@@ -145,6 +145,7 @@ docs/scene-art-cloud-api-plan.md
 docs/social-share-plan.md
 # --- 后台控制台 ---
 public/admin.html
+public/admin-rp-prompt.html
 # --- 成人向专项测试（含露骨夹具）---
 test/unit/roleplayAdult*.test.ts
 test/unit/adultCampaign.test.ts

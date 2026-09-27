@@ -33,9 +33,6 @@
 *.svg text
 
 # GitHub 语言统计：文档与生成物不计入源码比例
-CHANGELOG.md linguist-documentation
-project-state.md linguist-documentation
-CODE_REVIEW.md linguist-documentation
 docs/** linguist-documentation
 *.md linguist-documentation
 package-lock.json linguist-generated
