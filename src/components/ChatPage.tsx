@@ -805,9 +805,13 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
   const activeAvatar = activeCharacter && activeCharacter.id !== 'xiaoyu' ? (activeCharacter.avatar || skinAvatar) : skinAvatar;
   // 头像解析：内置小愈跟随当前皮肤；自定义角色优先自己的头像，无则回退当前皮肤陪伴头像
   const avatarFor = (c: ChatCharacterMeta) => (c.isDefault ? skinAvatar : (c.avatar || skinAvatar));
-  const activeName = activeCharacter?.name || t('appName');
-  // 当前角色的显示名（内置小愈 = 小愈／英文界面 Xiaoyu）：角色级文案（顶栏、设置面板标题…）统一取它
-  const charDisplayName = activeCharacter?.name || (getLang() === 'en' ? 'Xiaoyu' : '小愈');
+  // 内置小愈的显示名**跟随界面语言**；自定义角色一律用自己的名字。
+  // 2026-09-27 修正：此前是 `activeCharacter?.name` 优先，而内置角色的记录名恒为「小愈」，
+  // 于是英文界面的顶栏、设置面板标题、分享卡与给模型的说话人标签都错显成「小愈」。
+  const builtinCompanion = !activeCharacter || activeCharacter.isDefault || activeCharacter.id === 'xiaoyu';
+  const charDisplayName = builtinCompanion ? (getLang() === 'en' ? 'Xiaoyu' : '小愈') : activeCharacter!.name;
+  // 角色名统一口径（顶栏 / 设置面板 / 分享卡 / 模型上下文）
+  const activeName = charDisplayName;
   // 顶栏标题：用短名字（默认小愈官方名过长，窄屏会挤压两侧按钮）；自定义角色名过长时靠 truncate + max-w 截断
   const headerName = charLoading ? '…' : charDisplayName;
   // 开场白：自定义角色用自己的「开场」；未填开场用「我是<名字>…」，不回退成小愈的开场白
