@@ -1,0 +1,472 @@
+/**
+ * wolfcha 子应用 · 小愈侧的样式修正（独立于上游生成物，重新编译 v4 不会被冲掉）
+ *
+ * 修 1｜弹窗居中：上游用 \`fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%]\`。
+ *   这个 class 被 **两个 Tailwind 各生成一次**（v4 → \`translate\` 属性；v3 扫到 src/wolfcha → \`transform\`），
+ *   居中做了两次 → 弹窗被推出屏幕（手机端实测左边缘 -172px）。
+ *   把 src/wolfcha 排除出 v3 扫描后又可能出现两边都不生效（溢出到右侧 562px）。
+ *   因此把居中**钉死为一种实现**，不依赖哪个 Tailwind 生成。
+ */
+[role="dialog"] {
+  translate: none !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+/**
+ * 修 2｜token 泄漏：我们项目的品牌 token 定义在 :root，会**从外面漏进子应用**——
+ *   实测子应用内 \`--color-ring / --color-primary = #1FA46B\`（小愈主绿）、\`--color-bg = #FBF6EE\`（奶油底）。
+ *   而它们的命名是 \`--bg-*\` / \`--border-*\` / \`--color-gold\`，并不定义 \`--color-ring\` 这些名字，
+ *   于是组件引用到它们时就吃到了小愈的配色（弹窗/顶栏出现绿色描边就是这么来的）。
+ *   这里在子应用作用域内把这些名字**映射回上游自己的色板**，堵住泄漏。
+ */
+.ww-scope {
+  --color-ring: var(--border-focus, #c5a059);
+  --color-primary: var(--color-gold, #c5a059);
+  --color-bg: var(--bg-main, #f5f0e6);
+  --color-border: var(--border-color, rgba(140, 115, 53, 0.25));
+  --color-accent: var(--color-gold, #c5a059);
+  --color-fg: var(--text-primary, #3d2e24);
+}
+
+/**
+ * 修 3｜弹窗内部横向溢出：窄屏下弹窗宽 363px 而内容宽 464px（实测），
+ *   原因是头部按钮行里按钮带 \`whitespace-nowrap\` 且该行不换行，把容器撑爆、右侧被裁。
+ *   允许弹窗内的按钮换行、并让弹性子项可收缩。
+ */
+[role="dialog"] {
+  max-width: calc(100vw - 20px) !important;
+}
+/* 修 5.8（窄屏专属）：竖屏弹窗按 dvh 收口（原为 80vh/固定高度）——超出的内部滚动，
+   永远留一个可见的关闭路径。**只在 ≤768px 生效**，不动桌面端原有的 85vh 口径。 */
+@media (max-width: 768px) {
+  [role="dialog"] {
+    max-height: calc(100dvh - 24px) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+[role="dialog"] button {
+  white-space: normal;
+}
+[role="dialog"] div,
+[role="dialog"] p,
+[role="dialog"] h2 {
+  min-width: 0;
+}
+
+/**
+ * 修 4｜挂载层返回按钮压住上游顶栏：
+ *   我们的「← 返回」浮层固定在左上角，而上游顶栏左侧也有内容（标题区），
+ *   读图可见两者文字重叠。这里给它的顶栏留出左侧空间（仅小屏），避免叠字。
+ */
+/* 全宽度生效：桌面端原本没这条规则，实测返回按钮压住它的标题（"…愈 · AI 狼人杀"前半被盖） */
+.wc-topbar {
+  padding-left: 92px !important;
+}
+
+/* ========================================================================
+ * 修 5｜移动端「对局内装不下」整体适配（2026-09-27）
+ *
+ * 真机实测（headless Chrome，390×844 / 375×667 / 360×640，isMobile+DSL2）：
+ *   ① 底部玩家条是**横向滚动**的 flex 轨道：10 张卡总宽 1002px 塞进 360~430px 的框里，
+ *      只有 3~4 张能完整看到，其余被右边缘裁掉 —— 用户看到的正是「底部玩家头像看不全」。
+ *   ② 对局根容器用 \`h-screen\`(=100vh)：iOS Safari 的 100vh 是「地址栏收起」的大视口，
+ *      底栏会被浏览器 UI 顶到屏幕外（同一根因也让弹窗/羊皮纸下沿被裁）。
+ *   ③ 顶部栏 + 阶段徽章在窄屏折行，「轮到你/等待操作」胶囊与折行后的文案叠字（实测截图可见）。
+ *   ④ \`.wc-dialog-bottom\` 是 \`shrink-0\` 且内容高 460px > 容器 406px，被 \`overflow:hidden\`
+ *      裁掉——小屏上对话框/操作按钮直接被切掉（375×667 实测 t=129 < 对话区 t=133）。
+ * ===================================================================== */
+
+/* ---- 修 5.1｜整屏高度用 dvh，别让 iOS 地址栏吃掉底栏 ---- */
+.ww-scope {
+  height: 100dvh;
+}
+.wc-contract-screen {
+  height: 100dvh !important;
+  /* 小屏（≤640 高）时羊皮纸 595px 装不下：允许纵向滚动，而不是把印章裁掉 */
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
+}
+.wc-role-reveal-card {
+  max-height: calc(100dvh - 32px) !important;
+}
+.wc-notebook-panel {
+  max-height: calc(100dvh - 80px) !important;
+}
+
+@media (max-width: 768px) {
+  /* ---- 修 5.2｜顶部栏：压缩 + 阶段徽章独占一行，消掉叠字 ---- */
+  .wc-topbar {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 4px 10px 6px 88px !important;
+    row-gap: 2px !important;
+    /* 刘海/灵动岛：PWA 全屏时把内容推下来 */
+    padding-top: max(4px, env(safe-area-inset-top)) !important;
+  }
+  .wc-topbar__row-1 {
+    min-height: 30px;
+  }
+  .wc-topbar__title {
+    font-size: 13px !important;
+    gap: 5px !important;
+    letter-spacing: 0.04em !important;
+    min-width: 0;
+  }
+  /* 顶栏标题别把右侧的「笔记 / 设置」挤掉 */
+  .wc-topbar__title span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .wc-topbar__info {
+    gap: 2px 10px !important;
+    align-items: center !important;
+  }
+  .wc-topbar__item {
+    font-size: 10px !important;
+    gap: 3px !important;
+  }
+  .wc-topbar__item .font-serif {
+    font-size: 15px !important;
+    line-height: 1.1;
+  }
+  /* 阶段徽章：整行、可换行、子项不叠（原来 text 与胶囊同排且不收缩 → 叠字） */
+  .wc-phase-badge {
+    flex: 1 1 100% !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    margin-top: 3px;
+    padding: 4px 8px !important;
+    font-size: 11px !important;
+    line-height: 1.35;
+    letter-spacing: 0.01em;
+  }
+  /* 图标固定，文案占满剩余宽度并可断行，胶囊永远排在文案之后不重叠 */
+  .wc-phase-badge > span:first-child {
+    flex: 0 0 auto;
+    margin-top: 3px;
+    display: inline-flex;
+  }
+  .wc-phase-badge > span:nth-child(2) {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .wc-phase-badge > span:nth-child(n + 3) {
+    flex: 0 0 auto;
+    margin-left: 0 !important;
+    /* 「轮到你 / 等待操作」胶囊整体换行，别把「了」折到第二行（实测 360×640 会折） */
+    white-space: nowrap;
+  }
+
+  /* ---- 修 5.3｜底部玩家条：**全部玩家一屏可见**（两行网格，不再横向滚动） ----
+     列数由 page.tsx 内联给（ceil(人数/2)：8→4，10→5，12→6），保证永远是整齐的两行。 */
+  .wc-mobile-player-bar {
+    padding: 5px 6px calc(6px + env(safe-area-inset-bottom)) !important;
+    flex: 0 0 auto;
+  }
+  .wc-mobile-player-bar__track {
+    display: grid !important;
+    grid-auto-flow: row !important;
+    gap: 4px !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    scroll-snap-type: none !important;
+  }
+  .wc-player-card--mobile {
+    min-width: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+    padding: 4px 2px 3px !important;
+    border-radius: 7px !important;
+    gap: 0 !important;
+    scroll-snap-align: none !important;
+  }
+  .wc-player-card--mobile .wc-player-card__avatar {
+    width: 32px !important;
+    height: 32px !important;
+    margin-bottom: 2px !important;
+    border-width: 1.5px !important;
+  }
+  .wc-player-card--mobile .wc-player-card__info {
+    gap: 0 !important;
+  }
+  .wc-player-card--mobile .wc-player-card__name {
+    font-size: 10px !important;
+    max-width: 100% !important;
+    line-height: 1.2 !important;
+    gap: 2px !important;
+    padding: 0 1px;
+  }
+  .wc-player-card--mobile .wc-seat-badge {
+    font-size: 9px !important;
+    padding: 0 3px !important;
+    line-height: 1.35;
+    flex: 0 0 auto;
+  }
+  /* 「你」标签缩到最小，把宽度让给名字 */
+  .wc-player-card--mobile .wc-player-card__name > span:last-child:not(.wc-seat-badge) {
+    padding: 0 3px !important;
+    flex: 0 0 auto;
+  }
+  /* 狼队友/查验/警徽角标缩到 8px 并贴角，避免压住头像 */
+  .wc-player-card--mobile [class*="absolute"][class*="top-1.5"],
+  .wc-player-card--mobile [class*="absolute"][class*="right-1.5"] {
+    font-size: 8px !important;
+    line-height: 1.3;
+    padding: 0 3px !important;
+  }
+
+  /* ---- 修 5.4｜对话/操作区：小屏不裁切，超出内部滚动 ---- */
+  .wc-dialog-area {
+    min-height: 0 !important;
+  }
+  .wc-dialog-bottom {
+    /* 相对 .wc-dialog-area；留给上方历史记录至少 30% */
+    max-height: 68% !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 10px calc(8px + env(safe-area-inset-bottom)) !important;
+  }
+  .wc-panel {
+    min-height: 0 !important;
+    padding: 12px 12px 10px !important;
+  }
+  /* 历史记录顶部留给「事件」按钮的空间从 40px 收到 34px */
+  .wc-dialog-history > .absolute.inset-0,
+  .wc-dialog-history > div.absolute.inset-0 {
+    padding-top: 34px !important;
+  }
+
+  /* ---- 修 5.5｜笔记本浮层 & 悬浮按钮避开安全区 ---- */
+  .wc-notebook-fab {
+    bottom: calc(18px + env(safe-area-inset-bottom)) !important;
+    right: 14px !important;
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  /* ---- 修 5.6｜欢迎页（羊皮纸）小屏可滚、印章不贴边 ---- */
+  .wc-contract-paper {
+    min-height: 0 !important;
+    padding: 22px 18px 20px !important;
+  }
+  .wc-contract-title {
+    font-size: 26px !important;
+  }
+  .wc-signature-input {
+    font-size: 22px !important;
+  }
+  .wc-welcome-actions {
+    top: max(12px, env(safe-area-inset-top)) !important;
+  }
+}
+/* ---- 修 5.7｜把「会无限长」的中段列表收进固定高度，主操作按钮才不会被推到屏外 ----
+   实测（360×640，DAY_VOTE）：投票进行中的候选列表最长可到 10 行 ≈ 300px，
+   把对话面板连同「取消 / 确认投票给 X 号」一起推到视口外（实测面板 t=558 > 视口 640 之下），
+   用户必须先在底部面板里滚动才找得到确认按钮。这里给列表本身一个上限 + 内部滚动。
+   狼人协作面板同理（12 人局队友可达 5 行）。 */
+@media (max-width: 768px) {
+  .wc-voting-progress-list {
+    max-height: 20vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .wc-wolf-panel {
+    max-height: 34vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* 玩家条每张卡再收一点高度（上游 .wc-player-card 有 min-height:64px，两行就是 128px） */
+  .wc-player-card--mobile {
+    min-height: 58px !important;
+  }
+  .wc-player-card--mobile .wc-player-card__avatar {
+    width: 30px !important;
+    height: 30px !important;
+  }
+}
+
+/* ---- 修 5.8｜其余用 100vh 的浮层统一换 100dvh（同一类「被浏览器 UI 顶掉」的根因） ---- */
+.wc-role-reveal-card .glass-panel {
+  max-height: calc(100dvh - 32px) !important;
+  overflow-y: auto;
+}
+.wc-player-detail-content {
+  max-height: min(88dvh, 720px) !important;
+}
+/* ---- 修 5.9｜发言输入框（TipTap 富文本）小屏收紧 + iOS 不触发 auto-zoom ----
+   两个问题：
+   ① 上游把小愈全站「iOS 聚焦小字号输入框自动放大页面」的兜底写成 `input, textarea, select`
+      （src/index.css），而这里是 **contenteditable 富文本编辑器**（@tiptap/react）——
+      选择器命中不了 → iOS Safari 上点开输入框会整页放大/平移（项目里踩过的老坑）。
+   ② 输入框内联写死 `minHeight:112px` + `padding … 56px`，在 640 高的屏上占掉近 1/5 屏。 */
+@media (max-width: 768px) {
+  .wc-input-box {
+    /* !important 才能盖过内联 style（内联非 important 声明在样式表的 !important 前失效） */
+    min-height: 96px !important;
+    padding: 12px 14px 48px !important;
+  }
+  .wc-input-box > div:last-child {
+    bottom: 8px !important;
+    left: 10px !important;
+    right: 10px !important;
+  }
+}
+@supports (-webkit-touch-callout: none) {
+  .ww-scope [contenteditable="true"],
+  .ww-scope .ProseMirror {
+    font-size: 16px !important;
+    line-height: 1.5;
+  }
+}
+
+@media (max-width: 768px) {
+  /* 我的身份角标（白狼王/狼人等）：上游 `bottom:-2px/right:-2px` + translate(4px,4px)
+     会飘到相邻卡片上（5 列时每张卡只有 66px 宽，实测 360×640 会盖住邻居的座位号） */
+  .wc-player-card--mobile [class*="absolute"][class*="bottom-0"] {
+    bottom: 0 !important;
+    right: 0 !important;
+    /* 两个 Tailwind 都会生成位移（v4 → translate 属性，v3 → transform），两边都清 */
+    transform: none !important;
+    translate: none !important;
+    font-size: 8px !important;
+    line-height: 1.35;
+    padding: 0 3px !important;
+    border-radius: 4px 0 4px 0;
+  }
+}
+/* ========================================================================
+ * 修 6｜把 wolfcha 的**响应式工具类救回来**（桌面端此前是坏的，2026-09-27 定位）
+ *
+ * 根因（用 CSSOM 逐条枚举命中规则实测）：主站 Tailwind **v3** 产出的 CSS 是**不带 @layer 的**
+ *   （dist/assets/index-*.css 里 @layer 出现 0 次），而 wolfcha 的样式是 Tailwind **v4** 产出、
+ *   全部包在 @layer utilities 里。按 CSS 级联规则，**未分层的声明永远赢过分层里的声明** ——
+ *   于是主站那条 unlayered 的 `.hidden{display:none}` 压死了 wolfcha 分层里的
+ *   `.md\:flex{display:flex}`（同一元素 class="hidden md:flex"，特异性都是 0,1,0）。
+ *   实测后果：**桌面端左右两列玩家卡片恒为 display:none（宽高 0）**、顶栏 `md:contents` 失效
+ *   → `w-full` 的 row-1 变成整行 flex 项，把 DAY/ALIVE/阶段徽章挤成右侧竖排一条。
+ *   （窄屏不受影响：那里要的就是 `hidden` 的默认态，所以此前一直没人发现。）
+ *
+ * 修法：在**未分层**的 overrides 里用 !important 重新声明 wolfcha 真正用到的响应式 display
+ *   （对 src/wolfcha 全量枚举：sm:flex/hidden/inline、md:flex/hidden/block/contents/grid）。
+ *   md: 家族主站 v3 一条都没生成，所以不会有第二处 !important 与它争。
+ * ===================================================================== */
+@media (min-width: 640px) {
+  .ww-scope .sm\:flex { display: flex !important; }
+  .ww-scope .sm\:hidden { display: none !important; }
+  .ww-scope .sm\:inline { display: inline !important; }
+}
+@media (min-width: 768px) {
+  .ww-scope .md\:flex { display: flex !important; }
+  .ww-scope .md\:hidden { display: none !important; }
+  .ww-scope .md\:block { display: block !important; }
+  .ww-scope .md\:contents { display: contents !important; }
+  .ww-scope .md\:grid { display: grid !important; }
+  .ww-scope .md\:w-auto { width: auto !important; }
+  /* 弹窗是 portal 到 body 的，不在 .ww-scope 里；只补 v3 肯定没有的 md: 家族 */
+  [role="dialog"] .md\:flex { display: flex !important; }
+  [role="dialog"] .md\:hidden { display: none !important; }
+  [role="dialog"] .md\:block { display: block !important; }
+  [role="dialog"] .md\:grid { display: grid !important; }
+}
+@media (min-width: 1024px) {
+  .ww-scope .lg\:flex { display: flex !important; }
+  .ww-scope .lg\:hidden { display: none !important; }
+}
+/* ========================================================================
+ * 修 7｜「选完人还要往下滑才看到确认」——把确认操作从可滚动面板里拿出来（2026-09-27）
+ *
+ * 现场：`.wc-dialog-bottom` 在窄屏是**可滚动容器**（修 5.4），一旦它上面还有长内容
+ *   （狼人协作面板 / 投票票型列表），面板底部那条「确认要击杀 5 号 XXX」就被滚出可视区，
+ *   而手机上在这个小卡片里滚动很难操作 —— 用户原话「选择击杀的小卡片还要往下滑动才看到确认击杀，
+ *   但手机上很难滑动这个卡片…最好让用户能直接点击而不是滑动任何东西」。
+ *
+ * 做法（不是缩字号、不是加滚动提示，而是**把主操作移出滚动区**）：
+ *   DialogArea 新增一条 `.wc-selection-confirm`，挂在 `.wc-dialog-area` 上（可滚动面板之外），
+ *   永远紧贴移动端玩家条上方 —— 点完卡片，确认按钮就在手指边上，零滚动。
+ *   面板里那条旧确认行（`.wc-action-confirm-row`）在 ≤767.98px 隐藏，桌面端原样保留。
+ * 断点说明：`md:hidden` 是 min-width:768px 隐藏，所以「按钮条显示」= <768；
+ *   这里用 max-width:767.98px 隐藏面板里那条，避免正好 768px 时两条都不显示。
+ * ===================================================================== */
+@media (max-width: 767.98px) {
+  .wc-action-confirm-row {
+    display: none !important;
+  }
+}
+
+/* 移动端确认条本体（未分层，确保盖过 v4 分层里的工具类） */
+.wc-selection-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  background: var(--glass-bg-strong, rgba(255, 255, 255, 0.86));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid var(--border-color, rgba(140, 115, 53, 0.25));
+  box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.10);
+  z-index: 12;
+}
+
+.wc-selection-confirm__cancel {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color, rgba(140, 115, 53, 0.35));
+  background: transparent;
+  color: var(--text-secondary, #6e5948);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wc-selection-confirm__ok {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 42px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--color-gold, #c5a059);
+  color: var(--bg-dark, #1a1614);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* 击杀/开枪这类不可逆操作给血色，和面板里的口径一致 */
+.wc-selection-confirm__ok--danger {
+  background: var(--color-blood, #8a1c1c);
+  color: #fff;
+}
+
+.wc-selection-confirm__ok:active,
+.wc-selection-confirm__cancel:active {
+  transform: scale(0.985);
+}
+
+/* 桌面端不要这条（那里面板里那条原样保留）——必须用未分层的 !important 盖过上面 display:flex */
+@media (min-width: 768px) {
+  .wc-selection-confirm {
+    display: none !important;
+  }
+}

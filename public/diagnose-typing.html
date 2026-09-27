@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>正在输入指示器 · 诊断</title>
+<style>
+  :root { --green:#1FA46B; --ink:#243B2E; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:16px 14px 40px; font:15px/1.65 -apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif; color:var(--ink); background:#FBF6EE; }
+  h1 { font-size:19px; margin:0 0 4px; }
+  .sub { color:#6b7a70; font-size:12.5px; margin-bottom:14px; }
+  .card { background:#fff; border:1px solid #DCE8D5; border-radius:14px; padding:12px 14px; margin-bottom:12px; }
+  .card h2 { font-size:13px; margin:0 0 8px; color:#178353; letter-spacing:.02em; }
+  .row { display:flex; align-items:flex-end; gap:10px; margin:6px 0 2px; }
+  .bubble { background:#fff; border:1px solid #DCE8D5; border-radius:16px 16px 16px 4px; padding:12px 14px; box-shadow:0 3px 0 -1px rgba(36,59,46,.10); }
+  /* ⚠️ 与 app 的 .typing-dots 同形（本页是临时诊断页，故意自带一份，避免依赖构建产物里的哈希） */
+  @keyframes ty-wave { 0%{transform:scaleY(.35);opacity:.45} 25%{transform:scaleY(.7);opacity:.72} 50%{transform:scaleY(1);opacity:1} 75%{transform:scaleY(.65);opacity:.68} 100%{transform:scaleY(.35);opacity:.45} }
+  .typing-dots { display:inline-flex; align-items:center; justify-content:center; gap:3px; height:11px; }
+  .typing-dots > span { display:block; width:4px; height:11px; border-radius:999px;
+    background-image:linear-gradient(to top, #178353, #1FA46B 62%, #DCFCE7);
+    transform-origin:center; animation:ty-wave .9s cubic-bezier(.45,0,.55,1) infinite; }
+  .typing-dots > span:nth-child(1){ animation-delay:-.9s; transform:scaleY(.5); opacity:.6 }
+  .typing-dots > span:nth-child(2){ animation-delay:-.6s; transform:scaleY(.75); opacity:.8 }
+  .typing-dots > span:nth-child(3){ animation-delay:-.3s; transform:scaleY(1); opacity:1 }
+  @keyframes ty-wave-soft { 0%{transform:scaleY(.75);opacity:.45} 50%{transform:scaleY(1);opacity:1} 100%{transform:scaleY(.75);opacity:.45} }
+  /* 与 app 的 src/index.css 同口径：减弱动效下**仍然在动**，只是换成不位移的软波形（必须 !important，压过全局 0.01ms 规则） */
+  @media (prefers-reduced-motion: reduce) {
+    .typing-dots > span {
+      animation-name: ty-wave-soft !important;
+      animation-duration: .9s !important;
+      animation-iteration-count: infinite !important;
+      animation-timing-function: cubic-bezier(.45,0,.55,1) !important;
+    }
+  }
+  pre { margin:0; font:12px/1.5 Consolas,monospace; white-space:pre-wrap; overflow-wrap:anywhere; color:#243B2E; }
+  .verdict { font-weight:700; }
+  .ok { color:#178353 } .bad { color:#B3261E }
+  ol { margin:6px 0 0 18px; padding:0; font-size:13px; color:#40514a; }
+  code { background:#F1F6EF; padding:1px 4px; border-radius:4px; font-size:12.5px; }
+</style>
+</head>
+<body>
+  <h1>「正在输入」指示器 · 现场诊断</h1>
+  <div class="sub">临时页面（诊断完可删）。它做两件事：① 把你这台设备/浏览器的环境读数打出来；② 现场渲染三条呼吸条，让你直接看到动没动。</div>
+
+  <div class="card">
+    <h2>① 现场渲染（CSS 通路：与线上同一套规则）</h2>
+    <div class="row">
+      <div class="bubble"><span class="typing-dots" id="dotsCss"><span></span><span></span><span></span></span></div>
+      <div style="font-size:12px;color:#6b7a70;padding-bottom:4px">CSS 动画通路<br><span id="cssVerdict" class="verdict">测量中…</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>② 现场渲染（JS 兜底通路：与 app 里 <code>typingIndicator.ts</code> 同一套算法）</h2>
+    <div class="row">
+      <div class="bubble"><span class="typing-dots" id="dotsJs"><span></span><span></span><span></span></span></div>
+      <div style="font-size:12px;color:#6b7a70;padding-bottom:4px">不依赖 CSS 动画<br><span id="jsVerdict" class="verdict">测量中…</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>③ 环境读数（这几行请截给我）</h2>
+    <pre id="env">读取中…</pre>
+  </div>
+
+  <div class="card">
+    <h2>④ 逐帧采样（1.5 秒）</h2>
+    <pre id="samples">采样中…</pre>
+  </div>
+
+  <div class="card">
+    <h2>⑤ 如果这里 ①② 都不动，按顺序看</h2>
+    <ol>
+      <li><b>系统「减弱动效」</b>：Windows <code>设置 → 辅助功能 → 视觉效果 → 动画效果</code>；iPhone <code>设置 → 辅助功能 → 动态效果 → 减弱动态效果</code>；Android <code>开发者选项 → 动画时长缩放</code> 或 <code>辅助功能 → 移除动画</code>。</li>
+      <li><b>浏览器扩展</b>：任何「减少动画 / Reduce Motion / 省电」类扩展都会全局禁动画。</li>
+      <li><b>网页缓存</b>：强制刷新（Windows <code>Ctrl+F5</code>；手机清一次站点数据）后重开。</li>
+    </ol>
+    <div class="sub" style="margin:8px 0 0">② 是给上面这些情况准备的兜底：它不靠 CSS 动画，所以即使 ① 不动，app 里也应该仍然会动。</div>
+  </div>
+
+<script>
+(async () => {
+  const bars = (id) => Array.from(document.getElementById(id).children);
+  const read = (el) => ({ h: +el.getBoundingClientRect().height.toFixed(2), op: +(+getComputedStyle(el).opacity).toFixed(2) });
+
+  // —— JS 兜底通路：与 src/lib/typingIndicator.ts 同一套公式（相位 = base − i/3，余弦波，峰在 0.5）——
+  const CYCLE = 900;
+  const reduced = (() => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return null; } })();
+  const soft = reduced === true;
+  const jsBars = bars('dotsJs');
+  let raf = 0;
+  const tick = () => {
+    const base = (performance.now() % CYCLE) / CYCLE;
+    jsBars.forEach((el, i) => {
+      const phase = (((base - i / 3) % 1) + 1) % 1;
+      const w = 0.5 - 0.5 * Math.cos(2 * Math.PI * phase);
+      el.style.transform = 'scaleY(' + (soft ? 0.75 + 0.25 * w : 0.35 + 0.65 * w).toFixed(3) + ')';
+      el.style.opacity = (0.45 + 0.55 * w).toFixed(3);
+    });
+    raf = requestAnimationFrame(tick);
+  };
+  tick();
+
+  // —— 环境读数 ——
+  const cssHref = (() => { const l = Array.from(document.querySelectorAll('link[rel=stylesheet]')).map(x => x.getAttribute('href')).filter(Boolean); return l[0] || '(本页无外链 CSS)'; })();
+  let cssHasWave = '未检查';
+  try {
+    const r = await fetch('/', { cache: 'no-store' });
+    const html = await r.text();
+    const m = html.match(/assets\/index-[A-Za-z0-9_-]+\.css/);
+    if (m) {
+      const cr = await fetch('/' + m[0], { cache: 'no-store' });
+      const txt = await cr.text();
+      cssHasWave = '线上 CSS = ' + m[0] + ' ｜ typing-wave: ' + (txt.indexOf('keyframes typing-wave') >= 0) + ' ｜ typing-wave-soft: ' + (txt.indexOf('typing-wave-soft') >= 0) + ' ｜ 大小 ' + txt.length;
+    } else { cssHasWave = '首页 HTML 里没找到 assets/index-*.css 链接'; }
+  } catch (e) { cssHasWave = '检查失败：' + e.message; }
+
+  document.getElementById('env').textContent = [
+    'prefers-reduced-motion: reduce = ' + reduced,
+    '本页自带一份与 app 同形的 CSS（所以上面那条链接是空的，属正常）',
+    cssHasWave,
+    'userAgent: ' + navigator.userAgent,
+    'devicePixelRatio: ' + window.devicePixelRatio,
+    '硬件并发/内存(若暴露): ' + (navigator.hardwareConcurrency || '?') + ' / ' + (navigator.deviceMemory || '?'),
+    'visibilityState: ' + document.visibilityState,
+  ].join('\n');
+
+  // —— 逐帧采样 1.5s，比较「CSS 通路」与「JS 通路」各自动没动 ——
+  const cssBars = bars('dotsCss');
+  const acc = { css: cssBars.map(() => []), js: jsBars.map(() => []) };
+  const animsSnap = cssBars.map((el) => el.getAnimations().map((a) => a.animationName + '@' + Number(a.effect.getTiming().duration) + 'ms/' + a.playState).join(',') || '(无)');
+  await new Promise((res) => {
+    const t0 = performance.now();
+    const step = () => {
+      cssBars.forEach((el, i) => acc.css[i].push(read(el)));
+      jsBars.forEach((el, i) => acc.js[i].push(read(el)));
+      if (performance.now() - t0 < 1500) requestAnimationFrame(step); else res();
+    };
+    requestAnimationFrame(step);
+  });
+  const stat = (arr) => {
+    const hs = arr.map((x) => x.h);
+    const range = Math.max(...hs) - Math.min(...hs);
+    return { range: +range.toFixed(2), min: Math.min(...hs), max: Math.max(...hs) };
+  };
+  const cssStat = acc.css.map(stat), jsStat = acc.js.map(stat);
+  const moving = (s) => s.range >= 0.5;
+  const set = (id, ok, detail) => { const el = document.getElementById(id); el.textContent = (ok ? '✅ 在动' : '❌ 不动') + '（' + detail + '）'; el.className = 'verdict ' + (ok ? 'ok' : 'bad'); };
+  set('cssVerdict', cssStat.every(moving), cssStat.map((s, i) => '条' + (i + 1) + ' ' + s.min + '~' + s.max + 'px').join(' / '));
+  set('jsVerdict', jsStat.every(moving), jsStat.map((s, i) => '条' + (i + 1) + ' ' + s.min + '~' + s.max + 'px').join(' / '));
+  document.getElementById('samples').textContent = [
+    'CSS 通路 getAnimations(): ' + animsSnap.join(' ｜ '),
+    'CSS 通路 行程: ' + cssStat.map((s, i) => '条' + (i + 1) + '=' + s.range + 'px').join(', '),
+    'JS 兜底通路 行程: ' + jsStat.map((s, i) => '条' + (i + 1) + '=' + s.range + 'px').join(', ') + '（软波形=' + soft + '）',
+    '结论: CSS 通路' + (cssStat.every(moving) ? '正常' : '被环境掐掉') + '；JS 兜底通路' + (jsStat.every(moving) ? '正常' : '也异常（请把这页读数发我）'),
+  ].join('\n');
+  raf; // 保活到页面关闭
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+{
+  "generatedAt": "2026-09-15T03:28:53.512Z",
+  "provider": "wanx",
+  "model": "wanx-v1",
+  "keyPresent": true,
+  "size": "768*1152",
+  "audit": true,
+  "aborted": null,
+  "totals": {
+    "generated": 5,
+    "skipped": 0,
+    "failed": 0,
+    "attempts": 6,
+    "billed": 6,
+    "fellBackToTheme": 0,
+    "bytes": 669744,
+    "estCostYuan": 0.84
+  },
+  "items": [
+    {
+      "file": "guyushen-songzhi-meet.webp",
+      "group": "own",
+      "provider": "wanx",
+      "seed": 854466861,
+      "prompt": "narrow city street at 3am, a plain lit doorway in a tiled wall, wet asphalt, parked black sedan, framed light through a doorway, a table set for two, neutral palette, soft daylight, outdoor scene, 1990s Hong Kong street, tiled facades, metal window frames, warm street light",
+      "attempts": 1,
+      "billed": 1,
+      "audit": "pass",
+      "seconds": 23.9,
+      "bytes": 157976,
+      "ext": "webp",
+      "promptStage": "scene"
+    },
+    {
+      "file": "guyushen-songzhi-promise.webp",
+      "group": "own",
+      "provider": "wanx",
+      "seed": 470094522,
+      "prompt": "narrow city street at 3am, a plain lit doorway in a tiled wall, wet asphalt, parked black sedan, a small velvet box catching the light, warm golden glow, warm palette, soft lamplight, outdoor scene, 1990s Hong Kong street, tiled facades, metal window frames, warm street light",
+      "attempts": 2,
+      "billed": 2,
+      "audit": "unavailable(no json)",
+      "seconds": 27.2,
+      "bytes": 169078,
+      "ext": "webp",
+      "promptStage": "scene"
+    },
+    {
+      "file": "shenyanzhi-liuyang-cold.webp",
+      "group": "own",
+      "provider": "wanx",
+      "seed": 688978500,
+      "prompt": "stone quay, moored steamship, coiled hemp ropes, stacked leather trunks, wet cobblestones, river mist, grey overcast morning light, bare branches, grey even light, an empty bench, cool muted palette, low-key lighting, quiet tension, outdoor scene, 1930s republican-era street, wooden facades, worn paving, dusty light",
+      "attempts": 1,
+      "billed": 1,
+      "audit": "pass",
+      "seconds": 23.7,
+      "bytes": 201826,
+      "ext": "webp",
+      "promptStage": "scene"
+    },
+    {
+      "file": "lijinyan-xiaxia-daily.webp",
+      "group": "own",
+      "provider": "wanx",
+      "seed": 1347559584,
+      "prompt": "a lived-in kitchen in morning light, steam from a cup, dim living room, warm table lamp, rumpled sofa cushions, open closed plain journal on coffee table, rain-streaked window, warm palette, soft lamplight, interior scene, contemporary interior, floor-to-ceiling glass, neutral materials, city light",
+      "attempts": 1,
+      "billed": 1,
+      "audit": "pass",
+      "seconds": 33.6,
+      "bytes": 68440,
+      "ext": "webp",
+      "promptStage": "scene"
+    },
+    {
+      "file": "aluola-ailian-flutter.webp",
+      "group": "own",
+      "provider": "wanx",
+      "seed": 821601936,
+      "prompt": "sheer curtains at an open window, warm afternoon light, a cup on the sill, vast marble hall, tall fluted columns, dark red drapery, scattered golden coins, cold shafts of light, warm palette, soft lamplight, interior scene, traditional Chinese interior, carved wooden lattice windows, silk, porcelain",
+      "attempts": 1,
+      "billed": 1,
+      "audit": "pass",
+      "seconds": 23.7,
+      "bytes": 72424,
+      "ext": "webp",
+      "promptStage": "scene"
+    }
+  ]
+}

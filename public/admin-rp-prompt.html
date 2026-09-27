@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>剧情提示词监控 · 小愈管理端</title>
+<style>
+  :root { --g:#1FA46B; --gd:#178353; --ink:#243B2E; --line:#e5e7eb; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.6 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif; color:var(--ink); background:#f6f7f8; }
+  header { position:sticky; top:0; z-index:10; background:#fff; border-bottom:1px solid var(--line); padding:12px 16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  h1 { font-size:15px; margin:0; }
+  .muted { color:#6b7280; font-size:12px; }
+  .grow { flex:1; }
+  button, a.btn { border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:8px; padding:6px 12px; font-size:13px; cursor:pointer; text-decoration:none; }
+  button.on { background:var(--g); border-color:var(--g); color:#fff; }
+  button:hover, a.btn:hover { border-color:var(--g); }
+  main { padding:16px; max-width:1400px; margin:0 auto; }
+  .tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; }
+  .stat { display:flex; gap:18px; flex-wrap:wrap; font-size:12px; color:#4b5563; margin-bottom:10px; }
+  .stat b { color:var(--ink); }
+  .delta { color:#b45309; font-weight:600; }
+  pre { margin:0; white-space:pre-wrap; word-break:break-word; font:12px/1.65 ui-monospace,Consolas,monospace; max-height:70vh; overflow:auto; background:#fbfbfc; border:1px solid var(--line); border-radius:8px; padding:12px; }
+  .warn { background:#fef3c7; border:1px solid #fcd34d; color:#92400e; border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:13px; }
+  input { border:1px solid var(--line); border-radius:8px; padding:6px 10px; font-size:13px; min-width:280px; }
+  .warnred { background:#fee2e2; border-color:#fca5a5; color:#991b1b; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🔍 剧情提示词监控</h1>
+  <span class="muted" id="meta">尚未加载</span>
+  <span class="grow"></span>
+  <input id="tok" type="password" placeholder="ADMIN_TOKEN（也支持 ?token=…）" autocomplete="off" />
+  <button id="saveTok">保存</button>
+  <button id="reload">立即刷新</button>
+  <button id="auto" class="on">自动刷新 8s：开</button>
+  <a class="btn" href="/admin.html">← 返回管理端</a>
+</header>
+<main>
+  <div id="alert"></div>
+  <div class="tabs" id="tabs"></div>
+  <div class="card">
+    <div class="stat" id="stat"></div>
+    <pre id="out">加载中…</pre>
+  </div>
+  <p class="muted" style="margin-top:12px">
+    这里显示的是**实际会发给模型的 system prompt**（含成人块、craft 规则、语料库）。带 <b>-on</b> 的是开启无限制模式的版本，
+    <b>-off</b> 是走 DeepSeek 时的版本。<br />
+    内容会随源码 / <code>prompts/adult-lexicon.*.txt</code> / <code>.env</code> 变化而变化——服务端每次请求都实时渲染，无需重启。
+    页面对比上一轮结果并标出字符数变化。
+  </p>
+</main>
+<script>
+(function () {
+  var KEY = 'xiaoyu_admin_token';
+  var qs = new URLSearchParams(location.search);
+  var tokEl = document.getElementById('tok');
+  var token = qs.get('token') || localStorage.getItem(KEY) || '';
+  tokEl.value = token;
+
+  var variants = {}, prev = {}, current = 'zh-on', timer = null, auto = true;
+
+  function setAlert(html, red) {
+    document.getElementById('alert').innerHTML = html ? '<div class="warn' + (red ? ' warnred' : '') + '">' + html + '</div>' : '';
+  }
+
+  function renderTabs() {
+    var names = Object.keys(variants);
+    document.getElementById('tabs').innerHTML = names.map(function (n) {
+      return '<button data-v="' + n + '" class="' + (n === current ? 'on' : '') + '">' + n +
+        ' <span class="muted">' + variants[n].chars + '</span></button>';
+    }).join('');
+    Array.prototype.forEach.call(document.querySelectorAll('#tabs button'), function (b) {
+      b.onclick = function () { current = b.getAttribute('data-v'); renderTabs(); show(); };
+    });
+  }
+
+  function show() {
+    var v = variants[current];
+    if (!v) return;
+    var p = prev[current];
+    var d = p == null ? '' : (v.chars - p ? ' <span class="delta">（较上次 ' + (v.chars - p > 0 ? '+' : '') + (v.chars - p) + '）</span>' : ' <span class="muted">（无变化）</span>');
+    document.getElementById('stat').innerHTML =
+      '<span>变体 <b>' + current + '</b></span><span>字符数 <b>' + v.chars + '</b>' + d + '</span>' +
+      '<span>含语料 <b>' + (/可直接调用的措辞素材/.test(v.prompt) ? '是' : '否') + '</b></span>' +
+      '<span>含成人块 <b>' + (/成人模式|Adult mode/.test(v.prompt) ? '是' : '否') + '</b></span>';
+    document.getElementById('out').textContent = v.prompt;
+  }
+
+  function load() {
+    if (!token) { setAlert('未提供 ADMIN_TOKEN。点右上输入框填入后点「保存」，或用 <code>?token=…</code> 打开。', true); return; }
+    fetch('/api/payment/admin/rp-prompt', { headers: { 'x-admin-token': token } })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
+      .then(function (res) {
+        if (!res.ok || !res.j.success) {
+          setAlert('请求被拒（HTTP ' + res.status + '）。<b>最常见原因：服务端未配置 ADMIN_TOKEN</b>——' +
+            '<code>/api/payment/admin/*</code> 是 fail-closed 的，没配就整个禁用。请在 <code>.env</code> 设置强随机 ADMIN_TOKEN 并重启。', true);
+          return;
+        }
+        setAlert('');
+        var d = res.j.data;
+        prev = {}; Object.keys(variants).forEach(function (k) { prev[k] = variants[k].chars; });
+        variants = d.variants;
+        document.getElementById('meta').textContent = '渲染于 ' + new Date(d.generatedAt).toLocaleTimeString() +
+          ' · 剧本 ' + d.scenarioId + ' · 自动刷新 ' + (auto ? '开' : '关');
+        renderTabs(); show();
+      })
+      .catch(function (e) { setAlert('加载失败：' + e.message, true); });
+  }
+
+  document.getElementById('saveTok').onclick = function () {
+    token = tokEl.value.trim(); localStorage.setItem(KEY, token); load();
+  };
+  document.getElementById('reload').onclick = load;
+  document.getElementById('auto').onclick = function () {
+    auto = !auto;
+    this.className = auto ? 'on' : '';
+    this.textContent = '自动刷新 8s：' + (auto ? '开' : '关');
+    if (auto) { timer = setInterval(load, 8000); } else { clearInterval(timer); }
+  };
+
+  if (token) load();
+  else setAlert('请输入 ADMIN_TOKEN。', true);
+  timer = setInterval(load, 8000);
+})();
+</script>
+</body>
+</html>

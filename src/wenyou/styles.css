@@ -1,0 +1,2556 @@
+/* 两个大 CJK 字体（正文霞鹜文楷 1351 KB、标题 ZCOOL 小薇 984 KB）已切成 unicode-range
+   分片，@font-face 由 scripts/slice-fonts.py 生成在 fonts.css 里——浏览器只下渲染到的
+   那几片。必须放在最前：CSS 的 @import 只能出现在其它规则之前。
+   （马善政 9 KB、Cinzel 26 KB 本就极小，切了只剩开销，仍是整体一片，见文件下方。） */
+@import './fonts.css';
+
+/* ═══ 千世书 · 玄学星盘 ═══
+   绀青为夜，鎏金为文，罗盘问命。
+   显示字体：ZCOOL 小薇（标题/结局）；罗马题铭：Cinzel；正文：霞鹜文楷。 */
+
+/* ── 离线自托管字体(woff2,打包于 public/fonts,不依赖任何 CDN) ──
+   书法马善政仅含装饰字 */
+@font-face {
+  font-family: "Ma Shan Zheng";
+  src: url("/fonts/mashanzheng-regular.woff2") format("woff2");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Cinzel";
+  src: url("/fonts/cinzel.woff2") format("woff2");
+  font-weight: 400 600; font-style: normal; font-display: swap;
+}
+
+.wy-root {
+  --ink-9: #080b18;   /* 最深夜空 */
+  --ink-8: #0e1430;   /* 面板底 */
+  --ink-7: #141d40;   /* 抬升面 */
+  --ink-6: #1c2654;   /* 悬停抬升 */
+  --paper: #dcdcef;   /* 主文字（清冷） */
+  --paper-dim: #b4b8d8;
+  --muted: #868bb2;
+  --cinnabar: #c9503a;        /* 选中 / 危急 / 朱砂印 */
+  --cinnabar-bright: #e0704e;
+  --jade: #6fae9b;            /* 正向 */
+  --gold: #cba85a;            /* 品牌 / 结构 / 鎏金 */
+  --gold-bright: #ecd28f;
+  --line: #28326a;           /* 幽蓝细线 */
+  --line-strong: rgba(203, 168, 90, 0.42); /* 金色细线 */
+  --radius: 5px;
+  font-size: 16px;
+  /* 正文字号档位（玩家可调，仅缩放阅读类文字，不动布局）；默认 1=中 */
+  --font-scale: 1;
+
+  /* ── 字体栈(集中管理,统一回退;覆盖 Win/Mac/Linux/移动端) ──
+     正文:霞鹜文楷(未达回退思源宋体);标题:站酷小薇;书法:马善政;题铭:Cinzel */
+  --font-serif: "LXGW WenKai", "Noto Serif SC", "Source Han Serif SC",
+    "Source Han Serif CN", "Songti SC", STSong, "SimSun", serif;
+  --font-display: "ZCOOL XiaoWei", "Noto Serif SC", "STZhongsong", "Songti SC",
+    "SimSun", serif;
+  --font-script: "Ma Shan Zheng", "Kaiti SC", STKaiti, KaiTi, "楷体", cursive;
+  --font-roman: "Cinzel", "Noto Serif SC", serif;
+}
+
+/* 繁体模式:标题字体 ZCOOL 小薇为简体字库（缺约 1/3 繁体专用字：書體國會這…），
+   会单字回退到系统宋体造成混排。改用已打包、繁体全覆盖的霞鹜文楷作标题，
+   繁体下标题内部统一（楷体风），零额外字体体积。主 App 语言为 zh-TW 时 <html lang="zh-Hant">。 */
+html[lang="zh-Hant"] .wy-root {
+  --font-display: "LXGW WenKai", "Noto Serif SC", "STZhongsong", "Songti SC", "SimSun", serif;
+}
+
+.wy-root * { box-sizing: border-box; }
+
+.wy-root { background: var(--ink-9); overflow-x: clip; }
+
+.wy-root {
+  margin: 0;
+  /* 始终撑满视口：body 的星云渐变(background-attachment: fixed)只绘制在 body 盒内，
+     内容偏短时 body 矮于视口，底部会露出 html 的纯色 ink-9 形成色差断层 —— 撑满即消除 */
+  min-height: 100vh;
+  min-height: 100dvh;
+  /* 装饰罗盘/印玺在窄屏会略超出内容盒，禁止由此产生横向滚动（否则右缘露出无渐变的暗条，固定按钮也被顶出可视区） */
+  overflow-x: clip;
+  color: var(--paper);
+  font-family: var(--font-serif);
+  font-weight: 400;
+  line-height: 1.95;
+  letter-spacing: 0.01em;
+  /* 中文正文渲染优化:抗锯齿 + 字距微调,暗底宋体更清晰耐读 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  /* 深空星云：少量大而柔的云团 + 顶层极淡噪点(grain)抖动，消除暗色渐变带状(banding) */
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.72 0 0 0 0 0.78 0 0 0 0 0.98 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(72% 56% at 50% 4%, rgba(150, 110, 204, 0.20), transparent 72%),
+    radial-gradient(62% 52% at 12% 30%, rgba(92, 96, 198, 0.15), transparent 74%),
+    radial-gradient(64% 54% at 90% 38%, rgba(64, 118, 198, 0.14), transparent 74%),
+    radial-gradient(74% 62% at 72% 92%, rgba(104, 172, 156, 0.12), transparent 76%),
+    radial-gradient(60% 50% at 16% 88%, rgba(160, 84, 110, 0.10), transparent 74%),
+    linear-gradient(165deg, #0c1230, #080b1c 58%, #05060f);
+  background-size: 220px 220px, cover, cover, cover, cover, cover, cover;
+  background-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+/* 几颗明亮焦点星 + 边缘暗角：增焦点与影院纵深，破除单调 */
+.wy-root::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(2.2px 2.2px at 22% 16%, rgba(255, 255, 255, 0.95), transparent 60%),
+    radial-gradient(2.6px 2.6px at 76% 24%, rgba(236, 210, 143, 0.9), transparent 60%),
+    radial-gradient(2px 2px at 58% 72%, rgba(255, 255, 255, 0.85), transparent 60%),
+    radial-gradient(2.4px 2.4px at 12% 64%, rgba(208, 224, 255, 0.85), transparent 60%),
+    radial-gradient(2px 2px at 90% 80%, rgba(236, 210, 143, 0.8), transparent 60%),
+    radial-gradient(130% 120% at 50% 40%, transparent 64%, rgba(2, 4, 12, 0.42) 100%);
+  background-repeat: no-repeat;
+}
+
+/* 星点夜空：两层平铺星点（密而可见）+ 极缓闪烁 */
+.wy-root::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.85;
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 28px, rgba(255, 255, 255, 0.95), transparent),
+    radial-gradient(1.4px 1.4px at 150px 22px, rgba(236, 210, 143, 0.9), transparent),
+    radial-gradient(1px 1px at 92px 66px, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(1px 1px at 58px 128px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1.3px 1.3px at 178px 112px, rgba(255, 255, 255, 0.75), transparent),
+    radial-gradient(1.2px 1.2px at 116px 176px, rgba(236, 210, 143, 0.7), transparent),
+    radial-gradient(1px 1px at 200px 150px, rgba(255, 255, 255, 0.55), transparent);
+  background-repeat: repeat;
+  background-size: 230px 230px;
+  animation: wy-twinkle 7s ease-in-out infinite alternate;
+}
+@keyframes wy-twinkle { from { opacity: 0.6; } to { opacity: 0.95; } }
+
+.wy-root .app { position: relative; z-index: 1; max-width: 820px; margin: 0 auto; padding: 24px 16px 48px; }
+.wy-root #main-content:focus { outline: none; }
+/* 跳到主内容：键盘 Tab 首站，平时移出视口，聚焦时滑入左上角 */
+.wy-root .skip-link {
+  position: fixed; z-index: 100;
+  top: 8px; left: 8px;
+  transform: translateY(-150%);
+  padding: 8px 14px;
+  font-family: var(--font-display); font-size: 0.9rem;
+  color: var(--gold); background: rgba(16, 22, 52, 0.96);
+  border: 1px solid var(--line-strong); border-radius: 8px;
+  text-decoration: none;
+  transition: transform 0.18s ease;
+}
+.wy-root .skip-link:focus { transform: translateY(0); outline: 2px solid var(--gold); outline-offset: 2px; }
+/* 简繁切换:右上角常驻,低调鎏金 */
+.wy-root .lang-toggle {
+  position: fixed; z-index: 90;
+  /* 贴右上角，并避开刘海/圆角安全区，窄屏也始终留在可视区内 */
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  width: 34px; height: 34px; padding: 0;
+  font-family: var(--font-display); font-size: 1.05rem;
+  /* 近实心底色：无论背后是渐变、暗条还是卡片，按钮观感始终一致 */
+  color: var(--gold); background: rgba(16, 22, 52, 0.92);
+  border: 1px solid var(--line-strong); border-radius: 50%;
+  backdrop-filter: blur(4px); cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, transform 0.2s;
+}
+.wy-root .lang-toggle:hover { color: var(--gold-bright); border-color: var(--gold); transform: scale(1.08); }
+
+.wy-root .display, .wy-root .logo, .wy-root .ending-tone {
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+/* ── 控件 ── */
+
+.wy-root button {
+  font: inherit;
+  color: var(--paper);
+  background: var(--ink-7);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s, transform 0.15s;
+}
+.wy-root button:hover:not(:disabled) { border-color: var(--gold); }
+.wy-root button:disabled { opacity: 0.4; cursor: not-allowed; }
+.wy-root button.primary {
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+  color: #1a1530;
+  border-color: var(--gold);
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  box-shadow: 0 0 18px rgba(203, 168, 90, 0.22);
+}
+.wy-root button.primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #f3dca0, var(--gold-bright));
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 28px rgba(203, 168, 90, 0.4);
+}
+.wy-root button.ghost { background: transparent; border-color: transparent; color: var(--muted); }
+.wy-root button.ghost:hover { color: var(--paper); }
+
+.wy-root input, .wy-root select {
+  font: inherit;
+  width: 100%;
+  margin-top: 4px;
+  padding: 9px 12px;
+  color: var(--paper);
+  background: var(--ink-9);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.wy-root input:focus, .wy-root select:focus { outline: none; border-color: var(--gold); }
+.wy-root input::placeholder { color: #586089; }
+
+/* 键盘导航焦点：鎏金描边（鼠标点击不显，仅 Tab 走查时浮现）；
+   input:focus 的 outline:none 特异性更高，需显式补 :focus-visible */
+.wy-root :focus-visible, .wy-root input:focus-visible, .wy-root select:focus-visible, .wy-root textarea:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* 按压回弹：所有按钮落指即沉 1px，触感如钤印 */
+.wy-root button:active:not(:disabled) { transform: translateY(1px); }
+.wy-root .choice:active:not(:disabled) { transform: translateX(2px) translateY(1px); }
+.wy-root label { display: block; margin: 14px 0; color: var(--paper-dim); font-size: 0.9rem; }
+
+.wy-root .error { color: var(--cinnabar-bright); }
+.wy-root .loading { color: var(--gold); font-style: italic; animation: wy-pulse 1.6s ease-in-out infinite; }
+@keyframes wy-pulse { 50% { opacity: 0.35; } }
+.wy-root .row { display: flex; gap: 12px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+
+.wy-root ::-webkit-scrollbar { width: 8px; }
+.wy-root ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
+.wy-root ::-webkit-scrollbar-track { background: transparent; }
+/* Firefox：scrollbar-color 可继承，根上设一次即全站生效 */
+.wy-root { scrollbar-color: rgba(203, 168, 90, 0.42) transparent; }
+
+@keyframes wy-fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* 页面容器入场只渐变透明，不做位移变换——transform 一旦非 none 会让其成为
+   position:fixed 子元素的包含块，导致弹层相对整页而非视口定位（错位/遮罩盖整页） */
+@keyframes wy-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── 首页 ── */
+
+.wy-root .home { position: relative; text-align: center; padding-top: 4vh; }
+
+/* 标题区：大罗盘居中，题铭安于盘心；盘转而字定。
+   .hero 高度 ≥ 罗盘直径，故罗盘绝不溢出到下方副标题/卡片，从根本上消除重叠 */
+.wy-root .hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: min(520px, 96vw);
+  margin: 1vh 0 26px;
+}
+
+/* 罗盘容器：本体不转，内部各环各自旋转，转速各异更显玄机 */
+.wy-root .home-banner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(520px, 94vw);
+  height: min(520px, 94vw);
+  margin-top: calc(min(520px, 94vw) / -2);
+  margin-left: calc(min(520px, 94vw) / -2);
+  pointer-events: none;
+  z-index: 0;
+  /* 1s 而非 1.8s：入场再拖首屏就暗过头了，题铭 0.7s 进场后罗盘紧随其后即可 */
+  animation: wy-bannerIn 1s ease-out both;
+}
+.wy-root .home-banner .ring, .wy-root .home-banner .ticks, .wy-root .home-banner .inner, .wy-root .home-banner .orbit { position: absolute; border-radius: 50%; }
+/* 最外细金环 */
+.wy-root .home-banner .ring {
+  inset: 0;
+  border: 1px solid rgba(203, 168, 90, 0.30);
+  box-shadow: inset 0 0 100px rgba(203, 168, 90, 0.05);
+}
+/* 粗刻度环（慢转） */
+.wy-root .home-banner .ticks {
+  inset: -1px;
+  background: repeating-conic-gradient(from 0deg, rgba(203, 168, 90, 0.5) 0 0.5deg, transparent 0.5deg 7.5deg);
+  -webkit-mask: radial-gradient(circle, transparent 87%, #000 89%, #000 99%, transparent 100%);
+  mask: radial-gradient(circle, transparent 87%, #000 89%, #000 99%, transparent 100%);
+  animation: wy-spin 60s linear infinite;
+}
+/* 细刻度环（反向、更慢） */
+.wy-root .home-banner .ticks.fine {
+  background: repeating-conic-gradient(from 0deg, rgba(203, 168, 90, 0.28) 0 0.3deg, transparent 0.3deg 1.5deg);
+  -webkit-mask: radial-gradient(circle, transparent 91%, #000 92%, #000 96%, transparent 97%);
+  mask: radial-gradient(circle, transparent 91%, #000 92%, #000 96%, transparent 97%);
+  animation: wy-spinRev 90s linear infinite;
+}
+/* 内圈虚线 + 辉光 */
+.wy-root .home-banner .inner {
+  inset: 15%;
+  border: 1px dashed rgba(203, 168, 90, 0.26);
+  box-shadow: inset 0 0 80px rgba(203, 168, 90, 0.08), 0 0 50px rgba(111, 174, 155, 0.05);
+  animation: wy-spin 75s linear infinite;
+}
+/* 盘心金晕：罗盘中央一缕缓缓呼吸的暖光，似命数在芯处流转 */
+.wy-root .home-banner::after {
+  content: '';
+  position: absolute; inset: 24%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(203, 168, 90, 0.12), rgba(111, 174, 155, 0.045) 48%, transparent 72%);
+  animation: wy-corePulse 6.5s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes wy-corePulse { from { transform: scale(0.94); opacity: 0.6; } to { transform: scale(1.08); opacity: 1; } }
+/* 命·劫·缘·道：随盘公转，字身反向自转以保持正立 */
+.wy-root .home-banner .orbit { inset: 0; animation: wy-spin 60s linear infinite; }
+.wy-root .home-banner .orbit.orbit2 { transform: rotate(90deg); }
+.wy-root .home-banner .orbit .g {
+  position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+  font-family: var(--font-display);
+  font-size: 1.5rem; color: var(--gold-bright); opacity: 0.78;
+  text-shadow: 0 0 14px rgba(203, 168, 90, 0.6);
+  animation: wy-spinRev 60s linear infinite;
+}
+.wy-root .home-banner .orbit .g.o2 { top: auto; bottom: 0; }
+@keyframes wy-spin { to { transform: rotate(360deg); } }
+@keyframes wy-spinRev { to { transform: rotate(-360deg); } }
+@keyframes wy-bannerIn { from { opacity: 0; } to { opacity: 0.92; } }
+.wy-root .home > * { position: relative; z-index: 1; }
+
+/* 盘心题铭 */
+.wy-root .hero-title {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  animation: wy-fadeUp 0.7s ease-out both;
+}
+/* 题铭后的柔暗晕：使文字在罗盘之上清晰可读 */
+.wy-root .hero-title::before {
+  content: '';
+  position: absolute;
+  inset: -34% -24%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgba(8, 11, 24, 0.62), rgba(8, 11, 24, 0.28) 60%, transparent 80%);
+}
+.wy-root .hero-div {
+  display: block;
+  width: 120px; height: 1px;
+  margin: 16px auto 12px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  animation: wy-fadeUp 0.7s 0.1s ease-out both;
+}
+.wy-root .logo {
+  position: relative;
+  font-size: 5rem;
+  margin: 0;
+  letter-spacing: 0.18em;
+  text-indent: 0.18em;
+  color: transparent;
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold) 55%, #8a6f34);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 16px rgba(203, 168, 90, 0.35));
+  animation: wy-fadeUp 0.7s ease-out both, wy-logoGlow 4.5s ease-in-out 0.7s infinite alternate;
+}
+@keyframes wy-logoGlow {
+  to { filter: drop-shadow(0 0 30px rgba(203, 168, 90, 0.62)); }
+}
+.wy-root .seal {
+  position: absolute;
+  right: -1.5em;
+  bottom: 0.5em;
+  display: grid;
+  place-items: center;
+  width: 2.2em;
+  height: 2.2em;
+  font-family: var(--font-script);
+  font-size: 0.9rem;
+  line-height: 1.1;
+  letter-spacing: 0;
+  color: #f3e4c8;
+  -webkit-text-fill-color: #f3e4c8; /* 覆盖 logo 继承来的 transparent */
+  text-indent: 0;
+  background: var(--cinnabar);
+  border-radius: 3px;
+  transform: rotate(6deg);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35) inset, 0 2px 10px rgba(201, 80, 58, 0.35);
+  writing-mode: vertical-rl;
+}
+.wy-root .roman {
+  font-family: var(--font-roman);
+  font-size: 0.82rem;
+  letter-spacing: 0.55em;
+  text-indent: 0.55em;
+  color: var(--gold);
+  opacity: 0.8;
+  margin: 0;
+  animation: wy-fadeUp 0.7s 0.12s ease-out both;
+}
+.wy-root .tagline {
+  color: var(--paper-dim);
+  margin: 14px 0 0;
+  letter-spacing: 0.34em;
+  text-indent: 0.34em;
+  animation: wy-fadeUp 0.7s 0.18s ease-out both;
+}
+
+/* 玩法钩子：点明「选择→命运」的循环与结局广度 */
+.wy-root .home-hook {
+  margin: 12px 0 0;
+  font-size: 0.84rem;
+  letter-spacing: 0.06em;
+  color: var(--paper-dim);
+  animation: wy-fadeUp 0.7s 0.16s ease-out both;
+}
+.wy-root .home-hint {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  color: var(--jade);
+  opacity: 0.9;
+  animation: wy-fadeUp 0.7s 0.2s ease-out both;
+}
+
+/* 收集进度条：把留存钩子（结局/成就收集）摆到首页明面，点击进命书阁 */
+/* 收藏入口条：两道鎏金量表（结局 / 成就）+ 通往命书阁的引线 */
+.wy-root .collection-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 24px;
+  margin: 0 auto 30px;
+  padding: 11px 22px;
+  background: rgba(12, 16, 38, 0.55);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  backdrop-filter: blur(3px);
+  animation: wy-fadeUp 0.7s 0.24s ease-out both;
+  transition: border-color 0.2s, background 0.2s;
+}
+.wy-root .collection-strip:hover { border-color: var(--gold); background: rgba(203, 168, 90, 0.09); }
+.wy-root .cs-gauge { display: flex; flex-direction: column; gap: 5px; min-width: 124px; }
+.wy-root .cs-top { font-size: 0.82rem; letter-spacing: 0.03em; color: var(--paper-dim); white-space: nowrap; }
+.wy-root .cs-top b { color: var(--gold-bright); font-variant-numeric: tabular-nums; font-weight: 600; font-size: 0.92rem; }
+.wy-root .cs-top i { color: var(--muted); font-style: normal; }
+.wy-root .cs-bar { position: relative; height: 3px; border-radius: 3px; background: rgba(40, 50, 106, 0.6); overflow: hidden; }
+.wy-root .cs-bar-fill {
+  position: absolute; inset: 0 auto 0 0; height: 100%; border-radius: 3px;
+  background: linear-gradient(to right, var(--cinnabar), var(--gold-bright));
+  box-shadow: 0 0 8px rgba(203, 168, 90, 0.5);
+}
+.wy-root .cs-bar-fill.ach { background: linear-gradient(to right, var(--gold), var(--gold-bright)); }
+.wy-root .cs-go { color: var(--gold); letter-spacing: 0.1em; font-size: 0.86rem; white-space: nowrap; align-self: center; }
+.wy-root .collection-strip:hover .cs-go { color: var(--gold-bright); }
+
+/* 卷尾牌记：MIT 许可收束首页（不再外链 GitHub） */
+.wy-root .colophon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  margin: 46px 0 12px;
+  animation: wy-fadeUp 0.7s 0.3s ease-out both;
+}
+.wy-root .colophon-rule {
+  position: relative;
+  width: 132px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
+  color: var(--gold);
+  font-size: 0.6rem;
+  line-height: 0;
+  text-align: center;
+}
+.wy-root .colophon-rule::after {
+  content: "❖";
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 0 8px;
+  background: var(--ink-9);
+}
+.wy-root .colophon-mit {
+  font-family: var(--font-roman);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--gold);
+  opacity: 0.7;
+}
+
+.wy-root .continue-card {
+  display: block;
+  width: 100%;
+  margin-bottom: 22px;
+  padding: 14px;
+  border: 1px dashed var(--gold);
+  color: var(--gold-bright);
+  background: rgba(203, 168, 90, 0.06);
+  animation: wy-fadeUp 0.6s 0.15s ease-out both;
+}
+.wy-root .continue-card:hover { background: rgba(203, 168, 90, 0.12); border-color: var(--gold-bright); }
+.wy-root .continue-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.wy-root .continue-list .continue-card { margin-bottom: 0; animation: wy-fadeUp 0.6s 0.15s ease-out both; }
+.wy-root .continue-list-head { margin: 0 0 2px; color: var(--gold); letter-spacing: 0.2em; font-size: 0.85rem; }
+.wy-root .continue-item { display: flex; align-items: stretch; gap: 8px; }
+.wy-root .continue-item .continue-card { flex: 1 1 auto; min-width: 0; }
+.wy-root .continue-del {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  border: 1px dashed var(--line-strong);
+  color: var(--muted);
+  background: rgba(8, 11, 24, 0.4);
+  border-radius: var(--radius);
+}
+.wy-root .continue-del:hover {
+  color: var(--cinnabar-bright);
+  border-color: var(--cinnabar-bright);
+  background: rgba(201, 80, 58, 0.1);
+}
+
+/* 删除游玩记录确认弹窗：正文 + 可选「连同命书阁回看一并清」勾选 */
+.wy-root .modal p { margin: 8px 0; color: var(--paper-dim); line-height: 1.7; font-size: 0.9rem; }
+.wy-root .wy-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 4px;
+  color: var(--paper);
+  font-size: 0.88rem;
+  cursor: pointer;
+  text-align: left;
+}
+.wy-root .wy-check input { width: 16px; height: 16px; accent-color: var(--gold); cursor: pointer; flex: 0 0 auto; }
+.wy-root .wy-note { color: var(--muted); font-size: 0.78rem; margin: 4px 0 0; }
+.wy-root .wy-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.wy-root .wy-modal-actions button { min-width: 88px; }
+.wy-root .continue-list-head::before { content: '✦ '; color: var(--gold); opacity: 0.65; }
+
+.wy-root .scenario-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+
+.wy-root .scenario-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px 20px;
+  text-align: left;
+  background: var(--ink-8);
+  min-height: 190px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+  /* backwards 而非 both：入场动画结束后不再钉住 transform，否则 :hover 上浮被 fill 屏蔽 */
+  animation: wy-fadeUp 0.6s ease-out backwards;
+}
+/* 封面图铺满卡片，上覆墨色渐变保证文字可读。
+   是 <img loading="lazy"> 而非背景图（见 Home.tsx）——object-fit 复刻原来的 background-size: cover */
+.wy-root .card-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.5;
+  z-index: 0;
+  transition: opacity 0.3s, transform 0.4s;
+}
+.wy-root .has-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(to top, var(--ink-9) 8%, rgba(8, 11, 24, 0.45) 55%, rgba(8, 11, 24, 0.15));
+}
+.wy-root .has-cover .scenario-title, .wy-root .has-cover .scenario-intro { position: relative; z-index: 1; }
+.wy-root .has-cover .scenario-title { text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8); }
+.wy-root .has-cover .scenario-intro { color: var(--paper-dim); text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9); }
+.wy-root .has-cover:hover .card-cover { opacity: 0.7; transform: scale(1.05); }
+.wy-root .scenario-card:nth-child(1) { animation-delay: 0.15s; }
+.wy-root .scenario-card:nth-child(2) { animation-delay: 0.22s; }
+.wy-root .scenario-card:nth-child(3) { animation-delay: 0.29s; }
+.wy-root .scenario-card:nth-child(4) { animation-delay: 0.36s; }
+.wy-root .scenario-card:nth-child(5) { animation-delay: 0.43s; }
+.wy-root .scenario-card:nth-child(n+6) { animation-delay: 0.5s; }
+/* 内框线（金色描边，如卦牌） */
+.wy-root .scenario-card::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(203, 168, 90, 0.22);
+  border-radius: 3px;
+  pointer-events: none;
+  transition: border-color 0.25s;
+}
+.wy-root .scenario-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--gold);
+  background: var(--ink-7);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.5), 0 0 22px rgba(203, 168, 90, 0.18);
+}
+.wy-root .scenario-card:hover::before { border-color: rgba(203, 168, 90, 0.55); }
+/* 卡角卦象点缀（星盘呼应） */
+.wy-root .card-rune {
+  position: absolute;
+  top: 8px;
+  left: 11px;
+  z-index: 1;
+  font-size: 0.95rem;
+  line-height: 1;
+  color: var(--gold);
+  opacity: 0.4;
+  transition: opacity 0.25s, text-shadow 0.25s;
+  pointer-events: none;
+}
+.wy-root .scenario-card:hover .card-rune { opacity: 0.85; text-shadow: 0 0 10px rgba(203, 168, 90, 0.5); }
+.wy-root .scenario-emoji { font-size: 2.1rem; line-height: 1.2; transition: transform 0.25s; filter: drop-shadow(0 0 8px rgba(203, 168, 90, 0.25)); }
+.wy-root .scenario-card:hover .scenario-emoji { transform: scale(1.12); }
+/* 题名=卡面主角：站酷小薇显示体，明确大一档、字距舒展，与正文简介拉开层级 */
+.wy-root .scenario-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 1.05rem + 1.1vw, 1.6rem);
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  line-height: 1.22;
+  color: var(--gold-bright);
+}
+/* 简介=一句钩子：小一档、稍亮、两行收束，不与题名争高低 */
+.wy-root .scenario-intro {
+  color: var(--paper-dim); font-size: 0.82rem; line-height: 1.6;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+/* 题材眉标：题名之上的鎏金小字，与题名/钩子成「题材 / 题名 / 钩子」三级层级 */
+.wy-root .scenario-genre {
+  font-family: var(--font-serif);
+  font-size: 0.66rem; letter-spacing: 0.34em; text-indent: 0.34em;
+  color: var(--gold); opacity: 0.8;
+  margin-bottom: 3px;
+}
+.wy-root .has-cover .scenario-genre { text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9); }
+/* 题名下一道鎏金短分隔线，压出卡面结构 */
+.wy-root .scenario-card.has-cover .scenario-title::after {
+  content: ''; display: block;
+  width: 34px; height: 1px; margin: 7px 0 5px;
+  background: linear-gradient(90deg, var(--gold), transparent); opacity: 0.7;
+}
+/* 悬停：题名微亮、眉标提亮，配合卡片上浮增触感 */
+.wy-root .scenario-card:hover .scenario-title { color: #f5e8ca; }
+.wy-root .scenario-card:hover .scenario-genre { opacity: 1; color: var(--gold-bright); }
+/* 卡底「阅历此界」量表：该剧本已历结局占比，沿卡底绽一线鎏金；悬停显数 */
+.wy-root .card-meter { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; height: 3px; background: rgba(8, 11, 24, 0.55); }
+.wy-root .card-meter-fill {
+  display: block; height: 100%;
+  background: linear-gradient(to right, var(--cinnabar), var(--gold-bright));
+  box-shadow: 0 0 8px rgba(203, 168, 90, 0.55);
+}
+.wy-root .card-seen {
+  position: absolute; right: 11px; bottom: 10px; z-index: 1;
+  font-size: 0.7rem; color: var(--gold-bright); font-variant-numeric: tabular-nums;
+  padding: 1px 8px; border-radius: 10px; background: rgba(8, 11, 24, 0.72);
+  border: 1px solid var(--line-strong); opacity: 0; transition: opacity 0.25s;
+}
+.wy-root .scenario-card:hover .card-seen { opacity: 1; }
+
+.wy-root .import-card { border-style: dashed; justify-content: center; align-items: center; text-align: center; }
+
+/* 存档管理 */
+.wy-root .saves { margin-top: 28px; text-align: left; animation: wy-fadeUp 0.6s 0.5s ease-out both; }
+.wy-root .saves-head { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.wy-root .saves-title { color: var(--gold); letter-spacing: 0.2em; font-size: 0.95rem; }
+.wy-root .saves-title::before { content: '✦ '; color: var(--gold); opacity: 0.65; }
+/* 存档空状态 = 行动邀请：虚线封卡 + 朱砂「启」印 + 去开一段人生，而非一行灰字 */
+.wy-root .saves-invite {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  margin-top: 14px; padding: 34px 20px 30px;
+  text-align: center;
+  border: 1px dashed rgba(203, 168, 90, 0.32); border-radius: 8px;
+  background:
+    radial-gradient(70% 80% at 50% 0%, rgba(203, 168, 90, 0.05), transparent 70%),
+    rgba(14, 20, 48, 0.4);
+}
+.wy-root .saves-invite-seal {
+  display: grid; place-items: center;
+  width: 2em; height: 2em;
+  font-family: var(--font-script); font-size: 1.3rem;
+  color: rgba(201, 80, 58, 0.8);
+  border: 1px solid rgba(201, 80, 58, 0.4); border-radius: 4px;
+  transform: rotate(-4deg);
+  text-shadow: 0 0 12px rgba(201, 80, 58, 0.35);
+}
+.wy-root .saves-invite-text { margin: 0; color: var(--paper-dim); font-size: 0.9rem; line-height: 1.9; max-width: 30em; }
+.wy-root .saves-invite-go {
+  padding: 9px 22px; letter-spacing: 0.12em;
+  color: var(--gold-bright); background: rgba(203, 168, 90, 0.08);
+}
+.wy-root .saves-invite-go:hover { border-color: var(--gold); background: rgba(203, 168, 90, 0.14); }
+.wy-root .slot-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.wy-root .slot { display: flex; align-items: stretch; gap: 8px; }
+.wy-root .slot-load {
+  flex: 1; display: flex; flex-direction: column; gap: 3px; text-align: left;
+  background: var(--ink-8); border: 1px solid var(--line); padding: 10px 14px;
+}
+.wy-root .slot-load:hover { background: var(--ink-7); border-color: var(--gold); }
+.wy-root .slot-name { font-weight: 600; }
+.wy-root .slot-meta { color: var(--muted); font-size: 0.8rem; }
+.wy-root .slot-act { padding: 6px 12px; font-size: 0.85rem; white-space: nowrap; }
+.wy-root .inprogress-section { margin-top: 16px; }
+.wy-root .inprogress-section .saves-title { display: block; }
+.wy-root .saves-invite-text.muted { margin-top: 14px; max-width: 30em; }
+
+/* 结局图鉴 */
+.wy-root .achievements { margin-top: 20px; text-align: left; animation: wy-fadeUp 0.6s 0.5s ease-out both; }
+
+/* 勋章墙分栏：传说 / 收集 / 精通 / 历练，各起一栏，鎏金题首领衔 */
+.wy-root .ach-group { margin-bottom: 26px; }
+.wy-root .ach-group-head { display: flex; align-items: center; gap: 13px; margin: 0 0 13px; }
+.wy-root .ach-group-label {
+  font-family: var(--font-display);
+  font-size: 1.04rem; letter-spacing: 0.36em; color: var(--gold-bright);
+  text-shadow: 0 0 16px rgba(203, 168, 90, 0.3); white-space: nowrap; padding-left: 1px;
+}
+.wy-root .ach-group-rule { flex: 1; height: 1px; background: linear-gradient(to right, var(--line-strong), transparent); }
+.wy-root .ach-group-count { font-size: 0.8rem; color: var(--gold); font-variant-numeric: tabular-nums; letter-spacing: 0.05em; }
+.wy-root .ach-group-count i { color: var(--muted); font-style: normal; }
+
+.wy-root .ach-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(216px, 1fr));
+  gap: 10px;
+}
+.wy-root .ach {
+  display: flex; align-items: center; gap: 11px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ink-8);
+}
+.wy-root .ach.done {
+  border-color: rgba(201, 80, 58, 0.5);
+  background: linear-gradient(158deg, rgba(201, 80, 58, 0.1), rgba(14, 20, 48, 0.4) 70%);
+}
+.wy-root .ach.locked { background: rgba(14, 20, 48, 0.42); }
+.wy-root .ach.locked .ach-name { color: var(--paper-dim); }
+.wy-root .ach-icon { flex: none; width: 52px; display: grid; place-items: center; font-size: 1.5rem; line-height: 1; opacity: 0.85; }
+.wy-root .ach.locked .ach-icon { opacity: 0.4; }
+
+/* 传说一栏：题眼级勋章，放大陈列、鎏金主调 */
+.wy-root .ach-grid-legend { grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); }
+.wy-root .ach-group-legend .ach { padding: 13px 14px; }
+.wy-root .ach-group-legend .ach.done {
+  border-color: var(--gold);
+  background: linear-gradient(158deg, rgba(203, 168, 90, 0.14), rgba(201, 80, 58, 0.05) 72%);
+}
+.wy-root .ach-group-legend .ach.done .ach-name { color: var(--gold-bright); }
+.wy-root .ach-group-legend .ach-img, .wy-root .ach-group-legend .ach-icon { width: 60px; }
+.wy-root .ach-group-legend .ach-img { height: 60px; }
+
+/* 成就徽章配图（已得可点击放大；未得为朱砂封印下的剪影） */
+.wy-root .ach-img {
+  flex: none;
+  width: 52px; height: 52px;
+  background-size: cover; background-position: center;
+  border-radius: 6px;
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 0 10px rgba(203, 168, 90, 0.18);
+  padding: 0;
+  transition: transform 0.15s, box-shadow 0.2s, filter 0.2s;
+}
+.wy-root .ach-img.sealed {
+  filter: grayscale(1) brightness(0.46) contrast(0.92);
+  opacity: 0.62; box-shadow: none; border-color: var(--line);
+}
+.wy-root .ach-clickable { text-align: left; cursor: zoom-in; font: inherit; width: 100%; transition: border-color 0.2s, box-shadow 0.2s; }
+.wy-root .ach-clickable:hover { border-color: var(--gold); box-shadow: 0 0 18px rgba(203, 168, 90, 0.24); }
+.wy-root .ach-clickable:hover .ach-img { transform: scale(1.08); box-shadow: 0 0 16px rgba(203, 168, 90, 0.45); }
+
+/* 进度类成就：鎏金进度条 + 计数 */
+.wy-root .ach-prog { display: flex; align-items: center; gap: 8px; margin-top: 7px; }
+.wy-root .ach-bar { position: relative; flex: 1; height: 4px; border-radius: 3px; background: rgba(40, 50, 106, 0.6); overflow: hidden; }
+.wy-root .ach-bar-fill {
+  position: absolute; inset: 0 auto 0 0; height: 100%; border-radius: 3px;
+  background: linear-gradient(to right, var(--gold), var(--gold-bright));
+  box-shadow: 0 0 8px rgba(203, 168, 90, 0.55);
+}
+.wy-root .ach-bar-num { flex: none; font-size: 0.66rem; color: var(--gold); font-variant-numeric: tabular-nums; }
+
+/* 徽章放大展示卡：旋转入场 + 辉光（呼应命运之卡） */
+.wy-root .badge-overlay {
+  position: fixed; inset: 0; z-index: 70;
+  display: flex; align-items: center; justify-content: center;
+  padding: 5vh 16px; cursor: zoom-out;
+  background: rgba(4, 6, 14, 0.85); backdrop-filter: blur(5px);
+  perspective: 1200px;
+  animation: wy-fadeIn 0.25s ease-out both;
+}
+.wy-root .badge-show {
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+  cursor: default; text-align: center; max-width: 90vw;
+}
+.wy-root .badge-show-img {
+  width: min(300px, 72vw); height: min(300px, 72vw);
+  background-size: contain; background-position: center; background-repeat: no-repeat;
+  filter: drop-shadow(0 0 40px rgba(203, 168, 90, 0.5));
+  transform-origin: center;
+  animation: wy-fateSpinIn 1.3s cubic-bezier(0.16, 0.84, 0.3, 1) both,
+    wy-badgeFloat 3.5s ease-in-out 1.3s infinite alternate;
+}
+@keyframes wy-badgeFloat {
+  to { filter: drop-shadow(0 0 60px rgba(236, 210, 143, 0.75)); transform: translateY(-6px); }
+}
+.wy-root .badge-show-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.8rem; letter-spacing: 0.12em; color: var(--gold-bright);
+  text-shadow: 0 0 22px rgba(203, 168, 90, 0.4);
+  animation: wy-fadeUp 0.6s 0.5s ease-out both;
+}
+.wy-root .badge-show-desc {
+  margin: 0; max-width: 26em; color: var(--paper-dim); line-height: 1.9;
+  animation: wy-fadeUp 0.6s 0.65s ease-out both;
+}
+.wy-root .ach-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.wy-root .ach-name { font-weight: 600; color: var(--paper); font-size: 0.9rem; }
+.wy-root .ach.done .ach-name { color: var(--cinnabar-bright); }
+.wy-root .ach-desc { font-size: 0.74rem; color: var(--muted); line-height: 1.5; }
+
+/* ── 结局图鉴：封印解卷 ──
+   每剧本一壁，结局排作鎏金边的微卡；未历者为朱砂封印剪影，已历者绽为配图绘卷 */
+.wy-root .gallery { margin-top: 20px; text-align: left; animation: wy-fadeUp 0.6s 0.55s ease-out both; }
+.wy-root .gal-scene { margin-bottom: 26px; }
+.wy-root .gal-scene-head { display: flex; align-items: center; gap: 13px; margin: 0 0 12px; }
+.wy-root .gal-scene-name {
+  display: flex; align-items: baseline; gap: 8px; white-space: nowrap;
+  font-family: var(--font-display); font-size: 1.04rem; letter-spacing: 0.12em; color: var(--paper);
+}
+.wy-root .gal-bar { flex: 1; height: 3px; border-radius: 3px; background: rgba(40, 50, 106, 0.55); overflow: hidden; }
+.wy-root .gal-bar-fill {
+  display: block; height: 100%; border-radius: 3px;
+  background: linear-gradient(to right, var(--cinnabar), var(--gold-bright));
+  box-shadow: 0 0 8px rgba(203, 168, 90, 0.5);
+}
+.wy-root .gal-scene-count { flex: none; display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--gold); font-variant-numeric: tabular-nums; }
+.wy-root .gal-scene-count i { color: var(--muted); font-style: normal; }
+.wy-root .gal-scene.complete .gal-scene-name { color: var(--gold-bright); }
+.wy-root .gal-seal-done {
+  font-family: var(--font-script); font-size: 0.7rem; color: #f3e4c8; letter-spacing: 0.1em;
+  padding: 1px 7px; border-radius: 3px; background: var(--cinnabar);
+  box-shadow: 0 0 12px rgba(201, 80, 58, 0.5);
+}
+
+.wy-root .gal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 9px;
+}
+.wy-root .gal-tile {
+  position: relative; aspect-ratio: 3 / 4; border-radius: 6px; overflow: hidden;
+  border: 1px solid var(--line); padding: 0; margin: 0;
+  background: var(--ink-8) center / cover no-repeat;
+}
+/* 未历：朱砂封印剪影 */
+.wy-root .gal-tile.locked {
+  display: grid; place-items: center;
+  border-style: dashed; border-color: rgba(203, 168, 90, 0.28);
+  background:
+    radial-gradient(80% 60% at 50% 38%, rgba(201, 80, 58, 0.1), transparent 70%),
+    repeating-linear-gradient(135deg, rgba(40, 50, 106, 0.18) 0 7px, transparent 7px 14px),
+    var(--ink-8);
+}
+.wy-root .gal-tile-seal-mark {
+  font-family: var(--font-script); font-size: 1.5rem; color: rgba(201, 80, 58, 0.55);
+  width: 1.7em; height: 1.7em; display: grid; place-items: center;
+  border: 1px solid rgba(201, 80, 58, 0.32); border-radius: 4px;
+  text-shadow: 0 0 12px rgba(201, 80, 58, 0.3);
+  transition: color 0.2s, text-shadow 0.2s, border-color 0.2s;
+}
+/* 点到未解锁项：封印泛朱砂微光作答——「仍封印着」，而非毫无反应 */
+.wy-root .gal-tile.locked:active { border-color: rgba(201, 80, 58, 0.5); }
+.wy-root .gal-tile.locked:active .gal-tile-seal-mark {
+  color: rgba(224, 112, 78, 0.9);
+  border-color: rgba(201, 80, 58, 0.6);
+  text-shadow: 0 0 20px rgba(201, 80, 58, 0.75);
+}
+.wy-root .ach.locked { transition: border-color 0.2s, box-shadow 0.2s; }
+.wy-root .ach.locked:active { border-color: rgba(201, 80, 58, 0.45); box-shadow: 0 0 14px rgba(201, 80, 58, 0.15); }
+/* 已历：配图绘卷，鎏金边 + 底部基调题签 */
+.wy-root .gal-tile.seen { cursor: pointer; transition: transform 0.16s, box-shadow 0.22s, border-color 0.22s; }
+.wy-root .gal-tile.seen { border-color: var(--line-strong); box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4); }
+.wy-root .gal-tile.seen:hover { transform: translateY(-3px); border-color: var(--gold-bright); box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5), 0 0 22px rgba(203, 168, 90, 0.3); }
+.wy-root .gal-tile-veil {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, transparent 28%, rgba(8, 11, 24, 0.55) 64%, rgba(8, 11, 24, 0.94));
+}
+.wy-root .gal-tile-tone {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+  padding: 16px 7px 8px; text-align: center; line-height: 1.3;
+  font-family: var(--font-display); font-size: 0.74rem; letter-spacing: 0.02em; color: #f1e6cf;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+.wy-root .gal-tile-seal {
+  position: absolute; top: 6px; right: 7px; z-index: 2;
+  font-family: var(--font-script); font-size: 0.78rem; color: var(--gold-bright);
+  opacity: 0; transition: opacity 0.22s; text-shadow: 0 0 8px rgba(203, 168, 90, 0.8);
+}
+.wy-root .gal-tile.seen:hover .gal-tile-seal { opacity: 1; }
+
+
+/* ── 命书阁（存档 / 成就 / 结局图鉴） ── */
+.wy-root .archive { animation: wy-fadeIn 0.5s ease-out both; }
+.wy-root .archive-back { margin-bottom: 8px; margin-top: 30px; }
+.wy-root .archive-title {
+  margin: 10px 0 2px; text-align: center;
+  font-family: var(--font-display);
+  letter-spacing: 0.32em;
+  font-size: 1.9rem; color: var(--gold-bright);
+  text-shadow: 0 0 18px rgba(203, 168, 90, 0.28);
+}
+.wy-root .archive-sub {
+  margin: 0 0 22px; text-align: center;
+  color: var(--muted); letter-spacing: 0.28em; font-size: 0.82rem;
+}
+.wy-root .archive-tabs {
+  display: flex; gap: 8px; justify-content: center;
+  border-bottom: 1px solid var(--line); margin-bottom: 8px; flex-wrap: wrap;
+}
+/* 窄屏：三个标签换行后第三个孤零零占一整行、白吃 60px 高。
+   改成不换行的横向滚动条，标签始终并排一行 */
+@media (max-width: 430px) {
+  .wy-root .archive-tabs {
+    flex-wrap: nowrap; justify-content: flex-start;
+    overflow-x: auto; scrollbar-width: none; gap: 2px;
+  }
+  .wy-root .archive-tabs::-webkit-scrollbar { display: none; }
+  .wy-root .archive-tabs button { padding: 10px 12px 12px; white-space: nowrap; flex: 0 0 auto; }
+}
+.wy-root .archive-tabs button {
+  background: none; border: none; border-bottom: 2px solid transparent;
+  padding: 10px 18px 12px; color: var(--muted); letter-spacing: 0.12em;
+  font-size: 0.98rem; transition: color 0.2s, border-color 0.2s;
+}
+.wy-root .archive-tabs button:hover { color: var(--paper); }
+.wy-root .archive-tabs button.active { color: var(--gold-bright); border-bottom-color: var(--gold); text-shadow: 0 0 12px rgba(203, 168, 90, 0.4); }
+.wy-root .archive-tabs .tab-num {
+  margin-left: 7px; font-size: 0.74rem; color: var(--gold);
+  font-variant-numeric: tabular-nums; opacity: 0.85;
+}
+/* 命书阁内分区上边距归零（标签页已分隔） */
+.wy-root .archive .saves, .wy-root .archive .achievements, .wy-root .archive .gallery { margin-top: 8px; }
+
+/* ── 对局页眉：退场为安静一行（剧本名 + 第N载 + 卷宗菜单） ── */
+.wy-root .play-auto-flag {
+  font-size: 0.7rem; letter-spacing: 0.18em; color: #1a1208;
+  background: var(--gold); padding: 1px 9px; border-radius: 10px;
+  animation: wy-pulse 1.8s ease-in-out infinite;
+}
+.wy-root .play-menu { position: relative; margin-left: 4px; }
+.wy-root .play-menu-btn {
+  width: 34px; height: 34px; padding: 0;
+  font-family: var(--font-script); font-size: 1.15rem; line-height: 1;
+  color: var(--gold); background: transparent;
+  border: 1px solid transparent; border-radius: 50%;
+  transition: color 0.2s, border-color 0.2s, background 0.2s, transform 0.2s;
+}
+.wy-root .play-menu-btn:hover { color: var(--gold-bright); border-color: var(--line-strong); background: rgba(203, 168, 90, 0.08); }
+.wy-root .play-menu-btn.open { color: var(--gold-bright); border-color: var(--gold); background: rgba(203, 168, 90, 0.12); }
+.wy-root .play-menu-backdrop { position: fixed; inset: 0; z-index: 30; }
+.wy-root .play-menu-panel {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 31;
+  min-width: 232px; padding: 6px;
+  display: flex; flex-direction: column; gap: 1px;
+  background: rgba(14, 20, 48, 0.97);
+  border: 1px solid var(--line-strong); border-radius: 10px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6), 0 0 24px rgba(203, 168, 90, 0.08);
+  backdrop-filter: blur(8px);
+  animation: wy-menuDrop 0.18s ease-out both;
+  transform-origin: top right;
+}
+@keyframes wy-menuDrop { from { opacity: 0; transform: translateY(-6px) scale(0.97); } to { opacity: 1; transform: none; } }
+.wy-root .play-menu-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  width: 100%; text-align: left;
+  padding: 9px 12px; font-size: 0.92rem; letter-spacing: 0.04em;
+  color: var(--paper-dim); background: transparent; border: 1px solid transparent; border-radius: 6px;
+}
+.wy-root .play-menu-item > span:first-child { white-space: nowrap; flex: 0 0 auto; }
+.wy-root .play-menu-item:hover { background: rgba(203, 168, 90, 0.1); color: var(--paper); border-color: transparent; }
+.wy-root .play-menu-item.on { color: var(--gold-bright); }
+.wy-root .play-menu-item.on:hover { background: rgba(203, 168, 90, 0.16); }
+.wy-root .play-menu-item.danger { color: var(--muted); }
+.wy-root .play-menu-item.danger:hover { color: var(--cinnabar-bright); background: rgba(201, 80, 58, 0.1); }
+.wy-root .play-menu-glyph { font-size: 0.85rem; opacity: 0.7; flex: none; }
+.wy-root .play-menu-glyph.pro-tag {
+  font-size: 0.66rem; letter-spacing: 0.05em; font-weight: 700;
+  color: #f3e4c8; background: linear-gradient(135deg, var(--cinnabar), #b8432f);
+  padding: 1px 8px; border-radius: 9px; white-space: nowrap; flex: none; opacity: 1;
+  margin-left: auto; /* 菜单 justify-content:space-between，加 auto margin 让角标+箭头贴右 */
+}
+.wy-root .play-upsell { text-align: center; }
+.wy-root .play-upsell-desc { margin: 12px 0 18px; color: var(--paper-dim); font-size: 0.95rem; line-height: 1.7; }
+.wy-root .play-upsell-actions { display: flex; flex-direction: column; gap: 10px; }
+.wy-root .play-upsell-primary {
+  padding: 12px 18px; font-size: 0.98rem; font-weight: 700; letter-spacing: 0.06em;
+  color: #1a1208; background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+  border: 1px solid var(--gold-bright); border-radius: 8px;
+  box-shadow: 0 0 22px rgba(203, 168, 90, 0.35);
+  cursor: pointer; transition: transform 0.12s, box-shadow 0.22s;
+}
+.wy-root .play-upsell-primary:hover { transform: translateY(-1px); box-shadow: 0 0 34px rgba(203, 168, 90, 0.55); }
+.wy-root .play-upsell-ghost {
+  padding: 10px 16px; font-size: 0.9rem; color: var(--muted);
+  background: transparent; border: 1px solid var(--line); border-radius: 8px;
+  cursor: pointer; transition: color 0.2s, border-color 0.2s;
+}
+.wy-root .play-upsell-ghost:hover { color: var(--paper); border-color: var(--line-strong); }
+.wy-root .play-menu-sep { height: 1px; margin: 4px 8px; background: linear-gradient(90deg, transparent, var(--line), transparent); }
+.wy-root .play-menu-fontrow { display: flex; align-items: center; gap: 8px; padding: 6px 12px; }
+/* 四个档位换行时，「字号」二字会被挤成竖排——钉死不折行 */
+.wy-root .play-menu-fontlabel { font-size: 0.82rem; color: var(--muted); letter-spacing: 0.1em; white-space: nowrap; flex: 0 0 auto; }
+.wy-root .auto-hint {
+  color: var(--gold); font-size: 0.85rem; font-style: italic; margin: 0 0 4px;
+  animation: wy-pulse 1.6s ease-in-out infinite;
+}
+.wy-root .choice.recommended {
+  border-color: var(--gold);
+  background: linear-gradient(100deg, rgba(203, 168, 90, 0.11), var(--ink-8) 58%);
+}
+.wy-root .choice.recommended .choice-text { color: var(--gold-bright); }
+/* 拟：朱砂小印，点出托管将依角色取向「拟选」之项（仅托管模式显示，非对玩家的推荐） */
+.wy-root .choice.recommended::after {
+  content: '拟';
+  position: absolute; top: -1px; right: -1px;
+  font-family: var(--font-script); font-size: 0.72rem; line-height: 1;
+  color: #f3e4c8; background: var(--cinnabar);
+  padding: 3px 7px 4px; border-radius: 0 var(--radius) 0 7px;
+  box-shadow: 0 2px 9px rgba(201, 80, 58, 0.4);
+}
+
+/* ── 设置页 ── */
+
+.wy-root .setup { animation: wy-fadeUp 0.5s ease-out both; }
+.wy-root .setup h2 { margin: 16px 0 4px; letter-spacing: 0.08em; }
+.wy-root .setup-intro { color: var(--muted); }
+
+/* 设置页封面英雄区：整幅封面 + 底部题材眉标 + 显示体题名，与选关卡同一套语言 */
+.wy-root .setup-back { margin-bottom: 4px; margin-top: 30px; }
+.wy-root .setup-hero {
+  position: relative;
+  height: clamp(220px, 34vw, 300px);
+  margin: 6px 0 16px;
+  border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--line-strong);
+  background: var(--ink-8);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5), 0 0 30px rgba(203, 168, 90, 0.06);
+}
+.wy-root .setup-hero-art { position: absolute; inset: 0; background-size: cover; background-position: center 28%; }
+.wy-root .setup-hero-veil {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(8, 11, 24, 0.96) 3%, rgba(8, 11, 24, 0.42) 42%, rgba(8, 11, 24, 0.12) 72%, transparent);
+}
+.wy-root .setup-hero-cap { position: absolute; left: clamp(18px, 4vw, 34px); right: clamp(18px, 4vw, 34px); bottom: 22px; }
+.wy-root .setup-genre {
+  display: block;
+  font-size: 0.74rem; letter-spacing: 0.36em; text-indent: 0.36em;
+  color: var(--gold); opacity: 0.9; margin-bottom: 7px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+}
+.wy-root .setup .setup-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 1.3rem + 2.4vw, 2.7rem);
+  font-weight: 400; letter-spacing: 0.1em; line-height: 1.1;
+  color: var(--gold-bright);
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.85), 0 0 26px rgba(203, 168, 90, 0.25);
+}
+.wy-root .panel {
+  position: relative;
+  background: var(--ink-8);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin: 16px 0;
+}
+.wy-root .panel h3 {
+  margin-top: 0;
+  font-size: 1rem;
+  color: var(--gold);
+  letter-spacing: 0.12em;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+.wy-root .opening-list { display: flex; flex-direction: column; gap: 10px; }
+.wy-root .opening { display: flex; flex-direction: column; gap: 4px; text-align: left; }
+.wy-root .opening span { color: var(--muted); font-size: 0.85rem; }
+.wy-root .opening.selected { border-color: var(--cinnabar); background: rgba(201, 80, 58, 0.08); }
+.wy-root .opening.selected strong { color: var(--cinnabar-bright); }
+.wy-root .mode-row { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.wy-root .mode-card {
+  flex: 1; min-width: 200px;
+  display: flex; flex-direction: column; gap: 6px; text-align: left;
+  padding: 14px 16px; background: var(--ink-8); border: 1px solid var(--line);
+}
+.wy-root .mode-card strong { font-size: 1rem; }
+.wy-root .mode-card span { color: var(--muted); font-size: 0.82rem; line-height: 1.6; }
+.wy-root .mode-card.selected { border-color: var(--cinnabar); background: rgba(201, 80, 58, 0.08); }
+.wy-root .mode-card.selected strong { color: var(--cinnabar-bright); }
+
+.wy-root .ambition-list, .wy-root .chip-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.wy-root .ambition-chip, .wy-root .chip { padding: 6px 14px; font-size: 0.9rem; border-radius: 16px; }
+.wy-root .ambition-chip.selected, .wy-root .chip.selected { border-color: var(--gold); color: var(--gold); background: rgba(201, 160, 92, 0.1); }
+
+/* 中转：开关 + 地址（地址只在开着时出现），与另外两个项目同一形态 */
+.wy-root .proxy-block { margin-top: 14px; }
+.wy-root .proxy-block .hint { margin-bottom: 8px; }
+/* 开关：与另外两个项目同一控件语义（它们用组件库的 Switch，这里没有组件库，
+   用一个原生 checkbox 画出来）。裸 checkbox 在这套鎏金界面里是唯一一个方框，
+   突兀且不像"开关"——而这一栏决定的是 key 要不要经过别人的机器，值得看清楚。 */
+.wy-root .inline-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--muted); cursor: pointer; }
+.wy-root .inline-toggle input {
+  appearance: none; -webkit-appearance: none;
+  width: 38px; height: 21px; margin: 0; flex: none;
+  border-radius: 999px; border: 1px solid var(--line, rgba(201, 160, 92, 0.35));
+  background: rgba(255, 255, 255, 0.06);
+  position: relative; cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+.wy-root .inline-toggle input::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 15px; height: 15px; border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+.wy-root .inline-toggle input:checked { background: rgba(201, 160, 92, 0.28); border-color: var(--gold); }
+.wy-root .inline-toggle input:checked::after { transform: translateX(17px); background: var(--gold-bright, var(--gold)); }
+.wy-root .inline-toggle input:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.wy-root .proxy-block input.invalid { border-color: var(--cinnabar); }
+.wy-root .endpoint-chips { margin: 8px 0 0; }
+.wy-root .proxy-block .req { margin-left: 8px; font-size: 0.72rem; letter-spacing: 0.08em; color: var(--cinnabar); }
+.wy-root .hint.error { color: var(--cinnabar-bright); }
+.wy-root .start-btn { width: 100%; padding: 14px; font-size: 1.05rem; margin-top: 8px; }
+
+/* 正文字号档位选择器（设置页 + 对局头部共用；控件本身固定字号，不随 --font-scale 缩放） */
+.wy-root .font-scale { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.wy-root .font-scale-label { font-size: 0.82rem; color: var(--muted); letter-spacing: 0.1em; margin-right: 2px; }
+.wy-root .font-scale-btn {
+  padding: 4px 12px; font-size: 0.86rem;
+  color: var(--paper-dim); background: var(--ink-8);
+  border: 1px solid var(--line); border-radius: 14px;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.wy-root .font-scale-btn:hover:not(.active) { border-color: var(--line-strong); color: var(--paper); }
+.wy-root .font-scale-btn.active { color: var(--gold-bright); border-color: var(--gold); background: rgba(203, 168, 90, 0.1); }
+/* 对局头部紧凑版 */
+.wy-root .font-scale.compact { gap: 4px; }
+.wy-root .font-scale.compact .font-scale-btn { padding: 3px 9px; font-size: 0.8rem; }
+.wy-root .test-result { font-size: 0.9rem; }
+.wy-root .hint { color: var(--muted); font-size: 0.85rem; margin: 8px 0 0; }
+/* 居中的短说明在窄屏折行时常掉出「器）」这样的一两字孤行；balance 让两行长度接近。
+   段落型正文不用它（长文本上 balance 会被浏览器放弃，且没必要） */
+.wy-root .hint, .wy-root details > summary, .wy-root .share-social-label { text-wrap: balance; }
+
+.wy-root .label-row { display: flex; justify-content: space-between; align-items: baseline; }
+.wy-root a.ext { color: var(--gold); font-size: 0.85rem; text-decoration: none; white-space: nowrap; }
+.wy-root a.ext:hover { color: var(--cinnabar-bright); text-decoration: underline; }
+
+/* SearchSelect */
+.wy-root .combo { position: relative; }
+.wy-root .combo-list {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 10;
+  margin: 0; padding: 4px; list-style: none;
+  background: var(--ink-7); border: 1px solid var(--line-strong); border-radius: var(--radius);
+  max-height: 260px; overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+.wy-root .combo-item {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  padding: 8px 10px; border-radius: 2px; cursor: pointer;
+}
+/* 键盘高亮与鼠标 hover 是【同一个】视觉状态：JS 侧 mouseenter 会把 active 移过去，
+   所以只需要一条规则，不会出现"鼠标停在 A、方向键停在 B"两处同时亮的错觉。 */
+.wy-root .combo-item.active { background: var(--ink-6); }
+.wy-root .combo-item.selected { color: var(--cinnabar-bright); }
+.wy-root .combo-hint { color: var(--muted); font-size: 0.8rem; white-space: nowrap; }
+/* 分组标题：不可选，只做视觉分隔。首个之外的上方留白，避免和上一组挤在一起 */
+.wy-root .combo-group {
+  padding: 8px 10px 4px; color: var(--muted); font-size: 0.75rem; letter-spacing: 0.08em;
+  cursor: default; user-select: none;
+}
+.wy-root .combo-group + .combo-item { margin-top: 0; }
+.wy-root .combo-item + .combo-group { margin-top: 4px; border-top: 1px solid var(--line); padding-top: 8px; }
+
+/* ── 游戏页 ── */
+
+/* 对局页收窄为居中卷轴，成书卷感而非满幅 App 界面 */
+.wy-root .play {
+  display: flex; flex-direction: column;
+  height: calc(100vh - 48px); height: calc(100dvh - 48px);
+  max-width: 680px; margin-inline: auto; width: 100%;
+}
+
+/* ── 横屏画卷：氛围底图 + 当前场景大横幅 ── */
+/* 该剧本封面压暗+模糊铺满整屏，作环境氛围（手机/宽屏皆有），文字浮于其上仍可读 */
+.wy-root .play-ambient {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-size: cover; background-position: center;
+  opacity: 0.16;
+  filter: blur(7px) saturate(0.82);
+  transform: scale(1.08);
+  box-shadow: inset 0 0 220px 80px rgba(8, 11, 24, 0.92);
+}
+
+/* 选项在正文落定后整体淡入（呼吸：写完→你接话） */
+.wy-root .choices { animation: wy-choicesRise 0.55s ease both; }
+@keyframes wy-choicesRise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* 宽屏：画卷展开更阔气，横幅更大（仍居中，两侧留给氛围底图） */
+@media (min-width: 880px) {
+  .wy-root .app:has(.play) { max-width: 880px; }
+  .wy-root .play { max-width: 820px; }
+}
+
+/* lowPulse：命数告急的呼吸闪烁（vn-vital 危态复用） */
+@keyframes wy-lowPulse { 50% { opacity: 0.5; } }
+
+/* 目标 */
+.wy-root .ambition-bar {
+  display: flex; align-items: baseline; gap: 8px;
+  margin-top: 8px; padding: 6px 12px;
+  border-left: 2px solid var(--gold);
+  background: rgba(201, 160, 92, 0.06);
+}
+.wy-root .ambition-label { font-size: 0.78rem; color: var(--gold); letter-spacing: 0.2em; white-space: nowrap; }
+.wy-root .ambition-text { font-size: 0.9rem; color: var(--paper-dim); flex: 1; min-width: 0; }
+/* 目标进度条 */
+.wy-root .goal-progress { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.wy-root .goal-progress-track {
+  width: 72px; height: 6px; border-radius: 3px;
+  background: rgba(201, 160, 92, 0.18); overflow: hidden;
+}
+.wy-root .goal-progress-fill {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--cinnabar-bright));
+  transition: width 0.6s ease;
+}
+.wy-root .goal-progress-stage { font-size: 0.76rem; color: var(--gold); letter-spacing: 0.03em; }
+
+/* 行囊 */
+.wy-root .inventory {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 8px; padding: 0 4px;
+}
+.wy-root .inventory-label { font-size: 0.8rem; color: var(--muted); letter-spacing: 0.2em; }
+.wy-root .item-chip {
+  font-size: 0.8rem;
+  padding: 2px 10px;
+  color: var(--paper-dim);
+  background: var(--ink-8);
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  animation: wy-fadeUp 0.4s ease-out both;
+}
+/* 记忆栏：AI 模式下贯穿全程的关键事实，可折叠 */
+.wy-root .memory { margin-top: 8px; padding: 0 4px; }
+.wy-root .memory > summary {
+  display: inline-flex; align-items: center; gap: 8px;
+  cursor: pointer; list-style: none;
+  font-size: 0.8rem; color: var(--muted); letter-spacing: 0.2em;
+}
+.wy-root .memory > summary::-webkit-details-marker { display: none; }
+.wy-root .memory > summary::before { content: '▸'; letter-spacing: 0; }
+.wy-root .memory[open] > summary::before { content: '▾'; }
+.wy-root .memory-count {
+  letter-spacing: 0; font-size: 0.72rem; color: var(--cinnabar-bright);
+  border: 1px solid rgba(201, 80, 58, 0.5); border-radius: 10px; padding: 0 7px;
+}
+.wy-root .memory-list {
+  margin: 8px 0 0; padding: 0 0 0 4px; list-style: none;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.wy-root .memory-list li {
+  font-size: 0.82rem; color: var(--paper-dim); line-height: 1.5;
+  padding-left: 14px; position: relative;
+}
+.wy-root .memory-list li::before { content: '·'; position: absolute; left: 4px; color: var(--cinnabar); }
+
+/* 命数刚变过：数字本身亮一下就复原。不外挂浮标——属性行会换行，浮标会压到上一行 */
+.wy-root .vn-vital-val.bump-up { animation: wy-bumpUp 1.8s ease-out both; }
+.wy-root .vn-vital-val.bump-down { animation: wy-bumpDown 1.8s ease-out both; }
+@keyframes wy-bumpUp {
+  0%, 55% { color: var(--jade); }
+  100% { color: var(--muted); }
+}
+@keyframes wy-bumpDown {
+  0%, 55% { color: var(--cinnabar-bright); }
+  100% { color: var(--muted); }
+}
+
+.wy-root .intro { color: var(--muted); font-style: italic; font-size: calc(17px * var(--font-scale)); }
+
+.wy-root .narrative { margin: 0 0 8px; white-space: pre-wrap; text-indent: 2em; font-size: calc(17px * var(--font-scale)); }
+.wy-root .picked { color: var(--paper-dim); font-size: 0.9rem; margin: 0; }
+.wy-root .picked::before { content: '▸ '; color: var(--cinnabar); }
+/* 选择后他人的即时反馈：金线引出，营造代入与爽感 */
+.wy-root .reaction {
+  margin: 6px 0 0;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid var(--gold);
+  color: var(--gold-bright);
+  font-size: calc(0.88rem * var(--font-scale));
+  font-style: italic;
+  line-height: 1.7;
+  opacity: 0.92;
+}
+/* 命运无常:偶发转折提示,朱砂虚线框点出"同一选择,不同走向" */
+.wy-root .twist {
+  margin: 8px 0 0;
+  padding: 6px 12px;
+  border: 1px dashed var(--cinnabar);
+  border-radius: 4px;
+  color: var(--cinnabar-bright);
+  font-size: 0.84rem;
+  letter-spacing: 0.04em;
+  background: rgba(201, 80, 58, 0.06);
+}
+.wy-root .typewriter { cursor: pointer; }
+.wy-root .caret { color: var(--cinnabar-bright); animation: wy-pulse 0.8s steps(2) infinite; }
+
+.wy-root .error-box {
+  border: 1px solid var(--cinnabar);
+  background: rgba(201, 80, 58, 0.06);
+  border-radius: var(--radius);
+  padding: 12px 16px; margin: 12px 0;
+}
+.wy-root .error-box p { color: var(--cinnabar-bright); margin: 0 0 8px; }
+
+/* 选项区：浸于同一汪烛光，与正文相连而非独立按钮托盘 */
+.wy-root .choices {
+  position: relative;
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 18px 0 6px;
+  margin-top: 2px;
+}
+.wy-root .choices:not(.key-moment)::before {
+  content: '';
+  position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+  width: 56px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
+}
+/* 选项=可走的路，正文为主角；不再是填色按钮 */
+.wy-root .choice {
+  position: relative;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 5px;
+  text-align: left;
+  background: linear-gradient(100deg, rgba(28, 38, 84, 0.34), rgba(20, 29, 64, 0.16));
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: 13px 16px 13px 20px;
+  /* backwards：同选关卡，避免 fill 钉住 transform 屏蔽 :hover 位移 */
+  animation: wy-fadeUp 0.4s ease-out backwards;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.22s;
+}
+.wy-root .choice:nth-child(2) { animation-delay: 0.07s; }
+.wy-root .choice:nth-child(3) { animation-delay: 0.14s; }
+.wy-root .choice:nth-child(4) { animation-delay: 0.21s; }
+.wy-root .choice:nth-child(n+5) { animation-delay: 0.28s; }
+.wy-root .choice::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--cinnabar);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.wy-root .choice:hover {
+  background: linear-gradient(100deg, rgba(203, 168, 90, 0.12), rgba(28, 38, 84, 0.28) 60%);
+  border-color: rgba(203, 168, 90, 0.32); transform: translateX(2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.36), -4px 0 20px rgba(203, 168, 90, 0.1);
+}
+.wy-root .choice:hover::before { opacity: 1; }
+/* 选项正文：主角，温暖而克制 */
+.wy-root .choice-text {
+  line-height: 1.75; font-size: calc(17px * var(--font-scale));
+  color: var(--paper); letter-spacing: 0.01em;
+}
+.wy-root .choice:hover .choice-text { color: var(--gold-bright); }
+/* 数值影响：只在落子之后随承接段一并揭晓。这是整局唯一报数的地方，
+   所以要比周围的敛色文字更立得住——别再耳语化 */
+.wy-root .recap-fx { display: flex; gap: 12px; flex-wrap: wrap; margin: 4px 0 0; }
+.wy-root .fx {
+  display: inline-flex; align-items: baseline; gap: 3px;
+  font-size: calc(0.82rem * var(--font-scale)); line-height: 1.6; letter-spacing: 0.02em;
+  font-weight: 500; font-variant-numeric: tabular-nums;
+}
+.wy-root .fx::before { content: '·'; opacity: 0.7; }
+.wy-root .fx.up { color: var(--jade); }
+.wy-root .fx.down { color: var(--cinnabar-bright); }
+
+/* 命运抉择时的选项：金色化、辉光，落子如卜 */
+.wy-root .choices.key-moment { position: relative; }
+.wy-root .choices.key-moment::before {
+  content: '☰  落 子 问 命  ☷';
+  display: block;
+  text-align: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.35em;
+  color: var(--gold);
+  opacity: 0.7;
+  margin: 2px 0 4px;
+}
+.wy-root .choices.key-moment .choice { border-color: rgba(203, 168, 90, 0.3); }
+.wy-root .choices.key-moment .choice::before { background: var(--gold); }
+.wy-root .choices.key-moment .choice:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 16px rgba(203, 168, 90, 0.14);
+}
+
+/* ── 结局揭晓:命运之卡(旋转入场,轻触翻开) ── */
+.wy-root .ending-gate {
+  min-height: calc(100vh - 80px);
+  min-height: calc(100dvh - 80px); /* 移动端地址栏收展时仍居中 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  cursor: pointer;
+  perspective: 1400px;
+  animation: wy-fadeUp 0.5s ease-out both;
+}
+.wy-root .fate-card {
+  width: min(384px, 84vw);
+  aspect-ratio: 3 / 4;
+  transform-style: preserve-3d;
+}
+.wy-root .fate-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--gold);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4) inset, 0 24px 70px rgba(0, 0, 0, 0.6),
+    0 0 44px rgba(203, 168, 90, 0.22);
+  background: var(--ink-8);
+  transform-origin: center;
+  animation: wy-fateSpinIn 1.6s cubic-bezier(0.16, 0.84, 0.3, 1) both,
+    wy-fateGlow 3.4s ease-in-out 1.6s infinite alternate;
+}
+@keyframes wy-fateSpinIn {
+  0% { transform: rotateY(-720deg) scale(0.55); opacity: 0; }
+  70% { opacity: 1; }
+  100% { transform: rotateY(0deg) scale(1); opacity: 1; }
+}
+@keyframes wy-fateGlow {
+  to { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4) inset, 0 24px 70px rgba(0, 0, 0, 0.6),
+    0 0 64px rgba(203, 168, 90, 0.5); }
+}
+.wy-root .fate-card:hover .fate-card-inner { border-color: var(--gold-bright); }
+.wy-root .fate-card-art {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  opacity: 0.92;
+}
+.wy-root .fate-card-veil {
+  position: absolute; inset: 0;
+  background: radial-gradient(120% 90% at 50% 32%, rgba(8, 11, 24, 0.2), transparent 55%),
+    linear-gradient(to bottom, rgba(8, 11, 24, 0.35), rgba(8, 11, 24, 0.2) 45%, rgba(8, 11, 24, 0.92));
+}
+.wy-root .fate-card-corner {
+  position: absolute; z-index: 2;
+  color: var(--gold-bright); font-size: 1rem;
+  text-shadow: 0 0 10px rgba(203, 168, 90, 0.7);
+}
+.wy-root .fate-card-corner.tl { top: 12px; left: 14px; }
+.wy-root .fate-card-corner.br { bottom: 12px; right: 14px; }
+.wy-root .fate-card-face {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  text-align: center; padding: 0 22px 40px;
+}
+.wy-root .fate-seal {
+  display: grid; place-items: center;
+  width: 2em; height: 2em; margin-bottom: 16px;
+  font-family: var(--font-script);
+  font-size: 1.4rem; color: #f3e4c8;
+  background: var(--cinnabar); border-radius: 4px;
+  transform: rotate(7deg);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35) inset, 0 2px 14px rgba(201, 80, 58, 0.5);
+}
+.wy-root .fate-tone {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 6vw, 2.1rem);
+  line-height: 1.3; letter-spacing: 0.06em;
+  color: #f3e4c8;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.9), 0 0 26px rgba(201, 80, 58, 0.35);
+}
+.wy-root .fate-sub {
+  margin: 12px 0 0; font-size: 0.8rem; letter-spacing: 0.12em;
+  color: var(--paper-dim); text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+}
+.wy-root .fate-hint {
+  color: var(--gold); letter-spacing: 0.3em; text-indent: 0.3em; font-size: 0.9rem;
+  animation: wy-pulse 1.8s ease-in-out infinite;
+}
+
+/* ── 命途留影:命运抉择剧情卡相册(可回溯) ── */
+.wy-root .memoir-overlay {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  padding: 4vh 16px;
+  background: rgba(4, 6, 14, 0.78);
+  backdrop-filter: blur(4px);
+  animation: wy-fadeIn 0.3s ease-out both;
+}
+.wy-root .memoir {
+  width: min(760px, 96vw); max-height: 92vh; overflow-y: auto;
+  background: var(--ink-9);
+  border: 1px solid var(--line-strong); border-radius: 8px;
+  padding: 20px 22px 26px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+.wy-root .memoir-head {
+  display: flex; align-items: baseline; gap: 12px;
+  border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 16px;
+}
+.wy-root .memoir-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem; letter-spacing: 0.24em; color: var(--gold-bright);
+}
+.wy-root .memoir-count { color: var(--gold); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+.wy-root .memoir-close { margin-left: auto; font-size: 1rem; padding: 4px 10px; }
+.wy-root .memoir-empty { color: var(--muted); font-style: italic; text-align: center; padding: 30px 0; }
+.wy-root .memoir-grid { display: flex; flex-direction: column; gap: 16px; }
+.wy-root .memoir-card {
+  position: relative; overflow: hidden;
+  border: 1px solid var(--line); border-radius: 6px;
+  background: var(--ink-8);
+  animation: wy-fadeUp 0.4s ease-out both;
+}
+/* 关键节点（命运抉择）在回顾里高亮：鎏金边 + 微晕 */
+.wy-root .memoir-card.key {
+  border-color: rgba(203, 168, 90, 0.5);
+  box-shadow: 0 0 18px rgba(203, 168, 90, 0.1);
+}
+.wy-root .memoir-card-art {
+  height: 168px; background-size: cover; background-position: center 32%;
+  opacity: 0.96;
+  box-shadow: inset 0 -50px 40px -18px var(--ink-8);
+}
+.wy-root .memoir-card-key {
+  display: block; margin-bottom: 4px;
+  font-family: var(--font-display);
+  font-size: 0.68rem; letter-spacing: 0.28em; text-indent: 0.28em;
+  color: var(--gold-bright); text-shadow: 0 0 10px rgba(203, 168, 90, 0.5);
+}
+.wy-root .memoir-card-twist {
+  margin: 8px 0 0; padding: 5px 11px;
+  border: 1px dashed var(--cinnabar); border-radius: 4px;
+  color: var(--cinnabar-bright); font-size: 0.82rem;
+  background: rgba(201, 80, 58, 0.06); line-height: 1.6;
+}
+.wy-root .memoir-card-body { padding: 12px 18px 16px; position: relative; }
+.wy-root .memoir-card-no {
+  display: block; color: var(--gold); font-size: 0.78rem; letter-spacing: 0.22em;
+  text-shadow: 0 0 12px rgba(203, 168, 90, 0.3); margin-bottom: 8px;
+}
+.wy-root .memoir-card-narr { margin: 0; line-height: 1.9; font-size: calc(17px * var(--font-scale)); }
+.wy-root .memoir-card-pick { margin: 8px 0 0; color: var(--paper-dim); font-size: 0.9rem; }
+.wy-root .memoir-card-pick::before { content: ''; }
+.wy-root .memoir-card-react {
+  margin: 6px 0 0; padding-left: 12px; border-left: 2px solid var(--gold);
+  color: var(--gold-bright); font-size: 0.86rem; font-style: italic; line-height: 1.7; opacity: 0.92;
+}
+.wy-root .memoir-card-art { cursor: zoom-in; }
+
+/* ── 人物志 / 人物卡:正文里的人名可点开「预设身份」 ── */
+.wy-root .cast-overlay {
+  position: fixed; inset: 0; z-index: 54;
+  display: flex; align-items: center; justify-content: center;
+  padding: 4vh 16px;
+  background: rgba(4, 6, 14, 0.78);
+  backdrop-filter: blur(4px);
+  animation: wy-fadeIn 0.3s ease-out both;
+}
+.wy-root .cast-panel {
+  width: min(560px, 96vw); max-height: 88vh; overflow-y: auto;
+  background: var(--ink-9);
+  border: 1px solid var(--line-strong); border-radius: 8px;
+  padding: 18px 20px 22px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+.wy-root .cast-panel-head {
+  display: flex; align-items: baseline; gap: 10px;
+  border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 12px;
+}
+.wy-root .cast-panel-title {
+  font-family: var(--font-display);
+  font-size: 1.35rem; letter-spacing: 0.22em; color: var(--gold-bright);
+}
+.wy-root .cast-panel-count { color: var(--gold); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.wy-root .cast-panel-close { margin-left: auto; font-size: 1rem; padding: 4px 10px; }
+.wy-root .cast-panel-empty { color: var(--muted); font-style: italic; text-align: center; padding: 26px 0; }
+.wy-root .cast-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.wy-root .cast-row {
+  width: 100%; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; text-align: left;
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--ink-8); color: var(--paper); cursor: pointer;
+}
+.wy-root .cast-row:hover { background: var(--ink-7); border-color: var(--line-strong); }
+/* 窄屏（390px）下不让姓名被折成两行：各段 nowrap，整行允许换行，回合号始终靠右 */
+.wy-root .cast-row-name { font-family: var(--font-display); font-size: 1.05rem; color: var(--gold-bright); white-space: nowrap; }
+.wy-root .cast-row-role { color: var(--paper-dim); font-size: 0.86rem; white-space: nowrap; }
+.wy-root .cast-row-rel { color: var(--jade); font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.wy-root .cast-row-no { margin-left: auto; color: var(--muted); font-size: 0.78rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+.wy-root .cast-card {
+  width: min(440px, 92vw); max-height: 88vh; overflow-y: auto;
+  background: var(--ink-9);
+  border: 1px solid var(--line-strong); border-radius: 8px;
+  padding: 18px 20px 20px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  animation: wy-fadeUp 0.28s ease-out both;
+}
+.wy-root .cast-card-head {
+  display: flex; align-items: baseline; gap: 10px;
+  border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 12px;
+}
+.wy-root .cast-card-name {
+  font-family: var(--font-display);
+  font-size: 1.5rem; letter-spacing: 0.14em; color: var(--gold-bright);
+}
+.wy-root .cast-card-role { color: var(--paper-dim); font-size: 0.9rem; }
+.wy-root .cast-card-close { margin-left: auto; font-size: 1rem; padding: 4px 10px; }
+.wy-root .cast-card-fields { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; }
+.wy-root .cast-card-fields dt { color: var(--muted); font-size: 0.8rem; white-space: nowrap; padding-top: 3px; }
+.wy-root .cast-card-fields dd {
+  margin: 0; color: var(--paper); line-height: 1.8;
+  font-size: calc(16px * var(--font-scale));
+}
+.wy-root .cast-card-hint { color: var(--muted); font-size: 0.82rem; margin: 12px 0 0; font-style: italic; }
+
+/* 正文里的人名：淡金底纹 + 金色虚线底边，一眼看出可点，又不打断阅读。
+   关键：**不占横向任何尺寸**（padding/字号/字距全部不动），所以标出人名不会把整行挤得重新折行
+   —— 那正是用户看到的「每出一段新故事，整段又被刷新一遍」。 */
+.wy-root .narrative .cast-name {
+  display: inline; padding: 0; margin: 0;
+  font: inherit; letter-spacing: inherit; line-height: inherit;
+  color: var(--gold-bright);
+  background: rgba(203, 168, 90, 0.2);
+  border: none; border-bottom: 1px dashed var(--gold); border-radius: 2px;
+  cursor: pointer;
+}
+.wy-root .narrative .cast-name:hover {
+  color: #fff6e0;
+  background: rgba(203, 168, 90, 0.36);
+  border-bottom-style: solid;
+}
+
+/* 结局详情图右下角的放大角标（命书阁复用） */
+.wy-root .storycard-zoom {
+  position: absolute; bottom: 10px; right: 12px;
+  width: 30px; height: 30px; display: grid; place-items: center;
+  font-size: 1rem; color: var(--gold-bright);
+  background: rgba(8, 11, 24, 0.7); border: 1px solid var(--line-strong); border-radius: 50%;
+  backdrop-filter: blur(2px);
+}
+/* ── 全屏灯箱 ── */
+.wy-root .lightbox {
+  position: fixed; inset: 0; z-index: 80;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 3vh 3vw;
+  background: rgba(2, 3, 9, 0.92);
+  backdrop-filter: blur(6px);
+  cursor: zoom-out;
+  animation: wy-fadeIn 0.25s ease-out both;
+}
+.wy-root .lightbox-img {
+  max-width: 94vw; max-height: 84vh; object-fit: contain;
+  border: 1px solid var(--line-strong); border-radius: 6px;
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.7);
+}
+.wy-root .lightbox-hint { color: var(--muted); letter-spacing: 0.3em; font-size: 0.82rem; }
+
+/* ── 结局图鉴:点开看结局详情(配图+尾声) ── */
+.wy-root .ending-detail-overlay {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; align-items: center; justify-content: center;
+  padding: 4vh 16px;
+  background: rgba(4, 6, 14, 0.82); backdrop-filter: blur(5px);
+  animation: wy-fadeIn 0.3s ease-out both;
+}
+.wy-root .ending-detail {
+  position: relative;
+  width: min(540px, 94vw); max-height: 92vh; overflow-y: auto;
+  background: var(--ink-8);
+  border: 1px solid var(--gold); border-radius: 8px; overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.65), 0 0 50px rgba(203, 168, 90, 0.18);
+  /* 开卷一瞬鎏金绽放再敛息，与成就徽章的旋入辉光同一档仪式感 */
+  animation: wy-edReveal 0.7s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@keyframes wy-edReveal {
+  from {
+    opacity: 0; transform: translateY(12px) scale(0.97);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.65), 0 0 90px rgba(203, 168, 90, 0.55);
+  }
+  55% {
+    opacity: 1;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.65), 0 0 74px rgba(203, 168, 90, 0.42);
+  }
+  to {
+    opacity: 1; transform: none;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.65), 0 0 50px rgba(203, 168, 90, 0.18);
+  }
+}
+.wy-root .ed-close {
+  position: absolute; top: 8px; right: 8px; z-index: 3;
+  font-size: 1rem; padding: 4px 10px;
+  background: rgba(8, 11, 24, 0.6); border-radius: 50%;
+}
+.wy-root .ed-art {
+  display: block; width: 100%; aspect-ratio: 3 / 2;
+  background-size: cover; background-position: center;
+  border: none; padding: 0; position: relative; cursor: zoom-in;
+}
+.wy-root .ed-body {
+  padding: 18px 24px 26px;
+  background: linear-gradient(to bottom, rgba(203, 168, 90, 0.06), transparent 50%);
+}
+.wy-root .ed-scene { color: var(--gold); font-size: 0.85rem; letter-spacing: 0.12em; }
+.wy-root .ed-tone {
+  margin: 8px 0 14px;
+  font-family: var(--font-display);
+  font-size: 1.6rem; letter-spacing: 0.06em; color: var(--cinnabar-bright);
+  text-shadow: 0 0 20px rgba(201, 80, 58, 0.3);
+}
+.wy-root .ed-epilogue { margin: 0; line-height: 2; color: var(--paper); }
+.wy-root .ed-epilogue.muted { color: var(--muted); font-style: italic; }
+
+/* 自定义行动 */
+.wy-root .custom-trigger { color: var(--muted); border-style: dashed; }
+.wy-root .custom-trigger:hover { color: var(--gold); }
+.wy-root .custom-action {
+  display: flex; flex-direction: column; gap: 8px;
+  border: 1px solid var(--gold); border-radius: var(--radius);
+  padding: 12px; background: var(--ink-8);
+  animation: wy-fadeUp 0.25s ease-out both;
+}
+.wy-root .custom-input {
+  font: inherit; width: 100%; resize: vertical;
+  color: var(--paper); background: var(--ink-9);
+  border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px;
+}
+.wy-root .custom-input:focus { outline: none; border-color: var(--gold); }
+.wy-root .custom-row { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.wy-root .custom-row button { padding: 6px 16px; }
+.wy-root .custom-count { margin-right: auto; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* ── 结局页 ── */
+
+.wy-root .ending { text-align: center; padding-top: 4vh; animation: wy-fadeIn 0.6s ease-out both; }
+/* 结局配图：自虚空中浮现（径向遮罩让四缘融入暗底），无图时回退剧本封面 */
+.wy-root .ending-art {
+  width: 100%;
+  max-width: 520px;
+  /* 与图源同比例（结局图统一 1264×848 = 3:2）：定高横条会被 cover 裁掉约 1/3 画面 */
+  aspect-ratio: 3 / 2;
+  margin: 0 auto 14px;
+  background-size: cover;
+  background-position: center;
+  -webkit-mask-image: radial-gradient(125% 105% at 50% 36%, #000 52%, transparent 100%);
+  mask-image: radial-gradient(125% 105% at 50% 36%, #000 52%, transparent 100%);
+  animation: wy-fadeUp 0.8s ease-out both;
+}
+.wy-root .ending-tone {
+  position: relative;
+  display: inline-block;
+  /* 结局名多为 9 字（392 个里 359 个），最长 12 字。定死 3.4rem 时窄屏必然折行，
+     再叠上 1.95 的行高，「身心俱全·迎来曙光」会摊成两行、中间豁一大口。
+     按视口收缩：390px 上 9 字仍是一行；10~12 字的少数结局折行，但行距收紧后像是有意为之 */
+  font-size: clamp(1.9rem, 8.4vw, 3.4rem);
+  line-height: 1.3;
+  margin: 0;
+  color: var(--cinnabar-bright);
+  letter-spacing: 0.1em;
+  text-shadow: 0 2px 30px rgba(201, 80, 58, 0.35);
+}
+.wy-root .seal-mark {
+  display: inline-grid;
+  place-items: center;
+  vertical-align: 0.5em;
+  margin-left: 14px;
+  width: 1.6rem;
+  height: 1.6rem;
+  font-family: var(--font-script);
+  font-size: 1rem;
+  color: #f3e4c8;
+  background: var(--cinnabar);
+  border-radius: 3px;
+  transform: rotate(8deg);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35) inset;
+  /* 钤印落下：自高处砸落收束此生，落定瞬间微超再回弹 */
+  animation: wy-sealStamp 0.5s 0.45s cubic-bezier(0.2, 1.35, 0.45, 1) both;
+}
+@keyframes wy-sealStamp {
+  from { opacity: 0; transform: rotate(14deg) scale(2.6); }
+  55% { opacity: 1; }
+  to { opacity: 1; transform: rotate(8deg) scale(1); }
+}
+.wy-root .ending-grade { display: flex; gap: 12px; align-items: center; justify-content: center; margin: 4px 0; }
+/* 评级朱印：各品一色一品相，神品(S)灼灼有华、劫数(D)黯然 */
+.wy-root .grade-badge {
+  font-family: var(--font-script);
+  font-size: 1.3rem; padding: 2px 15px; border-radius: 4px;
+  color: #1a1208; background: var(--gold); border: 1px solid var(--gold);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3) inset;
+}
+.wy-root .grade-badge.grade-S {
+  background: var(--cinnabar-bright); border-color: var(--cinnabar-bright); color: #f9eed6;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3) inset, 0 0 20px rgba(224, 112, 78, 0.6);
+  animation: wy-gradeShine 2.6s ease-in-out infinite alternate;
+}
+@keyframes wy-gradeShine { to { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3) inset, 0 0 30px rgba(236, 210, 143, 0.8); } }
+.wy-root .grade-badge.grade-A {
+  background: var(--gold-bright); border-color: var(--gold-bright);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3) inset, 0 0 14px rgba(203, 168, 90, 0.5);
+}
+.wy-root .grade-badge.grade-B { background: var(--jade); border-color: var(--jade); color: #07140f; }
+.wy-root .grade-badge.grade-C { background: #5b62a0; border-color: #5b62a0; color: #0c1230; }
+.wy-root .grade-badge.grade-D { background: var(--muted); border-color: var(--muted); color: #11142e; }
+.wy-root .grade-title { color: var(--paper-dim); letter-spacing: 0.1em; }
+/* 本局新解锁成就：鎏金印章 chips，钤印落定后逐枚砸入（delay 由 TSX 按序号错开） */
+.wy-root .ach-unlock-row {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: 8px; margin: 10px 0 2px;
+}
+.wy-root .ach-unlock-label {
+  font-size: 0.74rem; letter-spacing: 0.3em; text-indent: 0.3em;
+  color: var(--gold); opacity: 0.85;
+  animation: wy-fadeIn 0.4s 0.9s ease-out backwards;
+}
+.wy-root .ach-unlock-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 4px 15px 4px 6px; border-radius: 22px;
+  font-size: 0.86rem; color: var(--gold-bright);
+  background: linear-gradient(158deg, rgba(203, 168, 90, 0.16), rgba(201, 80, 58, 0.06));
+  border: 1px solid rgba(203, 168, 90, 0.5);
+  box-shadow: 0 0 16px rgba(203, 168, 90, 0.18);
+  animation: wy-achChipIn 0.5s cubic-bezier(0.2, 1.3, 0.4, 1) backwards;
+  cursor: zoom-in;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.wy-root .ach-unlock-chip:hover {
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 22px rgba(203, 168, 90, 0.35);
+}
+/* 徽章本尊（webp 圆章）；无图剧本回退 emoji 时 chip 恢复对称内距 */
+.wy-root .ach-unlock-img {
+  flex: none; width: 32px; height: 32px; border-radius: 50%;
+  background-size: cover; background-position: center;
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 0 10px rgba(203, 168, 90, 0.35);
+}
+.wy-root span.ach-unlock-chip { padding: 4px 15px; cursor: default; }
+@keyframes wy-achChipIn {
+  from { opacity: 0; transform: scale(1.6); }
+  to { opacity: 1; transform: scale(1); }
+}
+.wy-root .ending-meta { color: var(--muted); letter-spacing: 0.2em; }
+/* 结局缘由:点明「为何落幕」(身死/大限),让结束清晰可感 */
+.wy-root .ending-cause { color: var(--cinnabar-bright); letter-spacing: 0.12em; font-size: 0.9rem; margin: 2px 0 0; opacity: 0.9; }
+.wy-root .ending-text {
+  text-align: left;
+  background: var(--ink-8);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 22px 26px;
+  white-space: pre-wrap;
+  text-indent: 2em;
+  font-size: calc(17px * var(--font-scale));
+}
+/* 本地模式提示：从结局正文中抽出，单独低调呈现，不混入可分享文案 */
+.wy-root .local-ending-note {
+  text-align: center;
+  color: var(--paper-dim);
+  font-size: 0.85rem;
+  opacity: 0.78;
+  margin: -4px 0 4px;
+}
+/* 文字版分享卡：默认折叠，避免与上方已渲染的结局信息重复 */
+.wy-root .summary-card-fold > summary {
+  cursor: pointer;
+  text-align: center;
+  color: var(--paper-dim);
+  font-size: 0.85rem;
+  list-style: none;
+  padding: 6px 0;
+  user-select: none;
+}
+.wy-root .summary-card-fold > summary:hover { color: var(--gold-bright); }
+.wy-root .summary-card-fold > summary::-webkit-details-marker { display: none; }
+.wy-root .summary-card-fold[open] > summary { color: var(--gold); }
+.wy-root .summary-card-fold > summary::after { content: ' ▾'; }
+.wy-root .summary-card-fold[open] > summary::after { content: ' ▴'; }
+.wy-root .summary-card-fold .summary-card { margin-top: 8px; }
+.wy-root .summary-card {
+  text-align: left;
+  background: transparent;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  white-space: pre-wrap;
+  color: var(--paper-dim);
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+.wy-root .ending .row { justify-content: center; }
+/* 结局操作：分享行 + 导航行，分组更清晰 */
+.wy-root .ending-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 22px;
+}
+.wy-root .ending-actions-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.wy-root .ending-actions-row.nav { padding-top: 12px; border-top: 1px solid var(--line); width: 100%; max-width: 460px; }
+.wy-root .ending-actions .primary { padding: 12px 26px; }
+.wy-root .ending-actions .ghost-line {
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  color: var(--paper-dim);
+  letter-spacing: 0.06em;
+}
+.wy-root .ending-actions .ghost-line:hover { border-color: var(--gold); color: var(--gold-bright); }
+
+/* ════════ 游戏感强化：把表单类界面做成「卷页 + 钤印」的器物 ════════ */
+/* 面板 = 卷页：内嵌鎏金细框 + 暖调起手，标题缀卦记 */
+.wy-root .panel { background: linear-gradient(162deg, rgba(20, 29, 64, 0.5), var(--ink-8) 62%); }
+.wy-root .panel::before {
+  content: ''; position: absolute; inset: 5px; pointer-events: none;
+  border: 1px solid rgba(203, 168, 90, 0.14); border-radius: 3px;
+}
+.wy-root .panel > h3::before { content: '◈ '; color: var(--gold); opacity: 0.62; font-size: 0.9em; }
+
+/* 模式 / 开局身份卡：悬浮微抬；选中即钤一枚朱砂角印「择」，如落子定身 */
+.wy-root .mode-card, .wy-root .opening {
+  position: relative; overflow: hidden;
+  transition: border-color 0.2s, background 0.2s, transform 0.18s, box-shadow 0.2s;
+}
+.wy-root .mode-card:hover, .wy-root .opening:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0, 0, 0, 0.38); }
+.wy-root .mode-card.selected, .wy-root .opening.selected {
+  box-shadow: 0 6px 20px rgba(201, 80, 58, 0.14), 0 0 0 1px rgba(201, 80, 58, 0.35) inset;
+}
+.wy-root .mode-card.selected::after, .wy-root .opening.selected::after {
+  content: '择'; position: absolute; top: 0; right: 0;
+  font-family: var(--font-script); font-size: 0.7rem; line-height: 1; color: #f3e4c8;
+  background: var(--cinnabar); padding: 4px 7px 5px; border-radius: 0 var(--radius) 0 8px;
+  box-shadow: 0 2px 8px rgba(201, 80, 58, 0.4);
+}
+
+/* 立目标的朱砂签：选中的目标更像「立誓」 */
+.wy-root .ambition-chip.selected { box-shadow: 0 0 0 1px rgba(203, 168, 90, 0.4) inset, 0 0 14px rgba(203, 168, 90, 0.12); }
+
+/* 「开始这段人生」：仪式级金印 CTA —— 辉光 + 按压回弹 */
+.wy-root .start-btn {
+  letter-spacing: 0.28em; text-indent: 0.28em; border-radius: 6px;
+  box-shadow: 0 0 22px rgba(203, 168, 90, 0.26), 0 6px 18px rgba(0, 0, 0, 0.42);
+  transition: box-shadow 0.25s, background 0.2s, border-color 0.2s, transform 0.12s;
+}
+.wy-root .start-btn:hover:not(:disabled) { box-shadow: 0 0 36px rgba(203, 168, 90, 0.5), 0 8px 24px rgba(0, 0, 0, 0.5); }
+.wy-root .start-btn:active:not(:disabled) { transform: translateY(1px); }
+
+/* 弹窗 = 器物：暖调起手 + 鎏金辉光 + 描金标题（生成剧本 / 分享命运卡 等） */
+.wy-root .modal {
+  background: linear-gradient(162deg, rgba(20, 29, 64, 0.5), var(--ink-8) 62%);
+  border-color: var(--line-strong); border-radius: 8px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6), 0 0 40px rgba(203, 168, 90, 0.06);
+}
+.wy-root .modal h3 { color: var(--gold-bright); letter-spacing: 0.08em; text-shadow: 0 0 16px rgba(203, 168, 90, 0.25); }
+
+/* 结局叙事 = 卷页：内嵌鎏金细框，与设置/命书阁同一套器物语言 */
+.wy-root .ending-text {
+  position: relative;
+  background: linear-gradient(162deg, rgba(20, 29, 64, 0.42), var(--ink-8) 60%);
+  border-color: var(--line-strong);
+}
+.wy-root .ending-text::before {
+  content: ''; position: absolute; inset: 5px; pointer-events: none;
+  border: 1px solid rgba(203, 168, 90, 0.14); border-radius: 3px;
+}
+
+/* 命书阁当前页签缀一枚鎏金小印 */
+.wy-root .archive-tabs button.active::after {
+  content: '◈'; display: block; margin-top: -1px;
+  font-size: 0.5rem; text-align: center; color: var(--gold); opacity: 0.8;
+}
+
+/* 选关卡片去 emoji 后改海报式：竖向海报比例、题名与简介沉到卡底暗角，露出更多封面、压字更清晰 */
+.wy-root .scenario-card.has-cover { justify-content: flex-end; aspect-ratio: 1 / 1; min-height: 0; }
+/* 生成/导入动作卡(无封面)：内容垂直居中、简介可多展一行 */
+.wy-root .scenario-card:not(.has-cover) { justify-content: center; align-items: center; text-align: center; }
+.wy-root .scenario-card:not(.has-cover) .scenario-intro { -webkit-line-clamp: 3; }
+
+/* 滑块(支线数量)：脱离默认灰条，改鎏金细轨 + 金珠拨钮，融入玄学调 */
+.wy-root input[type='range'] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 5px; margin: 10px 0; padding: 0;
+  border: none; border-radius: 3px;
+  background: linear-gradient(90deg, rgba(203, 168, 90, 0.55), rgba(203, 168, 90, 0.16));
+  cursor: pointer;
+}
+.wy-root input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--gold-bright), var(--gold) 70%);
+  border: 1px solid var(--gold-bright);
+  box-shadow: 0 0 10px rgba(203, 168, 90, 0.55), 0 1px 3px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+.wy-root input[type='range']::-moz-range-thumb {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--gold-bright), var(--gold) 70%);
+  border: 1px solid var(--gold-bright);
+  box-shadow: 0 0 10px rgba(203, 168, 90, 0.55);
+  cursor: pointer;
+}
+.wy-root input[type='range']:focus { outline: none; }
+
+/* 弹窗表单标签左对齐（标题/提示仍居中作仪式感），更像可扫读的配置表而非飘字 */
+.wy-root .modal label { text-align: left; }
+
+/* ════════ 命途长卷 VN：整屏场景画为世界，卷文浮于其上 ════════ */
+.wy-root .play.vn {
+  position: fixed; inset: 0;
+  max-width: none; width: auto; height: auto; margin: 0;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+/* 远景视差：剧本封面重模糊压暗，垫在场景画之下增纵深 */
+.wy-root .play.vn .play-ambient {
+  position: absolute; inset: 0; z-index: 0;
+  opacity: 0.5; filter: blur(20px) saturate(0.7) brightness(0.55);
+  transform: scale(1.18); box-shadow: none;
+}
+/* 画台：整屏场景画即世界（cover 铺满，object-position 居中裁切）；换幕自右平移入场（长卷徐展） */
+.wy-root .vn-stage { position: absolute; inset: 0; z-index: 1; }
+.wy-root .vn-scene {
+  position: absolute; inset: 0; z-index: 1;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
+  display: block;
+  animation: wy-vnPan 0.9s cubic-bezier(0.22, 0.7, 0.2, 1) both;
+}
+@keyframes wy-vnPan {
+  from { opacity: 0.2; transform: translateX(4%) scale(1.04); }
+  to { opacity: 1; transform: none; }
+}
+/* 顶部暗渐变罩：托起 HUD 可读（底部交给卷文区自身的渐变） */
+.wy-root .vn-scrim {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(8, 11, 24, 0.6) 0%, transparent 26%, transparent 100%);
+}
+
+/* ── 顶部 HUD（浮于画台上沿） ── */
+.wy-root .vn-hud {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 20;
+  display: flex; flex-direction: column; gap: 9px;
+  /* 命数（属性栏）已移入卷文面板，这里只剩标题行。
+     左侧让出小愈返回按钮（.wy-back 现为图标按钮，右上缘 ~52px），
+     padding-left 取 64px 即可可靠避让，不再需要 96px 的大让位。 */
+  padding: 14px clamp(16px, 4vw, 44px);
+  padding-left: max(64px, 4vw);
+}
+.wy-root .vn-hud-row { display: flex; align-items: center; gap: 12px; }
+.wy-root .vn-title {
+  font-family: var(--font-display); font-size: 1.06rem;
+  letter-spacing: 0.08em; color: var(--paper);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.85);
+}
+.wy-root .vn-hud-row .play-menu { margin-left: 8px; }
+.wy-root .vn-hud-quota {
+  font-size: 0.72rem; color: var(--paper); opacity: 0.72;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8); letter-spacing: 0.02em;
+}
+.wy-root .vn .play-menu-btn { background: rgba(8, 11, 24, 0.42); border-color: rgba(203, 168, 90, 0.2); backdrop-filter: blur(6px); }
+/* 看全图：HUD 内圆钮，隐去卷文看整张场景画 */
+.wy-root .vn-eye {
+  margin-left: auto; flex: none;
+  width: 34px; height: 34px; padding: 0;
+  font-family: var(--font-display); font-size: 0.92rem; line-height: 1;
+  color: var(--gold); background: rgba(8, 11, 24, 0.42);
+  border: 1px solid rgba(203, 168, 90, 0.2); border-radius: 50%;
+  backdrop-filter: blur(6px);
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.wy-root .vn-eye:hover { color: var(--gold-bright); border-color: var(--gold); }
+
+/* 命数：原悬浮于画面顶部，现移入卷文面板顶部做「状态栏」，随面板一起布局不再与他人重叠 */
+.wy-root .vn-vitals { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 10px; transition: opacity 0.3s ease; }
+.wy-root .vn-vital {
+  display: inline-flex; align-items: baseline; gap: 7px;
+  padding: 3px 12px; border-radius: 20px;
+  background: rgba(8, 11, 24, 0.4); border: 1px solid rgba(203, 168, 90, 0.16);
+  backdrop-filter: blur(6px);
+  font-size: 0.78rem; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+}
+.wy-root .vn-vital-name { color: var(--muted); }
+.wy-root .vn-vital-band.sev-high { color: var(--jade); }
+.wy-root .vn-vital-band.sev-normal { color: var(--paper-dim); }
+.wy-root .vn-vital-band.sev-low { color: var(--gold); }
+.wy-root .vn-vital-band.sev-critical { color: var(--cinnabar-bright); animation: wy-lowPulse 1.2s ease-in-out infinite; }
+.wy-root .vn-vital-val { position: relative; color: var(--muted); font-size: 0.74rem; font-variant-numeric: tabular-nums; }
+/* 属性封顶标记：暗金小字「满」，鼠标悬停解释需晋阶突破 */
+.wy-root .vn-vital-cap { margin-left: 3px; color: var(--gold); opacity: 0.72; font-size: 0.64rem; cursor: help; }
+
+/* ── 命途长卷进度（贴近卷文上沿） ── */
+.wy-root .vn-path {
+  position: relative; z-index: 6;
+  width: min(760px, 94vw); margin-inline: auto;
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 8px 9px;
+}
+.wy-root .vn-path-track { flex: 1; height: 2px; border-radius: 2px; background: rgba(203, 168, 90, 0.18); overflow: hidden; }
+.wy-root .vn-path-fill { display: block; height: 100%; background: linear-gradient(90deg, var(--cinnabar), var(--gold-bright)); box-shadow: 0 0 8px rgba(203, 168, 90, 0.5); transition: width 0.6s ease; }
+.wy-root .vn-path-label { font-size: 0.72rem; letter-spacing: 0.16em; color: var(--gold); white-space: nowrap; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8); }
+
+/* ── 卷文区：贴底，画面经渐变隐入暗处承托文字（非硬框，画仍透出） ── */
+.wy-root .vn-panel {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 6;
+  /* 固定为稳定滚动容器：阅读位置不随内容增长而上移（避免流式时「开头几句」被推到上面看不见）。
+     原为「短文只占一角、长文向上长」的自适应高度，改为固定高度 + 内部滚动，保证读到哪里就停在哪。 */
+  height: clamp(320px, 66vh, 86vh); display: flex; flex-direction: column;
+  /* 顶部留白让画面柔和淡入文字区，读来如文字「长在画里」 */
+  padding: 44px clamp(16px, 4vw, 44px) 18px;
+  /* 顶部这段渐变要托住题签与承接段：原来 26% 处才 0.42，落在亮画面上时
+     「第 N 载」和刚才的抉择/数值几乎读不出来。提前压暗，仍保留柔和的上缘 */
+  background: linear-gradient(to bottom,
+    transparent 0%, rgba(8, 11, 20, 0.58) 16%, rgba(7, 9, 17, 0.88) 52%, rgba(5, 7, 14, 0.96) 100%);
+  border: none; border-radius: 0; box-shadow: none; backdrop-filter: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.32s ease;
+  animation: wy-vnPanelRise 0.5s ease;
+}
+/* 卷文内容居中成栏，两侧让画面透出 */
+.wy-root .vn-panel > * { width: 100%; max-width: 800px; margin-inline: auto; }
+@keyframes wy-vnPanelRise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+/* 看全图：卷文滑出、命数隐去，整张场景画无遮 */
+.wy-root .play.vn.peek .vn-panel { transform: translateY(100%); opacity: 0; pointer-events: none; }
+.wy-root .play.vn.peek .vn-vitals { opacity: 0; pointer-events: none; }
+.wy-root .vn-panel-head { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 10px; }
+.wy-root .vn-label-col { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.wy-root .vn-scene-label {
+  font-family: var(--font-display); font-size: 0.94rem; letter-spacing: 0.12em;
+  color: var(--gold-bright); text-shadow: 0 0 12px rgba(203, 168, 90, 0.25);
+}
+/* 关键节点就地轻标记：题签上缀「命运抉择」鎏金眉标即可，替代原每 4 回合的弹卡（不再加面板辉光——它会沿浮层透明上沿浮出一道金线） */
+.wy-root .vn-keymark {
+  font-family: var(--font-display);
+  font-size: 0.72rem; letter-spacing: 0.28em; text-indent: 0.28em;
+  color: var(--gold-bright); text-shadow: 0 0 12px rgba(203, 168, 90, 0.55);
+}
+.wy-root .vn-zoom {
+  margin-left: auto; width: 30px; height: 30px; padding: 0;
+  display: grid; place-items: center; font-size: 0.82rem;
+  color: var(--gold); background: rgba(8, 11, 24, 0.5);
+  border: 1px solid var(--line-strong); border-radius: 7px;
+}
+.wy-root .vn-zoom:hover { color: var(--gold-bright); border-color: var(--gold); }
+.wy-root .vn-ambition { margin: 0 0 10px; }
+.wy-root .vn-body { flex: 1; min-height: 0; overflow-y: auto; padding-right: 4px; }
+/* 流式剧情时若用户上翻阅读，底部悬浮「下方有新内容」按钮：不自动滚动，点它回到底部并重新跟随 */
+.wy-root .vn-body .vn-new-content {
+  position: sticky;
+  bottom: 12px;
+  z-index: 8;
+  width: max-content;
+  margin: 12px auto 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: rgba(201, 160, 92, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #1b1b2f;
+  font-size: 0.82rem;
+  font-weight: 600;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.42);
+  cursor: pointer;
+  transition: background .15s ease, transform .15s ease;
+}
+.wy-root .vn-body .vn-new-content:hover { background: #e6c178; transform: translateY(-1px); }
+
+/* 刚才的抉择与他人反馈：作为新场景的承接引子，敛色置于卷文之首 */
+.wy-root .vn-recap {
+  margin: 0 0 9px; padding: 0 0 8px;
+  border-bottom: 1px dashed rgba(203, 168, 90, 0.2); opacity: 0.85;
+}
+.wy-root .vn-recap .picked { margin: 0; }
+/* 卷文排印：浮层上更舒展的行气与字距，霞鹜文楷读来如笔录 */
+.wy-root .vn-prose .narrative {
+  text-indent: 2em;
+  font-size: calc(17.5px * var(--font-scale));
+  line-height: 1.85;
+  letter-spacing: 0.02em;
+  color: #e6e7f4;
+  margin: 0;
+}
+/* 段间留白：多段叙事时各段相隔，呼吸更从容 */
+.wy-root .vn-prose .narrative + .narrative { margin-top: 0.7em; }
+/* 承接引子：你上一步的抉择与回响，字小、敛色、留出与新场景的间隔 */
+.wy-root .vn-recap .picked { font-size: calc(0.9rem * var(--font-scale)); }
+.wy-root .vn-recap .reaction { font-size: calc(0.92rem * var(--font-scale)); line-height: 1.85; }
+.wy-root .vn .choices { padding-top: 12px; }
+/* 选项正文在浮层上略放大、更清晰 */
+.wy-root .vn .choice-text { font-size: calc(17.5px * var(--font-scale)); line-height: 1.8; }
+.wy-root .vn-meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+  margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line);
+}
+.wy-root .vn-meta .inventory, .wy-root .vn-meta .memory { margin: 0; padding: 0; }
+
+/* 窄屏：卷文更高、HUD 收紧 */
+@media (max-width: 560px) {
+  /* margin-inline auto：left/right 同为 0 且限宽时水平居中（否则贴左，右缘留空条） */
+  /* 卷文更高：手机端不再只有下半边——面板上沿仅让出标题 HUD（返回图标+剧本名），
+     属性栏已移入面板顶部，不存在再被面板上沿盖住的问题；
+     高度以 calc(100dvh-80px) 封顶：确保面板上沿落在标题 HUD 之下（较矮屏也不重叠），同时内容区最大 */
+  .wy-root .vn-panel {
+    height: clamp(340px, min(calc(100dvh - 80px), 92vh), 92vh);
+    max-height: none;
+    min-height: 0;
+    width: 96vw;
+    margin-bottom: 10px;
+    margin-inline: auto;
+    padding-top: 26px;
+    padding-bottom: 12px;
+    background: linear-gradient(to bottom,
+      rgba(8, 11, 20, 0.5) 0%,
+      rgba(8, 11, 20, 0.82) 8%,
+      rgba(7, 9, 17, 0.94) 30%,
+      rgba(5, 7, 14, 0.99) 100%);
+  }
+  .wy-root .vn-vitals { gap: 6px 8px; }
+  .wy-root .vn-vital { padding: 2px 9px; font-size: 0.74rem; }
+  .wy-root .vn-title { font-size: 0.98rem; }
+}
+
+/* 横屏矮视口（手机横持）：上述窄屏规则不命中（宽>560），走的是桌面 86vh——
+   在 380px 高的屏上卷文会盖掉几乎整幅画。收紧 HUD 与卷文各处纵向内距，限高让画面露出 */
+@media (orientation: landscape) and (max-height: 520px) {
+  .wy-root .vn-hud { padding-top: 8px; gap: 5px; }
+  .wy-root .vn-panel { max-height: 76vh; padding-top: 24px; padding-bottom: 10px; }
+  .wy-root .vn-panel-head { margin-bottom: 6px; }
+  .wy-root .vn-path { padding-bottom: 5px; }
+  .wy-root .vn .choices { padding-top: 8px; gap: 6px; }
+  .wy-root .vn .choice { padding: 9px 14px 9px 18px; }
+}
+
+@media (max-width: 600px) {
+  .wy-root { font-size: 15px; }
+  .wy-root .play { height: calc(100dvh - 40px); }
+  .wy-root .logo { font-size: 3.4rem; }
+  .wy-root .seal { right: -1.1em; }
+}
+
+/* 窄屏收藏进度条：允许换行、收紧间距，繁体/大字号下也不挤爆 */
+@media (max-width: 480px) {
+  .wy-root .collection-strip {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 16px;
+    padding: 10px 14px;
+  }
+  .wy-root .cs-gauge { min-width: 116px; flex: 1 1 40%; }
+}
+
+/* ── 触屏设备：hover 才浮现的信息改为常显，指尖无从悬停 ── */
+@media (hover: none) {
+  /* 圆钮触控目标放大到 40px（桌面保持 34 的紧凑感），指尖点得中 */
+  .wy-root .lang-toggle, .wy-root .play-menu-btn, .wy-root .vn-eye { width: 40px; height: 40px; }
+  .wy-root .vn-zoom { width: 38px; height: 38px; }
+  /* 浮层的关闭叉：指尖点得中 */
+  .wy-root .memoir-close, .wy-root .ed-close { min-width: 40px; min-height: 40px; }
+  /* 选关卡的「已历结局」计数 */
+  .wy-root .card-seen { opacity: 1; }
+  /* 结局图鉴已历卡的「历」印 */
+  .wy-root .gal-tile-seal { opacity: 1; }
+  /* 字号档位按钮触控目标加大 */
+  .wy-root .font-scale-btn { padding: 7px 14px; }
+  .wy-root .font-scale.compact .font-scale-btn { padding: 6px 12px; }
+}
+
+/* ── 减少动态效果（系统偏好）：星穹止转、辉光敛息，仪式让位于安定 ──
+   一律压到 0.01ms 而非 none：入场动画瞬间到位、信息不丢；
+   命数变色（bump）例外——它靠动画回落到常色，直接压缩会让「刚变过」的提示一闪即逝 */
+@media (prefers-reduced-motion: reduce) {
+  .wy-root *, .wy-root *::before, .wy-root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .wy-root .vn-vital-val.bump-up { animation: wy-bumpUp 1.8s ease-out both !important; }
+  .wy-root .vn-vital-val.bump-down { animation: wy-bumpDown 1.8s ease-out both !important; }
+  /* 罗盘缓旋豁免：60~90s 一圈近乎静止，非致不适的剧烈运动，且为首页身份所系。
+     注意 RDP/远程桌面会话会让系统报告 reduce——若一刀切，远程用户首页即成死图。
+     时长与上方罗盘一节保持一致，改动时两处同步 */
+  .wy-root .home-banner .ticks { animation: wy-spin 60s linear infinite !important; }
+  .wy-root .home-banner .ticks.fine { animation: wy-spinRev 90s linear infinite !important; }
+  .wy-root .home-banner .inner { animation: wy-spin 75s linear infinite !important; }
+  .wy-root .home-banner .orbit { animation: wy-spin 60s linear infinite !important; }
+  .wy-root .home-banner .orbit .g { animation: wy-spinRev 60s linear infinite !important; }
+
+  /* 闪亮不是运动：辉光/星闪等纯明暗动画不含位移，reduce 下保留（规范针对的是移动、
+     旋转、缩放这类前庭刺激）；旋转揭晓类降级为「淡入 + 辉光」，时刻仍在、眩转不再 */
+  .wy-root::before { animation: wy-twinkle 7s ease-in-out infinite alternate !important; }
+  .wy-root .logo { animation: wy-fadeIn 0.01ms both, wy-logoGlow 4.5s ease-in-out infinite alternate !important; }
+  .wy-root .grade-badge.grade-S { animation: wy-gradeShine 2.6s ease-in-out infinite alternate !important; }
+  .wy-root .fate-card-inner {
+    animation: wy-fadeIn 0.5s ease-out both, wy-fateGlow 3.4s ease-in-out 0.5s infinite alternate !important;
+  }
+  .wy-root .badge-show-img {
+    animation: wy-fadeIn 0.45s ease-out both, wy-badgeGlow 3.5s ease-in-out 0.45s infinite alternate !important;
+  }
+  .wy-root .ach-unlock-chip { animation: wy-fadeIn 0.4s ease-out backwards !important; }
+  .wy-root .seal-mark { animation: wy-fadeIn 0.4s 0.45s ease-out backwards !important; }
+  .wy-root .ending-detail { animation: wy-fadeIn 0.4s ease-out both !important; }
+}
+/* badgeFloat 的去位移版：只呼吸辉光，不上下浮（reduce 模式徽章弹层用） */
+@keyframes wy-badgeGlow {
+  to { filter: drop-shadow(0 0 60px rgba(236, 210, 143, 0.75)); }
+}
+/* —— AI 生成剧本 —— */
+.wy-root .gen-card { border-style: dashed; border-color: var(--cinnabar); }
+.wy-root .gen-card:hover { border-color: var(--cinnabar-bright); }
+.wy-root .gen-card .scenario-emoji { color: var(--cinnabar-bright); }
+
+.wy-root .modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(6, 8, 18, 0.74);
+  backdrop-filter: blur(3px);
+  animation: wy-fadeUp 0.2s ease-out both;
+}
+/* 仅定尺寸与内距；背景/圆角/辉光/标题描金由上方「弹窗 = 器物」块统一负责，
+   此处不得再写视觉属性——同名选择器后到者会把器物感整块覆盖掉（曾实际发生） */
+.wy-root .modal {
+  width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 26px 26px 22px;
+  border: 1px solid var(--line-strong);
+}
+.wy-root .modal h3 { margin: 0 0 6px; }
+.wy-root .share-modal { max-width: 720px; }
+.wy-root .share-modal h3 { text-align: center; color: var(--gold); letter-spacing: 0.06em; }
+/* 左右两栏：左卡图、右操作+社交。窄屏堆叠（见末尾媒体查询） */
+.wy-root .share-modal-body { display: flex; gap: 22px; align-items: flex-start; margin-top: 14px; }
+.wy-root .share-preview {
+  flex: 0 0 300px;
+  max-width: 300px;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(201, 160, 92, 0.08), transparent 70%),
+    rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(201, 160, 92, 0.28);
+  border-radius: 6px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+.wy-root .share-preview img {
+  width: 100%;
+  height: auto;
+  max-height: 62vh;
+  object-fit: contain;
+  display: block;
+  animation: wy-fadeUp 0.25s ease-out both;
+}
+.wy-root .share-side { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-self: stretch; }
+.wy-root .share-loading, .wy-root .share-err { color: var(--muted); padding: 60px 0; font-size: 0.9rem; letter-spacing: 0.08em; }
+.wy-root .share-loading { animation: wy-pulse 1.2s ease-in-out infinite; }
+.wy-root .share-err { color: var(--cinnabar-bright); }
+.wy-root .share-msg { margin: 8px 0 0; color: var(--gold); font-size: 0.86rem; min-height: 1.1em; }
+.wy-root .share-modal-actions { display: flex; gap: 8px; }
+.wy-root .share-modal-actions .primary { flex: 2 1 0; }
+/* 窄屏上「保存图片 ⤓」的箭头会被挤到第二行，两个按钮一高一矮。钉死不折行，
+   宽度由 flex 分配，字号在放不下时自己收 */
+.wy-root .share-modal-actions button { flex: 1 1 0; white-space: nowrap; padding-inline: 10px; }
+.wy-root .share-system-row { margin-top: 10px; }
+.wy-root .share-system-row button { width: 100%; }
+.wy-root .share-tip.fallback { margin-top: 8px; color: var(--gold); }
+.wy-root .share-social { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+.wy-root .share-social-label { display: block; color: var(--muted); font-size: 0.76rem; margin-bottom: 9px; letter-spacing: 0.05em; }
+.wy-root .share-social-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.wy-root .share-social-row button {
+  flex: 0 1 auto;
+  font-size: 0.82rem;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: rgba(201, 160, 92, 0.06);
+  border-color: rgba(201, 160, 92, 0.3);
+  transition: background 0.15s, border-color 0.15s;
+}
+.wy-root .share-social-row button:hover { background: rgba(201, 160, 92, 0.16); border-color: rgba(201, 160, 92, 0.55); }
+.wy-root .share-tip { margin: 14px 0 0; color: var(--muted); font-size: 0.74rem; line-height: 1.6; opacity: 0.85; }
+.wy-root .share-close { margin-top: auto; align-self: flex-end; padding-left: 22px; padding-right: 22px; }
+@media (max-width: 600px) {
+  .wy-root .share-modal-body { flex-direction: column; gap: 16px; }
+  .wy-root .share-preview { flex: none; max-width: 100%; align-self: center; }
+  .wy-root .share-close { align-self: stretch; }
+}
+.wy-root .gen-modal input[type='text'], .wy-root .gen-modal input:not([type]), .wy-root .gen-modal input[type='password'] { width: 100%; }
+.wy-root .suggest-row { display: flex; flex-wrap: wrap; gap: 8px; margin: -6px 0 4px; }
+.wy-root .gen-config { margin: 14px 0; border-top: 1px solid var(--line); padding-top: 8px; }
+.wy-root .gen-config summary { cursor: pointer; color: var(--paper-dim); font-size: 0.85rem; }
+.wy-root .gen-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 4px;
+  color: var(--cinnabar-bright);
+  font-size: 0.9rem;
+}
+.wy-root .gen-actions { justify-content: flex-end; }
+.wy-root .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(224, 96, 63, 0.3);
+  border-top-color: var(--cinnabar-bright);
+  border-radius: 50%;
+  animation: wy-spin 0.8s linear infinite; /* spin 关键帧定义在首页罗盘一节 */
+}
+
+/* 小愈集成：文游返回按钮（固定左上角，仅保留返回箭头图标，触发区保持 40px 便于手机点按） */
+.wy-root .wy-back{position:fixed;top:12px;left:12px;z-index:120;width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.88);border:1px solid #d8cbb0;color:#5b4a2e;border-radius:999px;backdrop-filter:blur(6px);box-shadow:0 1px 4px rgba(0,0,0,.08);cursor:pointer;}
+.wy-root .wy-back:active{transform:scale(.94);}
+.wy-root .wy-back .wy-back-arrow{font-size:20px;line-height:1;}
+
+/* 剧本导入引导：下载示例 + 格式图示（非技术用户友好） */
+.wy-root .import-help {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.wy-root .import-help-btn {
+  padding: 8px 18px;
+  border: 1px solid var(--jade);
+  border-radius: var(--radius);
+  color: var(--jade);
+  background: rgba(111, 174, 155, 0.08);
+  font-size: 0.84rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.wy-root .import-help-btn:hover { background: rgba(111, 174, 155, 0.18); }
+.wy-root .import-help-details { width: 100%; max-width: 640px; }
+.wy-root .import-help-details summary {
+  cursor: pointer;
+  text-align: center;
+  color: var(--paper-dim);
+  font-size: 0.84rem;
+  letter-spacing: 0.06em;
+}
+.wy-root .import-help-details p {
+  color: var(--paper-dim);
+  font-size: 0.8rem;
+  text-align: center;
+  margin: 8px 0;
+}
+.wy-root .import-help-details pre {
+  background: rgba(8, 11, 24, 0.62);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-size: 0.72rem;
+  line-height: 1.7;
+  overflow-x: auto;
+  white-space: pre;
+  color: #cdd6c8;
+}
+
+/* 自建剧本表单（ScenarioCreator） */
+.wy-root .creator-modal { max-width: 640px; max-height: 88vh; overflow-y: auto; }
+.wy-root .creator-modal label { display: block; margin: 10px 0 4px; color: var(--paper-dim); font-size: 0.84rem; letter-spacing: 0.04em; }
+.wy-root .creator-modal input:not([type]),
+.wy-root .creator-modal input[type='text'],
+.wy-root .creator-modal input[type='number'],
+.wy-root .creator-modal textarea,
+.wy-root .creator-modal select {
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.92);
+  /* 白底必须配深色文字（--paper 是深色主题的浅色文字，直接用于白底会对比度不足） */
+  color: #2b2e3d;
+  font-size: 0.84rem;
+}
+.wy-root .creator-modal input::placeholder,
+.wy-root .creator-modal textarea::placeholder {
+  color: #8b8fa8;
+  opacity: 1;
+}
+.wy-root .creator-modal textarea { resize: vertical; }
+.wy-root .creator-modal fieldset { border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 10px 12px; margin: 12px 0 0; }
+.wy-root .creator-modal legend { color: var(--paper-dim); font-size: 0.8rem; letter-spacing: 0.06em; padding: 0 6px; }
+.wy-root .creator-row { display: flex; gap: 6px; margin: 6px 0; align-items: center; }
+.wy-root .creator-row input:not([type]),
+.wy-root .creator-row input[type='text'],
+.wy-root .creator-row input[type='number'] { margin-top: 0; flex: 1; min-width: 0; }
+.wy-root .creator-row .creator-num { flex: 0 0 64px; }
+.wy-root .creator-row .creator-wide { flex: 1.6; }
+.wy-root .creator-row .creator-select { flex: 0 0 auto; margin-top: 0; width: auto; }
+.wy-root .creator-row .creator-attr { flex: 0 0 120px; }
+.wy-root .creator-del {
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid transparent; border-radius: 50%;
+  color: var(--paper-dim); background: transparent; cursor: pointer;
+}
+.wy-root .creator-del:hover { color: var(--cinnabar-bright); background: rgba(201, 80, 58, 0.08); border-color: rgba(201, 80, 58, 0.3); }
+.wy-root .creator-add {
+  margin-top: 8px;
+  padding: 6px 14px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--paper-dim);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.wy-root .creator-add:hover { border-color: var(--jade); color: var(--jade); }

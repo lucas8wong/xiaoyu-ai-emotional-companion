@@ -1,0 +1,81 @@
+{
+  "generatedAt": "2026-09-14 19:16:38",
+  "note": "程序合成、免版权；如需改用精选 CC0 素材，覆盖同名文件并在 items[].source/license 里更新登记",
+  "items": [
+    {
+      "id": "rain-soft",
+      "label": "雨（窗外细雨）",
+      "file": "rain-soft.wav",
+      "loop": true,
+      "seconds": 6.0,
+      "sampleRate": 22050,
+      "rmsDbfs": -26.3,
+      "peak": 0.399,
+      "seamDelta": 0.0049,
+      "bytes": 264644,
+      "source": "procedural-synth (numpy)",
+      "license": "self-generated, no third-party rights",
+      "script": "scripts/generate_ambience.py"
+    },
+    {
+      "id": "wind-low",
+      "label": "风（低沉风声）",
+      "file": "wind-low.wav",
+      "loop": true,
+      "seconds": 8.0,
+      "sampleRate": 22050,
+      "rmsDbfs": -27.4,
+      "peak": 0.179,
+      "seamDelta": 0.0005,
+      "bytes": 352844,
+      "source": "procedural-synth (numpy)",
+      "license": "self-generated, no third-party rights",
+      "script": "scripts/generate_ambience.py"
+    },
+    {
+      "id": "room-soft",
+      "label": "室内底噪（房间感）",
+      "file": "room-soft.wav",
+      "loop": true,
+      "seconds": 6.0,
+      "sampleRate": 22050,
+      "rmsDbfs": -30.1,
+      "peak": 0.129,
+      "seamDelta": 0.0032,
+      "bytes": 264644,
+      "source": "procedural-synth (numpy)",
+      "license": "self-generated, no third-party rights",
+      "script": "scripts/generate_ambience.py"
+    },
+    {
+      "id": "clock-tick",
+      "label": "钟摆滴答",
+      "file": "clock-tick.wav",
+      "loop": true,
+      "seconds": 6.5,
+      "sampleRate": 22050,
+      "rmsDbfs": -34.1,
+      "peak": 0.98,
+      "seamDelta": 0.0,
+      "bytes": 286694,
+      "source": "procedural-synth (numpy)",
+      "license": "self-generated, no third-party rights",
+      "script": "scripts/generate_ambience.py"
+    },
+    {
+      "id": "thunder-far",
+      "label": "远处雷声（一次性）",
+      "file": "thunder-far.wav",
+      "loop": false,
+      "seconds": 3.6,
+      "sampleRate": 22050,
+      "rmsDbfs": -16.0,
+      "peak": 0.897,
+      "seamDelta": 0.0537,
+      "bytes": 158804,
+      "source": "procedural-synth (numpy)",
+      "license": "self-generated, no third-party rights",
+      "script": "scripts/generate_ambience.py"
+    }
+  ]
+}

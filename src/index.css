@@ -1,0 +1,685 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* —— 自托管字体（本地 woff2，避免外部 fonts.googleapis 阻塞首屏） —— */
+@font-face {
+  font-family: 'Nunito Sans';
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url('/fonts/NunitoSans-var.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Varela Round';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/VarelaRound.woff2') format('woff2');
+}
+
+:root {
+  /* —— 混合主题 Token：Claymorphism × Organic Biophilic × Vibrant Block —— */
+  --color-primary: #1FA46B;
+  --color-primary-rgb: 31 164 107;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-strong: #178353;
+  --color-primary-strong-rgb: 23 131 83;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-text: #167F50;   /* 品牌色的「文字档」：浅底上的品牌色文字用它（白底 5.04:1、奶油底 4.68:1） */
+  --color-primary-text-rgb: 22 127 80;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-soft: #DCFCE7;
+  --color-primary-soft-rgb: 220 252 231;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-lighter: #F0FDF4;
+  --color-primary-lighter-rgb: 240 253 244;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-accent: #F59E0B;
+  --color-accent-rgb: 245 158 11;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-accent-soft: #FEF3C7;
+  --color-accent-soft-rgb: 254 243 199;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-bg: #FBF6EE;
+  --color-bg-rgb: 251 246 238;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-surface: #FFFFFF;
+  --color-surface-rgb: 255 255 255;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-fg: #243B2E;
+  --color-fg-rgb: 36 59 46;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-muted: #F1EADC;
+  --color-muted-rgb: 241 234 220;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-muted-fg: #667085;
+  --color-muted-fg-rgb: 102 112 133;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-border: #DCE8D5;
+  --color-border-rgb: 220 232 213;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-ring: #1FA46B;
+  --color-ring-rgb: 31 164 107;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+
+  /* —— 皮肤变量（默认=原版，healing/zen 在下方按 <html data-skin> 覆盖） —— */
+  --skin-bg-image: none;
+  --skin-hero-image: none;
+  /* 氛围背景浅色罩：alpha=深浅（0=背景图明显/深，1=全浅/背景几乎不可见）；color=罩的 RGB */
+  --skin-bg-wash: 0;
+  --skin-bg-wash-color: 244 241 252;
+  --skin-display-font: "Varela Round", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+
+  /* —— 白板（白色卡片）背景透明度：0=全透，1=不透；默认=中度透明(0.8)，在「界面外观」可调 —— */
+  --card-bg-alpha: 0.8;
+
+  font-family: "Nunito Sans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+  color: var(--color-fg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* —— 界面皮肤（用户可选外观）：通过 <html data-skin> 切换 —— */
+/* 小愈治愈系：奶油底 + 薄荷绿 + 琥珀，晨光电影感插画 */
+:root[data-skin="healing"] {
+  --color-primary: #1FA46B;
+  --color-primary-rgb: 31 164 107;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-strong: #178353;
+  --color-primary-strong-rgb: 23 131 83;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-text: #167F50;   /* 品牌色的「文字档」：浅底上的品牌色文字用它（白底 5.04:1、奶油底 4.68:1） */
+  --color-primary-text-rgb: 22 127 80;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-soft: #DCFCE7;
+  --color-primary-soft-rgb: 220 252 231;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-lighter: #F0FDF4;
+  --color-primary-lighter-rgb: 240 253 244;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-accent: #F59E0B;
+  --color-accent-rgb: 245 158 11;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-accent-soft: #FEF3C7;
+  --color-accent-soft-rgb: 254 243 199;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-bg: #FBF6EE;
+  --color-bg-rgb: 251 246 238;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-fg: #243B2E;
+  --color-fg-rgb: 36 59 46;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-muted: #F1EADC;
+  --color-muted-rgb: 241 234 220;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-muted-fg: #667085;
+  --color-muted-fg-rgb: 102 112 133;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-border: #DCE8D5;
+  --color-border-rgb: 220 232 213;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-ring: #1FA46B;
+  --color-ring-rgb: 31 164 107;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --skin-bg-image: url("/skins/healing/bg.webp?v=3");
+  --skin-hero-image: url("/skins/healing/hero.webp?v=3");
+  --skin-bg-wash-color: 251 246 238;
+  --skin-display-font: "Varela Round", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+}
+
+/* 东方禅意：宣纸米白 + 墨绿 + 鎏金，留白、书法、远山月 */
+:root[data-skin="zen"] {
+  --color-primary: #3E5B4C;
+  --color-primary-rgb: 62 91 76;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-strong: #2F463B;
+  --color-primary-strong-rgb: 47 70 59;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-text: #2F463B;   /* 复用 strong：实测白底 10.19:1、皮肤底 9.05:1 已达标（先复用再新增） */
+  --color-primary-text-rgb: 47 70 59;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-soft: #E7ECE4;
+  --color-primary-soft-rgb: 231 236 228;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-lighter: #F3F6F0;
+  --color-primary-lighter-rgb: 243 246 240;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-accent: #B98A3E;
+  --color-accent-rgb: 185 138 62;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-accent-soft: #F1E7D4;
+  --color-accent-soft-rgb: 241 231 212;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-bg: #F7F1E3;
+  --color-bg-rgb: 247 241 227;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-fg: #2E2B25;
+  --color-fg-rgb: 46 43 37;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-muted: #EDE6D6;
+  --color-muted-rgb: 237 230 214;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-muted-fg: #8A8272;
+  --color-muted-fg-rgb: 138 130 114;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-border: #D9CDB6;
+  --color-border-rgb: 217 205 182;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-ring: #3E5B4C;
+  --color-ring-rgb: 62 91 76;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --skin-bg-image: url("/skins/zen/bg.webp?v=3");
+  --skin-hero-image: url("/skins/zen/hero.webp?v=3");
+  --skin-bg-wash-color: 247 241 227;
+  --skin-display-font: "Songti SC", "Noto Serif SC", STSong, "SimSun", serif;
+}
+
+/* 星空：深蓝夜幕 + 星光 + 奶油暖，梦幻温柔治愈 */
+:root[data-skin="star"] {
+  --color-primary: #3A2E7E;
+  --color-primary-rgb: 58 46 126;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-strong: #1B1E5C;
+  --color-primary-strong-rgb: 27 30 92;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-text: #1B1E5C;   /* 复用 strong：实测 15.14:1 / 13.43:1 已达标 */
+  --color-primary-text-rgb: 27 30 92;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-soft: #E8E4FA;
+  --color-primary-soft-rgb: 232 228 250;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-lighter: #F5F2FD;
+  --color-primary-lighter-rgb: 245 242 253;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-accent: #C9922E;
+  --color-accent-rgb: 201 146 46;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-accent-soft: #F7EBCB;
+  --color-accent-soft-rgb: 247 235 203;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-bg: #F2F0FA;
+  --color-bg-rgb: 242 240 250;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-fg: #1B1E5C;
+  --color-fg-rgb: 27 30 92;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-muted: #E6E1F5;
+  --color-muted-rgb: 230 225 245;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-muted-fg: #5A5F8C;
+  --color-muted-fg-rgb: 90 95 140;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-border: #CFCAEF;
+  --color-border-rgb: 207 202 239;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-ring: #3A2E7E;
+  --color-ring-rgb: 58 46 126;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --skin-bg-image: url("/skins/star/bg.webp?v=3");
+  --skin-bg-wash: 0.72;
+  --skin-bg-wash-color: 244 241 252;
+  --skin-hero-image: none;
+  --skin-display-font: "Varela Round", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+}
+
+/* 棉花糖：马卡龙粉紫蓝黄 · 软萌治愈少女心 */
+:root[data-skin="candy"] {
+  --color-primary: #E289B8;
+  --color-primary-rgb: 226 137 184;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-strong: #BC4A8B;
+  --color-primary-strong-rgb: 188 74 139;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-text: #AF4180;   /* candy 的 strong 在浅粉底只有 3.22:1 → 压亮度到 4.53:1（白底 4.86:1），色相不变 */
+  --color-primary-text-rgb: 175 65 128;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-soft: #FBE7F1;
+  --color-primary-soft-rgb: 251 231 241;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-primary-lighter: #FDF2F7;
+  --color-primary-lighter-rgb: 253 242 247;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-accent: #A48FE0;
+  --color-accent-rgb: 164 143 224;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-accent-soft: #F1ECFC;
+  --color-accent-soft-rgb: 241 236 252;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-bg: #FFF4F9;
+  --color-bg-rgb: 255 244 249;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-fg: #7A4B6E;
+  --color-fg-rgb: 122 75 110;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-muted: #FBEAF2;
+  --color-muted-rgb: 251 234 242;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-muted-fg: #905F7F;
+  --color-muted-fg-rgb: 144 95 127;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-border: #F2D7E8;
+  --color-border-rgb: 242 215 232;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --color-ring: #E289B8;
+  --color-ring-rgb: 226 137 184;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
+  --skin-bg-image: url("/skins/candy/bg.webp?v=2");
+  --skin-bg-wash: 0.32;
+  --skin-bg-wash-color: 255 244 249;
+  --skin-hero-image: none;
+  --skin-display-font: "Varela Round", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+}
+
+/* ── 手机端：氛围背景用竖版（其它不变；桌面仍用横版） ── */
+@media (max-width: 640px) {
+  :root[data-skin="healing"] { --skin-bg-image: url("/skins/healing/bg-portrait.webp?v=3"); }
+  :root[data-skin="zen"] { --skin-bg-image: url("/skins/zen/bg-portrait.webp?v=3"); }
+  :root[data-skin="star"] { --skin-bg-image: url("/skins/star/bgPortrait.webp?v=3"); }
+  :root[data-skin="candy"] { --skin-bg-image: url("/skins/candy/bgPortrait.webp?v=2"); }
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+}
+
+/* —— 全局：消除 iOS Safari 的「聚焦小字号输入框自动放大页面」（auto-zoom）——
+   在 iOS Safari 上，聚焦 font-size < 16px 的 input/textarea 会触发页面自动缩放，
+   导致整页被放大/平移、输入框跳出可视区、页面可上下左右拖动、键盘弹起时露出空白背景。
+   这里在 iOS/WebKit 下把输入控件字号统一提到 ≥16px 来规避（仅 iOS 生效，不影响其它平台）。
+   注意：此规则不带 @layer，属于非分层样式，会覆盖 Tailwind 的 text-sm/text-[15px] 等分层工具类。 */
+@supports (-webkit-touch-callout: none) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* 触屏命中区扩展：只扩垂直方向（left/right 保持 0），因为同一行相邻控件的间隙通常只有 6–8px，
+   水平一扩就会让两个命中区叠在一起 —— better-accessibility 明确规定不许重叠。
+   可见尺寸完全不变，只让手指更好按。 */
+.tap-y { position: relative; }
+.tap-y::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: max(100%, 44px);
+  transform: translateY(-50%);
+}
+
+/* 展示字体：标题走皮肤字体（可随皮肤切换 Varela Round / 宋体等） */
+h1, h2 {
+  font-family: var(--skin-display-font, "Varela Round", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif);
+  letter-spacing: -0.01em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html { scroll-behavior: auto; }
+}
+
+button, [role="button"], a { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+
+/* —— 剧情场景氛围（S4 伪动效）：只用 CSS 光效 + 少量粒子，零算力、零额外请求 ——
+   粒子上限 24（见 src/lib/storyFx.ts 的 FX_BUDGET）；reduced-motion 由上面的全局规则兜底，
+   组件层还会在 reduced-motion / 极低端机时**直接不渲染**（连 DOM 都不建）。 */
+.rp-fx-layer { position: absolute; inset: 0; pointer-events: none; }
+.rp-fx-streak {
+  position: absolute; top: -14%; width: 1.5px; height: 15%;
+  background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,.55) 45%, rgba(255,255,255,0) 100%);
+  animation: rp-fx-rain linear infinite;
+  will-change: transform;
+}
+.rp-fx-mote {
+  position: absolute; border-radius: 999px;
+  background: rgba(255,246,230,.5);
+  animation: rp-fx-drift ease-in-out infinite;
+  will-change: transform, opacity;
+}
+.rp-fx-flicker { animation: rp-fx-flicker 4.2s ease-in-out infinite; }
+@keyframes rp-fx-rain {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-8%, 128%, 0); }
+}
+@keyframes rp-fx-drift {
+  0% { transform: translate3d(0, 0, 0) scale(.9); opacity: 0; }
+  22% { opacity: .5; }
+  100% { transform: translate3d(7%, -18%, 0) scale(1.18); opacity: 0; }
+}
+@keyframes rp-fx-flicker {
+  0%, 100% { opacity: .42; }
+  42% { opacity: .68; }
+  58% { opacity: .5; }
+  72% { opacity: .62; }
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: var(--color-primary-soft); background: color-mix(in srgb, var(--color-primary) 38%, var(--color-bg)); border-radius: 999px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+@layer components {
+  /* 黏土卡片：白底 + 双阴影 + 厚描边 + 大圆角 */
+  .card-soft {
+    @apply bg-white rounded-3xl border-2 border-clay-border shadow-soft;
+  }
+  /* 白板卡片：白色背景随「界面外观 → 卡片透明度」统一调节（默认中度透明，透出皮肤氛围背景） */
+  .card-white {
+    background-color: rgba(255, 255, 255, var(--card-bg-alpha, 0.38));
+  }
+  /* 浮层提示卡（首页底部的「保存/安装到桌面」提示、今日打卡提示这类**临时浮层**）：
+     给**可读性下限 0.9** —— 它们压在 hero 插画/渐变上，带 11px 小字与按钮，不能跟着内容卡一起透。
+     为什么必须有下限（2026-09-27 用户反馈「保存到手机桌面的提示背景太透了」）：
+     新用户走 DEFAULT_CARD_BG_ALPHA = 0.38（见 src/lib/skin.ts）。在 390×844 上实测（脚本
+     temp/verify-install-banner/measure.mjs：把卡隐藏、截下它背后那 358×160 的真实像素再合成）：
+       标题  #1F2937：0.38 → 最暗处 2.5:1 / 平均 6.5:1   |  0.9 → 11.7:1 / 11.7:1
+       说明字 #667085：0.38 → 最暗处 1.2:1 / 平均 2.2:1   |  0.9 → 4.0:1 / 4.4:1（白底满不透也只有 4.97）
+     下限 0.9 不是为了「好看」，是让这张卡在任何 hero 底下都不再是一层纱；滑块**往上（更不透）仍有效**，
+     往下不再更透——浮层是"看一眼做决定的提示"，不是可翻阅的内容卡，可读性优先。
+     ⚠️ 说明字（11px #667085）要真正到 AA 4.5:1 需要下限 ≈0.96（或把字色换深），本轮只动背景、未动字色。 */
+  .card-white-toast {
+    background-color: rgba(255, 255, 255, clamp(0.9, var(--card-bg-alpha, 0.38), 1));
+  }
+  /* 正文卡（剧情浏览首页的「角色介绍 / 背景故事 / 开场剧情」这类**大段文字**的卡片）：
+     与 card-white 一样随滑块变透，但给一个**可读性下限 0.48**。
+     为什么必须有下限（2026-09-15 实测）：滑块拉到 0 时卡片完全透明，14px 长正文直接压在场景图上，
+     明暗交界处直接读不清（截图 temp/verify-scene-art/24-detail-alpha-0.png）。
+     ⚠️ 曾靠 blur(16px) 把下限放宽到 0.32；用户 2026-09-15 要求去掉虚化后**必须收回到 0.48**
+     （没有虚化时 0.32 会糊）。
+     聊天气泡不受此限（短句 + 毛玻璃已够）；这几张是长正文，必须有底。 */
+  .card-white-readable {
+    background-color: rgba(255, 255, 255, clamp(0.48, var(--card-bg-alpha, 0.38), 1));
+  }
+  /* ⚠️ Tailwind 层级顺序的坑（2026-09-15 用户实测踩到）：
+     `card-white`（components 层）**会被同一元素上的 `bg-*`（utilities 层）覆盖** ——
+     曾因此让首页「聊一聊」卡写成 `card-white … bg-primary-lighter`，结果渲染成**实心浅绿、完全不透**，
+     而旁边同样 `card-white`、只是没有 `bg-*` 的卡片却是透的（用户看到"一个透一个不透"）。
+     → 要让一张卡既有配色又有透明度，配色请走 `background-image`（叠层），**不要用 `bg-*`**，
+       否则会把 `--card-bg-alpha` 整个覆盖掉。
+     主入口的强化改为只靠描边（`border-2 border-primary`）+ 阴影，底色与其它卡一致。 */
+  /* 顶栏/模式行/输入栏这类 **chrome**：给「卡片不透明度」加**下限 0.6**。
+     为什么必须有下限（2026-09-15 实测）：场景图铺满整屏后，chrome 背后变成深色夜景，
+     滑块拉到 0.35 时模式行那行 11px 说明文字对比度只有 3.0:1、拉到 0 时 1.2:1（AA 要求 4.5）；
+     而渐变白纱救不了——到那行小字的位置已经衰减到接近 0。
+     下限 0.6 实测：深色夜景上小字 ≈5:1 ✅（气泡仍可全透，不受此限）。 */
+  .chrome-white {
+    background-color: rgba(255, 255, 255, max(0.6, var(--card-bg-alpha, 0.38)));
+  }
+  /* 顶栏专用：用户要求"顶栏可以更透一点" → **下限 0.25、上限 0.6**：
+     上限的作用是"任何时候都不做成一条实心白条"（默认滑块 80% 时顶栏按 60% 渲染，肉眼就比气泡更透），
+     下限的作用是"别透到图标看不清"。函数用 clamp(min, 滑块值, max)。
+     图标可读性由**顶栏那条固定白纱**（见 RoleplayPage 顶部 scrim）兜底：白纱不吃滑块。 */
+  .chrome-white-top {
+    background-color: rgba(255, 255, 255, clamp(0.18, var(--card-bg-alpha, 0.38), 0.3));
+  }
+  /* 主按钮：深草木绿实心（白字对比度 4.75:1，AA 达标）+ 厚描边 + 按压回弹 */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-primary-strong text-white font-bold rounded-full px-6 py-3 border-2 border-primary-strong shadow-soft transition-all duration-150 hover:bg-primary hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  /* 点缀按钮：浅琥珀底 + 深琥珀描边深字（正向/见证类动作，对比度达标） */
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 bg-amber-50 text-amber-900 font-bold rounded-full px-6 py-3 border-2 border-amber-600 shadow-soft transition-all duration-150 hover:bg-amber-100 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  /* 次级按钮：白底描边 */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 bg-white text-primary-text border-2 border-clay-border font-bold rounded-full px-6 py-3 shadow-inner transition-all duration-150 hover:border-primary hover:text-primary;
+  }
+  .heading-display {
+    @apply font-display font-semibold tracking-tight;
+  }
+  /* 固定背景层：用 position:fixed 元素承载整页氛围图（替代 background-attachment:fixed，避免手机滚动卡顿/底部露白） */
+  .skin-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    /* 提升为 GPU 合成层：快速惯性滚动时背景层始终贴住视口，避免重绘/“漂移”露出底层空白 */
+    transform: translate3d(0, 0, 0);
+    will-change: transform;
+    background-color: var(--color-bg);
+    background-image:
+      linear-gradient(rgb(var(--skin-bg-wash-color) / var(--skin-bg-wash)), rgb(var(--skin-bg-wash-color) / var(--skin-bg-wash))),
+      var(--skin-bg-image),
+      radial-gradient(620px 300px at 12% -6%, rgba(134, 239, 172, 0.40), transparent 60%),
+      radial-gradient(520px 300px at 106% 6%, rgba(253, 230, 138, 0.45), transparent 60%),
+      radial-gradient(700px 420px at 50% 112%, rgba(187, 247, 208, 0.35), transparent 65%);
+    background-size: cover, cover, 620px 300px, 520px 300px, 700px 420px;
+    background-position: center, center, 12% -6%, 106% 6%, 50% 112%;
+    background-repeat: no-repeat;
+  }
+  /* 各页根透明，让固定背景层透出（不再用 background-attachment:fixed） */
+  .bg-brand {
+    background-color: transparent;
+  }
+  /* 🔴 剧情视图首帧兜底（配合 index.html 的启动脚本）：
+     进入剧情时**皮肤层先显示"最近一次看过的剧情背景图"**，避免"先闪皮肤再跳到背景图"。
+     React 挂载后真正的场景层会盖在它上面；离开剧情时 RoleplayPage 卸载会摘掉 data-scene-boot。
+     底色用深色：万一那张图还在下载，也比闪一下浅色皮肤更接近剧情观感。 */
+  html[data-scene-boot] .skin-backdrop {
+    background-color: #14171a;
+    background-image: var(--scene-boot-url, none);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  /* ⚠️ 「正在输入」指示器（.typing-dots）已移到文件末尾的独立一节：
+     它需要自己的 @keyframes 与 reduced-motion 兜底，放在 @layer 里会被 Tailwind 的按需裁剪碰到，
+     而且那套「负延迟 + 基准相」的写法本身就是一份需要就地解释的工艺，见文件末尾「正在输入指示器」。 */
+
+  /* —— 会员弹窗「用量推荐器」的滑块（2026-09-17 视觉重做）——
+     为什么不用 accent-color 一行搞定：accent-color 只能染一条纯色，画不出「品牌色渐变填充 +
+     白珠描边环 + 按下回弹」；而这里是整张卡的主交互（4 条），值得单独一层工艺。
+     **仍然保留原生 <input type="range">** —— 键盘/读屏/触屏惯性全部白拿，只重画轨道与拨钮，
+     无障碍零回退（对比度、焦点环都留）。
+     皮肤感知：空轨 = color-mix(品牌色 × 卡片面)、填充 = --color-primary → --color-primary-strong、
+     珠子 = --color-surface 白 + 品牌色描边 → zen/candy/star 换肤自动跟随，不硬编码灰绿。
+     两个关键实现细节：
+     ① 填充比例由 JS 写进自定义属性 --usage-fill（0–100%）：伪元素能继承自定义属性，
+        所以不必为了进度条再包一层 DOM；Firefox 用原生 ::-moz-range-progress，无需该变量。
+     ② 轨道高度 = 输入框高度（24px）= **触屏命中区**；可见那 8px 亮条靠 background-size 压出来
+        —— input 上不能挂 ::after 扩热区（表单控件不生成伪元素），只能靠自身高度给。 */
+  .usage-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 24px;
+    background: transparent;
+    cursor: pointer;
+  }
+  .usage-slider::-webkit-slider-runnable-track {
+    height: 24px;
+    border-radius: 999px;
+    background-repeat: no-repeat;
+    background-position: left center, left center;
+    background-image:
+      linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-strong) 100%),
+      linear-gradient(
+        color-mix(in srgb, var(--color-primary) 16%, var(--color-surface)),
+        color-mix(in srgb, var(--color-primary) 16%, var(--color-surface))
+      );
+    background-size: var(--usage-fill, 0%) 8px, 100% 8px;
+  }
+  .usage-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+    margin-top: 3px;   /* (24 - 18) / 2：把珠子摆到 8px 亮条正中 */
+    border-radius: 999px;
+    background: var(--color-surface);
+    border: 3px solid var(--color-primary-strong);
+    box-shadow: 0 1px 3px rgba(36, 59, 46, 0.28);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .usage-slider::-moz-range-track {
+    height: 24px;
+    border-radius: 999px;
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-image: linear-gradient(
+      color-mix(in srgb, var(--color-primary) 16%, var(--color-surface)),
+      color-mix(in srgb, var(--color-primary) 16%, var(--color-surface))
+    );
+    background-size: 100% 8px;
+  }
+  .usage-slider::-moz-range-progress {
+    height: 24px;
+    border-radius: 999px;
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-image: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-strong) 100%);
+    background-size: 100% 8px;
+  }
+  .usage-slider::-moz-range-thumb {
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: var(--color-surface);
+    border: 3px solid var(--color-primary-strong);
+    box-shadow: 0 1px 3px rgba(36, 59, 46, 0.28);
+  }
+  /* 焦点：**不摘全局 :focus-visible 的 outline**（键盘可见性优先，绝不静默无焦点——
+     万一某个浏览器不认下面这两条伪元素规则，仍然看得见焦点）；珠子光环只是强化。 */
+  .usage-slider:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-ring) 38%, transparent);
+  }
+  .usage-slider:focus-visible::-moz-range-thumb {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-ring) 38%, transparent);
+  }
+  @media (hover: hover) {
+    .usage-slider:hover::-webkit-slider-thumb { transform: scale(1.06); }
+    .usage-slider:hover::-moz-range-thumb { transform: scale(1.06); }
+  }
+  .usage-slider:active::-webkit-slider-thumb { transform: scale(1.12); }
+  .usage-slider:active::-moz-range-thumb { transform: scale(1.12); }
+
+  /* —— 剧情文本「内容类型」三档（配合 src/lib/roleplayText.ts + RoleplayRichText.tsx）——
+     ① 对白 = 「说出来的话」= **唯一带容器的一档**：独占一行 → 台词卡（墨色 12% 底 + 品牌色 60% 左竖线），
+        夹在句中 → 只留引号着色 + 500 字重（不铺底，否则一句话被切成色块，反而更难读）；
+     ② 旁白/动作/环境 = 基准层：素面朝天（与对白同墨色，靠"没有装饰"做底）；
+     ③ 心声/神态（括号）= 安静的注解：只有 0.94em + 括号符淡色，不铺底、不加竖线。
+     2026-09-17 用户口径「高亮的应该是对白而不是心声」→ 容器从心声**搬给对白**（互换，不是叠加）。
+     红线：
+     - 颜色**永远不是唯一通道**（WCAG G182 / 508「感官特征」）→ 每类至少两个通道
+       （颜色 + 字重 / 字阶 / 底色 / 竖线）；
+     - **中文不上斜体**（本项目设了 `font-synthesis: none`，italic 对中文是不生效的静默 no-op）
+       → 斜体只作英文界面的附加通道；
+     - 全部走皮肤 token，默认/healing/zen/star/candy 自动跟随，禁止硬编码灰绿。
+     底色为什么用**墨色 12%** 而不是品牌色（两轮实操结论，别改回去）：
+     - 品牌色底在 zen（暖米纸）上发冷发脏、在 candy（粉紫底）上与背景同色系而"融掉"
+       —— 本轮第一版 A 案试过"品牌色 7%"，candy 皮肤下目视即糊（对照图 options-candy.png 前后可比）；
+     - 浓度停在 12%：底色越浓、同色系字/底对比度越低（墨色 15% 实测 candy 掉到 5.18:1，12% 回到 5.41:1）。
+     对白**不整段上品牌色文字**（也评估过）：zen 皮肤的 `--color-primary-text`(#2F463B) 与
+     `--color-fg`(#2E2B25) 几乎同色 → 那个方案在 zen 下是静默 no-op，且会让颜色成为唯一强通道。
+     对比度（**实测，不是估算**）：气泡是半透明白卡、底色是 color-mix，最终落地色"算不出来"只能量 ——
+     用无头 Chrome 逐皮肤取真实像素按 WCAG 公式算（`temp/rp-contrast.mjs`、
+     `temp/shot-rp-highlight-options.mjs`、`temp/verify-rp-highlight-real.mjs`）。 */
+  .rp-dialogue {
+    color: var(--color-fg);
+    font-weight: 500;
+  }
+  /* 独占一行的对白 → 台词卡 */
+  .rp-dialogue-block {
+    display: block;
+    margin: 0.24em 0;
+    background-color: color-mix(in srgb, var(--color-fg) 12%, transparent);
+    border-left: 2px solid color-mix(in srgb, var(--color-primary) 60%, transparent);
+    border-radius: 0 0.5rem 0.5rem 0;
+    padding: 0.2em 0.5em 0.2em 0.55em;
+  }
+  /* 夹在句中的对白 → **同一套高亮的行内版**（2026-09-19 用户口径「经典叙事的对话高亮应该跟沉浸叙事一样」）。
+     为什么原来它是"无容器"：经典档的模型习惯把台词写进长段叙述中间 —— 实测全站真实回复里，
+     经典档 221 个对白片段只有 52 个独占一行（对白字数里只有 **10.5%** 被高亮），沉浸档是 48.1%。
+     于是"台词有没有被框起来"取决于**模型的排版习惯**，而不是"这是不是台词"：同一部戏切到经典档，
+     用户看到的台词就退回裸文本了。
+     改法：把块级那套通道（墨色底 + 品牌色左竖线 + 圆角）**原样搬到行内版**，用 `inline-block` 承载 ——
+     竖线/圆角不会随折行碎成一堆小竖条（`box-decoration-break: clone` 会每行画一条，反而更乱）。
+     底色比块级淡一档（8% vs 12%）：行内底色紧贴正文，太浓会压住旁白、把一段话切成一堆色块。
+     红线不变：颜色仍**不是唯一通道**（底色 + 竖线 + 字重 + 引号着色四条并行）。 */
+  .rp-dialogue-inline {
+    display: inline-block;
+    max-width: 100%;
+    background-color: color-mix(in srgb, var(--color-fg) 8%, transparent);
+    border-left: 2px solid color-mix(in srgb, var(--color-primary) 60%, transparent);
+    border-radius: 0 0.4rem 0.4rem 0;
+    padding: 0.1em 0.42em 0.1em 0.5em;
+  }
+  .rp-quote-mark {
+    color: color-mix(in srgb, var(--color-primary-strong) 80%, transparent);
+    font-weight: 700;
+  }
+  /* 心声：安静的注解（无底色、无竖线、小一号 + 括号淡色） */
+  .rp-thought {
+    color: var(--color-fg);
+    font-size: 0.94em;
+  }
+  .rp-thought-block {
+    display: block;
+    margin: 0.12em 0;
+  }
+  .rp-thought-mark {
+    color: color-mix(in srgb, var(--color-fg) 65%, transparent);
+  }
+  /* 英文界面的附加通道：斜体是拉丁文的"内心独白"排版惯例（Netflix/广播字幕同口径） */
+  .rp-thought-italic {
+    font-style: italic;
+  }
+}
+
+/* —— 引用跳转高亮：点引用块跳回被引用的那条消息时，目标气泡闪一圈品牌色描边
+   （Telegram「focuses on the exact location in the original message」的同类交互）。
+   两条纪律：① 静态线索不依赖动效 —— 环本身就是 cue，不靠动画表达状态；
+   ② `prefers-reduced-motion` 下不播动画，但**保留静态环**（文件顶部那条全局 0.01ms 规则会掐掉动画，
+      所以这里必须单独兜一个静态 box-shadow，否则减弱动效用户什么都看不到）。 */
+@keyframes msg-flash-ring {
+  0% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 55%, transparent); }
+  30% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--color-primary) 30%, transparent); }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.msg-flash {
+  animation: msg-flash-ring 1.5s cubic-bezier(0.2, 0, 0, 1) 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .msg-flash {
+    animation: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 45%, transparent);
+  }
+}
+
+/* —— 「正在输入」指示器（2026-09-19 重做：三点缩放 → 三条薄荷呼吸条）——
+   两个调用方共用：聊一聊 `src/components/ChatPage.tsx:2448`、剧情 `src/components/RoleplayPage.tsx:3582`。
+
+   🔴 为什么要重做（用户实测「只有第一个点在放大，另外两个完全不在动」的根因）：
+   段落之间那条「正在输入」气泡**只活 420ms** —— `ChatPage` 里 `setTyping(true)` → `await sleep(PARA_PAUSE_MS=420)`
+   → 下一段开出气泡时 `setTyping(false)`（`src/components/ChatPage.tsx:1071 / :1073 / :1049`）。
+   也就是说它**每次出现都是一次全新挂载，CSS 动画从 0 重来**。旧实现是「圆点缩放 1.2s + **正**延迟 0.15s / 0.3s」：
+     · 第 1 个点（延迟 0）：420ms 窗口里全程在动；
+     · 第 2、3 个点的延迟分别是 150ms / 300ms，延迟期间停在**基准态** = scale 1、opacity 1（满尺寸实心），
+   于是观感就是「只有第一个点在放大、另外两个完全定格」。错峰时长超过了气泡寿命的一半，这个波形根本演不完。
+
+   ✅ 现在的四条纪律（缺一条就会退回旧毛病）：
+     ① **负延迟**（-0.9s / -0.6s / -0.3s）：它们是「0 / +0.3s / +0.6s」的等相位写法（同一周期内等价），
+        但**一挂载三条就已经处在不同相位**，没有任何「等待延迟」的死时间。所以 420ms 的闪现也能看到完整起伏；
+        万一动画仍被反复重启，三条也只是各自回到自己的相位，**永远不会退回满尺寸静止**。
+        为什么是这三个数：要让波峰**从左往右**依次扫过，第 i 条必须比前一条晚 T/3 出现 ⇒ 延迟 = i·T/3 - T（取同相位的负值）。
+        写反符号（0 / -0.3 / -0.6）会得到「中间→左→右」的来回跳，不是行进波。
+     ② 周期收到 **0.9s**（原 1.2s）：短寿命窗口里也能走完半个波形。
+     ③ **基准相本身就是波形**：`nth-child` 给三条不同高矮 + 明暗递进 —— 动画被系统掐掉
+        （`prefers-reduced-motion` 的全局 `animation-duration:.01ms / iteration-count:1`）或被冻在任何一帧时，
+        看到的是「三条渐高的薄荷条」，而不是三条一模一样的实心方块。静止也像在输入。
+     ④ 只动 `transform: scaleY()` 与 `opacity`：三条 3×10px 元素全部交给合成器，不触发重排/重绘
+        （不碰 width / height / box-shadow）；取色走 `--color-primary-*-rgb` 通道变量 ⇒ healing/zen/star/candy 换肤自动跟随。 */
+/* 波形形状：**全程都在变**，不留「死区」。
+   首版写成 `0%/35%/70%/100%` 时，70%→100% 段几乎不动（.5→.4），实测让第 2 条在 420ms 闪现窗口里
+   只有 1.65px 的行程 —— 观感上仍像「没怎么动」。现在改成连续起落的 4 段对称波（3.5px ↔ 10px，行程 6.5px），
+   三条以 1/3 周期错开 ⇒ 任何时刻都有一条在峰、另两条在明确的上升/下降途中。 */
+@keyframes typing-wave {
+  0%   { transform: scaleY(0.35); opacity: 0.45; }
+  25%  { transform: scaleY(0.7);  opacity: 0.72; }
+  50%  { transform: scaleY(1);    opacity: 1; }
+  75%  { transform: scaleY(0.65); opacity: 0.68; }
+  100% { transform: scaleY(0.35); opacity: 0.45; }
+}
+/* 减弱动效版：**不位移的明暗呼吸**（只把高度在 0.8↔1 之间轻轻带一下，行程 2px 级）——
+   用户实测「完全静止」的教训：指示器在任何环境下都不该一动不动；`prefers-reduced-motion` 下
+   要减的是**大幅位移**（前庭敏感），而不是把「正在输入」这个功能性反馈一起掐掉。
+   周期与延迟都沿用 0.9s 那套，所以两版之间切换不会跳相位。 */
+@keyframes typing-wave-soft {
+  0%   { transform: scaleY(0.75); opacity: 0.45; }
+  50%  { transform: scaleY(1);    opacity: 1; }
+  100% { transform: scaleY(0.75); opacity: 0.45; }
+}
+.typing-dots {
+  /* 周期写成自定义属性：JS 兜底驱动（src/lib/typingIndicator.ts）读它，避免两处各写一份节奏 */
+  --typing-cycle: 900ms;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 11px;
+}
+.typing-dots span {
+  display: block;
+  width: 4px;
+  height: 11px;
+  border-radius: 999px;
+  /* 渐变只把最上面一小段让给「薄荷」（primary-soft 在浅皮肤上接近白，
+     整条都用它会在白气泡上糊掉；主体必须是实打实的品牌绿，薄荷只做顶端高光）。 */
+  background-image: linear-gradient(
+    to top,
+    rgb(var(--color-primary-strong-rgb)) 0%,
+    rgb(var(--color-primary-rgb)) 62%,
+    rgb(var(--color-primary-soft-rgb)) 100%
+  );
+  transform-origin: center;
+  animation: typing-wave 0.9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+/* 负延迟（= 0s / +0.3s / +0.6s 的同相位写法）+ 基准相波形（动画不跑时看到的就是这三行） */
+.typing-dots span:nth-child(1) { animation-delay: -0.9s; transform: scaleY(0.5);  opacity: 0.6; }
+.typing-dots span:nth-child(2) { animation-delay: -0.6s; transform: scaleY(0.75); opacity: 0.8; }
+.typing-dots span:nth-child(3) { animation-delay: -0.3s; transform: scaleY(1);    opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  /* 必须有 !important：文件顶部那条全局规则是 `* { animation-duration: .01ms !important; animation-iteration-count: 1 !important }`，
+     不带 !important 的 animation 简写赢不了它（结果就是动画被压成 0.01ms ⇒ 完全静止）。
+     只覆盖 name/duration/iteration/timing，不动 nth-child 的延迟（0.9s 那套延迟在这里同样成立）。 */
+  .typing-dots span {
+    animation-name: typing-wave-soft !important;
+    animation-duration: 0.9s !important;
+    animation-iteration-count: infinite !important;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1) !important;
+  }
+}

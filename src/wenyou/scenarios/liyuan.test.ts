@@ -1,0 +1,150 @@
+import { describe, it, expect } from 'vitest'
+import { liyuan } from './liyuan'
+import { clampEffects, initState, applyChoice, checkEnding } from '../engine/state'
+import { buildTurnMessages } from '../engine/prompt'
+
+describe('liyuan 隐藏 endTone', () => {
+  it('致死/封箱隐藏结局存在且为哨兵 safety<=-1', () => {
+    // 注：一夜爆红·伶界天骄 已从「隐藏天堂结局(endTone 即终局)」改为「人生里程碑」——
+    // 抱病登台爆红只置 has(一夜爆红) 并继续人生，到满期 fame>=60 才以「伶界天骄」盖棺(见 liyuan.ts)。
+    for (const t of ['开罪权贵·横死乱世', '名节尽毁·封箱绝迹']) {
+      const e = liyuan.endings.find((x) => x.tone === t)
+      expect(e?.condition, t).toBe('safety<=-1')
+    }
+  })
+  it('军阀逼伶含低权横死 endTone 分支', () => {
+    const ev = (liyuan.localEvents ?? []).find((e) => e.summary === '军阀逼伶')!
+    const has = ev.choices.some((c) => (c.outcomes ?? []).some((o) => o.endTone === '开罪权贵·横死乱世'))
+    expect(has).toBe(true)
+  })
+  it('每个哨兵基调都被某事件 endTone 引用（防 tone 字符串打错）', () => {
+    // 收集所有事件 outcome 里用到的 endTone
+    const used = new Set<string>()
+    for (const ev of liyuan.localEvents ?? []) {
+      for (const c of ev.choices) for (const o of c.outcomes ?? []) if (o.endTone) used.add(o.endTone)
+    }
+    // 哨兵隐藏结局的 tone 须能被某事件 endTone 触发，否则字符串不匹配、结局永不命中。
+    // (一夜爆红 已改为里程碑+maxTurns 结局，不再由 endTone 触发，故移出此校验)
+    for (const t of ['开罪权贵·横死乱世', '名节尽毁·封箱绝迹']) {
+      expect(used.has(t), t).toBe(true)
+    }
+  })
+  it('endTone 强制即终局', () => {
+    let st = initState(liyuan, liyuan.openings!.find((o) => o.name === '票友下海'))
+    st = { ...st, attributes: { art: 60, fame: 60, safety: 50 }, history: Array(18).fill({ narrative: '', choiceText: '', summary: '' }) }
+    const ev = (liyuan.localEvents ?? []).find((e) => e.summary === '军阀逼伶')!
+    const tr = { narrative: ev.narrative, summary: ev.summary, choices: ev.choices.map((c) => ({ text: c.text, effects: c.effects, outcomes: c.outcomes, endTone: c.endTone })) }
+    const idx = tr.choices.findIndex((c) => (c.outcomes ?? []).some((o) => o.endTone === '开罪权贵·横死乱世'))
+    const next = applyChoice(liyuan, st, tr as any, idx, () => 0.999)
+    expect(next.ended?.reason).toBe('forced')
+  })
+})
+
+describe('liyuan 技艺名位封顶', () => {
+  it('无名位印记时技艺封顶 20', () => {
+    expect(clampEffects(liyuan, { art: 18 }, { art: 50 }, []).art).toBe(20)
+  })
+  it('搭班印记解锁封顶 45', () => {
+    expect(clampEffects(liyuan, { art: 40 }, { art: 50 }, ['搭班']).art).toBe(45)
+  })
+  it('挑梁印记解锁封顶 70', () => {
+    expect(clampEffects(liyuan, { art: 60 }, { art: 50 }, ['搭班', '挑梁']).art).toBe(70)
+  })
+  it('名伶印记解锁封顶 90', () => {
+    expect(clampEffects(liyuan, { art: 85 }, { art: 50 }, ['搭班', '挑梁', '名伶']).art).toBe(90)
+  })
+  it('泰斗印记解锁封顶 100', () => {
+    expect(clampEffects(liyuan, { art: 95 }, { art: 50 }, ['搭班', '挑梁', '名伶', '泰斗']).art).toBe(100)
+  })
+  it('安稳与声名不设名位封顶', () => {
+    expect(clampEffects(liyuan, { safety: 95 }, { safety: 50 }, []).safety).toBe(100)
+    expect(clampEffects(liyuan, { fame: 95 }, { fame: 50 }, []).fame).toBe(100)
+  })
+})
+
+describe('liyuan 身份印记', () => {
+  it('三开局各注入身份印记', () => {
+    for (const n of ['戏班学徒', '落魄世家小姐', '票友下海']) {
+      const op = liyuan.openings!.find((o) => o.name === n)
+      expect(op?.flag).toBe(n)
+      expect(initState(liyuan, op).flags).toContain(n)
+    }
+  })
+  it('身份专属事件带 has() 门控（至少各一）', () => {
+    const evs = liyuan.localEvents ?? []
+    const byFlag = (f: string) => evs.filter((e) => (e.requires ?? '').includes(`has(${f})`)).length
+    expect(byFlag('落魄世家小姐')).toBeGreaterThanOrEqual(1)
+    expect(byFlag('票友下海')).toBeGreaterThanOrEqual(1)
+    expect(byFlag('戏班学徒')).toBeGreaterThanOrEqual(1)
+  })
+  it('身份门控与既有数值条件合并（不覆盖原 requires）', () => {
+    // 求词文人 原带 art>=55，加身份门控须 & 合并、两者并存
+    const ev = (liyuan.localEvents ?? []).find((e) => e.summary === '求词文人')
+    expect(ev?.requires).toContain('has(落魄世家小姐)')
+    expect(ev?.requires).toContain('art>=55')
+  })
+})
+
+describe('liyuan 巅峰结局须 maxTurns（不中途白嫖）', () => {
+  it('满血高位在非落幕年不触发巅峰结局', () => {
+    const r = checkEnding(liyuan, { art: 98, fame: 98, safety: 98 }, 18, ['搭班', '挑梁', '名伶', '泰斗'])
+    for (const t of ['一代宗师·开宗立派', '艺压群伶·曲高和寡', '红透半边天·万人空巷']) {
+      expect(r?.tone === t, t).toBe(false)
+    }
+  })
+  it('落幕年（满期）高位触发巅峰结局', () => {
+    const r = checkEnding(liyuan, { art: 98, fame: 98, safety: 98 }, liyuan.maxTurns!, ['搭班', '挑梁', '名伶', '泰斗'])
+    expect(r?.tone).toBeTruthy()
+    expect(['一代宗师·开宗立派', '艺压群伶·曲高和寡', '红透半边天·万人空巷', '艺名双全·梨园泰斗']).toContain(r!.tone)
+  })
+})
+
+describe('liyuan 升艺闸门', () => {
+  it('四道升艺机缘均为 keyMoment 且授对应名位印记、按序串链', () => {
+    const want = [
+      { summary: '出科搭班', flag: '搭班', prev: undefined },
+      { summary: '挑梁担纲', flag: '挑梁', prev: '搭班' },
+      { summary: '唱红名动', flag: '名伶', prev: '挑梁' },
+      { summary: '开宗立派', flag: '泰斗', prev: '名伶' },
+    ]
+    for (const w of want) {
+      const ev = (liyuan.localEvents ?? []).find((e) => e.summary === w.summary)
+      expect(ev?.keyMoment, w.summary).toBe(true)
+      expect(ev!.choices.some((c) => (c.flagsSet ?? []).includes(w.flag)), w.summary).toBe(true)
+      if (w.prev) expect(ev!.requires, w.summary).toContain(`has(${w.prev})`)
+    }
+  })
+  it('出科搭班后同回合技艺可破 20 上限', () => {
+    let st = initState(liyuan, liyuan.openings!.find((o) => o.name === '戏班学徒'))
+    st = { ...st, attributes: { art: 18, fame: 40, safety: 70 }, history: Array(4).fill({ narrative: '', choiceText: '', summary: '' }) }
+    const ev = (liyuan.localEvents ?? []).find((e) => e.summary === '出科搭班')!
+    const tr = { narrative: ev.narrative, summary: ev.summary, choices: ev.choices.map((c) => ({ text: c.text, effects: c.effects, outcomes: c.outcomes, flagsSet: c.flagsSet, flagsClear: c.flagsClear, endTone: c.endTone })) }
+    const idx = tr.choices.findIndex((c) => (c.flagsSet ?? []).includes('搭班'))
+    const next = applyChoice(liyuan, st, tr as any, idx, () => 0)
+    expect(next.flags).toContain('搭班')
+    expect(next.attributes.art).toBeGreaterThan(20)
+  })
+})
+
+describe('liyuan AI 模式', () => {
+  it('tierLabel=名位，晋阶之序用本剧术语「名位」+ 名位印记序', () => {
+    const st = initState(liyuan, liyuan.openings!.find((o) => o.flag), undefined, 'ai')
+    const all = buildTurnMessages(liyuan, st).map((m) => m.content).join('\n')
+    expect(liyuan.tierLabel).toBe('名位')
+    expect(all).toContain('晋阶之序')
+    expect(all).toContain('名位')
+    expect(all).toContain('搭班→挑梁→名伶→泰斗')
+    expect(all).not.toContain('封顶')
+    // 隐藏 tone 经词表注入（横死乱世 不在 systemPrompt 文本，证明 hiddenTones 注入生效）
+    expect(all).toContain('横死乱世')
+  })
+  it('systemPrompt 含名位晋阶规则与横祸极稀指导', () => {
+    expect(liyuan.systemPrompt).toContain('名位')
+    expect(liyuan.systemPrompt).toContain('横祸')
+  })
+  it('提示不含「共 undefined」', () => {
+    const st = initState(liyuan, liyuan.openings![0], undefined, 'ai')
+    const all = buildTurnMessages(liyuan, st).map((m) => m.content).join('\n')
+    expect(all).not.toContain('undefined')
+  })
+})

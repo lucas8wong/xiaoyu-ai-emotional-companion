@@ -1,0 +1,158 @@
+{
+  "id": "candy",
+  "label": "棉花糖 糖果星球",
+  "desc": "由管理员生成 · 棉花糖 糖果星球",
+  "labelKey": "",
+  "descKey": "",
+  "bg": "/skins/candy/bg.webp?v=2",
+  "bgPortrait": "/skins/candy/bgPortrait.webp?v=2",
+  "hero": "/skins/candy/hero.webp?v=2",
+  "chat": "/skins/candy/chat.webp?v=2",
+  "structure": "/skins/candy/structure.webp?v=2",
+  "story": "/skins/candy/story.webp?v=2",
+  "wordmark": "/skins/candy/wordmark.webp?v=4",
+  "heart": "/skins/candy/heart.webp?v=2",
+  "favicon": "/skins/candy/favicon.webp?v=2",
+  "companion": "/skins/candy/companion.webp?v=2",
+  "membership": "/skins/candy/membership.webp?v=2",
+  "modeHug": "/skins/candy/modeHug.webp?v=2",
+  "modeAlly": "/skins/candy/modeAlly.webp?v=2",
+  "modeClarify": "/skins/candy/modeClarify.webp?v=2",
+  "modeLight": "/skins/candy/modeLight.webp?v=2",
+  "modeObjective": "/skins/candy/modeObjective.webp?v=2",
+  "feedback": "/skins/candy/feedback.webp?v=2",
+  "planFree": "/skins/candy/planFree.webp?v=2",
+  "planPlus": "/skins/candy/planPlus.webp?v=2",
+  "planPro": "/skins/candy/planPro.webp?v=2",
+  "preview": "/skins/candy/preview.webp?v=2",
+  "palette": [
+    "#F7C6D9",
+    "#D8B4E2",
+    "#B8D4E3",
+    "#F9E7B2",
+    "#F0D9E8"
+  ],
+  "theme": "棉花糖 糖果星球",
+  "createdAt": "2026-09-01T16:37:37.272Z",
+  "styleAnchor": {
+    "themeEnglish": "cotton candy candy planet",
+    "mood": "dreamy,healing,cute,soft,imaginative,gentle,whimsical",
+    "palette": [
+      "#F7C6D9",
+      "#D8B4E2",
+      "#B8D4E3",
+      "#F9E7B2",
+      "#F0D9E8"
+    ],
+    "keywords": [
+      "cotton candy texture",
+      "squishy fluffy plush",
+      "soft marble swirls",
+      "pastel gradient nebula",
+      "colorful cloud puffs",
+      "glittering stardust",
+      "bright cross-shaped starbursts",
+      "no text",
+      "no UI",
+      "no watermark"
+    ]
+  },
+  "slots": [
+    {
+      "key": "bg",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A wide atmosphere background for the Xiaoyu gentle-healing companion app, soft glow, atmospheric depth, rich gradient, fills the whole frame. "
+    },
+    {
+      "key": "bgPortrait",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A vertical atmosphere background for the Xiaoyu gentle-healing companion app, soft glow, atmospheric depth, rich gradient, fills the whole frame. "
+    },
+    {
+      "key": "hero",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A wide hero main scene for the Xiaoyu gentle-healing companion app, soft glow, atmospheric depth, rich gradient, fills the whole frame. "
+    },
+    {
+      "key": "chat",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A square chat feature illustration illustration, the central subject is large and fills the frame, rich detail, refined, edge-to-edge artwork. "
+    },
+    {
+      "key": "structure",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A square structure feature illustration illustration, the central subject is large and fills the frame, rich detail, refined, edge-to-edge artwork. "
+    },
+    {
+      "key": "story",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A square healing story illustration illustration, the central subject is large and fills the frame, rich detail, refined, edge-to-edge artwork. "
+    },
+    {
+      "key": "wordmark",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A brand brand wordmark for \"Xiaoyu\", elegant minimal typography that fills the frame large and clear, on a rich background, small accent. "
+    },
+    {
+      "key": "heart",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat brand heart mark, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "favicon",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat app icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "companion",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A friendly AI companion avatar, the character or abstract form fills the frame large and centered, soft glow, square crop. "
+    },
+    {
+      "key": "membership",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat membership mark, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "modeHug",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat hug mode icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "modeAlly",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat ally mode icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "modeClarify",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat clarify mode icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "modeLight",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat light mode icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "modeObjective",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat objective mode icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "feedback",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat feedback icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "planFree",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat free plan icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "planPlus",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat plus plan icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "planPro",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat pro plan icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "preview",
+      "prompt": "Soft dreamy cute pastel: cotton candy, plush squishy fluffy, puffy, soft marble swirls, pastel pink/purple/blue/yellow, gradient nebula, colorful cloud puffs, glittering stardust, brilliant cross-shaped starbursts, dreamy healing girly, Theme: cotton candy candy planet. Mood: dreamy,healing,cute,soft,imaginative,gentle,whimsical. Palette: #F7C6D9, #D8B4E2, #B8D4E3, #F9E7B2, #F0D9E8. Keywords: cotton candy texture, squishy fluffy plush, soft marble swirls, pastel gradient nebula, colorful cloud puffs, glittering stardust, bright cross-shaped starbursts, no text, no UI, no watermark. Cute, kawaii, soft, dreamy, healing. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A wide skin preview thumbnail for the Xiaoyu gentle-healing companion app, soft glow, atmospheric depth, rich gradient, fills the whole frame. "
+    }
+  ],
+  "chatSm": "/skins/candy/chat-sm.webp?v=2",
+  "storySm": "/skins/candy/story-sm.webp?v=2",
+  "structureSm": "/skins/candy/structure-sm.webp?v=2",
+  "modeHugSm": "/skins/candy/modeHug-sm.webp?v=2",
+  "modeAllySm": "/skins/candy/modeAlly-sm.webp?v=2",
+  "modeClarifySm": "/skins/candy/modeClarify-sm.webp?v=2",
+  "modeLightSm": "/skins/candy/modeLight-sm.webp?v=2",
+  "modeObjectiveSm": "/skins/candy/modeObjective-sm.webp?v=2",
+  "planFreeSm": "/skins/candy/planFree-sm.webp?v=2",
+  "planPlusSm": "/skins/candy/planPlus-sm.webp?v=2",
+  "planProSm": "/skins/candy/planPro-sm.webp?v=2",
+  "feedbackSm": "/skins/candy/feedback-sm.webp?v=2"
+}

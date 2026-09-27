@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/skins/healing/app-icon-32.png?v=2" />
+    <link rel="manifest" href="/manifest.webmanifest?v=2" />
+    <link rel="apple-touch-icon" href="/skins/healing/app-icon-180.png?v=2" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Xiaoyu" />
+    <!-- 首屏字体 preload：让正文字体尽早就绪，减少文字闪烁 -->
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/NunitoSans-var.woff2" crossorigin />
+    <!-- 展示字体已自托管（src/fonts-display.css → /fonts/display/*），无外部 googleapis 依赖 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+    <meta name="theme-color" content="#1FA46B" />
+    <style>
+      /* 语言闪切防护：首帧脚本判定「存档语言 ≠ 预渲染页语言」时打上 data-lang-swap，
+         先把预渲染的英文内容隐掉（只隐 #root，皮肤底色仍在，不闪白）；
+         React 应用语言后 applyDocumentTitle() 会摘掉这个标记。 */
+      html[data-lang-swap] #root { visibility: hidden !important; }
+    </style>
+    <!-- 首帧标题：中英并列。单一英文标题会让中文用户在"JS 应用语言之前"看到标签页闪一下英文；
+         JS 起来后由 i18n 的 applyDocumentTitle() 覆盖为当前语言的标题。 -->
+    <title>Xiaoyu 小愈 — AI Companion · AI 情感陪伴</title>
+    <meta name="description" content="Xiaoyu is an AI emotional companion that listens to every feeling — from the hard moments to the bright ones. Free to start in your browser, no download. Gentle healing, not a substitute for therapy." />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://myxiaoyu.com/" />
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Xiaoyu" />
+    <meta property="og:title" content="Xiaoyu — Free AI Companion for Emotional Support" />
+    <meta property="og:description" content="Xiaoyu is an AI emotional companion that listens to every feeling — from the hard moments to the bright ones. Free to start in your browser, no download. Gentle healing, not a substitute for therapy." />
+    <meta property="og:url" content="https://myxiaoyu.com/" />
+    <meta property="og:image" content="https://myxiaoyu.com/skins/healing/hero.webp?v=2" />
+    <meta property="og:image:alt" content="Xiaoyu — AI emotional companion" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="zh_CN" />
+    <meta property="og:locale:alternate" content="zh_TW" />
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Xiaoyu — Free AI Companion for Emotional Support" />
+    <meta name="twitter:description" content="Xiaoyu is an AI emotional companion that listens to every feeling — from the hard moments to the bright ones. Gentle healing, not a substitute for therapy." />
+    <meta name="twitter:image" content="https://myxiaoyu.com/skins/healing/hero.webp?v=2" />
+    <!-- Structured data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://myxiaoyu.com/#website",
+          "url": "https://myxiaoyu.com/",
+          "name": "Xiaoyu — AI Emotional Companion",
+          "alternateName": "小愈",
+          "description": "AI emotional companion that listens to every feeling — gentle healing for the hard moments and the bright ones.",
+          "inLanguage": ["en", "zh-CN", "zh-TW"],
+          "publisher": { "@id": "https://myxiaoyu.com/#organization" }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://myxiaoyu.com/#organization",
+          "name": "Xiaoyu",
+          "alternateName": "小愈",
+          "url": "https://myxiaoyu.com/",
+          "logo": { "@type": "ImageObject", "url": "https://myxiaoyu.com/skins/healing/wordmark.webp?v=2" },
+          "slogan": "Every feeling deserves to be understood.",
+          "sameAs": ["https://www.instagram.com/your_xiaoyu"]
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://myxiaoyu.com/#app",
+          "name": "Xiaoyu AI Emotional Companion",
+          "alternateName": "小愈",
+          "url": "https://myxiaoyu.com/",
+          "applicationCategory": "WebApplication",
+          "operatingSystem": "Web",
+          "description": "AI emotional companion in your browser — listens to every feeling, remembers what matters, gentle healing rather than treatment.",
+          "inLanguage": ["en", "zh-CN", "zh-TW"],
+          "offers": {
+            "@type": "Offer",
+            "price": "4.99",
+            "priceCurrency": "USD",
+            "description": "Plus membership — $4.99/month; free tier available"
+          },
+          "publisher": { "@id": "https://myxiaoyu.com/#organization" }
+        }
+      ]
+    }
+    </script>
+    <script type="module">
+      if (import.meta.hot?.on) {
+        import.meta.hot.on('vite:error', (error) => {
+          console.error([error.error.message, error.error.frame].filter(Boolean).join('\n'));
+        });
+      }
+    </script>
+    <!-- 首屏关键图 preload：读当前皮肤，在 JS 解析前预载 hero（LCP 关键、视口无关），减少首屏等待。
+         氛围背景 bg / bgPortrait 走 CSS 低优先级，不等它绘制首屏——避免手机竖版/桌面横版双拉背景，
+         把关键带宽让给 hero / 入口图 / 正文字体。 -->
+    <script>
+      (function () {
+        try {
+          var ver = Number(localStorage.getItem('cure_skin_version') || '0');
+          var storedSkin = ver >= 2 ? (localStorage.getItem('cure_skin') || '') : '';
+          // iOS 主屏 App 与 Safari 的 localStorage 不通：回退读 cookie 携带的皮肤
+          if (!storedSkin) {
+            var cm = document.cookie.match(/(?:^|; )cure_skin=([^;]*)/);
+            var cv = Number((document.cookie.match(/(?:^|; )cure_skin_version=([^;]*)/) || [])[1] || '0');
+            if (cv >= 2 && cm) storedSkin = decodeURIComponent(cm[1]);
+          }
+          // 与 src/lib/skin.ts 的 getStoredSkin() 一致：无存档/版本未升级/空值 → 回退默认「棉花糖」
+          var skin = storedSkin && storedSkin.trim() ? storedSkin : 'candy';
+          // 老游客的一次性迁移（与 src/lib/skin.ts 的 getStoredSkin 同步，否则首屏会先闪一下「小愈治愈系」）：
+          // 存档是旧默认 healing、未登录、且尚未迁移 → 首帧就按新默认 candy 渲染。
+          // ⚠️ **这里绝不写迁移标记**：标记由 React 侧真正的迁移负责写。
+          //    若首屏脚本抢先写掉，React 会认为"已迁移过"→ 按老存档退回 healing（首帧 candy、随后跳回，自己打自己脸）。
+          try {
+            if (skin === 'healing' && !localStorage.getItem('cure_app_token') && localStorage.getItem('cure_skin_default_candy_v1') !== '1') {
+              skin = 'candy';
+            }
+          } catch (e) { /* 忽略 */ }
+          var assets = {
+            healing: { hero: '/skins/healing/hero.webp?v=3' },
+            zen: { hero: '/skins/zen/hero.webp?v=3' },
+            star: { hero: '/skins/star/hero.webp?v=3' },
+            candy: { hero: '/skins/candy/hero.webp?v=2' }
+          };
+          // 已存皮肤（内置或 candy）→ preload 对应 hero；动态皮肤从本地缓存的 manifest 读 hero，避免误拉 healing
+          var dynHero = null;
+          try {
+            var cachedRaw = localStorage.getItem('cure_dynamic_skins_cache');
+            if (cachedRaw) {
+              var parsed = JSON.parse(cachedRaw);
+              if (Array.isArray(parsed)) {
+                for (var si = 0; si < parsed.length; si++) {
+                  if (parsed[si] && parsed[si].id === skin && parsed[si].hero) { dynHero = parsed[si].hero; break; }
+                }
+              }
+            }
+          } catch (e) { /* 忽略 */ }
+          var m = assets[skin] || (dynHero ? { hero: dynHero } : null);
+          // 首帧即打上 data-skin，让 CSS 变量/氛围背景一次到位，避免「先默认皮肤后选中皮肤」的闪切
+          document.documentElement.setAttribute('data-skin', skin);
+
+          // ── 语言闪切（2026-09-18 修）────────────────────────────────────────────
+          // 根路径 `/` 的 HTML 是**预渲染的英文版**（SEO 要英文落地页），而中文用户存档里是 cure_lang=zh-TW/zh-CN：
+          // 浏览器先画出整屏英文，React 起来后才切成中文 → 每次刷新"闪一下英文"。
+          // 这里在首帧就比对：存档语言 ≠ 页面语言 → 打标记，由 CSS 把预渲染内容先隐掉
+          // （只隐 #root、保留皮肤底色，所以不会闪白）；React 应用语言后由 applyDocumentTitle() 摘掉标记。
+          var storedLang = '';
+          try { storedLang = localStorage.getItem('cure_lang') || ''; } catch (e) { /* 忽略 */ }
+          if (!storedLang) { var lm = document.cookie.match(/(?:^|; )cure_lang=([^;]*)/); if (lm) storedLang = decodeURIComponent(lm[1]); }
+          var base = function (v) { return String(v || '').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en'; };
+          var pageLang = base(document.documentElement.getAttribute('lang'));
+          if (storedLang && base(storedLang) !== pageLang) {
+            document.documentElement.setAttribute('data-lang-swap', '1');
+            // 标签页标题也别英文闪：与 src/i18n 的 applyDocumentTitle 同口径（品牌 + 目标词）
+            var titles = { zh: '小愈 — AI 情感陪伴', en: 'Xiaoyu — Free AI Companion for Emotional Support' };
+            if (titles[base(storedLang)]) document.title = titles[base(storedLang)];
+            // 兜底：万一 React 起不来，4 秒后无论如何恢复显示（不能永远白着）
+            setTimeout(function () { document.documentElement.removeAttribute('data-lang-swap'); }, 4000);
+          }
+          // 卡片不透明度：**首帧就应用**（默认 38%；用户存过值就用存的值），
+          // 否则会出现"先按 CSS 兜底渲染、再跳到用户值"的一帧闪变。
+          // 迁移口径与 src/lib/skin.ts 的 getStoredCardBgAlpha() 保持一致：
+          // 版本号落后时只迁移"没有存档 / 仍等于旧默认 0.8"的用户，用户自己拖过的值原样保留。
+          try {
+            var alphaVer = Number(localStorage.getItem('cure_card_bg_alpha_version') || '0');
+            var alphaRaw = localStorage.getItem('cure_card_bg_alpha');
+            // 同样：空串当“没存档”（Number('') 是 0，否则首帧会渲染成全透明）
+            var alphaNum = (alphaRaw == null || alphaRaw.trim() === '') ? null : Number(alphaRaw);
+            var alphaValid = alphaNum != null && isFinite(alphaNum) && alphaNum >= 0 && alphaNum <= 1;
+            var alpha;
+            if (alphaVer < 2) alpha = (alphaValid && alphaNum !== 0.8) ? alphaNum : 0.38;
+            else alpha = alphaValid ? alphaNum : 0.38;
+            document.documentElement.style.setProperty('--card-bg-alpha', String(alpha));
+          } catch (e3) { /* 忽略 */ }
+          // 氛围背景深浅：跟随当前皮肤默认值，并读取用户记忆值（与 src/lib/skin.ts 的 getStoredBgWash() 一致）
+          var washes = { healing: 0, zen: 0, star: 0.72, candy: 0.32 };
+          var wash = washes[skin];
+          if (wash == null) wash = 0;
+          var storedWash = localStorage.getItem('cure_skin_bg_wash_' + skin);
+          if (storedWash != null) {
+            var n = Number(storedWash);
+            if (isFinite(n) && n >= 0 && n <= 1) wash = n;
+          }
+          document.documentElement.style.setProperty('--skin-bg-wash', String(wash));
+          // 🔴 2026-09-15：剧情视图的**首帧兜底**。用户反馈"刚进剧情会先闪一下皮肤再跳到背景图"。
+          // 皮肤层 `.skin-backdrop` 是 z-index:-1 的 fixed 满屏层，会盖住 html 背景，
+          // 所以这里让它**自己**先显示"最近一次看过的剧情背景图"（写在 --scene-boot-url 上，
+          // 由 index.css 的 html[data-scene-boot] 规则接管）。React 挂载后场景层盖上来，
+          // 离开剧情视图时 RoleplayPage 卸载会摘掉这个标记 → 其它页面照旧用皮肤。
+          try {
+            if (/[?&]open=roleplay(?:&|$)/.test(location.search)) {
+              var sceneUrl = localStorage.getItem('cure_scene_url_last');
+              if (sceneUrl) {
+                document.documentElement.style.setProperty('--scene-boot-url', 'url("' + sceneUrl + '")');
+                document.documentElement.setAttribute('data-scene-boot', '1');
+              }
+            }
+          } catch (e2) { /* 忽略 */ }
+          // 浏览器标签栏/地址栏主题色随皮肤（首帧即设，避免切皮肤后仍闪品牌绿）：已知皮肤用各自主色，未知/缺省回退品牌绿
+          var themeColors = { healing: '#1FA46B', zen: '#3E5B4C', star: '#3A2E7E', candy: '#E289B8' };
+          var themeColor = themeColors[skin] || '#1FA46B';
+          var themeMeta = document.querySelector('meta[name="theme-color"]');
+          if (themeMeta) themeMeta.setAttribute('content', themeColor);
+          // 浏览器标签页图标 / iOS 主屏图标 / PWA manifest 随皮肤（用该皮肤 hero 正方形的 app-icon）。
+          // ⚠️ 三处都要 builtinSkin 守卫：`default`（原版）皮肤**没有** public/skins/default 目录，
+          // 按 /skins/<id>/... 改写会 404（图标空掉），manifest 更糟——Express 会把 SPA 的 index.html
+          // 回落给这个请求，浏览器按 manifest 解析 HTML → 控制台 "Manifest: Line: 1, column: 1, Syntax error."
+          // 没有自家资源就**保持 index.html 的站点默认**（healing 图标 + 公共 manifest）。
+          var builtinSkin = { healing: 1, zen: 1, star: 1, candy: 1 }[skin] === 1;
+          var iconLink = document.querySelector('link[rel="icon"]');
+          if (iconLink && builtinSkin) { iconLink.setAttribute('href', '/skins/' + skin + '/app-icon-32.png?v=2'); iconLink.setAttribute('type', 'image/png'); }
+          var appleLink = document.querySelector('link[rel="apple-touch-icon"]');
+          if (appleLink && builtinSkin) appleLink.setAttribute('href', '/skins/' + skin + '/app-icon-180.png?v=2');
+          var manifestLink = document.querySelector('link[rel="manifest"]');
+          if (manifestLink && builtinSkin) manifestLink.setAttribute('href', '/skins/' + skin + '/manifest.webmanifest?v=2');
+          function preload(href) { var l = document.createElement('link'); l.rel = 'preload'; l.as = 'image'; l.href = href; document.head.appendChild(l); }
+          if (m && m.hero) preload(m.hero);
+        } catch (e) { /* 忽略 */ }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

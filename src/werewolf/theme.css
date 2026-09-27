@@ -1,0 +1,97 @@
+/**
+ * AI 狼人杀 · 复古暗调主题（对齐上游 wolfcha 的视觉体系）
+ *
+ * 来源：wolfcha `src/app/globals.css` 的设计 token（Apache-2.0，见 `upstream/ATTRIBUTION.md`）。
+ * 取值直接来自它的变量表，不是照着截图眼调：
+ *   --paper #f0e6d2 / --color-gold #c5a059 / --color-blood #8a1c1c
+ *   --bg-night-from #1a1614 → --bg-night-to #0d0a08 / --text-muted #9c8570
+ *   身份色：wolf #8a1c1c · seer #2c5282 · witch #6b46c1 · hunter #c05621 · guard #276749 · villager #5c4a3d
+ *
+ * ⚠️ 品牌红线 #4 的放宽范围：**仅限本玩法这一屏**（`.ww-theme` 作用域内）。
+ * 全站品牌色（主绿 #1FA46B / 奶油底 #FBF6EE）不变——这是用户 2026-09-15 明确的决定（选项 B）。
+ *
+ * 为什么用变量重映射而不是改类名：项目 Tailwind 的颜色全部引用 CSS 变量
+ * （见 tailwind.config.js 注释「全部引用 CSS 变量，切换皮肤即可全局重着色」），
+ * 所以只要在作用域内改这些变量，既有组件自动变成复古暗调。
+ */
+
+.ww-theme {
+  /* ⚠️ token 成对出现：hex（CSS/内联样式直接用）+ RGB 三通道（Tailwind 的 /透明度 修饰符用；
+     裸 var() 解析不出颜色会让 bg-primary/20 这类类静默失效，见 tailwind.config.js 顶部注释）。
+     原先三个「自带 alpha 的变量」（primary-lighter / accent-soft / border）改成**在夜色底上合成好的实心色**：
+     `rgb(var(--x-rgb) / <alpha-value>)` 表达不了「变量自己带 alpha」，直接给三通道会让 bg-primary-lighter
+     从「一层淡金纱」变成「实心金块」；合成色在深底上观感等价。
+     换算：rgba(197,160,89,.14) over #1a1614(26,22,20) → #32291e；rgba(138,28,28,.2) → #301716；rgba(140,115,53,.38) → #453921 */
+
+  /* —— 主色：陈金（CTA / 强调） —— */
+  --color-primary: #c5a059;
+  --color-primary-rgb: 197 160 89;
+  --color-primary-strong: #d4b06a;
+  --color-primary-strong-rgb: 212 176 106;
+  --color-primary-soft: #8c7335;
+  --color-primary-soft-rgb: 140 115 53;
+  --color-primary-lighter: #32291e;
+  --color-primary-lighter-rgb: 50 41 30;
+
+  /* —— 点缀：血色（警示 / 狼阵营） —— */
+  --color-accent: #8a1c1c;
+  --color-accent-rgb: 138 28 28;
+  --color-accent-soft: #301716;
+  --color-accent-soft-rgb: 48 23 22;
+
+  /* —— 底与面：夜渐层 —— */
+  --color-bg: #0d0a08; /* 页面底（night-to） */
+  --color-bg-rgb: 13 10 8;
+  --color-surface: #1a1614; /* 卡片面（bg-dark） */
+  --color-surface-rgb: 26 22 20;
+  --color-muted: #2c241b; /* 弱化面（bg-dark-secondary） */
+  --color-muted-rgb: 44 36 27;
+  --color-border: #453921; /* 金描边：原 rgba(140,115,53,.38) 的合成色 */
+  --color-border-rgb: 69 57 33;
+  --color-ring: #c5a059;
+  --color-ring-rgb: 197 160 89;
+
+  /* —— 文字：羊皮纸 —— */
+  --color-fg: #f0e6d2; /* paper */
+  --color-fg-rgb: 240 230 210;
+  --color-muted-fg: #9c8570; /* text-muted */
+  --color-muted-fg-rgb: 156 133 112;
+
+  /* —— 字体：衬线复古。Cinzel 未自托管，用项目已有的书法体兜住「古」的味道 —— */
+  --skin-display-font: 'Cinzel', 'Ma Shan Zheng', 'Songti SC', 'SimSun', serif;
+
+  font-family: 'Cinzel', 'Ma Shan Zheng', 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+  color: var(--color-fg);
+  background-color: var(--color-bg);
+  /* 夜色渐层：照它的 --bg-night-from/via/to */
+  background-image: linear-gradient(180deg, #1a1614 0%, #14100e 55%, #0d0a08 100%);
+  background-attachment: fixed;
+}
+
+/* 身份配色：直接取它的 --color-* 身份色，让牌桌一眼能认出阵营 */
+.ww-theme .ww-role-wolf {
+  color: #b93636;
+  border-color: rgba(138, 28, 28, 0.55);
+}
+.ww-theme .ww-role-seer {
+  color: #4a7fb5;
+}
+.ww-theme .ww-role-witch {
+  color: #8b6fd0;
+}
+.ww-theme .ww-role-hunter {
+  color: #d97742;
+}
+.ww-theme .ww-role-guard {
+  color: #3f9b71;
+}
+.ww-theme .ww-role-villager {
+  color: #9c8570;
+}
+
+/* 暗底上的卡片：加一点金边与内发光，贴近它的 glass 面板 */
+.ww-theme .ww-panel {
+  background: linear-gradient(180deg, rgba(44, 36, 27, 0.92), rgba(26, 22, 20, 0.96));
+  border: 1px solid var(--color-border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(197, 160, 89, 0.08);
+}

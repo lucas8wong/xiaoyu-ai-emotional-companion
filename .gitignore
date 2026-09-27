@@ -1,0 +1,158 @@
+# dependencies
+node_modules/
+
+# self-hosted TTS / Python venv & cloned repos（体积大，勿提交）
+.venv-tts/
+.venv-voxcpm/
+.venv-image/
+third_party/
+pretrained_models/
+
+# env (包含 API Key，切勿提交)
+.env
+.env.local
+.env.bak-*
+
+
+# 运行时产物
+temp/
+# 剧情「按需出图」在线上生成的专属场景图（运行时产生，不进仓库）
+public/scene-art/
+public/videos/composed_*.mp4
+public/videos/sample*.mp4
+public/uploads/
+
+# 构建产物
+dist/
+dist-dev/
+api/dist/
+
+# 日志与系统文件
+*.log
+.DS_Store
+Thumbs.db
+
+# 运行时数据（含用户隐私：账号/会话/订单/令牌，切勿提交）
+data/
+
+# 本地开发/压测脚本（内含硬编码管理令牌，勿提交）
+test-*.mjs
+verify-flow.mjs
+
+# 第三方克隆仓库（狼人杀移植参考：vendor/wolfcha 自带独立 .git，git 无法作为普通文件提交，
+# 需要时按 docs/werewolf-porting.md 自行 clone；移植产物已在 src/wolfcha/ 与 src/werewolf/）
+vendor/
+
+# Python 字节码缓存（机器生成，不随仓库分发）
+__pycache__/
+*.pyc
+
+# 项目级技能库（第三方内容，按需 clone；映射文档见 marketing-skills-map.md）
+.dsh/skills/
+
+# 大体积二进制工具（cloudflared 按需下载，不随仓库分发）
+# 本地 TTS/语音模型权重（VoxCPM / CosyVoice / Whisper 等，按需本地运行，不随仓库分发）
+voxcpm_model/
+tools/cloudflared.exe
+
+# 浠撳簱鍗敓锛?026-09-27 娓呯悊锛氫互涓嬩负鏈湴浜х墿锛屼笉鍏ュ簱锛塦nui_shots/
+ht1.json
+example-*.js
+*.test-summary.md
+
+# 个人收款码：不进仓库（部署时本地放入 public/；线上仍由 dist/public 静态托管）
+public/pay-qr.jpg
+
+# 成人向提示词素材：不进仓库（仅保留在本机磁盘；运行时按「可选语料库」按需读取）
+prompts/adult-lexicon.zh.txt
+prompts/adult-lexicon.en.txt
+prompts/eval-probes.zh.txt
+prompts/eval-probes.en.txt
+
+################ 作品集（public 仓库不含以下内容；文件仍保留在本机磁盘）################
+# --- 内部记录与安全文档 ---
+AGENTS.md
+CHANGELOG.md
+project-state.md
+CODE_REVIEW.md
+P1_FIX_TICKETS.md
+部署运营手册.md
+browser-skill-setup.md
+xiaoyu-walkthrough-*.md
+# --- 商业 / 运营内情 ---
+会员*.md
+统一点数账本-*.md
+邀请福利-*.md
+attribution-readout.md
+domain-change-report.md
+email-provider-migration.md
+usage-time-zero-audit-*.md
+# --- 营销文案 ---
+instagram-*.md
+reddit-*.md
+seo-*.md
+marketing-*.md
+posteverywhere-setup.md
+小红书测试帖*.md
+# --- 地区语气研究报告 ---
+*地区语气研究报告.md
+# --- 产品方案草稿 ---
+剧情引流*.md
+剧情角色接入*.md
+叙事模式-设置对比.md
+聊一聊真人感-方案.md
+anyou-rebrand-plan.md
+MODLENS-备忘.md
+AI狼人杀-调研与实施方案.md
+AI文游-调研与实施方案.md
+ROLEPLAY_IMAGE_PROMPTS.md
+# --- UI / 工具笔记 ---
+ui-skills-map.md
+ui-review-*.md
+skill-library-audit.md
+# --- 本机运维脚本与图标 ---
+guard.ps1
+check_restart_3001.ps1
+restart-all.ps1
+restart-all.bat
+install-service.js
+守护启动.bat
+一键启动.bat
+一键停止.bat
+重启服务.bat
+启动小愈.vbs
+小愈开关.vbs
+DSH启动.vbs
+DSH.ico
+小愈.ico
+启动VoxCPM守护.bat
+启动语音识别服务.bat
+# --- 内部配置与未使用的部署入口 ---
+.env.example
+vercel.json
+# --- 内部目录 ---
+tasks/
+docs/reviews/
+# --- 设计文档：只公开工程向的几份 ---
+docs/cloud-deploy-phase1.md
+docs/deepseek-v4-thinking-eval.md
+docs/proactive-outreach-plan.md
+docs/proactive-outreach-report.md
+docs/quota-token-cost-design.md
+docs/roleplay-bgm-plan.md
+docs/roleplay-immersion-plan.md
+docs/scene-art-cloud-api-plan.md
+docs/social-share-plan.md
+# --- 后台控制台 ---
+public/admin.html
+# --- 成人向专项测试（含露骨夹具）---
+test/unit/roleplayAdult*.test.ts
+test/unit/adultCampaign.test.ts
+test/unit/customScenarioAdultTag.test.ts
+test/unit/roleplaySessionAdultTag.test.ts
+test/unit/chatVoice.test.ts
+# --- 大体积资源（本机保留，不随仓库分发）---
+public/music/
+public/fonts/
+src/wenyou/assets/
+闽南语Hokkien-地区语气研究报告.md

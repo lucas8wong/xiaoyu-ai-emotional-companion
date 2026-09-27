@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#A9D64B"/>
+      <stop offset="0.55" stop-color="#3FA449"/>
+      <stop offset="1" stop-color="#158257"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" fill="#F5F0E6"/>
+  <text x="32" y="45" text-anchor="middle" font-family="system-ui,-apple-system,'Segoe UI',sans-serif" font-weight="800" font-size="19" fill="url(#lg)" letter-spacing="-0.5">Xiaoyu</text>
+  <!-- 字母 i 上的芽 / 两片叶子 -->
+  <g fill="#3FA449">
+    <path d="M31 24c-2-5 1-9 6-10-1 4-3 7-6 10z"/>
+    <path d="M31 24c-1-5-4-8-9-8 2 3 5 6 9 8z"/>
+    <path d="M31 24l1 3 1-3z"/>
+  </g>
+</svg>

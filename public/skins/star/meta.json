@@ -1,0 +1,157 @@
+{
+  "id": "star",
+  "label": "星空",
+  "desc": "由管理员生成 · 星空",
+  "labelKey": "",
+  "descKey": "",
+  "bg": "/skins/star/bg.webp?v=2",
+  "bgPortrait": "/skins/star/bgPortrait.webp?v=2",
+  "hero": "/skins/star/hero.webp?v=2",
+  "chat": "/skins/star/chat.webp?v=2",
+  "structure": "/skins/star/structure.webp?v=2",
+  "story": "/skins/star/story.webp?v=2",
+  "wordmark": "/skins/star/wordmark.webp?v=5",
+  "heart": "/skins/star/heart.webp?v=2",
+  "favicon": "/skins/star/favicon.webp?v=2",
+  "companion": "/skins/star/companion.webp?v=2",
+  "membership": "/skins/star/membership.webp?v=2",
+  "modeHug": "/skins/star/modeHug.webp?v=2",
+  "modeAlly": "/skins/star/modeAlly.webp?v=2",
+  "modeClarify": "/skins/star/modeClarify.webp?v=2",
+  "modeLight": "/skins/star/modeLight.webp?v=2",
+  "modeObjective": "/skins/star/modeObjective.webp?v=2",
+  "feedback": "/skins/star/feedback.webp?v=2",
+  "planFree": "/skins/star/planFree.webp?v=2",
+  "planPlus": "/skins/star/planPlus.webp?v=2",
+  "planPro": "/skins/star/planPro.webp?v=2",
+  "preview": "/skins/star/preview.webp?v=2",
+  "palette": [
+    "#0B1026",
+    "#1B1E3A",
+    "#2C2A5E",
+    "#E8C87A",
+    "#8A9BB5"
+  ],
+  "theme": "星空",
+  "createdAt": "2026-09-01T15:00:47.843Z",
+  "styleAnchor": {
+    "themeEnglish": "starry night",
+    "mood": "serene, contemplative, vast, intimate, quiet awe",
+    "palette": [
+      "#0B1026",
+      "#1B1E3A",
+      "#2C2A5E",
+      "#E8C87A",
+      "#8A9BB5"
+    ],
+    "keywords": [
+      "deep space",
+      "no text",
+      "no UI",
+      "no watermark",
+      "velvet darkness",
+      "fine grain",
+      "soft bokeh",
+      "celestial glow",
+      "premium atmosphere"
+    ]
+  },
+  "slots": [
+    {
+      "key": "bg",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A wide atmosphere background for the Xiaoyu gentle-healing companion app, soft glow, atmospheric depth, rich gradient, fills the whole frame. "
+    },
+    {
+      "key": "bgPortrait",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A vertical atmosphere background for the Xiaoyu gentle-healing companion app, soft glow, atmospheric depth, rich gradient, fills the whole frame. "
+    },
+    {
+      "key": "hero",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A wide hero main scene for the Xiaoyu gentle-healing companion app, soft glow, atmospheric depth, rich gradient, fills the whole frame. "
+    },
+    {
+      "key": "chat",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A square chat feature illustration illustration, the central subject is large and fills the frame, rich detail, refined, edge-to-edge artwork. "
+    },
+    {
+      "key": "structure",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A square structure feature illustration illustration, the central subject is large and fills the frame, rich detail, refined, edge-to-edge artwork. "
+    },
+    {
+      "key": "story",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A square healing story illustration illustration, the central subject is large and fills the frame, rich detail, refined, edge-to-edge artwork. "
+    },
+    {
+      "key": "wordmark",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A brand brand wordmark for \"Xiaoyu\", elegant minimal typography that fills the frame large and clear, on a rich background, small accent. "
+    },
+    {
+      "key": "heart",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat brand heart mark, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "favicon",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat app icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "companion",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A friendly AI companion avatar, the character or abstract form fills the frame large and centered, soft glow, square crop. "
+    },
+    {
+      "key": "membership",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat membership mark, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "modeHug",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat hug mode icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "modeAlly",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat ally mode icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "modeClarify",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat clarify mode icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "modeLight",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat light mode icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "modeObjective",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat objective mode icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "feedback",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat feedback icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "planFree",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat free plan icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "planPlus",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat plus plan icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "planPro",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A minimal flat pro plan icon, the icon glyph is large, bold, centered, fills the tile, on a simple rich background, crisp, no tiny details, no extra space. "
+    },
+    {
+      "key": "preview",
+      "prompt": "A refined, high-quality illustration with depth and atmosphere, rich but tasteful color, elegant lighting. Theme: starry night. Mood: serene, contemplative, vast, intimate, quiet awe. Palette: #0B1026, #1B1E3A, #2C2A5E, #E8C87A, #8A9BB5. Keywords: deep space, no text, no UI, no watermark, velvet darkness, fine grain, soft bokeh, celestial glow, premium atmosphere. Not childish, not flat pastel, not cartoon, not clip-art. Composition: the subject fills the ENTIRE canvas edge-to-edge, large and centered, no empty background, no unused margins, no letterboxing, no wasted space, no rounded border, no frame, no card outline, no picture-in-picture; it must fully cover the frame and be safe to crop into a square card. No text, no watermark, no UI, no interface elements, no people unless noted. A wide skin preview thumbnail for the Xiaoyu gentle-healing companion app, soft glow, atmospheric depth, rich gradient, fills the whole frame. "
+    }
+  ],
+  "chatSm": "/skins/star/chat-sm.webp?v=2",
+  "storySm": "/skins/star/story-sm.webp?v=2",
+  "structureSm": "/skins/star/structure-sm.webp?v=2",
+  "modeHugSm": "/skins/star/modeHug-sm.webp?v=2",
+  "modeAllySm": "/skins/star/modeAlly-sm.webp?v=2",
+  "modeClarifySm": "/skins/star/modeClarify-sm.webp?v=2",
+  "modeLightSm": "/skins/star/modeLight-sm.webp?v=2",
+  "modeObjectiveSm": "/skins/star/modeObjective-sm.webp?v=2",
+  "planFreeSm": "/skins/star/planFree-sm.webp?v=2",
+  "planPlusSm": "/skins/star/planPlus-sm.webp?v=2",
+  "planProSm": "/skins/star/planPro-sm.webp?v=2",
+  "feedbackSm": "/skins/star/feedback-sm.webp?v=2"
+}

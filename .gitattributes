@@ -1,0 +1,47 @@
+# 统一行尾：文本文件一律以 LF 入库（消除 Windows 上反复出现的 CRLF 警告）
+* text=auto eol=lf
+
+# Windows 专属脚本保持 CRLF（cmd.exe / PowerShell / WSH 对 LF 更敏感）
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.vbs text eol=crlf
+
+# 二进制：不做行尾转换、不参与文本 diff
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.mp3 binary
+*.wav binary
+*.ogg binary
+*.m4a binary
+*.mp4 binary
+*.webm binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+*.zip binary
+*.exe binary
+
+# SVG 是文本，保留 diff；但默认不在语言统计里按代码算
+*.svg text
+
+# GitHub 语言统计：文档与生成物不计入源码比例
+CHANGELOG.md linguist-documentation
+project-state.md linguist-documentation
+CODE_REVIEW.md linguist-documentation
+docs/** linguist-documentation
+*.md linguist-documentation
+package-lock.json linguist-generated
+public/fonts/** linguist-vendored
+public/img/** linguist-vendored
+public/music/** linguist-vendored
+public/skins/** linguist-vendored
+public/audio/** linguist-vendored
+src/wolfcha/** linguist-vendored

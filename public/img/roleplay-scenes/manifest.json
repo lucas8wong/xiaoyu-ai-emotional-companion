@@ -1,0 +1,1882 @@
+{
+  "generatedAt": "2026-09-14 21:10:00",
+  "model": "stabilityai/stable-diffusion-xl-base-1.0",
+  "steps": 28,
+  "guidance": 6.5,
+  "negative": "people, person, human, face, faces, hands, body, crowd, crowd of people, silhouette of a person, text, letters, words, signage, signboard, watermark, signature, logo, poster, blood, corpse, weapon, gun, knife, blurry, low quality, deformed, extra limbs, cluttered, oversaturated",
+  "width": 1024,
+  "height": 576,
+  "style": "interior scene, no people, no text, soft cinematic illustration, neutral palette, soft daylight",
+  "items": [
+    {
+      "worldview": "ancient",
+      "theme": "alone",
+      "file": "ancient-alone.webp",
+      "seed": 1505360092,
+      "prompt": "an empty apartment at night, a single lamp, long shadows, curtains half drawn, cool muted palette, low-key lighting, quiet tension, interior scene, traditional Chinese interior, carved wooden lattice windows, silk, porcelain",
+      "bytes": 57866,
+      "seconds": 4.54,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一幅中式风格的室内场景插画，有木质屏风、床榻、灯笼和植物，无人物与可辨认文字。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "cold",
+      "file": "ancient-cold.webp",
+      "seed": 58702757,
+      "prompt": "a bare room in grey light, one empty chair by a curtained window, cool muted palette, low-key lighting, quiet tension, interior scene, traditional Chinese interior, carved wooden lattice windows, silk, porcelain",
+      "bytes": 41060,
+      "seconds": 4.51,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "室内中式风格场景，有坐榻、茶几、窗户、窗帘和挂画，无人物和可辨文字。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "conflict",
+      "file": "ancient-conflict.webp",
+      "seed": 991089768,
+      "prompt": "a living room in hard side light, a tilted chair, scattered papers, cool muted palette, low-key lighting, quiet tension, interior scene, traditional Chinese interior, carved wooden lattice windows, silk, porcelain",
+      "bytes": 60330,
+      "seconds": 4.56,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间带有中式木质格栅窗、山水画和暖色灯笼的雅致客厅，内有沙发与茶几，画面中无人也无文字。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "crisis",
+      "file": "ancient-crisis.webp",
+      "seed": 99538356,
+      "prompt": "a dark apartment corridor at night, one flickering light, an overturned chair, cool muted palette, low-key lighting, quiet tension, interior scene, traditional Chinese interior, carved wooden lattice windows, silk, porcelain",
+      "bytes": 51518,
+      "seconds": 4.52,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间宁静的东方风格室内走廊，木格窗与壁灯投下暖光，地面铺着长条地垫，靠墙放着一张木凳。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "daily",
+      "file": "ancient-daily.webp",
+      "seed": 1099558154,
+      "prompt": "a lived-in kitchen in morning light, steam from a cup, warm palette, soft lamplight, interior scene, traditional Chinese interior, carved wooden lattice windows, silk, porcelain",
+      "bytes": 60406,
+      "seconds": 4.58,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间中式风格的室内场景，木质雕花窗格透出朦胧的庭院景致，桌上摆放着茶壶、茶碗和盆栽。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "flutter",
+      "file": "ancient-flutter.webp",
+      "seed": 2068180320,
+      "prompt": "sheer curtains at an open window, warm afternoon light, a cup on the sill, warm palette, soft lamplight, interior scene, traditional Chinese interior, carved wooden lattice windows, silk, porcelain",
+      "bytes": 51168,
+      "seconds": 4.54,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "阳光透过中式窗棂照在窗台上的茶杯与白色窗帘上，窗外是朦胧的远山。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "hospital",
+      "file": "ancient-hospital.webp",
+      "seed": 887783828,
+      "prompt": "a quiet hospital corridor with pale light and empty chairs, neutral palette, soft daylight, interior scene, traditional Chinese interior, carved wooden lattice windows, silk, porcelain",
+      "bytes": 41750,
+      "seconds": 4.53,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间充满日式木质格栅与暖阳的空旷室内空间，墙边设有长凳和三幅挂画，右侧摆一盆绿植。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "intimate",
+      "file": "ancient-intimate.webp",
+      "seed": 1965352846,
+      "prompt": "a dim bedroom lit by one candle, soft textiles, amber glow, warm palette, soft lamplight, interior scene, traditional Chinese interior, carved wooden lattice windows, silk, porcelain",
+      "bytes": 60914,
+      "seconds": 4.53,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间中式风格的卧室，暖光下摆放着大床、木质屏风和窗棂装饰。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "master/北疆婚帐洞房",
+      "file": "tuobaye-shenlianxing-master.webp",
+      "seed": 1946143338,
+      "prompt": "interior of a yurt wedding chamber, red silk drapes, flickering candles, thick felt curtain lifted, bronze brazier, fur rugs, warm candlelight, warm palette, soft lamplight, interior scene",
+      "bytes": 70276,
+      "seconds": 4.48,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一个温馨的帐篷内部，中央有燃烧的壁炉，周围摆放着坐垫和地毯。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "master/夜里的听月楼外长街",
+      "file": "chengqingyan-xinhuang-master.webp",
+      "seed": 1461239633,
+      "prompt": "wooden teahouse tower, red silk lanterns, wet bluestone street, scattered petals, night mist, cold moonlight, cool muted palette, low-key lighting, quiet tension, outdoor scene",
+      "bytes": 45602,
+      "seconds": 4.47,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "夜晚雾气中的中式亭子悬挂着红灯笼，亭内摆放茶几和坐垫，地面散落红色花瓣。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "master/宫宴散后的殿堂",
+      "file": "shenyu-lingchaoyue-master.webp",
+      "seed": 278401686,
+      "prompt": "dim palace hall, flickering candles, overturned wine cups, silk drapes, brocade couch, scattered cushions, cold moonlight through lattice windows, neutral palette, soft daylight, interior scene",
+      "bytes": 51460,
+      "seconds": 4.49,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间奢华风格的室内场景，摆放着金色雕花的沙发与茶几，透过高大的落地窗可看见远处的山峦。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "master/洞房喜房内",
+      "file": "peixiuyuan-linwantang-master.webp",
+      "seed": 102670536,
+      "prompt": "chinese bridal chamber, carved wooden bed with red canopy, red paper double happiness on the wall, red candles, silk drapes, dim warm candlelight, warm palette, soft lamplight, interior scene",
+      "bytes": 54174,
+      "seconds": 4.47,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间中式古典风格的卧室，中央是挂有红色床幔的大床，两侧有红灯笼和木质家具，整体氛围温暖雅致。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "master/游街散去后的长街",
+      "file": "xiaoyan-qianqian-master.webp",
+      "seed": 345680386,
+      "prompt": "ancient stone street, red bridal sedan chair, scattered red silk ribbons, swaying lanterns, autumn osmanthus petals, dusty hoofprints, hazy afternoon golden light, warm palette, soft lamplight, outdoor scene",
+      "bytes": 54734,
+      "seconds": 4.49,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "中式街道上悬挂着红色灯笼，右侧有一座红色亭阁式座椅，秋叶飘落，画面宁静无人。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "master/皇后宫廊下庭院",
+      "file": "xiaoyan-chisha-master.webp",
+      "seed": 326778320,
+      "prompt": "vermilion red wooden pillars, yellow glazed roof tiles, carved wooden eaves, worn stone steps, withered chrysanthemums, faint mist, cold grey light, cool muted palette, low-key lighting, quiet tension, outdoor scene",
+      "bytes": 54054,
+      "seconds": 4.46,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "雾中的中式红柱古建筑走廊，未见人物或文字。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "master/罗马宫殿大殿",
+      "file": "aluola-ailian-master.webp",
+      "seed": 1682210943,
+      "prompt": "vast marble hall, tall fluted columns, dark red drapery, scattered golden coins, cold shafts of light, polished stone floor, cool muted palette, low-key lighting, quiet tension, interior scene",
+      "bytes": 56520,
+      "seconds": 4.48,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一条宏伟的古典柱廊大厅，红白立柱与金色装饰延伸至远端发光的门口，地面光洁反光。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "meet",
+      "file": "ancient-meet.webp",
+      "seed": 574808685,
+      "prompt": "a quiet doorway with framed light, a table set for two, neutral palette, soft daylight, interior scene, traditional Chinese interior, carved wooden lattice windows, silk, porcelain",
+      "bytes": 45368,
+      "seconds": 4.53,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一幅中式室内场景插画，有木质格栅、圆桌、椅子、花瓶与装饰画，未出现人物或文字。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "memory",
+      "file": "ancient-memory.webp",
+      "seed": 1050218641,
+      "prompt": "a desk with faded photographs, old letters, dusty warm light, warm palette, soft lamplight, interior scene, traditional Chinese interior, carved wooden lattice windows, silk, porcelain",
+      "bytes": 53434,
+      "seconds": 4.55,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间布置雅致的中式书房，书桌上摊开书本、花瓶与台灯，四周是木质格窗和植物挂画。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "night",
+      "file": "ancient-night.webp",
+      "seed": 1590577652,
+      "prompt": "a quiet bedroom at night, sheer curtains, soft lamplight, out-of-focus window, cool muted palette, low-key lighting, quiet tension, interior scene, traditional Chinese interior, carved wooden lattice windows, silk, porcelain",
+      "bytes": 51260,
+      "seconds": 4.53,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间具有东方格调的现代中式卧室，布置着木质床榻、屏风、台灯和素雅床品，整体宁静温馨。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "parting",
+      "file": "ancient-parting.webp",
+      "seed": 1797424742,
+      "prompt": "an entryway at dusk, a suitcase left by the door, neutral palette, soft daylight, interior scene, traditional Chinese interior, carved wooden lattice windows, silk, porcelain",
+      "bytes": 54044,
+      "seconds": 4.56,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "中式风格室内场景，有木格门窗、青花瓷盆栽和地面草席，空无一人。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "promise",
+      "file": "ancient-promise.webp",
+      "seed": 1248047173,
+      "prompt": "a small velvet box on a bedside table by candlelight, golden glow, warm palette, soft lamplight, interior scene, traditional Chinese interior, carved wooden lattice windows, silk, porcelain",
+      "bytes": 57178,
+      "seconds": 4.58,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间布置雅致的中式风格卧室插画，有大床、台灯、窗景和装饰屏风。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "rain",
+      "file": "ancient-rain.webp",
+      "seed": 2095495950,
+      "prompt": "rain on the window from inside, blurred lights beyond the glass, neutral palette, soft daylight, interior scene, traditional Chinese interior, carved wooden lattice windows, silk, porcelain",
+      "bytes": 41408,
+      "seconds": 4.53,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "透过中式木质镂空窗格，看到窗外雨丝绵密、绿意朦胧的庭院。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "reconcile",
+      "file": "ancient-reconcile.webp",
+      "seed": 1256540173,
+      "prompt": "a sunlit room, half-open curtains, two cups on a small table, warm palette, soft lamplight, interior scene, traditional Chinese interior, carved wooden lattice windows, silk, porcelain",
+      "bytes": 60734,
+      "seconds": 4.56,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间中式风格的明亮室内，有雕花木窗、长桌、花瓶和绿植，阳光洒在地板上。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "ancient",
+      "theme": "work",
+      "file": "ancient-work.webp",
+      "seed": 419060004,
+      "prompt": "a modern office desk with documents, a laptop and a city view at dusk, neutral palette, soft daylight, interior scene, traditional Chinese interior, carved wooden lattice windows, silk, porcelain",
+      "bytes": 73998,
+      "seconds": 4.58,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代中式风格办公室内有一张办公桌、椅子、笔记本电脑和花瓶，窗外是城市与山脉的黄昏景色。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "alone",
+      "file": "campus-alone.webp",
+      "seed": 863270774,
+      "prompt": "an empty apartment at night, a single lamp, long shadows, curtains half drawn, cool muted palette, low-key lighting, quiet tension, interior scene, youthful school interior, painted walls, bright daylight",
+      "bytes": 22214,
+      "seconds": 4.51,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一个没有人的室内场景，阳光穿过窗户照进房间，窗前有绿色窗帘和一把棕色扶手椅。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "cold",
+      "file": "campus-cold.webp",
+      "seed": 2127620020,
+      "prompt": "a bare room in grey light, one empty chair by a curtained window, cool muted palette, low-key lighting, quiet tension, interior scene, youthful school interior, painted walls, bright daylight",
+      "bytes": 21898,
+      "seconds": 4.5,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一个空荡的室内房间，靠窗摆放着一把木椅，阳光透过白色窗帘洒在木地板上，右侧可见桌子的边缘。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "conflict",
+      "file": "campus-conflict.webp",
+      "seed": 825925358,
+      "prompt": "a living room in hard side light, a tilted chair, scattered papers, cool muted palette, low-key lighting, quiet tension, interior scene, youthful school interior, painted walls, bright daylight",
+      "bytes": 37842,
+      "seconds": 4.52,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代风格客厅室内场景，配有沙发、扶手椅、地毯和绿植，阳光从窗户照入。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "crisis",
+      "file": "campus-crisis.webp",
+      "seed": 887789268,
+      "prompt": "a dark apartment corridor at night, one flickering light, an overturned chair, cool muted palette, low-key lighting, quiet tension, interior scene, youthful school interior, painted walls, bright daylight",
+      "bytes": 38828,
+      "seconds": 4.55,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一条空旷的室内走廊，两侧有门、壁板和吊灯，光线明亮。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "daily",
+      "file": "campus-daily.webp",
+      "seed": 725901992,
+      "prompt": "a lived-in kitchen in morning light, steam from a cup, warm palette, soft lamplight, interior scene, youthful school interior, painted walls, bright daylight",
+      "bytes": 42962,
+      "seconds": 4.54,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间阳光充足的厨房，配有橱柜、窗户、中岛台和餐桌，没有人物或文字。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "flutter",
+      "file": "campus-flutter.webp",
+      "seed": 918980677,
+      "prompt": "sheer curtains at an open window, warm afternoon light, a cup on the sill, warm palette, soft lamplight, interior scene, youthful school interior, painted walls, bright daylight",
+      "bytes": 24028,
+      "seconds": 4.51,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间阳光明亮的室内窗边场景，有窗帘、绿植、杯子和墙上的装饰画。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "hospital",
+      "file": "campus-hospital.webp",
+      "seed": 1052953370,
+      "prompt": "a quiet hospital corridor with pale light and empty chairs, neutral palette, soft daylight, interior scene, youthful school interior, painted walls, bright daylight",
+      "bytes": 20492,
+      "seconds": 4.54,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一条空无一人的医院走廊，两侧是蓝绿色门和米色墙面，光滑的地板反射着顶灯的光。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "intimate",
+      "file": "campus-intimate.webp",
+      "seed": 2131537160,
+      "prompt": "a dim bedroom lit by one candle, soft textiles, amber glow, warm palette, soft lamplight, interior scene, youthful school interior, painted walls, bright daylight",
+      "bytes": 36826,
+      "seconds": 4.53,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间暖色调卧室，配有床、床尾凳、扶手椅、床头柜、装饰画和大窗户，光线柔和。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "master/大学校门口路边",
+      "file": "chenboyuan-qingxing-master.webp",
+      "seed": 1571677107,
+      "prompt": "university gate, black BMW parked at curb, empty sidewalk, delivery scooter with insulated box, fading dusk light, cool grey sky, cool muted palette, low-key lighting, quiet tension, outdoor scene",
+      "bytes": 27440,
+      "seconds": 4.43,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "黄昏天空下的现代建筑与公路场景，路边停着一辆摩托车。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "master/礼堂门前石阶",
+      "file": "jiangyubai-wenruanruan-master.webp",
+      "seed": 1360500579,
+      "prompt": "school auditorium entrance, wide sunlit stone steps, open glass doors, scattered ribbons, fallen bouquet, warm summer afternoon light, warm palette, soft lamplight, outdoor scene",
+      "bytes": 43058,
+      "seconds": 4.45,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "阳光下的建筑正门插画，米色立柱与台阶通向深色玻璃双开门，两侧点缀着橙色与粉色花丛。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "master/贵族学校走廊拐角",
+      "file": "luyan-sunian-master.webp",
+      "seed": 326679643,
+      "prompt": "sunlit private-school corridor, high windows, polished marble floor, lockers, scattered books, cream stone walls, slanted afternoon light, warm palette, soft lamplight, interior scene",
+      "bytes": 35912,
+      "seconds": 4.47,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一条明亮的古典风格室内走廊，有拱形窗户和光滑反光地板，空无一人。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "meet",
+      "file": "campus-meet.webp",
+      "seed": 1609416316,
+      "prompt": "a quiet doorway with framed light, a table set for two, neutral palette, soft daylight, interior scene, youthful school interior, painted walls, bright daylight",
+      "bytes": 28360,
+      "seconds": 4.54,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代简约室内场景，浅色墙面与木地板，中间有一张圆桌、两把棕色椅子和墙上植物挂画。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "memory",
+      "file": "campus-memory.webp",
+      "seed": 261968881,
+      "prompt": "a desk with faded photographs, old letters, dusty warm light, warm palette, soft lamplight, interior scene, youthful school interior, painted walls, bright daylight",
+      "bytes": 30258,
+      "seconds": 4.54,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "阳光透过窗户照进安静的房间，书桌上堆满打开的书籍和散落的纸张。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "night",
+      "file": "campus-night.webp",
+      "seed": 872662618,
+      "prompt": "a quiet bedroom at night, sheer curtains, soft lamplight, out-of-focus window, cool muted palette, low-key lighting, quiet tension, interior scene, youthful school interior, painted walls, bright daylight",
+      "bytes": 37812,
+      "seconds": 4.54,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间布置温馨的现代卧室，有落地窗、灰色扶手椅、床铺和暖色灯光。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "parting",
+      "file": "campus-parting.webp",
+      "seed": 648143741,
+      "prompt": "an entryway at dusk, a suitcase left by the door, neutral palette, soft daylight, interior scene, youthful school interior, painted walls, bright daylight",
+      "bytes": 27610,
+      "seconds": 4.52,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间阳光斜照的浅绿色房间内，百叶窗前放着一只棕色复古行李箱和一个小皮包，右侧黄色门上的镜子里映出挂着的衣物。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "promise",
+      "file": "campus-promise.webp",
+      "seed": 132175198,
+      "prompt": "a small velvet box on a bedside table by candlelight, golden glow, warm palette, soft lamplight, interior scene, youthful school interior, painted walls, bright daylight",
+      "bytes": 15442,
+      "seconds": 4.52,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "桌面上放着一盏金色台灯和一个金色首饰盒，左侧有花朵，背景是浅紫色墙面，无人物和文字。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "rain",
+      "file": "campus-rain.webp",
+      "seed": 21620511,
+      "prompt": "rain on the window from inside, blurred lights beyond the glass, neutral palette, soft daylight, interior scene, youthful school interior, painted walls, bright daylight",
+      "bytes": 28392,
+      "seconds": 4.53,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "雨滴沿着窗玻璃滑落的窗前景象，窗外景色模糊，窗台木质且被雨水打湿。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "reconcile",
+      "file": "campus-reconcile.webp",
+      "seed": 1577802690,
+      "prompt": "a sunlit room, half-open curtains, two cups on a small table, warm palette, soft lamplight, interior scene, youthful school interior, painted walls, bright daylight",
+      "bytes": 40550,
+      "seconds": 4.54,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "阳光洒入的温馨室内场景，摆放着木质桌椅、床、绿植和装饰画，没有人物或文字。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "campus",
+      "theme": "work",
+      "file": "campus-work.webp",
+      "seed": 1700070707,
+      "prompt": "a modern office desk with documents, a laptop and a city view at dusk, neutral palette, soft daylight, interior scene, youthful school interior, painted walls, bright daylight",
+      "bytes": 42268,
+      "seconds": 4.56,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一张面向城市天际线日落景观的现代办公桌场景插画，桌上有笔记本电脑、台灯、植物和文件，窗外可见高楼与暖色天空。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "hk",
+      "theme": "alone",
+      "file": "hk-alone.webp",
+      "seed": 69215029,
+      "prompt": "an empty apartment at night, a single lamp, long shadows, curtains half drawn, cool muted palette, low-key lighting, quiet tension, interior scene, 1990s Hong Kong interior, tiled walls, metal window frames, neon glow",
+      "bytes": 37276,
+      "seconds": 4.54,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "黄昏时分的室内窗景，落地窗前有窗帘和落地灯，窗外是城市天际线。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "hk",
+      "theme": "cold",
+      "file": "hk-cold.webp",
+      "seed": 400071883,
+      "prompt": "a bare room in grey light, one empty chair by a curtained window, cool muted palette, low-key lighting, quiet tension, interior scene, 1990s Hong Kong interior, tiled walls, metal window frames, neon glow",
+      "bytes": 27476,
+      "seconds": 4.52,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "室内靠窗摆放两把椅子和一张小圆桌，窗外是城市高楼。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "hk",
+      "theme": "conflict",
+      "file": "hk-conflict.webp",
+      "seed": 1936793125,
+      "prompt": "a living room in hard side light, a tilted chair, scattered papers, cool muted palette, low-key lighting, quiet tension, interior scene, 1990s Hong Kong interior, tiled walls, metal window frames, neon glow",
+      "bytes": 50948,
+      "seconds": 4.52,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间现代客厅插画，配有沙发、茶几、落地灯、绿植和落地窗，窗外呈现粉色景象。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "hk",
+      "theme": "crisis",
+      "file": "hk-crisis.webp",
+      "seed": 1115783952,
+      "prompt": "a dark apartment corridor at night, one flickering light, an overturned chair, cool muted palette, low-key lighting, quiet tension, interior scene, 1990s Hong Kong interior, tiled walls, metal window frames, neon glow",
+      "bytes": 51998,
+      "seconds": 4.53,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一条绿色墙面与粉色地砖的空荡走廊，尽头有一扇透出暖黄色光的窗户。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "hk",
+      "theme": "daily",
+      "file": "hk-daily.webp",
+      "seed": 470824679,
+      "prompt": "a lived-in kitchen in morning light, steam from a cup, warm palette, soft lamplight, interior scene, 1990s Hong Kong interior, tiled walls, metal window frames, neon glow",
+      "bytes": 53818,
+      "seconds": 4.55,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "阳光明媚的现代厨房插画，设有中央岛台、彩色橱柜与大窗户，窗外可见城市天际线。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "hk",
+      "theme": "flutter",
+      "file": "hk-flutter.webp",
+      "seed": 716826104,
+      "prompt": "sheer curtains at an open window, warm afternoon light, a cup on the sill, warm palette, soft lamplight, interior scene, 1990s Hong Kong interior, tiled walls, metal window frames, neon glow",
+      "bytes": 39312,
+      "seconds": 4.52,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "黄昏时分，透过一扇大窗户望向城市天际线，窗边垂着黄色窗帘，桌上放着一盏发光的台灯。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "hk",
+      "theme": "hospital",
+      "file": "hk-hospital.webp",
+      "seed": 2089372625,
+      "prompt": "a quiet hospital corridor with pale light and empty chairs, neutral palette, soft daylight, interior scene, 1990s Hong Kong interior, tiled walls, metal window frames, neon glow",
+      "bytes": 28130,
+      "seconds": 4.65,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一条空旷的绿色医院走廊，墙面与天花板亮着灯带和吸顶灯，两侧靠墙摆放着若干空置的金属框座椅。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "hk",
+      "theme": "intimate",
+      "file": "hk-intimate.webp",
+      "seed": 1028074957,
+      "prompt": "a dim bedroom lit by one candle, soft textiles, amber glow, warm palette, soft lamplight, interior scene, 1990s Hong Kong interior, tiled walls, metal window frames, neon glow",
+      "bytes": 40556,
+      "seconds": 4.51,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间暖光卧室场景，床铺整洁，窗帘与装饰屏风营造温馨氛围。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "hk",
+      "theme": "master/深夜夜店门口街道",
+      "file": "guyushen-songzhi-master.webp",
+      "seed": 1755406656,
+      "prompt": "narrow city street at 3am, neon-lit nightclub facade, wet asphalt, parked black sedan, orange streetlamp glow, cigarette smoke haze, cool blue shadows, cool muted palette, low-key lighting, quiet tension, outdoor scene",
+      "bytes": 51072,
+      "seconds": 4.77,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "夜晚街边停着一辆黑色轿车，建筑窗户透出暖光，湿漉漉的路面映出倒影，画面中没有人物和可辨认文字。",
+        "retries": 1
+      }
+    },
+    {
+      "worldview": "hk",
+      "theme": "meet",
+      "file": "hk-meet.webp",
+      "seed": 921027843,
+      "prompt": "a quiet doorway with framed light, a table set for two, neutral palette, soft daylight, interior scene, 1990s Hong Kong interior, tiled walls, metal window frames, neon glow",
+      "bytes": 41134,
+      "seconds": 4.53,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "日式风格室内场景，中央有一张木桌和两把藤编椅子，四周是格栅门，阳光在地面投下柔和光影。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "hk",
+      "theme": "memory",
+      "file": "hk-memory.webp",
+      "seed": 2046182965,
+      "prompt": "a desk with faded photographs, old letters, dusty warm light, warm palette, soft lamplight, interior scene, 1990s Hong Kong interior, tiled walls, metal window frames, neon glow",
+      "bytes": 32806,
+      "seconds": 4.51,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一个温馨的室内书桌场景，有台灯、墙上贴着地图和纸张、抽屉柜及绿植。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "hk",
+      "theme": "night",
+      "file": "hk-night.webp",
+      "seed": 56070683,
+      "prompt": "a quiet bedroom at night, sheer curtains, soft lamplight, out-of-focus window, cool muted palette, low-key lighting, quiet tension, interior scene, 1990s Hong Kong interior, tiled walls, metal window frames, neon glow",
+      "bytes": 33300,
+      "seconds": 4.52,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间面朝海景的卧室，床铺、窗帘、台灯和扶手椅在温暖光线下。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "hk",
+      "theme": "parting",
+      "file": "hk-parting.webp",
+      "seed": 987664066,
+      "prompt": "an entryway at dusk, a suitcase left by the door, neutral palette, soft daylight, interior scene, 1990s Hong Kong interior, tiled walls, metal window frames, neon glow",
+      "bytes": 32162,
+      "seconds": 4.55,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "场景插画中走廊上放着一个粉色行李箱，尽头是彩色玻璃门，没有人物和文字。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "hk",
+      "theme": "promise",
+      "file": "hk-promise.webp",
+      "seed": 463452387,
+      "prompt": "a small velvet box on a bedside table by candlelight, golden glow, warm palette, soft lamplight, interior scene, 1990s Hong Kong interior, tiled walls, metal window frames, neon glow",
+      "bytes": 25812,
+      "seconds": 4.52,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一盏发光的球形台灯放在带金色边框的黑色盒子上，置于蓝绿色柜面，背景是几何格栅窗。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "hk",
+      "theme": "rain",
+      "file": "hk-rain.webp",
+      "seed": 1749130338,
+      "prompt": "rain on the window from inside, blurred lights beyond the glass, neutral palette, soft daylight, interior scene, 1990s Hong Kong interior, tiled walls, metal window frames, neon glow",
+      "bytes": 41730,
+      "seconds": 4.51,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "雨夜窗边，两盏暖黄色球形灯与绿植置于窗台，窗外是雨中朦胧的城市楼宇。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "hk",
+      "theme": "reconcile",
+      "file": "hk-reconcile.webp",
+      "seed": 628636652,
+      "prompt": "a sunlit room, half-open curtains, two cups on a small table, warm palette, soft lamplight, interior scene, 1990s Hong Kong interior, tiled walls, metal window frames, neon glow",
+      "bytes": 42308,
+      "seconds": 4.55,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间洒满阳光的室内房间，有大窗户、窗帘、绿植、圆桌和椅子，氛围宁静。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "hk",
+      "theme": "work",
+      "file": "hk-work.webp",
+      "seed": 207453772,
+      "prompt": "a modern office desk with documents, a laptop and a city view at dusk, neutral palette, soft daylight, interior scene, 1990s Hong Kong interior, tiled walls, metal window frames, neon glow",
+      "bytes": 38374,
+      "seconds": 4.52,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代办公室书桌正对落地窗，窗外是日落时分的城市天际线、山脉与紫色高楼，桌上有电脑、键盘、绿植和书本。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "alone",
+      "file": "modern-alone.webp",
+      "seed": 515725198,
+      "prompt": "an empty apartment at night, a single lamp, long shadows, curtains half drawn, cool muted palette, low-key lighting, quiet tension, interior scene, contemporary interior, floor-to-ceiling glass, neutral materials, city light",
+      "bytes": 45212,
+      "seconds": 4.49,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "夜晚现代高层公寓客厅，落地窗外可见城市天际线灯火与远山，室内有米色沙发、茶几、吧台与暖色吊灯。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "cold",
+      "file": "modern-cold.webp",
+      "seed": 1350064863,
+      "prompt": "a bare room in grey light, one empty chair by a curtained window, cool muted palette, low-key lighting, quiet tension, interior scene, contemporary interior, floor-to-ceiling glass, neutral materials, city light",
+      "bytes": 24286,
+      "seconds": 4.48,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代客厅内摆放着两张灰色扶手椅、圆形小茶几和落地灯，落地窗帘半掩，柔和光线洒入室内。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "conflict",
+      "file": "modern-conflict.webp",
+      "seed": 2140626117,
+      "prompt": "a living room in hard side light, a tilted chair, scattered papers, cool muted palette, low-key lighting, quiet tension, interior scene, contemporary interior, floor-to-ceiling glass, neutral materials, city light",
+      "bytes": 32224,
+      "seconds": 4.56,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代高层公寓客厅内，落地窗俯瞰城市景观，摆放着沙发、休闲椅和茶几，光线柔和。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "crisis",
+      "file": "modern-crisis.webp",
+      "seed": 505967712,
+      "prompt": "a dark apartment corridor at night, one flickering light, an overturned chair, cool muted palette, low-key lighting, quiet tension, interior scene, contemporary interior, floor-to-ceiling glass, neutral materials, city light",
+      "bytes": 21842,
+      "seconds": 4.53,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一个极简风格的现代室内走廊，光滑地面与两侧墙板构成对称空间。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "daily",
+      "file": "modern-daily.webp",
+      "seed": 109920860,
+      "prompt": "a lived-in kitchen in morning light, steam from a cup, warm palette, soft lamplight, interior scene, contemporary interior, floor-to-ceiling glass, neutral materials, city light",
+      "bytes": 42924,
+      "seconds": 4.47,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代开放式厨房与客厅的室内场景，配有中岛、吧台凳、绿植和落地窗，阳光充足。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "flutter",
+      "file": "modern-flutter.webp",
+      "seed": 2061516083,
+      "prompt": "sheer curtains at an open window, warm afternoon light, a cup on the sill, warm palette, soft lamplight, interior scene, contemporary interior, floor-to-ceiling glass, neutral materials, city light",
+      "bytes": 43454,
+      "seconds": 4.48,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代温馨客厅内摆放着沙发、扶手椅、圆形茶几和落地灯，落地窗配有轻薄窗帘，阳光透入。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "hospital",
+      "file": "modern-hospital.webp",
+      "seed": 1886325041,
+      "prompt": "a quiet hospital corridor with pale light and empty chairs, neutral palette, soft daylight, interior scene, contemporary interior, floor-to-ceiling glass, neutral materials, city light",
+      "bytes": 27354,
+      "seconds": 4.44,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "空无一人的现代室内走廊，左侧排列着一排空座椅，墙面与立柱呈暖木色，顶灯与壁灯投下明亮光线，地面光洁。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "intimate",
+      "file": "modern-intimate.webp",
+      "seed": 832663341,
+      "prompt": "a dim bedroom lit by one candle, soft textiles, amber glow, warm palette, soft lamplight, interior scene, contemporary interior, floor-to-ceiling glass, neutral materials, city light",
+      "bytes": 36828,
+      "seconds": 4.45,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代卧室，床铺整洁，落地窗外是黄昏时分的城市天际线。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "master/傍晚的书房",
+      "file": "guhuaizhi-chanhou-master.webp",
+      "seed": 712699981,
+      "prompt": "dim study, dark wood desk, laptop screen glow, heavy curtains, dusk city light through blinds, cold grey-blue tones, cool muted palette, low-key lighting, quiet tension, interior scene",
+      "bytes": 44600,
+      "seconds": 4.53,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "夜晚的室内办公桌场景，窗外是城市高楼夜景，桌上有笔记本电脑和台灯，没有人物或文字。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "master/凌乱的豪门客厅",
+      "file": "guwanqing-heyu-master.webp",
+      "seed": 133758766,
+      "prompt": "opulent marble living room, overturned cushions, shattered porcelain, scattered throw pillows, warm chandelier glow, sheer curtains, doorway light, warm palette, soft lamplight, interior scene",
+      "bytes": 43962,
+      "seconds": 4.45,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间优雅的米色调客厅，配有弧形沙发、水晶吊灯和落地窗帘，没有人物或文字。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "master/周家客厅",
+      "file": "peizhisheng-suwan-master.webp",
+      "seed": 689001398,
+      "prompt": "empty modern living room, sheer curtains, carved window frames, low tea table, two porcelain cups, cool afternoon light, dark wood floor, leather sofa, cool muted palette, low-key lighting, quiet tension, interior scene",
+      "bytes": 46932,
+      "seconds": 4.57,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间现代客厅，内有沙发、扶手椅、壁炉、落地窗和薄纱窗帘，阳光洒入地面。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "master/周末客厅沙发",
+      "file": "luyu-nvpengyou-master.webp",
+      "seed": 1705100745,
+      "prompt": "sunlit apartment living room, open photo album on sofa, scattered photographs, rumpled knit blanket, ceramic mug, dust motes, warm afternoon light, neutral palette, soft daylight, interior scene",
+      "bytes": 49042,
+      "seconds": 4.47,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间现代温馨的客厅，摆放着米色沙发、木质茶几、抽象挂画和绿植。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "master/商K顶层卡座区",
+      "file": "luci-jiajiao-master.webp",
+      "seed": 1204898918,
+      "prompt": "dark leather booths, low glass tables, ice buckets, neon glow, city night skyline through floor-to-ceiling windows, dim violet light, cool muted palette, low-key lighting, quiet tension, interior scene",
+      "bytes": 48264,
+      "seconds": 4.46,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一家紫色灯光下的空酒吧，窗外是城市黄昏夜景。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "master/夜晚的玄关与行李箱",
+      "file": "shenjian-jiangnian-master.webp",
+      "seed": 1213954753,
+      "prompt": "night apartment entryway, scattered shopping bags on tile floor, open suitcase, dim warm lamp, shoes by door, folded clothes, neutral palette, soft daylight, interior scene",
+      "bytes": 35420,
+      "seconds": 4.49,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间明亮温馨的室内走廊，左侧木桌上摆放台灯与盆栽，桌下放着旅行包，光线柔和地洒在方格地板上。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "master/婚房卧室",
+      "file": "fuxingzhou-yaba-master.webp",
+      "seed": 1307648619,
+      "prompt": "modern luxury bedroom, white bed linens, red silk quilt, scattered rose petals, warm bedside lamp, floor-to-ceiling windows, city night lights, neutral palette, soft daylight, interior scene",
+      "bytes": 56076,
+      "seconds": 4.49,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代卧室夜景，落地窗外是城市灯火，床上铺着白色床品，床头柜上有红玫瑰和台灯。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "master/居家客厅",
+      "file": "lusinian-chuanghuo-master.webp",
+      "seed": 612666171,
+      "prompt": "cozy living room, plush sofa, watermelon slices on plate, smartphone on cushion, warm afternoon sunlight, sheer curtains, scattered paperback novels, soft shadows, warm palette, soft lamplight, interior scene",
+      "bytes": 30066,
+      "seconds": 4.44,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一个温馨客厅场景，沙发和地上摆放着西瓜造型的靠垫与装饰，阳光透过窗户洒入。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "master/昏暗的公寓玄关",
+      "file": "shenshu-jiangjia-master.webp",
+      "seed": 1890007384,
+      "prompt": "dim luxury apartment, closed front door, warm entryway lamp glow, unopened gift boxes, marble floor, long night shadows, warm palette, soft lamplight, interior scene",
+      "bytes": 31134,
+      "seconds": 4.45,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "优雅的室内玄关场景，设有双开门、壁灯、粉色花卉、挂画与大理石地面，没有人物和文字。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "master/法院门口",
+      "file": "suwanzhou-wenyan-master.webp",
+      "seed": 598342101,
+      "prompt": "granite courthouse steps, tall stone columns, glass entrance doors, midday sunlight, long shadows, stone paving, clear sky, empty plaza, neutral palette, soft daylight, outdoor scene",
+      "bytes": 37890,
+      "seconds": 4.5,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一座带圆柱与玻璃幕墙的现代建筑入口，前方是宽阔的石阶和铺装广场，画面中没有任何人物或文字。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "master/深夜总裁办公室",
+      "file": "luyan-waimai-master.webp",
+      "seed": 1992998063,
+      "prompt": "late-night corner office, glass wall, distant city lights, cold fluorescent glow, takeout bag, untouched red-oil bowl, pristine bento box, cool muted palette, low-key lighting, quiet tension, interior scene",
+      "bytes": 29514,
+      "seconds": 4.45,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "窗边书桌上摆放着台灯和杂物，窗外是黄昏时分的城市天际线。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "master/深夜的公寓客厅",
+      "file": "lijinyan-xiaxia-master.webp",
+      "seed": 1563648388,
+      "prompt": "dim living room, warm table lamp, rumpled sofa cushions, open magazine on coffee table, rain-streaked window, late-night quiet, warm palette, soft lamplight, interior scene",
+      "bytes": 43662,
+      "seconds": 4.44,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代客厅室内场景，布置有沙发、抱枕、茶几、灯具和装饰画，没有人物或可辨认文字。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "master/深夜的出租屋客厅",
+      "file": "linzhao-xiaxia-master.webp",
+      "seed": 2006864519,
+      "prompt": "dim apartment living room at night, worn fabric sofa, crumpled blanket, warm table lamp glow, rain-streaked window, empty water glass, kitchen doorway, warm palette, soft lamplight, interior scene",
+      "bytes": 40068,
+      "seconds": 4.49,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间温馨的客厅里摆放着蓝色沙发、茶几、落地灯和绿植，窗外透进暖光。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "master/清晨的医院病房",
+      "file": "linjianwei-chenyi-master.webp",
+      "seed": 2034904808,
+      "prompt": "hospital ward, hospital bed with white sheets, IV drip stand, bedside monitor, pale blue curtain, tall window, early morning light, warm palette, soft lamplight, interior scene",
+      "bytes": 29144,
+      "seconds": 4.44,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "阳光照进一间空荡的病房，内有两张病床、蓝色窗帘和靠墙的柜子。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "master/雨后警戒线现场",
+      "file": "lutingyuan-shenyan-master.webp",
+      "seed": 978909665,
+      "prompt": "wet asphalt road at dusk, plain yellow tape strips strung between poles, shallow puddles reflecting grey sky, muddy ground, scattered wet leaves, faint mist, cool muted palette, low-key lighting, quiet tension, outdoor scene",
+      "bytes": 39302,
+      "seconds": 4.44,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "浓雾笼罩的湿滑公路上，黄色标线延伸向远方，路旁有电线杆和黄色田野。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "master/雨后霓虹夜色街道",
+      "file": "luwang-guxiaoman-master.webp",
+      "seed": 1387064162,
+      "prompt": "rain-soaked city street at night, blurred warm and cold light reflections, mirrored puddles along the kerb, one lone street lamp, dark distant buildings, drizzle, cool muted palette, low-key lighting, quiet tension, outdoor scene",
+      "bytes": 57548,
+      "seconds": 4.47,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "雨夜中空无一人的城市街道，湿润路面反射着路灯的暖光，两侧是古典建筑。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "master/顶楼休息室",
+      "file": "fuyanci-kunjing-master.webp",
+      "seed": 1046847051,
+      "prompt": "rain lashing floor-to-ceiling windows, dim lounge, leather sofa, locked door, empty champagne glasses, cold grey-blue light, cool muted palette, low-key lighting, quiet tension, interior scene",
+      "bytes": 30280,
+      "seconds": 4.48,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代简约客厅内设弧形沙发、圆形地毯、金属吊灯与边桌，透过落地窗可见雾蒙蒙的海景，画面中没有人物和文字。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "master/高层总裁办公室",
+      "file": "shenqingyi-luchi-master.webp",
+      "seed": 1129665081,
+      "prompt": "modern high-rise office, half-closed venetian blinds, slanted afternoon light, glossy desk, spilled coffee soaking documents, chilled minimal decor, cool muted palette, low-key lighting, quiet tension, interior scene",
+      "bytes": 52494,
+      "seconds": 4.46,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代高层办公室内有一张办公桌、黑色座椅、笔记本和落地灯，窗外是城市天际线。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "meet",
+      "file": "modern-meet.webp",
+      "seed": 1900348183,
+      "prompt": "a quiet doorway with framed light, a table set for two, neutral palette, soft daylight, interior scene, contemporary interior, floor-to-ceiling glass, neutral materials, city light",
+      "bytes": 39938,
+      "seconds": 4.57,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代极简风格的室内场景，包含用餐区、休闲沙发、落地窗及阳台景观，整体氛围宁静优雅。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "memory",
+      "file": "modern-memory.webp",
+      "seed": 627028293,
+      "prompt": "a desk with faded photographs, old letters, dusty warm light, warm palette, soft lamplight, interior scene, contemporary interior, floor-to-ceiling glass, neutral materials, city light",
+      "bytes": 49226,
+      "seconds": 4.49,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间布置优雅的现代客厅，有米色沙发、茶几、扶手椅、球形吊灯和墙上的地图挂画。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "night",
+      "file": "modern-night.webp",
+      "seed": 432727714,
+      "prompt": "a quiet bedroom at night, sheer curtains, soft lamplight, out-of-focus window, cool muted palette, low-key lighting, quiet tension, interior scene, contemporary interior, floor-to-ceiling glass, neutral materials, city light",
+      "bytes": 26646,
+      "seconds": 4.51,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代卧室场景，配有双人床、吊灯、床头柜、窗帘和休闲椅，氛围温馨。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "parting",
+      "file": "modern-parting.webp",
+      "seed": 1787254283,
+      "prompt": "an entryway at dusk, a suitcase left by the door, neutral palette, soft daylight, interior scene, contemporary interior, floor-to-ceiling glass, neutral materials, city light",
+      "bytes": 26964,
+      "seconds": 4.44,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代简约室内门厅，米色竖条纹墙面与白色木门，左侧灰色花盆绿植与棕色行李箱，右侧阳光透过竖条窗棂在墙上投下条纹光影，地面为浅色瓷砖。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "promise",
+      "file": "modern-promise.webp",
+      "seed": 1271291946,
+      "prompt": "a small velvet box on a bedside table by candlelight, golden glow, warm palette, soft lamplight, interior scene, contemporary interior, floor-to-ceiling glass, neutral materials, city light",
+      "bytes": 23674,
+      "seconds": 4.5,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "温馨卧室场景，床头柜上摆放着金色台灯、蜡烛和花朵，旁边是床铺与枕头。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "rain",
+      "file": "modern-rain.webp",
+      "seed": 803297910,
+      "prompt": "rain on the window from inside, blurred lights beyond the glass, neutral palette, soft daylight, interior scene, contemporary interior, floor-to-ceiling glass, neutral materials, city light",
+      "bytes": 60250,
+      "seconds": 4.53,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "室内透过带有雨滴的落地玻璃窗望向室外露台与树木，画面宁静无人。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "reconcile",
+      "file": "modern-reconcile.webp",
+      "seed": 92159959,
+      "prompt": "a sunlit room, half-open curtains, two cups on a small table, warm palette, soft lamplight, interior scene, contemporary interior, floor-to-ceiling glass, neutral materials, city light",
+      "bytes": 52596,
+      "seconds": 4.48,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代风格客厅内摆放着沙发、茶几、落地灯与绿植，阳光透过落地窗洒入室内。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "modern",
+      "theme": "work",
+      "file": "modern-work.webp",
+      "seed": 1274919000,
+      "prompt": "a modern office desk with documents, a laptop and a city view at dusk, neutral palette, soft daylight, interior scene, contemporary interior, floor-to-ceiling glass, neutral materials, city light",
+      "bytes": 45168,
+      "seconds": 4.51,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代高层办公室内，落地窗外是黄昏城市天际线，办公桌与座椅空无一人。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "republic",
+      "theme": "alone",
+      "file": "republic-alone.webp",
+      "seed": 324734080,
+      "prompt": "an empty apartment at night, a single lamp, long shadows, curtains half drawn, cool muted palette, low-key lighting, quiet tension, interior scene, 1930s republican-era interior, wooden floor, lace curtains, brass details",
+      "bytes": 30248,
+      "seconds": 4.51,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间安静的空房间，中央有挂着米色窗帘的窗户，阳光透过纱帘洒在地板上，左侧摆着一把扶手椅，两侧墙上各有一盏壁灯。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "republic",
+      "theme": "cold",
+      "file": "republic-cold.webp",
+      "seed": 1043226307,
+      "prompt": "a bare room in grey light, one empty chair by a curtained window, cool muted palette, low-key lighting, quiet tension, interior scene, 1930s republican-era interior, wooden floor, lace curtains, brass details",
+      "bytes": 31398,
+      "seconds": 4.56,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间优雅的室内场景，灰色护墙板、大窗与浅色窗帘、人字形木地板，中央摆放一把灰蓝色扶手椅和一张小边桌。",
+        "retries": 2
+      }
+    },
+    {
+      "worldview": "republic",
+      "theme": "conflict",
+      "file": "republic-conflict.webp",
+      "seed": 1538754172,
+      "prompt": "a living room in hard side light, a tilted chair, scattered papers, cool muted palette, low-key lighting, quiet tension, interior scene, 1930s republican-era interior, wooden floor, lace curtains, brass details",
+      "bytes": 39668,
+      "seconds": 4.53,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间布置典雅的古典风格房间，内有书桌、扶手椅、吊灯、窗帘和墙上的花卉挂画。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "republic",
+      "theme": "crisis",
+      "file": "republic-crisis.webp",
+      "seed": 1411338418,
+      "prompt": "a dark apartment corridor at night, one flickering light, an overturned chair, cool muted palette, low-key lighting, quiet tension, interior scene, 1930s republican-era interior, wooden floor, lace curtains, brass details",
+      "bytes": 61282,
+      "seconds": 4.87,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一条空荡的古典风格室内走廊，木地板上摆着一把扶手椅，墙上装壁灯、挂画，两侧敞开的门通向其他房间。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "republic",
+      "theme": "daily",
+      "file": "republic-daily.webp",
+      "seed": 191568302,
+      "prompt": "a lived-in kitchen in morning light, steam from a cup, warm palette, soft lamplight, interior scene, 1930s republican-era interior, wooden floor, lace curtains, brass details",
+      "bytes": 52102,
+      "seconds": 4.54,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "阳光洒入的温馨厨房与餐桌，敞开的玻璃门通向绿意盎然的后院。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "republic",
+      "theme": "flutter",
+      "file": "republic-flutter.webp",
+      "seed": 201254998,
+      "prompt": "sheer curtains at an open window, warm afternoon light, a cup on the sill, warm palette, soft lamplight, interior scene, 1930s republican-era interior, wooden floor, lace curtains, brass details",
+      "bytes": 64820,
+      "seconds": 4.57,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间阳光明亮的室内角落，摆放着圆桌、两把椅子、盆栽和白色窗帘。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "republic",
+      "theme": "hospital",
+      "file": "republic-hospital.webp",
+      "seed": 1414517640,
+      "prompt": "a quiet hospital corridor with pale light and empty chairs, neutral palette, soft daylight, interior scene, 1930s republican-era interior, wooden floor, lace curtains, brass details",
+      "bytes": 31026,
+      "seconds": 4.53,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一条明亮空旷的欧式走廊，阳光透过窗户洒在地板上。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "republic",
+      "theme": "intimate",
+      "file": "republic-intimate.webp",
+      "seed": 360822166,
+      "prompt": "a dim bedroom lit by one candle, soft textiles, amber glow, warm palette, soft lamplight, interior scene, 1930s republican-era interior, wooden floor, lace curtains, brass details",
+      "bytes": 48316,
+      "seconds": 4.54,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间温馨优雅的卧室，内有铺着米色床品的床、两盏暖光台灯、带薄纱窗帘的窗户和木地板。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "republic",
+      "theme": "master/江畔客运码头",
+      "file": "shenyanzhi-liuyang-master.webp",
+      "seed": 1024410142,
+      "prompt": "stone quay, moored steamship, coiled hemp ropes, stacked leather trunks, wet cobblestones, river mist, grey overcast morning light, neutral palette, soft daylight, outdoor scene",
+      "bytes": 60122,
+      "seconds": 4.45,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "雾中港湾里停泊着一艘木船，前景石岸边盘放着几圈粗缆绳，画面中没有人物或可辨认文字。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "republic",
+      "theme": "meet",
+      "file": "republic-meet.webp",
+      "seed": 521340681,
+      "prompt": "a quiet doorway with framed light, a table set for two, neutral palette, soft daylight, interior scene, 1930s republican-era interior, wooden floor, lace curtains, brass details",
+      "bytes": 34402,
+      "seconds": 4.55,
+      "peak_vram_gb": 8.85,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "优雅的古典风格室内场景，有扶手椅、落地灯、窗边吧台与木地板。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "republic",
+      "theme": "memory",
+      "file": "republic-memory.webp",
+      "seed": 1869125014,
+      "prompt": "a desk with faded photographs, old letters, dusty warm light, warm palette, soft lamplight, interior scene, 1930s republican-era interior, wooden floor, lace curtains, brass details",
+      "bytes": 62910,
+      "seconds": 4.53,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间阳光透过窗帘洒入的复古书房，摆放着书桌、椅子和墙上的画框。",
+        "retries": 1
+      }
+    },
+    {
+      "worldview": "republic",
+      "theme": "night",
+      "file": "republic-night.webp",
+      "seed": 338476368,
+      "prompt": "a quiet bedroom at night, sheer curtains, soft lamplight, out-of-focus window, cool muted palette, low-key lighting, quiet tension, interior scene, 1930s republican-era interior, wooden floor, lace curtains, brass details",
+      "bytes": 36068,
+      "seconds": 4.54,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间温馨的卧室，中央是铺着白色枕头与被子的深色木床，两侧床头柜上各亮着一盏暖黄台灯，米色窗帘垂下，窗外是繁星点点的夜空。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "republic",
+      "theme": "parting",
+      "file": "republic-parting.webp",
+      "seed": 463045484,
+      "prompt": "an entryway at dusk, a suitcase left by the door, neutral palette, soft daylight, interior scene, 1930s republican-era interior, wooden floor, lace curtains, brass details",
+      "bytes": 42048,
+      "seconds": 4.54,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "阳光照入的室内场景，中央放着两只叠起来的复古行李箱，周围有画框、壁灯、植物和通往室外的门。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "republic",
+      "theme": "promise",
+      "file": "republic-promise.webp",
+      "seed": 987280719,
+      "prompt": "a small velvet box on a bedside table by candlelight, golden glow, warm palette, soft lamplight, interior scene, 1930s republican-era interior, wooden floor, lace curtains, brass details",
+      "bytes": 44368,
+      "seconds": 4.52,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "卧室内床上摆放着一个精致的金色雕花箱子，背景有台灯、窗帘和镜框。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "republic",
+      "theme": "rain",
+      "file": "republic-rain.webp",
+      "seed": 1102536298,
+      "prompt": "rain on the window from inside, blurred lights beyond the glass, neutral palette, soft daylight, interior scene, 1930s republican-era interior, wooden floor, lace curtains, brass details",
+      "bytes": 42822,
+      "seconds": 4.55,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "雨天窗边的角落，米色窗帘与窗台上的绿植静立。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "republic",
+      "theme": "reconcile",
+      "file": "republic-reconcile.webp",
+      "seed": 1080042674,
+      "prompt": "a sunlit room, half-open curtains, two cups on a small table, warm palette, soft lamplight, interior scene, 1930s republican-era interior, wooden floor, lace curtains, brass details",
+      "bytes": 45494,
+      "seconds": 4.53,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "一间阳光洒入的古典室内，窗前摆放着两把扶手椅和一张小圆桌，窗帘垂落，窗外可见绿树。",
+        "retries": 0
+      }
+    },
+    {
+      "worldview": "republic",
+      "theme": "work",
+      "file": "republic-work.webp",
+      "seed": 632011848,
+      "prompt": "a modern office desk with documents, a laptop and a city view at dusk, neutral palette, soft daylight, interior scene, 1930s republican-era interior, wooden floor, lace curtains, brass details",
+      "bytes": 47922,
+      "seconds": 4.54,
+      "peak_vram_gb": 8.84,
+      "audit": {
+        "checked": true,
+        "has_person": false,
+        "has_text": false,
+        "description": "现代风格办公室内景，配有办公桌、椅子、窗户、沙发、植物和城市景观，画面中无人也无文字。",
+        "retries": 0
+      }
+    }
+  ]
+}

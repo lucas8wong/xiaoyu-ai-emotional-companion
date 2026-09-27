@@ -1,0 +1,18 @@
+services:
+  xiaoyu:
+    build: .
+    image: xiaoyu:latest
+    restart: always
+    container_name: xiaoyu
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - TRANSFORMERS_CACHE=/app/.cache/transformers
+    volumes:
+      # 关键：把 data/ 挂到持久化目录，记忆/账号/会话/成长都在这，重启不丢
+      - ./data:/app/data
+      # 生产在服务器上放一个 .env（勿提交、勿打进镜像），二选一：
+      # - ./env.production:/app/.env:ro
+    # env_file:
+    #   - .env

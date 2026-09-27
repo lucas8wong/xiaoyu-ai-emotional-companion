@@ -1,0 +1,17 @@
+# CosyVoice2 侧车依赖（自托管 TTS）
+# 注：cosyvoice 包需从 Fun-CosyVoice 仓库 clone 后安装（git clone https://github.com/FunAudioLLM/CosyVoice 并 pip install -r 该仓库 requirements.txt）
+torch>=2.4
+torchaudio>=2.4
+fastapi>=0.110
+uvicorn>=0.29
+numpy
+soundfile
+librosa
+sentencepiece
+transformers>=4.46
+hydra-core
+omegaconf
+diffusers
+modelindex
+# Windows 上 ttsfrd 可能装不上；若失败，中文文本归一化会回退到 WeTextProcessing（可用）
+# ttsfrd

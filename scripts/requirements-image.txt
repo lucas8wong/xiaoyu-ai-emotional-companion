@@ -1,0 +1,20 @@
+# 剧情模式「场景插画」出图引擎实测依赖（spike 专用）
+#
+# ⚠️ 与生产 TTS 环境隔离：不要装进 `.venv-voxcpm`（它跑着 VoxCPM2-2B 生产侧车），
+#    另建 `.venv-image`。安装示例（与 VoxCPM 同款做法：uv 建 py3.12 venv）：
+#
+#   uv venv .venv-image --python 3.12
+#   .\.venv-image\Scripts\python -m pip install -r scripts\requirements-image.txt
+#   # 大陆网络拉不到 pytorch 源时，改用 hf-mirror 拉模型：加 --hf-mirror（见 image_spike.py）
+#
+# torch 必须用 CUDA 版（cu128）才能吃到 Blackwell（RTX 5070 Ti, sm_120）；
+# 误装 CPU 版会看到 cuda_available=False（项目此前踩过一次，见 CHANGELOG 2026-09-04）。
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch==2.7.0+cu128
+diffusers>=0.35.0
+transformers>=4.44.0
+accelerate>=1.0.0
+safetensors>=0.4.0
+Pillow>=10.0.0
+sentencepiece>=0.2.0
+protobuf>=4.25.0

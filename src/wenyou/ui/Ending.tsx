@@ -1,0 +1,355 @@
+import { useEffect, useRef, useState } from 'react'
+import { buildEndingMessages } from '../engine/prompt'
+import { buildSummaryCard } from '../engine/summary'
+import { localEnding } from '../engine/local'
+import { gradeRun } from '../engine/grade'
+import { ShareCardModal } from './ShareCardModal'
+import { endingImage } from './endingArt'
+import { achievementImage } from './achievementArt'
+import { Memoir } from './Memoir'
+import { Lightbox } from './Lightbox'
+import { chat, friendlyError, isAbortError } from '../ai/client'
+import { recordEnding, seenEndings, loadStats, type SaveGame } from '../storage'
+import { msg } from './messages'
+import { copyText } from './download'
+import type { Scenario } from '../scenarios/schema'
+import { builtinScenarios } from '../scenarios'
+import { computeAchievements } from '../engine/achievements'
+import { achievementConfig } from '../scenarios/achievementConfig'
+import { reachableEndingTones } from '../engine/state'
+import { t } from '../../i18n'
+import { canShowBridge, recordBridgeEvent, readBridgeBudget, markBridgeShown, markBridgeDismissed, bridgeEnabled, buildBridgeDraft, type BridgeSeed } from '../../lib/rpBridge'
+
+// 当前已解锁成就（用于分享卡），需在 recordEnding 之后调用以包含本局
+function unlockedAchievements() {
+  return computeAchievements({
+    scenarios: builtinScenarios.map((sc) => ({
+      id: sc.id,
+      seen: new Set(seenEndings(sc.id)).size,
+      total: reachableEndingTones(sc).length,
+    })),
+    stats: loadStats(),
+    seenTones: Object.fromEntries(builtinScenarios.map((sc) => [sc.id, seenEndings(sc.id)])),
+    achConfig: achievementConfig,
+  }).filter((a) => a.done)
+}
+
+export function EndingScreen({
+  session,
+  onRestart,
+  onReplay,
+  onGoChat,
+}: {
+  session: SaveGame
+  onRestart: () => void
+  onReplay: (sc: Scenario) => void
+  /** 剧情 → 聊一聊 跨模式桥（B 方案 · 结局位）：把草稿交给外层切到聊一聊。绝不自动发送。 */
+  onGoChat?: (seed: BridgeSeed) => void
+}) {
+  const { scenario, state } = session
+  const ending = state.ended ?? { tone: '未知', reason: '' }
+  const grade = gradeRun(scenario, state)
+  const [text, setText] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
+  const [revealed, setRevealed] = useState(false)
+  const [newAch, setNewAch] = useState<{ id: string; icon: string; name: string }[]>([])
+  const [showMemoir, setShowMemoir] = useState(false)
+  const [lightbox, setLightbox] = useState<string | null>(null)
+  const busyRef = useRef(false)
+  const aliveRef = useRef(true)
+  const abortRef = useRef<AbortController | null>(null)
+
+  // ===== 跨模式桥（B 方案 · 结局位）=====
+  // 只在结局文字出现后展示一次；预算与剧情侧三条桥共用（72h/1 次，连拒 2 次永久静默）。
+  const [bridgeOpen, setBridgeOpen] = useState(false)
+  const bridgeDecidedRef = useRef(false)
+  useEffect(() => {
+    if (bridgeDecidedRef.current || !text || !onGoChat) return;
+    bridgeDecidedRef.current = true;
+    const verdict = canShowBridge({ enabled: bridgeEnabled(), now: Date.now(), shownThisSession: false, budget: readBridgeBudget() });
+    if (!verdict.show) return;
+    markBridgeShown();
+    recordBridgeEvent('shown', 'ending');
+    setBridgeOpen(true);
+  }, [text, onGoChat])
+
+  const goChatFromEnding = () => {
+    const title = scenario.title || ''
+    // 只带「我刚走完一段人生：《剧名》」这一句；结局正文不进聊一聊（既是另一个模式的语境，也是隐私复制）
+    const seed: BridgeSeed = {
+      draft: buildBridgeDraft(t('rpBridgeDraftPrefaceEnding', { title })),
+      trigger: 'ending',
+      scenarioId: scenario.id || '',
+      scenarioTitle: title,
+      aiName: '',
+      kind: 'wenyou',
+    }
+    recordBridgeEvent('clicked', 'ending')
+    setBridgeOpen(false)
+    onGoChat?.(seed)
+  }
+
+  useEffect(() => {
+    aliveRef.current = true
+    return () => {
+      aliveRef.current = false
+      abortRef.current?.abort()
+      // 与 Play 同理：复位 busy，使 StrictMode 的卸载→重挂载能重新发起尾声请求，
+      // 否则 busyRef 卡在 true 会让重挂载的 fetchEnding 直接 return，尾声永不生成
+      busyRef.current = false
+    }
+  }, [])
+
+  // 记入结局图鉴（按剧本累计见过的结局基调）+ 全局统计（成就用）
+  useEffect(() => {
+    if (state.ended) {
+      const isDeath = scenario.attributes.some(
+        (a) => a.deathBelow !== undefined && state.attributes[a.key] <= a.deathBelow,
+      )
+      // 记录前后各取一次已解锁成就，差集即本局新达成——揭晓页上钤印告知
+      const before = unlockedAchievements()
+      recordEnding(scenario.id, state.ended.tone, {
+        rating: grade.rating,
+        local: state.mode === 'local',
+        isDeath,
+        turns: state.history.length,
+        goal: state.goalProgress,
+        custom: !builtinScenarios.some((b) => b.id === scenario.id),
+      })
+      const fresh = unlockedAchievements().filter((a) => !before.some((b) => b.id === a.id))
+      // 仅非空才写入：StrictMode 下 effect 双跑，第二轮差集为空，不得抹掉首轮结果
+      if (fresh.length) setNewAch(fresh.map((a) => ({ id: a.id, icon: a.icon, name: a.name })))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scenario.id, state.ended])
+
+  const fetchEnding = async () => {
+    if (busyRef.current) return
+    busyRef.current = true
+    const ac = new AbortController()
+    abortRef.current = ac
+    setLoading(true)
+    setError('')
+    try {
+      // 小愈 AI 驱动（走服务端 DeepSeek + 额度），无需玩家配置 Key
+      const t = await chat(
+        { provider: 'xiaoyu', apiKey: '', model: '', baseURL: '' },
+        buildEndingMessages(scenario, state, ending),
+        (partial) => {
+          if (aliveRef.current) setText(partial)
+        },
+        ac.signal,
+      )
+      if (aliveRef.current) setText(t)
+    } catch (e) {
+      if (aliveRef.current && !isAbortError(e)) setError(friendlyError(e))
+    } finally {
+      busyRef.current = false
+      if (aliveRef.current) setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (text) return
+    // 本地模式无需调用 AI：直接用本地拼写的尾声
+    if (state.mode === 'local') setText(localEnding(scenario, state))
+    else void fetchEnding()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const card = buildSummaryCard(scenario, state, text)
+
+  const copy = async () => {
+    // copyText：异步剪贴板 API 优先，非 HTTPS / 旧浏览器自动回退 execCommand
+    if (await copyText(card)) {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } else {
+      setError(msg.copyFailed)
+    }
+  }
+
+  const [showShare, setShowShare] = useState(false)
+
+  const art = endingImage(scenario.id, ending.tone)
+
+  // 揭晓前先以一张「命运之卡」呈现，轻触翻开方见此生结局——仪式感与绚丽收束
+  if (!revealed) {
+    return (
+      <div className="ending-gate" onClick={() => setRevealed(true)}>
+        <div
+          className="fate-card"
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setRevealed(true)
+            }
+          }}
+        >
+          <div className="fate-card-inner">
+            {art && (
+              <div
+                className="fate-card-art"
+                style={{ backgroundImage: `url(${art})` }}
+                aria-hidden="true"
+              />
+            )}
+            <div className="fate-card-veil" aria-hidden="true" />
+            <span className="fate-card-corner tl" aria-hidden="true">✦</span>
+            <span className="fate-card-corner br" aria-hidden="true">✦</span>
+            <div className="fate-card-face">
+              <span className="fate-seal" aria-hidden="true">終</span>
+              <h2 className="fate-tone">{ending.tone}</h2>
+              <p className="fate-sub">第 {state.history.length} {scenario.turnUnit} · {scenario.title}</p>
+            </div>
+          </div>
+        </div>
+        <p className="fate-hint">轻触，揭晓此生结局</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="ending revealed">
+      {art && (
+        <div
+          className="ending-art"
+          style={{ backgroundImage: `url(${art})` }}
+          aria-hidden="true"
+        />
+      )}
+      <h2 className="ending-tone">
+        {ending.tone}
+        <span className="seal-mark" aria-hidden="true">終</span>
+      </h2>
+      <p className="ending-grade">
+        <span className={`grade-badge grade-${grade.rating}`}>{grade.rating} 级</span>
+      </p>
+      {newAch.length > 0 && (
+        <p className="ach-unlock-row" role="status">
+          <span className="ach-unlock-label">成就解锁</span>
+          {newAch.map((a, i) => {
+            const badge = achievementImage(a.id)
+            return badge ? (
+              <button
+                key={a.id}
+                className="ach-unlock-chip"
+                style={{ animationDelay: `${1 + i * 0.18}s` }}
+                onClick={() => setLightbox(badge)}
+                title="点击放大徽章"
+                aria-label={`查看新解锁徽章「${a.name}」`}
+              >
+                <span
+                  className="ach-unlock-img"
+                  style={{ backgroundImage: `url(${badge})` }}
+                  aria-hidden="true"
+                />
+                {a.name}
+              </button>
+            ) : (
+              <span
+                key={a.id}
+                className="ach-unlock-chip"
+                style={{ animationDelay: `${1 + i * 0.18}s` }}
+              >
+                {a.icon} {a.name}
+              </span>
+            )
+          })}
+        </p>
+      )}
+      <p className="ending-meta">
+        历经 {state.history.length} {scenario.turnUnit} · {scenario.title}
+      </p>
+      {(() => {
+        const r = ending.reason ?? ''
+        const cause =
+          ending.tone === '死亡' || r.endsWith('耗尽')
+            ? `${r || '气数已尽'}，你的人生就此画上句点`
+            : r === 'maxTurns' || ending.tone === '落幕'
+              ? (scenario.finale ?? '此生行至尽头，命途就此落幕')
+              : ''
+        return cause ? <p className="ending-cause">{cause}</p> : null
+      })()}
+      {loading && !text && <p className="loading">正在书写你的结局…</p>}
+      {error && (
+        <div className="error-box">
+          <p>{error}</p>
+          <button onClick={fetchEnding}>重试</button>
+        </div>
+      )}
+      {text && <p className="ending-text">{text}</p>}
+      {state.mode === 'local' && (
+        <p className="local-ending-note">
+          本局为本地模式生成；填入 AI Key 可获得由大模型实时编织的独特剧情与结局。
+        </p>
+      )}
+      {/* 跨模式桥（B 方案 · 结局位）：结局刚揭晓、情绪最高的一刻给一句「如果是你的人生」。
+          放在「分享卡折叠」之前——这是全页情绪最高、最该被看到的位置。
+          频次与剧情侧三条桥共用同一预算；文案只在 UI 层，不写进任何消息集合（红线 6）。 */}
+      {bridgeOpen && (
+        <div className="ending-actions" data-testid="wy-bridge-ending">
+          <p>{t('rpBridgeEndingTitle')}</p>
+          <p>{t('rpBridgeEndingBody')}</p>
+          <div className="ending-actions-row">
+            <button className="primary" onClick={goChatFromEnding} title={t('rpBridgeEndingBtn')}>
+              {t('rpBridgeEndingBtn')}
+            </button>
+            <button onClick={() => { markBridgeDismissed(); setBridgeOpen(false) }}>
+              {t('rpBridgeEndingDismiss')}
+            </button>
+          </div>
+        </div>
+      )}
+      <details className="summary-card-fold">
+        <summary>文字版分享卡 · 点开预览</summary>
+        <pre className="summary-card">{card}</pre>
+      </details>
+      <div className="ending-actions">
+        <div className="ending-actions-row">
+          <button className="primary" onClick={() => setShowShare(true)} title="生成命运卡，预览后复制/保存/分享">分享命运卡 ⤴</button>
+          <button onClick={copy}>{copied ? '已复制 ✓' : '复制文字版 ⎘'}</button>
+          <button onClick={() => setShowMemoir(true)} title="回看这一生的命运抉择">命途留影 ◷</button>
+        </div>
+        <div className="ending-actions-row nav">
+          <button
+            className="ghost-line"
+            onClick={() => onReplay(scenario)}
+            title="以同一段命途，从头再走一遍"
+          >
+            ↻ 再活一世
+          </button>
+          <button
+            className="ghost-line"
+            onClick={onRestart}
+            title="回到卷首，另择一段人生"
+          >
+            ❖ 换个人生
+          </button>
+        </div>
+      </div>
+      {showMemoir && (
+        <Memoir
+          scenario={scenario}
+          state={state}
+          onClose={() => setShowMemoir(false)}
+          onViewArt={setLightbox}
+        />
+      )}
+      {lightbox && <Lightbox src={lightbox} onClose={() => setLightbox(null)} />}
+      {showShare && (
+        <ShareCardModal
+          sc={scenario}
+          st={state}
+          achievements={unlockedAchievements().map((a) => ({ icon: a.icon, name: a.name }))}
+          coverUrl={art}
+          onClose={() => setShowShare(false)}
+        />
+      )}
+    </div>
+  )
+}

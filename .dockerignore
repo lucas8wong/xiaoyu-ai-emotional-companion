@@ -1,0 +1,21 @@
+# 构建/运行时不需要的东西
+node_modules
+.venv-tts
+.venv
+pretrained_models
+dist
+data
+temp
+*.log
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+docs
+*.md
+CHANGELOG.md
+project-state.md
+test
+tests
+.DS_Store
