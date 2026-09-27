@@ -62,7 +62,7 @@ self-hosted deployment.
 
 ```bash
 npm install
-cp env.local.example .env     # or create .env yourself and fill in your keys
+# create a .env and fill in your own keys (the variable names are read from the environment)
 npm run dev                   # Vite frontend + nodemon backend on :3001
 ```
 
