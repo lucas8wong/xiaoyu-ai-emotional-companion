@@ -1,3 +1,5 @@
+<a id="en"></a>
+
 # Xiaoyu · AI Emotional Companion
 
 > **Every feeling deserves to be understood.**
@@ -117,7 +119,7 @@ MIT — see [LICENSE](LICENSE).
 
 > **你的每一种情绪，都值得被理解。**
 
-[English](#) · **简体中文**
+[English](#en) · **简体中文**
 
 一个已经上线的网页应用，给人一个温柔、随时都在的地方聊聊自己的感受——可以陪你日常聊天，可以帮你把
 乱糟糟的心情理清楚，也可以进入分支剧情扮演另一段人生。
