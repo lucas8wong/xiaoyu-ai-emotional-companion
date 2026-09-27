@@ -36,7 +36,8 @@ export interface GeneratedCharacters {
 export type Gender = "male" | "female" | "nonbinary";
 
 /** 小愈只有一个模型：不再按模型名映射第三方品牌，展示名固定；同名玩家靠序号区分 */
-const MODEL_DISPLAY_NAME = "小愈 AI";
+// 显示名跟随界面语言（内置小愈 = Xiaoyu / 小愈）——不要写死中文，见 src/lib/companionName.ts
+import { companionShortName } from "../../lib/companionName";
 
 const CHARACTER_GENERATOR_REASONING = { enabled: false } as const;
 /**
@@ -114,7 +115,7 @@ export const generateGenshinModeCharacters = async (
   const resolvedRefs = modelRefs.length >= count ? modelRefs : buildGenshinModelRefs(count);
 
   return resolvedRefs.slice(0, count).map((modelRef) => {
-    const modelLabel = MODEL_DISPLAY_NAME;
+    const modelLabel = companionShortName() + " AI";
     const usageCount = modelUsageCounts.get(modelLabel) ?? 0;
     modelUsageCounts.set(modelLabel, usageCount + 1);
     const preferredName = usageCount === 0 ? modelLabel : `${modelLabel} ${usageCount + 1}`;

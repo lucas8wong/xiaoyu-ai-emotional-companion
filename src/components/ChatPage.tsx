@@ -32,6 +32,7 @@ import { useSkin } from './SkinProvider';
 import VoiceMessage from './VoiceMessage';
 import { isMediaRecorderSupported, resolveSpeechLang, encodeAudioToPcm16Base64, pickMediaMime, createSilenceDetector, blobToDataUrl, type SpeechLangKey, type SilenceDetector } from '../services/speech';
 import { t, getLang } from '../i18n';
+import { companionShortName, displayNameForCharacter } from '../lib/companionName';
 import { mapServerMessages } from '../lib/chatServerMessages';
 import { findQuotedMessage } from '../lib/quoteTarget';
 import { recordBridgeEvent } from '../lib/rpBridge';
@@ -808,8 +809,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
   // 内置小愈的显示名**跟随界面语言**；自定义角色一律用自己的名字。
   // 2026-09-27 修正：此前是 `activeCharacter?.name` 优先，而内置角色的记录名恒为「小愈」，
   // 于是英文界面的顶栏、设置面板标题、分享卡与给模型的说话人标签都错显成「小愈」。
-  const builtinCompanion = !activeCharacter || activeCharacter.isDefault || activeCharacter.id === 'xiaoyu';
-  const charDisplayName = builtinCompanion ? (getLang() === 'en' ? 'Xiaoyu' : '小愈') : activeCharacter!.name;
+  const charDisplayName = displayNameForCharacter(activeCharacter);
   // 角色名统一口径（顶栏 / 设置面板 / 分享卡 / 模型上下文）
   const activeName = charDisplayName;
   // 顶栏标题：用短名字（默认小愈官方名过长，窄屏会挤压两侧按钮）；自定义角色名过长时靠 truncate + max-w 截断
@@ -2653,7 +2653,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
                         {isActive && <span aria-hidden className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full bg-primary" />}
                         <div className="relative flex-shrink-0">
                           {/* 图片描边用 1px 低透明纯黑（better-ui 的 image-outline 配方）：比"灰边"干净，不吸底色 */}
-                          <img src={avatarFor(c)} alt={c.name} className="w-11 h-11 rounded-full object-cover bg-white mix-blend-multiply outline outline-1 -outline-offset-1 outline-black/5" />
+                          <img src={avatarFor(c)} alt={displayNameForCharacter(c)} className="w-11 h-11 rounded-full object-cover bg-white mix-blend-multiply outline outline-1 -outline-offset-1 outline-black/5" />
                           {/* 未读数字角标：有 1 条就显示 1（用户原话）；用品牌色而非报警红，白环让它在头像上"浮"起来 */}
                           {unread > 0 && (
                             <span
@@ -2667,7 +2667,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
                         <div className="flex-1 min-w-0">
                           {/* 时间提到与名字同一行（微信/iMessage 的读法）：扫列表时先读"谁+什么时候" */}
                           <div className="flex items-baseline gap-1.5">
-                            <p className={'truncate text-[15px] leading-tight text-ink ' + (unread > 0 ? 'font-semibold' : 'font-medium')}>{c.name}</p>
+                            <p className={'truncate text-[15px] leading-tight text-ink ' + (unread > 0 ? 'font-semibold' : 'font-medium')}>{displayNameForCharacter(c)}</p>
                             {c.origin === 'story' && (
                               <span className="text-[10px] px-1.5 py-[1px] rounded-md bg-clay-muted text-ink-soft flex-shrink-0 leading-[14px]">{t('chatStoryBadge')}</span>
                             )}
@@ -2937,8 +2937,8 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
               </button>
               <button
                 onClick={() => setVoiceSettingsOpen(true)}
-                aria-label={voiceTarget ? `设置「${voiceTarget.name}」的声音` : '设置小愈的声音'}
-                title={voiceTarget ? `设置「${voiceTarget.name}」的声音（声线/语速/语言）` : '设置小愈的声音（声线/语速/语言）'}
+                aria-label={t('voiceTitle', { name: voiceTarget ? voiceTarget.name : companionShortName() })}
+                title={t('voiceTitle', { name: voiceTarget ? voiceTarget.name : companionShortName() })}
                 className="w-[32px] h-[32px] rounded-full flex items-center justify-center text-ink-soft hover:text-primary-text hover:bg-primary-lighter transition-colors"
               >
                 <Volume2 className="w-[18px] h-[18px]" />
@@ -3752,7 +3752,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
         onClose={() => setVoiceSettingsOpen(false)}
         lang={getLang()}
         region={userRegion}
-        name={voiceTarget ? voiceTarget.name : (getLang() === 'en' ? 'Xiaoyu' : '小愈')}
+        name={voiceTarget ? voiceTarget.name : companionShortName()}
         config={voiceTarget ? voiceTargetCfg : voiceCfg}
         onChange={voiceTarget ? (cfg) => setActiveCharacter({ ...voiceTarget, ttsVoice: JSON.stringify(cfg) }) : setVoiceCfg}
         onSave={voiceTarget ? (cfg) => saveCharVoice(voiceTarget.id, cfg) : saveVoiceConfig}

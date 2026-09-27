@@ -51,6 +51,7 @@ import { pickBottomPromo } from '../lib/bottomPromo';
 import type { BridgeSeed } from '../lib/rpBridge';
 import { useSkin } from '../components/SkinProvider';
 import { t, getLang } from '../i18n';
+import { companionShortName } from '../lib/companionName';
 import { mainPrice } from '../lib/payPrice';
 
 function StepLoading() {
@@ -630,11 +631,13 @@ export default function Home() {
   // 从聊一聊转去理一理：把最近一段完整对话（双方）带过去，让 AI 接得上
   const handleGoStructure = () => {
     const recent = chatMessages.slice(-8);
+    // 这段前缀会**预填进理一理的输入框**（用户看得见），所以必须跟随界面语言
+    const isEn = getLang() === 'en';
     const transcript = recent
-      .map(m => (m.role === 'user' ? '我：' : '小愈：') + m.content)
+      .map(m => (m.role === 'user' ? (isEn ? 'Me: ' : '我：') : companionShortName() + (isEn ? ': ' : '：')) + m.content)
       .join('\n');
     const seed = recent.length > 0
-      ? '（我刚和小愈聊了一会儿，想请你帮我理一理）\n' + transcript
+      ? (isEn ? '(I was just talking with ' + companionShortName() + ' - please help me sort this out)\n' : '（我刚和小愈聊了一会儿，想请你帮我理一理）\n') + transcript
       : '';
     setEmotionInput(seed);
     setStructureCharacterId(null); // 独立理一理 = 默认小愈（逐角色理一理走聊一聊内「帮我理一理」）

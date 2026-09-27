@@ -4,6 +4,7 @@ import type { ChatMessage, TurnResult } from '../engine/types'
 import { chatOpenAI, chatAnthropic, chatGemini, type OnDelta } from './adapters'
 import { parseTurnResult } from './turn'
 import { textgameChat, textgameChatStream, type TextGameMessage } from '../../services/api'
+import { wyT } from '../i18n'
 
 export type ChatFn = (
   cfg: AIConfig,
@@ -32,7 +33,7 @@ async function chatXiaoyuImpl(messages: ChatMessage[], json: boolean, auto = fal
     ? await textgameChatStream(msgs, { json, auto }, onDelta, signal)
     : await textgameChat(msgs, { json, auto });
   if (r.success && r.data) return r.data.reply
-  const msg = r.error || '小愈 AI 请求失败'
+  const msg = r.error || wyT('小愈 AI 请求失败')
   // 显式门控提示（Pro 专属 / 每日托管上限）：给 402 并带 [AUTO] 标记，前端据此关闭托管并展示
   if (msg.includes('[AUTO]')) throw new AIError(402, msg)
   // 额度不足：用真实 HTTP 状态码（402）/业务码（CHAT_QUOTA_EXCEEDED）判定，

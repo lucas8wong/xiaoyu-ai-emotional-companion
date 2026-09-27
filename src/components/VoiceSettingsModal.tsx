@@ -6,6 +6,7 @@
 import { useEffect, useState } from 'react';
 import { X, Play, Loader2, Check } from 'lucide-react';
 import { t } from '../i18n';
+import { companionShortName } from '../lib/companionName';
 import Modal from './ui/Modal';
 import { CHIP, ToggleRow } from './ui/controls';
 
@@ -157,7 +158,7 @@ const PREVIEW_BY_DIALECT: Record<string, string> = {
   English: "Hi there, how's your day been? I'm here.",
 };
 
-export function VoiceSettingsModal({ open, onClose, lang = 'zh-CN', region, name = '小愈', config, onChange, onSave, enabled, onEnabledChange }: {
+export function VoiceSettingsModal({ open, onClose, lang = 'zh-CN', region, name = companionShortName(lang), config, onChange, onSave, enabled, onEnabledChange }: {
   open: boolean;
   onClose: () => void;
   lang?: string;

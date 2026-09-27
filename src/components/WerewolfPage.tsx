@@ -19,6 +19,7 @@ import { ArrowLeft, Crosshair, Eye, FlaskConical, Loader2, Send, Sparkles, Users
 const WerewolfReplayCard = lazy(() => import('./WerewolfReplayCard'));
 
 import { roleDesc, roleName, wwT } from '../werewolf/i18n';
+import { companionShortName, displayNameForCharacter } from '../lib/companionName';
 import {
   advanceUntilMyTurn,
   abandonWerewolfGame,
@@ -426,11 +427,11 @@ export default function WerewolfPage({ onBack, onGoChat }: Props) {
                       {c.avatar ? <img src={c.avatar} alt="" className="w-full h-full rounded-full object-cover" /> : c.name.slice(0, 1)}
                     </div>
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-ink truncate">{c.name}</div>
+                      <div className="text-sm font-medium text-ink truncate">{displayNameForCharacter(c)}</div>
                       {c.memoryCount > 0 ? (
                         <div className="text-[11px] text-primary-text">✦ {wwT('memoryTag')} · {c.memoryCount}</div>
                       ) : (
-                        <div className="text-[11px] text-ink-soft">{c.isDefault ? '小愈' : ''}</div>
+                        <div className="text-[11px] text-ink-soft">{c.isDefault ? companionShortName() : ''}</div>
                       )}
                     </div>
                   </button>
