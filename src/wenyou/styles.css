@@ -2086,10 +2086,6 @@ html[lang="zh-Hant"] .wy-root {
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.85);
 }
 .wy-root .vn-hud-row .play-menu { margin-left: 8px; }
-.wy-root .vn-hud-quota {
-  font-size: 0.72rem; color: var(--paper); opacity: 0.72;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8); letter-spacing: 0.02em;
-}
 .wy-root .vn .play-menu-btn { background: rgba(8, 11, 24, 0.42); border-color: rgba(203, 168, 90, 0.2); backdrop-filter: blur(6px); }
 /* 看全图：HUD 内圆钮，隐去卷文看整张场景画 */
 .wy-root .vn-eye {
@@ -2120,6 +2116,12 @@ html[lang="zh-Hant"] .wy-root {
 .wy-root .vn-vital-val { position: relative; color: var(--muted); font-size: 0.74rem; font-variant-numeric: tabular-nums; }
 /* 属性封顶标记：暗金小字「满」，鼠标悬停解释需晋阶突破 */
 .wy-root .vn-vital-cap { margin-left: 3px; color: var(--gold); opacity: 0.72; font-size: 0.64rem; cursor: help; }
+/* 剩余额度：从顶部悬浮 HUD 移入命数栏（2026-09-28 用户反馈）。
+   HUD 与卷文面板是两层绝对定位浮层，窄屏上额度行会压在命数药丸上；移进同一条流后
+   随面板正常排布，换行几行都不会再和属性重叠。桌面端右对齐，窄屏换行后自成一行。 */
+.wy-root .vn-quota-chip {
+  margin-left: auto; color: var(--muted); opacity: 0.85; white-space: nowrap;
+}
 
 /* ── 命途长卷进度（贴近卷文上沿） ── */
 .wy-root .vn-path {
@@ -2136,8 +2138,11 @@ html[lang="zh-Hant"] .wy-root {
 .wy-root .vn-panel {
   position: absolute; left: 0; right: 0; bottom: 0; z-index: 6;
   /* 固定为稳定滚动容器：阅读位置不随内容增长而上移（避免流式时「开头几句」被推到上面看不见）。
-     原为「短文只占一角、长文向上长」的自适应高度，改为固定高度 + 内部滚动，保证读到哪里就停在哪。 */
-  height: clamp(320px, 66vh, 86vh); display: flex; flex-direction: column;
+     原为「短文只占一角、长文向上长」的自适应高度，改为固定高度 + 内部滚动，保证读到哪里就停在哪。
+     上限取「66vh」与「让开实测 HUD 高度后的剩余空间」的较小者：HUD 是独立浮层，写死让位空间
+     会在标题换行 / 窄屏 / 大字号时失效，命数与额度就会钻到标题底下。 */
+  height: clamp(320px, min(66vh, calc(100% - var(--vn-hud-h, 88px) - 16px)), 86vh);
+  display: flex; flex-direction: column;
   /* 顶部留白让画面柔和淡入文字区，读来如文字「长在画里」 */
   padding: 44px clamp(16px, 4vw, 44px) 18px;
   /* 顶部这段渐变要托住题签与承接段：原来 26% 处才 0.42，落在亮画面上时
@@ -2231,11 +2236,13 @@ html[lang="zh-Hant"] .wy-root {
 /* 窄屏：卷文更高、HUD 收紧 */
 @media (max-width: 560px) {
   /* margin-inline auto：left/right 同为 0 且限宽时水平居中（否则贴左，右缘留空条） */
-  /* 卷文更高：手机端不再只有下半边——面板上沿仅让出标题 HUD（返回图标+剧本名），
-     属性栏已移入面板顶部，不存在再被面板上沿盖住的问题；
-     高度以 calc(100dvh-80px) 封顶：确保面板上沿落在标题 HUD 之下（较矮屏也不重叠），同时内容区最大 */
+  /* 卷文更高：手机端不再只有下半边——面板上沿只让出标题 HUD（返回图标+剧本名），
+     属性栏/额度行都在面板内（不再悬浮在画面上），不存在被面板上沿盖住的问题；
+     高度封顶改为「让开实测 HUD 高度」，见下方 height 一行 */
   .wy-root .vn-panel {
-    height: clamp(340px, min(calc(100dvh - 80px), 92vh), 92vh);
+    /* 让开实测 HUD 高度（--vn-hud-h 由 Play.tsx 写入）：标题换行 / 换语言 / 调字号时面板上沿
+       都会自动跟着下移，不会像原来写死 80px 那样让命数与额度钻到标题底下重叠 */
+    height: clamp(340px, min(calc(100% - var(--vn-hud-h, 88px) - 16px), 92vh), 92vh);
     max-height: none;
     min-height: 0;
     width: 96vw;
@@ -2258,7 +2265,7 @@ html[lang="zh-Hant"] .wy-root {
    在 380px 高的屏上卷文会盖掉几乎整幅画。收紧 HUD 与卷文各处纵向内距，限高让画面露出 */
 @media (orientation: landscape) and (max-height: 520px) {
   .wy-root .vn-hud { padding-top: 8px; gap: 5px; }
-  .wy-root .vn-panel { max-height: 76vh; padding-top: 24px; padding-bottom: 10px; }
+  .wy-root .vn-panel { max-height: min(76vh, calc(100% - var(--vn-hud-h, 88px) - 12px)); padding-top: 24px; padding-bottom: 10px; }
   .wy-root .vn-panel-head { margin-bottom: 6px; }
   .wy-root .vn-path { padding-bottom: 5px; }
   .wy-root .vn .choices { padding-top: 8px; gap: 6px; }

@@ -418,8 +418,30 @@ export function Play({
   // 分享当下：打开预览弹窗，所见即所得地复制/保存/分享此刻的命运卡
   const [showShare, setShowShare] = useState(false)
 
+  // 顶部 HUD 是绝对定位浮层，卷文面板（.vn-panel）也是绝对定位贴底——两者不在同一条流里，
+  // 面板让出的顶部空间原先是写死的（窄屏只让 80px），而 HUD 高度会随「标题换行 / 语言 / 字号」变化。
+  // 一旦 HUD 高于让位空间，面板里的命数（属性栏）与额度就会钻到标题底下互相重叠（2026-09-28 用户反馈）。
+  // 这里实测 HUD 高度、写成 CSS 变量 --vn-hud-h，由 .vn-panel 的高度公式据此让位：语言、字号、
+  // 标题换行怎么变都自动跟上，不会再退化成写死的魔数。
+  const vnRootRef = useRef<HTMLDivElement>(null)
+  const hudRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const hud = hudRef.current
+    const host = vnRootRef.current
+    if (!hud || !host) return
+    const apply = () => host.style.setProperty('--vn-hud-h', `${hud.offsetHeight}px`)
+    apply()
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(apply) : null
+    ro?.observe(hud)
+    window.addEventListener('resize', apply)
+    return () => {
+      ro?.disconnect()
+      window.removeEventListener('resize', apply)
+    }
+  }, [])
+
   return (
-    <div className={`play vn ${peek ? 'peek' : ''}`} style={{ height: vvHeight ? Math.max(0, vvHeight - 24) + 'px' : undefined }}>
+    <div ref={vnRootRef} className={`play vn ${peek ? 'peek' : ''}`} style={{ height: vvHeight ? Math.max(0, vvHeight - 24) + 'px' : undefined }}>
       {ambientBg && (
         <div
           className="play-ambient"
@@ -446,7 +468,7 @@ export function Play({
       {/* HUD 必须是 vn-stage 的兄弟而非子节点：stage 带 z-index 自成层叠上下文，
           HUD 放在里面时，展开的菜单再高的 z-index 也压不过卷文层（vn-panel），
           会被正文盖住半截。移出来后 HUD(20) > 卷文(6)，菜单才真正浮在最上面 */}
-      <header className="vn-hud">
+      <header className="vn-hud" ref={hudRef}>
         <div className="vn-hud-row">
           <span className="vn-title">{scenario.title}</span>
           {auto && <span className="play-auto-flag" title="托管中：AI 正替你的角色演进">托管中</span>}
@@ -540,14 +562,6 @@ export function Play({
           )}
           </div>
         </div>
-        {quota && (
-          <div className="vn-hud-quota">
-            {appT('wenyouQuota', {
-              remain: quotaIsUnlimited(quota) ? appT('memUnlimited') : quotaChatRemain(quota),
-              turn: 1,
-            })}
-          </div>
-        )}
       </header>
 
       <section className="vn-panel">
@@ -579,6 +593,17 @@ export function Play({
               </span>
             )
           })}
+          {/* 剩余额度：原先挂在顶部悬浮 HUD 里，窄屏上会压在命数药丸（属性）上（2026-09-28 用户反馈）。
+              移进命数栏后随面板正常流式排布，换行多少行都不会再和属性重叠；桌面端靠 margin-left:auto
+              右对齐，窄屏换行后自成一行。 */}
+          {quota && (
+            <span className="vn-vital vn-quota-chip">
+              {appT('wenyouQuota', {
+                remain: quotaIsUnlimited(quota) ? appT('memUnlimited') : quotaChatRemain(quota),
+                turn: 1,
+              })}
+            </span>
+          )}
         </div>
         {scenario.maxTurns ? (
           <div className="vn-path" aria-hidden="true">
