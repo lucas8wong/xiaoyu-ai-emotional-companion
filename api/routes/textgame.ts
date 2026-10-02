@@ -22,7 +22,7 @@ import { safeError } from '../services/safeError.js';
 import { resolveUserId } from '../services/session.js';
 import { getClientCountry, getClientIp } from '../services/geo.js';
 import { activityStore, isTestRequest } from '../services/activity.js';
-import { quotaStore, isCreditQuotaEnabled, estimateFeatureCredit , actionPricePoints} from '../services/quota.js';
+import { quotaStore, isCreditQuotaEnabled, actionPricePoints} from '../services/quota.js';
 import { checkContentSafety, isSelfHarmContent, checkAiOutputSafety } from '../services/safety.js';
 import { pickGuide } from '../services/prompts.js';
 import { createDeepSeekClient } from '../services/deepseek.js';
@@ -261,6 +261,11 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
         const msg = safeError('ai', e);
         // 记录真实失败原因，便于定位「剧情写一半/无选项/AI 服务端错误」的根因
         console.error('[TextGame] SSE 回合生成失败:', msg);
+        // 失败必须退费（2026-09-29 审查 A6-P2-4）：这里过去直接 return，**跳过了外层 catch 的回滚**，
+        // 而前端把「流失败」当成「本回合失败」并给「重试本回合」→ 一次故障按重试次数重复扣费。
+        for (let i = 0; i < quotaConsumed; i++) { if (quotaUserId) quotaStore.rollbackChat(quotaUserId); }
+        if (autoConsumed && quotaUserId) quotaStore.rollbackAutoPlay(quotaUserId);
+        if (creditToken && quotaUserId) { quotaStore.rollbackCredit(quotaUserId, creditToken); creditToken = null; }
         if (res.headersSent) {
           try { res.write('data: ' + JSON.stringify({ type: 'error', error: msg }) + '\n\n'); } catch { /* */ }
           try { res.end(); } catch { /* */ }

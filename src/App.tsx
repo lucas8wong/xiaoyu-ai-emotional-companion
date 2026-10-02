@@ -19,6 +19,9 @@ const PRIVACY_AGREED_KEY = 'cure_privacy_agreed';
 const FaqPage = lazy(() => import("@/components/FaqPage"));
 // 千世书分享入口页（/s/:seg）：命运卡二维码/社交链接的落点，避免空路由白板
 const ShareEntryPage = lazy(() => import("@/components/ShareEntryPage"));
+// 公开隐私政策页（/privacy）：Google OAuth 同意屏幕要求一个可公开访问的隐私政策链接，
+// 原先只有 PrivacyModal 弹窗、没有地址。文案与弹窗同源（同一批 i18n key）。
+const PrivacyPage = lazy(() => import("@/pages/PrivacyPage"));
 // SEO/GEO 落地内容页：路由与页面清单来自 src/seo 注册表（新增页面 = 加一条数据）
 const SeoPage = lazy(() => import("@/components/SeoPage"));
 
@@ -87,6 +90,8 @@ export default function App() {
             <Route path="/" element={<Home />} />
             {/* 公开页：不经过隐私同意门，利于搜索引擎/爬虫直接抓取 */}
             <Route path="/faq" element={<FaqPage />} />
+            {/* 公开隐私政策页（Google OAuth 同意屏幕的 Privacy policy URL 指向这里） */}
+            <Route path="/privacy" element={<PrivacyPage />} />
             {/* SEO/GEO 落地内容页（公开，利于爬虫与 AI 引擎收录）：路由由 src/seo 注册表派生，
                 新增页面只需在 src/seo/*.ts 加一条数据（sitemap / 预渲染同源） */}
             {SEO_PAGES.map((p) => (

@@ -1,15 +1,16 @@
 /**
- * 类型门禁（2026-09-17 立）
+ * 类型门禁（2026-09-17 立；2026-09-28 收紧为「零豁免」）
  *
- * 问题：`npm run check`（= `tsc --noEmit`）长期红着——31 条诊断**全部**来自上游移植子系统
- * `src/wolfcha/**`（狼人杀）。而 `tsconfig.json` 里的 `exclude: ["src/wolfcha"]` 救不了它：
- * 只要有**被 include 的文件 import 了 wolfcha**（`WolfchaHost.tsx` 就是），tsc 就会把这些文件
- * 拉进同一个 program，exclude 只管"根文件集合"，不管被拉进来的依赖。
+ * 历史：`npm run check` 曾长期红着 —— 诊断全部来自上游移植子系统 `src/wolfcha`，而
+ * `tsconfig.json` 的 exclude 救不了它（第一方文件 import 了 wolfcha，就会被拉进同一个 program）。
+ * 2026-09-17 的办法是把诊断分成「第一方 / 上游」两组、只让第一方决定退出码，先让门禁可用。
  *
- * 后果（可持续性）：门禁永远红着 → 没人看它 → 第一方代码新增的类型错误会被淹没在 31 条噪声里。
+ * 代价（2026-09-28 全仓审查证实）：`src/wolfcha` 被整体豁免 → 真实缺陷藏在里面。
+ * 本轮就在那 19 条「既有基线」中挖出一条用户可见的 bug（编辑自定义角色静默无效的 arity 不匹配）。
  *
- * 做法：把两边的诊断**分开报告**，只让第一方（src 里非 wolfcha + api + test）决定退出码；
- * wolfcha 的存量单独打印并作为基线可见（清完它的那天，这个脚本自然变成"全绿"）。
+ * 现在：那 19 条已逐条修完，**豁免名单为空**；只要 tsc 报出一条诊断就失败。
+ * 以后若引入新的上游/第三方代码，请把它修干净，不要再开豁免口子——
+ * 「永远红着、或者永远被豁免」的门禁，等于没有门禁。
  */
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
@@ -17,7 +18,7 @@ import fs from 'node:fs';
 
 // 直接跑 typescript 的 JS 入口（`node node_modules/typescript/bin/tsc`）：跨平台最稳。
 // ⚠️ 不能用 `node_modules/.bin/tsc.cmd` + spawnSync（Node 18+ 在 Windows 上会 EINVAL，
-//    而且**静默返回空输出**——那会让这个门禁假装全绿，比没有门禁更危险）；
+//    而且**静默返回空输出** —— 那会让门禁假装全绿，比没有门禁更危险）；
 //    也不能用 `npx + shell:true`（DEP0190 告警会盖住真正的诊断）。
 const tscJs = path.resolve('node_modules', 'typescript', 'bin', 'tsc');
 let run;
@@ -33,21 +34,10 @@ if (run.error || run.status === null) {
 const out = `${run.stdout || ''}${run.stderr || ''}`;
 const lines = out.split(/\r?\n/).filter((l) => /error TS\d+/.test(l));
 
-const isVendored = (l) => /src[\\/]wolfcha[\\/]/.test(l);
-const vendored = lines.filter(isVendored);
-const firstParty = lines.filter((l) => !isVendored(l));
-
-console.log(`tsc 诊断：第一方 ${firstParty.length} 条 ／ 上游移植子系统 src/wolfcha ${vendored.length} 条`);
-
-if (firstParty.length > 0) {
-  console.error('\n❌ 第一方代码类型错误（必须修）：');
-  for (const l of firstParty) console.error('  ' + l);
+console.log(`tsc 诊断：${lines.length} 条`);
+if (lines.length > 0) {
+  console.error('\n❌ 类型错误（门禁零豁免，必须修）：');
+  for (const l of lines) console.error('  ' + l);
   process.exit(1);
 }
-
-if (vendored.length > 0) {
-  console.log(`\nℹ️ src/wolfcha 的 ${vendored.length} 条是**既有基线**（上游移植代码，按 backlog 处理）。`);
-  console.log('   要看明细：`npm run check:all`（或 npx tsc --noEmit）。');
-}
-
-console.log('\n✅ 第一方类型检查通过');
+console.log('\n✅ 类型检查通过（0 条诊断）');

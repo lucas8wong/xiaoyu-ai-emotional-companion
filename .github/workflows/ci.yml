@@ -1,0 +1,35 @@
+name: CI
+
+# 2026-09-28 新增（审查 C3）：本仓库此前**没有任何自动化门禁**——而线上是自部署 Express
+# （myxiaoyu.com = 本机 :3001 + Cloudflare 回源），部署脚本又不跑 tsc，所以类型/测试/lint
+# 的错误可以一路进生产，守护脚本还会把它拉起来，看起来像一次成功发布。
+# 现在：每次 push/PR 都跑「类型 + lint + 两套测试 + 生产构建」。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck (zero exemption)
+        run: npm run check
+      - name: Lint
+        run: npm run lint
+      - name: Unit + integration tests
+        run: npm test
+      - name: wenyou vitest suite
+        run: npm run test:wenyou
+      - name: Production build (gated on typecheck)
+        run: npm run build:prod

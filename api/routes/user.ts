@@ -4,13 +4,13 @@
 
 import 'dotenv/config';
 import { Router, type Request, type Response } from 'express';
-import { safeError } from '../services/safeError.js';
 import { resolveUserId, isLoggedIn } from '../services/session.js';
 import { resolveUserTimezone } from '../services/requestTimezone.js';
 import { feedbackStore } from '../services/feedback.js';
 import { accountStore } from '../services/accounts.js';
 import { notifyNewFeedback } from '../services/adminNotifier.js';
 import { announcementStore } from '../services/announcements.js';
+import { inboxStore } from '../services/inbox.js';
 import { preferenceStore, resolveThinkingLevelFor } from '../services/preferences.js';
 // 关系档白名单（2026-09-21）：非法值一律**当没传**（不能让它落成 friend —— 那会把用户
 // 已经选好的"恋人"静默改回默认；偏好面板是字段级提交，一次手滑不该丢设置）。
@@ -70,6 +70,43 @@ router.get('/announcement', async (req: Request, res: Response): Promise<void> =
       updatedAt: a.createdAt,
     })),
   });
+});
+
+/**
+ * 小愈信箱：当前用户收到的信（新在前）+ 未读数
+ *
+ * 身份用 resolveUserId（注册用户=账号；游客=设备+IP 哈希）——
+ * **游客也要能收信**：运营端奖励邮件的收件人必须是有邮箱的注册用户，
+ * 而无邮箱的游客此前完全看不到运营者写给他的回复（2026-09-30 补上）。
+ * GET /api/inbox
+ */
+router.get('/inbox', async (req: Request, res: Response): Promise<void> => {
+  const userId = resolveUserId(req);
+  res.json({
+    success: true,
+    data: {
+      unread: inboxStore.unreadCount(userId),
+      items: inboxStore.list(userId).map((l) => ({
+        id: l.id,
+        kind: l.kind,
+        rewardCount: l.rewardCount ?? 0,
+        body: l.body,
+        read: l.read,
+        createdAt: l.createdAt,
+      })),
+    },
+  });
+});
+
+/**
+ * 标记信件已读：传 id = 只标这一封；不传 = 全部已读（前端打开信箱即全读）
+ * POST /api/inbox/read { id? }
+ */
+router.post('/inbox/read', async (req: Request, res: Response): Promise<void> => {
+  const userId = resolveUserId(req);
+  const rawId = req.body?.id;
+  const id = typeof rawId === 'string' && rawId ? rawId : undefined;
+  res.json({ success: true, data: { unread: inboxStore.markRead(userId, id) } });
 });
 
 /**

@@ -9,7 +9,7 @@ import { roleplayClientFor, roleplayAuxClientFor } from './roleplayModel.js';
 import { type CustomScenario } from './customRoleplay.js';
 import { toZhTw, toZhTwDeep, toZhSimple, normalizeScriptTextProtected } from './zhConvert.js';
 import { quoteRuleBlock, createDialogueQuoteNormalizer } from './dialogueQuotes.js';
-import { narrativeProfile, styleBands, lengthPhrase, type RoleplayNarrativeStyle } from './narrativeStyle.js';
+import { narrativeProfile, lengthPhrase, type RoleplayNarrativeStyle } from './narrativeStyle.js';
 import { INJECTION_BOUNDARY, buildOutputScriptDirective, buildPlainTextDirective, buildUserPersonDirective } from './prompts.js';
 import { preferenceStore, resolveThinkingLevelFor, type ThinkingLevel } from './preferences.js';
 import { mergeContinuationGuarded, trimAdditionToBudget, incompleteReason, autoContinueEligible, continuationAnchor, CONTINUATION_RETELL_MIN_CHARS, type IncompleteReason } from '../../src/lib/replyCompleteness.js';
@@ -20,6 +20,8 @@ import { rpRecentEndingKinds, rpLastClause } from '../../src/lib/rpEnding.js';
 // 抽出前这套判据长在本文件里；抽出的原因与口径见 `src/lib/repeatPhrases.ts` 开篇。
 import { collectAvoidPhrases as collectAvoidPhrasesCore, longestCommonSpan } from '../../src/lib/repeatPhrases.js';
 import { splitBeatPlan } from '../../src/lib/beatPlan.js';
+import { stripCastTags } from '../../src/lib/roleplayCast.js';
+import { parseRoleplayMode, type RoleplayMode } from '../../src/lib/roleplayMode.js';
 import { isAdultConfirmed } from './adultConfirm.js';
 import { roleplayLikeStore } from './roleplayLikes.js';
 import { createHash } from 'node:crypto';
@@ -45,6 +47,23 @@ function avatarHashFor(id: string): string {
     }
   }
   return avatarHashCache[id] || '';
+}
+
+/**
+ * 配角头像（`/img/roleplay/<name>.jpg`）的内容 hash —— 与主头像同一套「换图即换 URL」的版本化。
+ * 为什么不复用 `avatarHashFor`：那个按剧本 id 枚举、只会去读 `<scenarioId>.jpg`；
+ * 配角文件名是 `<scenarioId>-<castId>.jpg`，需要按**文件名**取 hash。
+ * 缺文件/不可读一律返回 ''（URL 退回不带版本号，不影响渲染）。
+ */
+const castAvatarHashCache: Record<string, string> = {};
+function castAvatarHash(fileBase: string): string {
+  if (fileBase in castAvatarHashCache) return castAvatarHashCache[fileBase];
+  let h = '';
+  try {
+    h = createHash('md5').update(readFileSync(path.join(ROLEPLAY_IMG_DIR, fileBase + '.jpg'))).digest('hex').slice(0, 8);
+  } catch { h = ''; }
+  castAvatarHashCache[fileBase] = h;
+  return h;
 }
 
 // ============ 通用交互规则（后端 system prompt 专用，不展示到页面） ============
@@ -392,6 +411,9 @@ export interface RoleplayLangText {
   ai: RoleplayCharText;
   user: RoleplayUserText;
   background: string; openingScene: string; openingAssistant: string;
+  /** 多角色线专属开场（可选）：写了就用它，没写回落通用开场 */
+  multiOpeningScene?: string;
+  multiOpeningAssistant?: string;
   /** 内容提示：详情/开场的温和说明（如涉及心理题材时的「非专业心理援助」声明）；可选 */
   contentNote?: string;
 }
@@ -562,6 +584,669 @@ const SCENARIO_TAGS: Record<string, { zh: string[]; en: string[] }> = {
   }
 };
 
+// ============ 多角色（群像）剧本的说话人名单（2026-10-01） ============
+/**
+ * 为什么单独一张侧表，而不写进 RoleplayScenario：
+ *   与 SCENARIO_AUDIENCE / SCENARIO_TAGS 同一考虑——多角色是**少数剧本**的属性。
+ *   塞进 zh/en 双语结构会让每个剧本都要多写一遍语言块，也更容易写歪。
+ *
+ * 启用口径：某剧本在表里且 `length >= 2` 才算多角色；没有这张表的剧本行为**一字不变**
+ *（提示词不注入多角色块、前端解析器直接返回单段兜底）。
+ *
+ * 名字口径与剧本其它文案一致：zh 存简中（zh-TW 由 toZhTw 转），en 存英文。
+ * `lead: true` 的那位 = 剧本的主 AI 角色：用户自定义名字（aiName）会替换它的标记名 ——
+ * 与开场白里 `opening.split(s.ai.name).join(aName)` 的处理必须同一口径（见 RoleplayPage）。
+ */
+export interface CastMember {
+  id: string;
+  zh: string;
+  en: string;
+  /** 身份标签（详情页「角色介绍」用，如「国公府世子」） */
+  zhRole?: string;
+  enRole?: string;
+  /** 一句话人物介绍（详情页「角色介绍」用） */
+  zhDesc?: string;
+  enDesc?: string;
+  /** 头像（可选）。缺省时前端回退到「名字首字」色块，不阻塞渲染 */
+  avatar?: string;
+  /** 是否本剧本的主 AI 角色（可被用户自定义名字替换） */
+  lead?: boolean;
+}
+
+const SCENARIO_CAST: Record<string, CastMember[]> = {
+  // 替姐出嫁那夜：洞房夜在场的只有世子、府里掌事的嬷嬷、陪嫁的丫鬟（2026-10-01 首个多角色试水剧本）
+  'peixiuyuan-linwantang': [
+    {
+      id: 'peixiuyuan', zh: '裴修远', en: 'Pei Xiuyuan', lead: true,
+      zhRole: '国公府世子', enRole: "The duke's heir",
+      zhDesc: '生性清冷，对长辈硬定的这门亲事本不上心；掀开盖头发现新娘换了人，先是愠怒，随即起了探究的心思。',
+      enDesc: 'Cold by nature and indifferent to the marriage his elders arranged — until he lifts the veil and finds the wrong bride. First anger, then curiosity.',
+    },
+    {
+      // 姐姐（逃婚的林家长女）——**前提本身**：妹妹是被推上花轿替她出嫁的。
+      // 提示词禁止闪回，所以她不能靠回忆出场，只能在后段**真人走进来**（被找回、或自己回来）。
+      id: 'linwanling', zh: '林晚菱', en: 'Lin Wanling',
+      avatar: '/img/roleplay/peixiuyuan-linwantang-linwanling.jpg',
+      zhRole: '林家长女（逃婚的姐姐）', enRole: 'The elder Lin daughter (the runaway bride)',
+      zhDesc: '本该是今晚的新娘，却在成亲前夜逃了婚，把妹妹一个人推上花轿。她走了，可这门亲事、这个家，早晚会把她找回来。',
+      enDesc: 'She was meant to be tonight\u2019s bride, but fled on the eve of the wedding and left her younger sister to take her place. She is gone — but the match and the family will come looking for her sooner or later.',
+    },
+    {
+      id: 'limomo', zh: '李嬷嬷', en: 'Matron Li',
+      avatar: '/img/roleplay/peixiuyuan-linwantang-limomo.jpg',
+      zhRole: '府中掌事嬷嬷', enRole: 'House matron',
+      zhDesc: '操办这场婚事的老嬷嬷，礼数比谁都熟、眼睛也毒；只要规矩做足，新娘子是哪一位她并不十分在意。',
+      enDesc: 'The old matron who ran the wedding. She knows every rite by heart and misses nothing — as long as the forms are kept, she hardly minds which bride it is.',
+    },
+    {
+      id: 'cuiping', zh: '翠屏', en: 'Cuiping',
+      avatar: '/img/roleplay/peixiuyuan-linwantang-cuiping.jpg',
+      zhRole: '林家陪嫁丫鬟', enRole: "The Lin family's maid",
+      zhDesc: '跟着小姐一起进府的贴身丫鬟，胆子小、话不多，却比谁都护着自家小姐。',
+      enDesc: 'The maid who came into the household with her young mistress — timid and quiet, but she would shield her lady before anyone else would.',
+    },
+  ],
+
+  // ——— 以下 9 部为 2026-10-01 阶段 3 首批（每个新角色都配了符合剧情的头像，见 public/img/roleplay/）———
+
+  // 他等了我十五年（现代·港圈年上）：他的商业世界 + 你刚成年的社交圈
+  'guyushen-songzhi': [
+    { id: 'guyushen', zh: '顾聿深', en: 'Gu Yushen', lead: true,
+      zhRole: '顾家掌事人（监护人）', enRole: 'Head of the Gu family (your guardian)',
+      zhDesc: '把失去双亲的你养大的人。外人面前冷淡疏离，唯独对你毫无底线地宠，也一直按自己的盘算等你长大。',
+      enDesc: 'The man who raised you after your parents died — icy to the world, endlessly indulgent with you, and quietly planning for the day you grow up.' },
+    { id: 'chenbo', zh: '陈伯', en: 'Uncle Chen', avatar: '/img/roleplay/guyushen-songzhi-chenbo.jpg',
+      zhRole: '顾家司机', enRole: 'The family chauffeur',
+      zhDesc: '跟了顾家三十年的司机，看着你长大；他嘴上什么都不说，却是最清楚顾聿深在等什么的人。',
+      enDesc: 'Thirty years with the Gu household, and he watched you grow up. He says nothing — and knows exactly what Gu Yushen has been waiting for.' },
+    { id: 'shenjia', zh: '沈家二少', en: 'The younger Shen', avatar: '/img/roleplay/guyushen-songzhi-shenjia.jpg',
+      zhRole: '生意场上的对手', enRole: 'Business rival',
+      zhDesc: '在酒桌上和顾聿深过招的人，最擅长挑别人的软肋说话——而你的名字，正好是那根软肋。',
+      enDesc: 'He trades barbs with Gu Yushen over drinks and is very good at finding a man\u2019s soft spot. Your name happens to be one.' },
+    { id: 'amay', zh: '阿May', en: 'May', avatar: '/img/roleplay/guyushen-songzhi-amay.jpg',
+      zhRole: '你的同龄朋友', enRole: 'Your friend',
+      zhDesc: '唯一敢当面说「他看你的眼神不对劲」的人，也是你叛逆的夜里唯一会接电话的人。',
+      enDesc: 'The only one who will say it to your face — the way he looks at you is not how a guardian looks. Also the only one who picks up at 3am.' },
+  ],
+
+  // 贵族高中的坏狗（现代·私立高中）：球队与校园是两个天然的群像场
+  'luyan-sunian': [
+    { id: 'luyan', zh: '陆衍', en: 'Lu Yan', lead: true,
+      zhRole: '橄榄球队长 / 财阀少爷', enRole: 'Quarterback and heir',
+      zhDesc: '人人追捧的橄榄球队长、顶级财阀的少爷；桀骜散漫，看透你那点虚荣，却还是一头栽了进来。',
+      enDesc: 'The adored quarterback and heir of a conglomerate — careless and rebellious, he sees right through your vanity and falls anyway.' },
+    { id: 'zhousong', zh: '周颂', en: 'Zhou Song', avatar: '/img/roleplay/luyan-sunian-zhousong.jpg',
+      zhRole: '球队损友', enRole: 'Teammate and tormentor',
+      zhDesc: '陆衍的队友，球场上把后背交给他、球场下专拆他的台；也是第一个看出他这次是认真的。',
+      enDesc: 'His teammate: they cover each other\u2019s backs on the field and needle each other off it. He is the first to notice this time is different.' },
+    { id: 'luwei', zh: '陆微', en: 'Lu Wei', avatar: '/img/roleplay/luyan-sunian-luwei.jpg',
+      zhRole: '陆衍的妹妹', enRole: 'Lu Yan\u2019s younger sister',
+      zhDesc: '陆家小女儿，被全家放养却最会看人；她认定你不像别人那样图他的钱，于是第一个站到你这边。',
+      enDesc: 'The youngest Lu — raised hands-off but the sharpest reader in the family. She decides you are not after his money, and takes your side first.' },
+    { id: 'bailu', zh: '白露', en: 'Bai Lu', avatar: '/img/roleplay/luyan-sunian-bailu.jpg',
+      zhRole: '校刊社学姐', enRole: 'Student-press editor',
+      zhDesc: '校刊社的学姐，手里握着全校的流言；她对你没有恶意，只是想弄清「奖学金女孩和球队队长」这条新闻值不值得写。',
+      enDesc: 'She runs the school paper and therefore knows every rumour. No malice — she is just deciding whether the scholarship girl and the quarterback is a story worth printing.' },
+  ],
+
+  // 草原上的和亲公主（古代·草原）：婚房之外还有部落的规矩与人
+  'tuobaye-shenlianxing': [
+    { id: 'tuobaye', zh: '拓跋野', en: 'Tuoba Ye', lead: true,
+      zhRole: '草原王子', enRole: 'Steppe prince',
+      zhDesc: '桀骜不驯的草原王子，狼一样的绿眼睛；娶你是两国的事，护你是他自己的事。',
+      enDesc: 'The untamed steppe prince with wolf-green eyes. Marrying you is politics; protecting you is his own business.' },
+    { id: 'bayin', zh: '巴音', en: 'Bayin', avatar: '/img/roleplay/tuobaye-shenlianxing-bayin.jpg',
+      zhRole: '部落老医官', enRole: 'Tribal healer',
+      zhDesc: '草原上唯一懂药的老医官，是你体弱的身子里能抓住的第二根绳；他看着王子长大，也第一个看出他动了真心。',
+      enDesc: 'The only healer on the steppe — the second thread keeping your frail body alive. He watched the prince grow up, and is the first to see him fall.' },
+    { id: 'ashina', zh: '阿史那', en: 'Ashina', avatar: '/img/roleplay/tuobaye-shenlianxing-ashina.jpg',
+      zhRole: '草原大妃', enRole: 'Steppe consort',
+      zhDesc: '部落里真正管事的女人，镶满宝石的头饰下是一双审视的眼睛；她要的不是你的病弱，而是你身上那点中原的骨头。',
+      enDesc: 'The woman who actually runs the camp. Under all that jewellery is a appraising eye — she is not interested in your frailty, but in how much Central-Plains backbone you have.' },
+    { id: 'yugu', zh: '玉姑', en: 'Aunt Yu', avatar: '/img/roleplay/tuobaye-shenlianxing-yugu.jpg',
+      zhRole: '随嫁乳母', enRole: 'Your old nurse',
+      zhDesc: '从宫里跟你一路到草原的乳母，替你挡过鞭子、也替你藏过药；她只会说一句话：活着比规矩要紧。',
+      enDesc: 'She followed you from the palace to the steppe, took a whip for you and hid your medicine. She says only one thing: staying alive matters more than propriety.' },
+  ],
+
+  // 黏人的毕业学长（现代·校园）：校园里永远不缺围观的人
+  'jiangyubai-wenruanruan': [
+    { id: 'jiangyubai', zh: '江逾白', en: 'Jiang Yubai', lead: true,
+      zhRole: '毕业回校演讲的学长', enRole: 'The senior back to give a talk',
+      zhDesc: '毕业回校演讲的优秀学长，对你一见钟情；人前温和得体，人后黏得像个大金毛。',
+      enDesc: 'The accomplished senior who came back to speak, and fell for you at first sight — composed in public, a golden retriever in private.' },
+    { id: 'chenxu', zh: '陈叙', en: 'Chen Xu', avatar: '/img/roleplay/jiangyubai-wenruanruan-chenxu.jpg',
+      zhRole: '他的室友兼创业搭档', enRole: 'His roommate and co-founder',
+      zhDesc: '和江逾白一起熬夜写代码的人，见过他所有样子——包括他手机壁纸上那张偷拍的、你的侧脸。',
+      enDesc: 'He has pulled all-nighters with Jiang Yubai and seen every version of him — including the candid photo of you on his lock screen.' },
+    { id: 'milu', zh: '米露', en: 'Mi Lu', avatar: '/img/roleplay/jiangyubai-wenruanruan-sunian.jpg',
+      zhRole: '你的同桌', enRole: 'Your deskmate',
+      zhDesc: '你的同桌，起哄第一名，也是最先把「学长是不是喜欢你」这件事说出口的人。',
+      enDesc: 'Your deskmate and chief instigator — the first to say out loud what everyone is thinking about the senior.' },
+    { id: 'nianjizhuren', zh: '年级主任', en: 'The year head', avatar: '/img/roleplay/jiangyubai-wenruanruan-nianji.jpg',
+      zhRole: '年级主任', enRole: 'Head of year',
+      zhDesc: '最不看好高中生谈恋爱的那位；他办公室的窗，正好对着你们放学经常走的那条路。',
+      enDesc: 'The last man in school to approve of a romance — and his office window looks straight onto the road you two take home.' },
+  ],
+
+  // 疯批总裁的白月光（现代·都市）：卷钱跑路的故事里，帮手和债主都会登场
+  'luwang-guxiaoman': [
+    { id: 'luwang', zh: '陆妄', en: 'Lu Wang', lead: true,
+      zhRole: '百年世家掌权人', enRole: 'Head of the Lu family',
+      zhDesc: '看似漫不经心、实则疯批腹黑的掌权人；你卷了他的钱跑路，他笑着追了上来。',
+      enDesc: 'He looks casual and is anything but — you ran off with his money, and he followed, smiling.' },
+    { id: 'zhouyan', zh: '周砚', en: 'Zhou Yan', avatar: '/img/roleplay/luwang-guxiaoman-zhouyan.jpg',
+      zhRole: '陆妄的秘书', enRole: 'Lu Wang\u2019s secretary',
+      zhDesc: '什么都查得到、什么都不说的人；他递上的那份行程表里，永远有一行留给你。',
+      enDesc: 'He can find anything and says nothing. There is always one line left blank for you in the schedule he hands over.' },
+    { id: 'laodao', zh: '老刀', en: 'Old Dao', avatar: '/img/roleplay/luwang-guxiaoman-laodao.jpg',
+      zhRole: '讨债人', enRole: 'The collector',
+      zhDesc: '被你卷走那笔钱的债主，光头、眉上一道疤；他是来讨债的，但更想看看敢动陆妄钱的人长什么样。',
+      enDesc: 'The man whose money you took — shaved head, a scar through one eyebrow. He came to collect, but mostly he wants to see who dared touch Lu Wang\u2019s money.' },
+    { id: 'luchen', zh: '陆沉', en: 'Lu Chen', avatar: '/img/roleplay/luwang-guxiaoman-luchen.jpg',
+      zhRole: '陆家二叔', enRole: 'Lu Wang\u2019s uncle',
+      zhDesc: '陆家二叔，巴不得陆妄栽跟头；他找上你，不是要钱，是要一个能扳倒侄子的把柄。',
+      enDesc: 'Lu Wang\u2019s uncle, who would love to see him fall. He is not here for the money — he wants leverage against his nephew.' },
+  ],
+
+  // 高冷女总裁的落魄助理（现代·职场）：办公室政治天然是群像
+  'shenqingyi-luchi': [
+    { id: 'shenqingyi', zh: '沈清漪', en: 'Shen Qingyi', lead: true,
+      zhRole: '集团女总裁', enRole: 'CEO',
+      zhDesc: '商界闻名的女总裁，高冷强势、雷厉风行；对你这只落魄又倔强的小奶狗动了恻隐，护短到最后。',
+      enDesc: 'A CEO known across the industry — cold and decisive. She takes pity on you, the fallen heir, and ends up shielding you completely.' },
+    { id: 'gumingchuan', zh: '顾明川', en: 'Gu Mingchuan', avatar: '/img/roleplay/shenqingyi-luchi-gumingchuan.jpg',
+      zhRole: '公司副总', enRole: 'Vice president',
+      zhDesc: '盯着沈清漪那把椅子的副总；你第一天泼湿的那份文件，正好是他准备发难的材料。',
+      enDesc: 'The VP eyeing her chair. The files you soaked on your first day were exactly the ammunition he had been waiting for.' },
+    { id: 'suhe', zh: '苏禾', en: 'Su He', avatar: '/img/roleplay/shenqingyi-luchi-suhe.jpg',
+      zhRole: '沈清漪的秘书', enRole: 'Her secretary',
+      zhDesc: '总裁办的女秘书，最先对你放软态度；她一句话能让你进得去办公室，也能让你在门口站一上午。',
+      enDesc: 'The secretary on the executive floor, and the first to soften toward you. One word from her and you are either inside the office or standing in the corridor all morning.' },
+    { id: 'qianjingli', zh: '钱经理', en: 'Manager Qian', avatar: '/img/roleplay/shenqingyi-luchi-qianjingli.jpg',
+      zhRole: '你的债主', enRole: 'Your creditor',
+      zhDesc: '追债追到公司大堂的人，衬衫皱、额头冒汗；他不敢得罪沈清漪，却敢在楼下堵你。',
+      enDesc: 'He chases your debt all the way into the company lobby — wrinkled shirt, sweating brow. He will not cross Shen Qingyi, but he will ambush you downstairs.' },
+  ],
+
+  // 温柔女医生（现代·医院）：多角色支线落在「住院部日常」
+  'linjianwei-chenyi': [
+    { id: 'linjianwei', zh: '林见微', en: 'Lin Jianwei', lead: true,
+      zhRole: '科室女医生', enRole: 'The ward doctor',
+      zhDesc: '科室里最温柔的女医生，轻声细语；每天的查房，是你最期待又最紧张的时刻。',
+      enDesc: 'The gentlest doctor on the ward. Every morning round is the moment you look forward to and dread.' },
+    { id: 'wangjie', zh: '王姐', en: 'Sister Wang', avatar: '/img/roleplay/linjianwei-chenyi-wangjie.jpg',
+      zhRole: '护士长', enRole: 'Head nurse',
+      zhDesc: '科室里的定海神针，谁的病情、谁的心思都瞒不过她；她第一个看出你在等查房的那几分钟。',
+      enDesc: 'The anchor of the ward — nobody\u2019s condition, or feelings, escape her. She is the first to notice you waiting for those few minutes of rounds.' },
+    { id: 'zhouming', zh: '周铭', en: 'Zhou Ming', avatar: '/img/roleplay/linjianwei-chenyi-zhouming.jpg',
+      zhRole: '同科室男医生', enRole: 'A colleague',
+      zhDesc: '同科室的男医生，对林医生有意思；他越是客气地替你检查，你越说不出那句谢谢。',
+      enDesc: 'He works the same ward and has his eye on Dr. Lin. The more considerate he is during your check-ups, the harder it is to say thank you.' },
+    { id: 'xiaoyu', zh: '小宇', en: 'Xiaoyu', avatar: '/img/roleplay/linjianwei-chenyi-xiaoyu.jpg',
+      zhRole: '隔壁床病友', enRole: 'The kid in the next bed',
+      zhDesc: '十六岁，住了大半年，把你当树洞；他嘴上嫌你烦，护士不在时却总替你按铃。',
+      enDesc: 'Sixteen, half a year on the ward, and he uses you as a wall to talk at. He says you are annoying, then hits the call button for you whenever the nurses are away.' },
+  ],
+
+  // 傲娇大小姐（现代·豪门）：保镖、管家、表姐构成她的世界
+  'guwanqing-heyu': [
+    { id: 'guwanqing', zh: '顾晚晴', en: 'Gu Wanqing', lead: true,
+      zhRole: '顾家千金', enRole: 'The Gu heiress',
+      zhDesc: '傲娇嘴硬、口是心非的顾家千金；她越是在意，越是嘴上不饶人。',
+      enDesc: 'The Gu heiress — prickly, stubborn and never saying what she means. The more she cares, the sharper her tongue.' },
+    { id: 'laozhou', zh: '老周', en: 'Old Zhou', avatar: '/img/roleplay/guwanqing-heyu-laozhou.jpg',
+      zhRole: '顾家管家', enRole: 'The family butler',
+      zhDesc: '看着小姐长大的老管家，家里唯一敢说「小姐您这样不对」的人，也是最早把你当成自己人的。',
+      enDesc: 'He watched the young mistress grow up and is the only one in the house who dares tell her she is wrong. Also the first to treat you as one of the family.' },
+    { id: 'guwanning', zh: '顾晚宁', en: 'Gu Wanning', avatar: '/img/roleplay/guwanqing-heyu-guwanning.jpg',
+      zhRole: '顾晚晴的表姐', enRole: 'Her cousin',
+      zhDesc: '家宴上最爱戳表妹痛处的人；她一眼就看出顾晚晴对保镖动了心，并乐得把它说破。',
+      enDesc: 'She lives to prod her cousin at family dinners. She spots the crush on the bodyguard immediately and delights in saying so out loud.' },
+    { id: 'awu', zh: '阿武', en: 'A Wu', avatar: '/img/roleplay/guwanqing-heyu-awu.jpg',
+      zhRole: '保镖队搭档', enRole: 'Fellow bodyguard',
+      zhDesc: '和你搭班的保镖，规矩比谁都熟、玩笑比谁都欠；他总在你和小姐之间那点距离上做文章。',
+      enDesc: 'Your partner on shift: flawless at the job, merciless with the jokes. He never misses a chance to needle the distance between you and the young mistress.' },
+  ],
+
+  // 冷峻刑警的年下法医（现代·刑侦）：一条案子就是一场群像
+  'lutingyuan-shenyan': [
+    { id: 'lutingyuan', zh: '陆庭深', en: 'Lu Tingshen', lead: true,
+      zhRole: '刑警队长', enRole: 'Detective captain',
+      zhDesc: '雷厉风行、冷峻寡言的刑警队长；起初只当你是可能拖后腿的法医助理，后来却在危险时第一个挡在你身前。',
+      enDesc: 'A captain who gets things done and says little. He starts out treating you as a liability and ends up stepping in front of you when it counts.' },
+    { id: 'laoxing', zh: '老邢', en: 'Old Xing', avatar: '/img/roleplay/lutingyuan-shenyan-laoxing.jpg',
+      zhRole: '刑警队搭档', enRole: 'His partner',
+      zhDesc: '跟陆庭深搭档十年的老刑警，唯一敢当面怼队长的人；他看案子比你早，看人也比陆庭深早。',
+      enDesc: 'Ten years alongside Lu Tingshen and the only one who talks back to him. He reads cases early — and read the two of you even earlier.' },
+    { id: 'dengjiaoshou', zh: '邓教授', en: 'Professor Deng', avatar: '/img/roleplay/lutingyuan-shenyan-dengjiaoshou.jpg',
+      zhRole: '法医室主任', enRole: 'Head of forensics',
+      zhDesc: '法医室主任，你的师门；她一句「孩子，验尸报告不会说谎」，能让你在压力最大的时候坐得住。',
+      enDesc: 'Head of forensics and your mentor. One line from her — the post-mortem does not lie, child — is enough to steady you under the worst pressure.' },
+    { id: 'gaoyuan', zh: '高远', en: 'Gao Yuan', avatar: '/img/roleplay/lutingyuan-shenyan-gaoyuan.jpg',
+      zhRole: '重点嫌疑人', enRole: 'Prime suspect',
+      zhDesc: '审了三次都滴水不漏的人；他每次开口都先看你一眼，像在确认你还记得他。',
+      enDesc: 'Three interrogations and not a single crack. He glances at you before he speaks, as if checking that you still remember him.' },
+  ],
+
+  // ═══ 第二批 #11–#20（2026-10-01）═══
+
+  // 飒爽女律师的温柔记者（现代·律政）
+  'suwanzhou-wenyan': [
+    { id: 'suwanzhou', zh: '苏晚舟', en: 'Su Wanzhou', lead: true,
+      zhRole: '女律师', enRole: 'The lawyer',
+      zhDesc: '法庭上锋芒毕露、寸步不让的女律师；看似冷硬，实则护短，对你这个温柔又执着的记者最先放软。',
+      enDesc: 'A lawyer who gives no quarter in court — seemingly hard, quietly protective, and the first to soften for a gentle, persistent reporter.' },
+    { id: 'zhengming', zh: '郑明', en: 'Zheng Ming', avatar: '/img/roleplay/suwanzhou-wenyan-zhengming.jpg',
+      zhRole: '律所合伙人', enRole: 'Firm partner',
+      zhDesc: '带她入行的合伙人，也是唯一敢当面说她「最近心不在案子上」的人。',
+      enDesc: 'The partner who trained her, and the only one who dares tell her she has not had her mind on the case lately.' },
+    { id: 'yetang', zh: '叶棠', en: 'Ye Tang', avatar: '/img/roleplay/suwanzhou-wenyan-yetang.jpg',
+      zhRole: '律所实习生', enRole: 'Law intern',
+      zhDesc: '律所里最年轻的人，偷偷崇拜苏律师；她整理卷宗时最先发现，那两份证词里有一份被人动过。',
+      enDesc: 'The youngest person at the firm and a quiet admirer of Su Wanzhou. She is the first to notice that one of the two statements has been tampered with.' },
+    { id: 'jianglvshi', zh: '江律师', en: 'Counsel Jiang', avatar: '/img/roleplay/suwanzhou-wenyan-jianglvshi.jpg',
+      zhRole: '对手律师', enRole: 'Opposing counsel',
+      zhDesc: '庭上从不留情的对手；他输过她一次，于是把「苏律师的私事」也列进了准备清单。',
+      enDesc: 'An opponent who holds nothing back. He lost to her once, and has since put her private life on the prep list too.' },
+  ],
+
+  // 188霸总&闯祸写手（现代·都市）
+  'lusinian-chuanghuo': [
+    { id: 'lusinian', zh: '陆斯年', en: 'Lu Sinian', lead: true,
+      zhRole: '陆氏集团总裁', enRole: 'Group president',
+      zhDesc: '你随手写进小说的那个号码，真的属于他；被冒犯到极点的集团总裁，最后却是他先找上门来问下一章。',
+      enDesc: 'The number you casually wrote into your novel really is his. The outraged president ends up at your door asking about the next chapter.' },
+    { id: 'hechuan', zh: '何川', en: 'He Chuan', avatar: '/img/roleplay/lusinian-chuanghuo-hechuan.jpg',
+      zhRole: '他的特助', enRole: 'His executive assistant',
+      zhDesc: '替你收拾过三次烂摊子的特助；他办公抽屉里收着一份「陆总公关风险清单」，第一页写的是你的笔名。',
+      enDesc: 'He has cleaned up after you three times. There is a PR-risk list in his drawer, and your pen name is on page one.' },
+    { id: 'xiajie', zh: '夏姐', en: 'Sister Xia', avatar: '/img/roleplay/lusinian-chuanghuo-xiajie.jpg',
+      zhRole: '你的平台编辑', enRole: 'Your editor',
+      zhDesc: '催稿毫不留情的编辑；她一边骂你写疯了，一边把这条新闻推上了首页。',
+      enDesc: 'Your editor, who chases manuscripts without mercy — scolding you for going too far while pushing the story to the front page.' },
+    { id: 'lumu', zh: '陆母', en: 'Lu\u2019s mother', avatar: '/img/roleplay/lusinian-chuanghuo-lumu.jpg',
+      zhRole: '陆斯年的母亲', enRole: 'Lu Sinian\u2019s mother',
+      zhDesc: '唯一能让他低头的人；她翻完你的小说，只问了一句：这个女主角，是不是照着你自己写的？',
+      enDesc: 'The only person he will bow to. She reads your novel and asks one question: is this heroine modelled on yourself?' },
+  ],
+
+  // 严重洁癖总裁&拿错外卖实习生（现代·职场）
+  'luyan-waimai': [
+    { id: 'luyan', zh: '陆衍', en: 'Lu Yan', lead: true,
+      zhRole: '集团总裁', enRole: 'Group president',
+      zhDesc: '严重洁癖的总裁，被拿错的那盒六百八的烧肉饭是他今天的晚饭；他让你自己赔，却记住了你的名字。',
+      enDesc: 'A president with a severe cleanliness streak. The 680-yuan box you took by mistake was his dinner. He makes you pay — and remembers your name.' },
+    { id: 'fangtezhu', zh: '方特助', en: 'Assistant Fang', avatar: '/img/roleplay/luyan-waimai-fangtezhu.jpg',
+      zhRole: '总裁特助', enRole: 'Special assistant',
+      zhDesc: '那盒饭的经手人；他递上白手套的时候永远面不改色，只在你说「我赔」的时候多看了你一眼。',
+      enDesc: 'He handled that box of food. He never blinks while handing over the white gloves — but he does look twice when you say you will pay.' },
+    { id: 'xiaoyu', zh: '小雨', en: 'Xiaoyu', avatar: '/img/roleplay/luyan-waimai-xiaoyu.jpg',
+      zhRole: '同组实习生', enRole: 'Fellow intern',
+      zhDesc: '和你一起加班到凌晨的实习生；她替你在外卖袋上写了名字，也替你顶过一次班。',
+      enDesc: 'The intern who stays up with you till dawn. She wrote your name on the takeaway bag, and once covered a shift for you.' },
+    { id: 'wangshu', zh: '王叔', en: 'Uncle Wang', avatar: '/img/roleplay/luyan-waimai-wangshu.jpg',
+      zhRole: '烧肉店老板', enRole: 'Restaurant owner',
+      zhDesc: '街角那家烧肉店的老板；他记得每一份套餐的去向，也记得你那天跑得有多慌。',
+      enDesc: 'He runs the barbecue place on the corner. He remembers where every set meal goes — and how badly you were hurrying that night.' },
+  ],
+
+  // 冷面总裁&哑巴新娘（现代·豪门）
+  'fuxingzhou-yaba': [
+    { id: 'fuxingzhou', zh: '傅行舟', en: 'Fu Xingzhou', lead: true,
+      zhRole: '傅氏集团总裁', enRole: 'Group president',
+      zhDesc: '被迫娶了林家哑巴大小姐的总裁；他厌恶这段婚姻，新婚夜却忽然听见一道清晰的声音。',
+      enDesc: 'Forced into marriage with the mute eldest Miss Lin. He loathes the arrangement — until a clear voice speaks to him on the wedding night.' },
+    { id: 'zhongshu', zh: '忠叔', en: 'Uncle Zhong', avatar: '/img/roleplay/fuxingzhou-yaba-zhongshu.jpg',
+      zhRole: '傅家老宅管家', enRole: 'Head butler',
+      zhDesc: '看着傅行舟长大的老管家，也是府里唯一对这位新夫人行礼时没有半分轻慢的人。',
+      enDesc: 'He watched Fu Xingzhou grow up, and is the only servant in the house whose bow to the new mistress carries no trace of contempt.' },
+    { id: 'fumu', zh: '傅母', en: 'Fu\u2019s mother', avatar: '/img/roleplay/fuxingzhou-yaba-fumu.jpg',
+      zhRole: '傅行舟的母亲', enRole: 'Fu Xingzhou\u2019s mother',
+      zhDesc: '看不上这门婚事的婆婆；她当着你的面对儿子说「她配不上傅家」，却在你转身时收起了那点轻蔑。',
+      enDesc: 'The mother-in-law who considers the match beneath them. She tells her son you are not good enough for the Fu family — and hides the sneer when you turn around.' },
+    { id: 'linwei', zh: '林薇', en: 'Lin Wei', avatar: '/img/roleplay/fuxingzhou-yaba-linwei.jpg',
+      zhRole: '你的姐姐', enRole: 'Your elder sister',
+      zhDesc: '家里唯一相信你「不是不会说话，只是不想说」的人；她替你把手语练到能看懂每一个字。',
+      enDesc: 'The only one in the family who believes you are not unable to speak, only unwilling. She learned enough sign language to read every word.' },
+  ],
+
+  // 封建世家家主&留洋大小姐（古代·世家）
+  'shenyanzhi-liuyang': [
+    { id: 'shenyanzhi', zh: '沈砚之', en: 'Shen Yanzhi', lead: true,
+      zhRole: '沈家家主 / 当朝首辅', enRole: 'Head of the Shen clan and chief minister',
+      zhDesc: '沈家家主、当朝首辅，规矩比圣旨还硬；九年之后你穿着及膝洋装跑向他，他没有伸手，也没有走开。',
+      enDesc: 'Head of the Shen clan and chief minister — his rules are harder than an imperial decree. Nine years later you run at him in a knee-length dress; he does not reach out, and does not walk away.' },
+    { id: 'shenfu', zh: '沈福', en: 'Shen Fu', avatar: '/img/roleplay/shenyanzhi-liuyang-shenfu.jpg',
+      zhRole: '沈府管家', enRole: 'Household steward',
+      zhDesc: '沈府的老管家，规矩比主子还多；他第一次见你穿洋装进门，转身上报时只说了一句「三小姐回来了」。',
+      enDesc: 'The old steward whose rules outnumber even his master\u2019s. The first time he sees you walk in wearing Western dress, all he reports is: the third young lady is back.' },
+    { id: 'shenlaotaitai', zh: '沈老太太', en: 'The old matriarch', avatar: '/img/roleplay/shenyanzhi-liuyang-shenlaotaitai.jpg',
+      zhRole: '沈家老太太', enRole: 'The Shen matriarch',
+      zhDesc: '沈家真正说了算的人，也是当年定下这门婚约的人；她不看你穿什么，只看你还认不认这个家的规矩。',
+      enDesc: 'The one who truly decides in the Shen house, and who made the betrothal. She does not look at what you wear — only at whether you still accept the family\u2019s rules.' },
+    { id: 'songzhiyuan', zh: '宋知远', en: 'Song Zhiyuan', avatar: '/img/roleplay/shenyanzhi-liuyang-songzhiyuan.jpg',
+      zhRole: '你的表哥', enRole: 'Your cousin',
+      zhDesc: '留洋时就护着你的表哥，也是唯一会拿英文打趣沈砚之的人；他劝你别把旧礼当回事。',
+      enDesc: 'The cousin who protected you abroad and the only one who teases Shen Yanzhi in English. He tells you not to take the old proprieties seriously.' },
+  ],
+
+  // 情感漠视丈夫&产后抑郁妻子（现代·家庭）——多角色支线：家里三条不同的声音
+  'guhuaizhi-chanhou': [
+    { id: 'guhuaizhi', zh: '顾淮之', en: 'Gu Huaizhi', lead: true,
+      zhRole: '顾氏集团总裁', enRole: 'Group president',
+      zhDesc: '娶了安静懂事的你，孩子出生后越来越忙；他不是不爱，是从来没有学会怎么看见。',
+      enDesc: 'He married you for being quiet and sensible, then grew busier after the child. It is not that he does not love you — he never learned how to look.' },
+    { id: 'zhangjie', zh: '张姐', en: 'Sister Zhang', avatar: '/img/roleplay/guhuaizhi-chanhou-zhangjie.jpg',
+      zhRole: '月嫂', enRole: 'Maternity nurse',
+      zhDesc: '这个家里唯一注意到你不对劲的人；她会在半夜替你热一碗汤，也会提醒顾淮之「太太最近没怎么说话」。',
+      enDesc: 'The only one in the house who notices something is wrong. She warms soup for you at midnight and reminds Gu Huaizhi that his wife has not been talking much.' },
+    { id: 'gumu', zh: '顾母', en: 'Gu\u2019s mother', avatar: '/img/roleplay/guhuaizhi-chanhou-gumu.jpg',
+      zhRole: '顾淮之的母亲', enRole: 'Gu Huaizhi\u2019s mother',
+      zhDesc: '只会说「谁不是这么过来的，别矫情」的婆婆；她的每一句「经验」，都把你又推远一点。',
+      enDesc: 'The mother-in-law whose every line is: everyone goes through this, stop being dramatic. Each piece of her experience pushes you a little further away.' },
+    { id: 'linyisheng', zh: '林医生', en: 'Dr. Lin', avatar: '/img/roleplay/guhuaizhi-chanhou-linyisheng.jpg',
+      zhRole: '你的闺蜜 / 精神科医生', enRole: 'Your friend and doctor',
+      zhDesc: '你的闺蜜，也是唯一敢当着顾淮之的面说「她不是心情不好，她是病了」的人。',
+      enDesc: 'Your closest friend, and the only one who will say it to Gu Huaizhi\u2019s face: she is not in a bad mood, she is ill.' },
+  ],
+
+  // 毒舌雇主&家教兼酒妹（现代·都市）
+  'luci-jiajiao': [
+    { id: 'luci', zh: '陆辞', en: 'Lu Ci', lead: true,
+      zhRole: '毒舌雇主', enRole: 'Your sharp-tongued employer',
+      zhDesc: '白天是你学生的哥哥、晚上是商K卡座上的那位先生；他一眼看穿你的两副面孔，却没有拆穿。',
+      enDesc: 'By day the brother of your student, by night the man in the club booth. He sees straight through your two faces — and says nothing.' },
+    { id: 'luxing', zh: '陆星', en: 'Lu Xing', avatar: '/img/roleplay/luci-jiajiao-luxing.jpg',
+      zhRole: '你的学生', enRole: 'Your student',
+      zhDesc: '你教的那个高中生，聪明又别扭；他最先察觉你晚上「在忙别的事」，却替你瞒了两个月。',
+      enDesc: 'The high-schooler you tutor — clever and awkward. He is the first to realise you are busy with something else at night, and he covers for you for two months.' },
+    { id: 'lanjie', zh: '兰姐', en: 'Sister Lan', avatar: '/img/roleplay/luci-jiajiao-lanjie.jpg',
+      zhRole: '商K领班', enRole: 'Floor manager',
+      zhDesc: '场子里的领班，替你瞒过班、也替你把喝多的客人挡回去；她只说你一句：别在这里把书读丢了。',
+      enDesc: 'The floor manager who covered your shifts and kept drunk customers off you. She tells you exactly one thing: do not lose your studies in here.' },
+    { id: 'aqian', zh: '阿骞', en: 'A Qian', avatar: '/img/roleplay/luci-jiajiao-aqian.jpg',
+      zhRole: '酒局上认出你的人', enRole: 'The one who recognised you',
+      zhDesc: '在酒局上认出你是「陆辞家那个家教」的人；他笑着把这件事按在桌上，等一个价码。',
+      enDesc: 'He recognised you as the tutor from Lu Ci\u2019s house. He lays it on the table with a smile and waits for a price.' },
+  ],
+
+  // 清高才子&被忽视的新婚佳人（古代·文人）
+  'chengqingyan-xinhuang': [
+    { id: 'chengqingyan', zh: '程卿偃', en: 'Cheng Qingyan', lead: true,
+      zhRole: '翰林院编修 / 新锐诗人', enRole: 'Hanlin compiler and poet',
+      zhDesc: '成亲两个月始终待你疏离的清高才子；他在听月楼写诗，却看见台上蒙着面纱跳舞的人像极了你。',
+      enDesc: 'Two months married and still distant. He writes poetry at the Listening Moon Pavilion — and sees a veiled dancer on stage who looks exactly like you.' },
+    { id: 'lixiu', zh: '李修', en: 'Li Xiu', avatar: '/img/roleplay/chengqingyan-xinhuang-lixiu.jpg',
+      zhRole: '翰林院同僚', enRole: 'Fellow compiler',
+      zhDesc: '替他传诗、也替他传闲话的同僚；他是第一个把「程大人近来诗里有个人」说出口的人。',
+      enDesc: 'He passes along both poems and gossip. He is the first to say out loud that there is someone in the minister\u2019s recent verse.' },
+    { id: 'linlaofuren', zh: '林老夫人', en: 'The old madam Lin', avatar: '/img/roleplay/chengqingyan-xinhuang-linlaofuren.jpg',
+      zhRole: '你家长辈', enRole: 'Your family\u2019s elder',
+      zhDesc: '你的祖母，只问一句「他在府里待你可好」；她不管诗词名声，只管你有没有被冷待。',
+      enDesc: 'Your grandmother, who asks one thing only: is he good to you in that house. She cares nothing for poetic fame, only whether you are being neglected.' },
+    { id: 'yunniang', zh: '云娘', en: 'Yunniang', avatar: '/img/roleplay/chengqingyan-xinhuang-yunniang.jpg',
+      zhRole: '听月楼舞姬', enRole: 'Dancer at the pavilion',
+      zhDesc: '台上面纱后那双眼睛的主人；她知道程卿偃在看她，也知道他在看的是另一个人。',
+      enDesc: 'The eyes behind the veil on stage. She knows Cheng Qingyan is watching her — and knows he is seeing someone else.' },
+  ],
+
+  // 狂躁症总裁&被困千金（现代·都市）——多角色支线：医生与妹妹两条外部视角
+  'fuyanci-kunjing': [
+    { id: 'fuyanci', zh: '傅砚辞', en: 'Fu Yanci', lead: true,
+      zhRole: '傅氏集团总裁', enRole: 'Group president',
+      zhDesc: '有间歇性狂躁症的总裁，下雨天会把自己锁起来；他在顶楼那扇门后第一次问你，为什么会是他。',
+      enDesc: 'A president with intermittent mania who locks himself away on rainy days. Behind that rooftop door he asks you, for the first time, why it had to be him.' },
+    { id: 'xuyisheng', zh: '徐医生', en: 'Dr. Xu', avatar: '/img/roleplay/fuyanci-kunjing-xuyisheng.jpg',
+      zhRole: '他的心理医生', enRole: 'His psychiatrist',
+      zhDesc: '跟了他八年的心理医生，知道下雨天意味着什么；他提醒你，别把「留下来」当成一句安慰。',
+      enDesc: 'Eight years treating him, and he knows what rain means. He warns you not to treat staying as a form of comfort.' },
+    { id: 'fuyao', zh: '傅瑶', en: 'Fu Yao', avatar: '/img/roleplay/fuyanci-kunjing-fuyao.jpg',
+      zhRole: '傅砚辞的妹妹', enRole: 'Fu Yanci\u2019s younger sister',
+      zhDesc: '唯一敢在下雨天去花园里找他的人；她见到你第一句话是「你还活着，说明他信你」。',
+      enDesc: 'The only one who dares go looking for him in the garden when it rains. Her first words to you: you are still alive, so he trusts you.' },
+    { id: 'wenfu', zh: '温父', en: 'Your father', avatar: '/img/roleplay/fuyanci-kunjing-wenfu.jpg',
+      zhRole: '你父亲', enRole: 'Your father',
+      zhDesc: '把你送到那间休息室、又在门外站了一夜的人；他嘴上谈的是合作，眼里是后悔。',
+      enDesc: 'He sent you to that room and then stood outside all night. His mouth talks business; his eyes are full of regret.' },
+  ],
+
+  // 粘人精男友&心虚躲闪的你（现代·都市）
+  'luyu-nvpengyou': [
+    { id: 'luyu', zh: '陆屿', en: 'Lu Yu', lead: true,
+      zhRole: '互联网产品经理 / 男友', enRole: 'Product manager and your boyfriend',
+      zhDesc: '黏人又会撒娇的男友，和你在一起三年；他翻到那张照片时没有问你，只是把相册合上了。',
+      enDesc: 'Clingy, sweet-tempered, and three years with you. When he finds the photograph he does not ask — he just closes the album.' },
+    { id: 'dapeng', zh: '大彭', en: 'Da Peng', avatar: '/img/roleplay/luyu-nvpengyou-dapeng.jpg',
+      zhRole: '他的同事', enRole: 'His coworker',
+      zhDesc: '组里最会看眼色的同事；他见过陆屿把你们的合照当桌面用了三年，也知道他最近换了。',
+      enDesc: 'The most perceptive man on the team. He watched Lu Yu keep your photo as his wallpaper for three years, and noticed when he changed it.' },
+    { id: 'chengyue', zh: '程越', en: 'Cheng Yue', avatar: '/img/roleplay/luyu-nvpengyou-chengyue.jpg',
+      zhRole: '照片里那位学长', enRole: 'The senior in the photo',
+      zhDesc: '照片里那个和陆屿有六七分相似的人；他并不认识你，只是恰好在同一座城市里活着。',
+      enDesc: 'The man in the photograph who resembles Lu Yu by six or seven parts. He does not know you at all — he merely happens to live in the same city.' },
+    { id: 'taotao', zh: '陶陶', en: 'Taotao', avatar: '/img/roleplay/luyu-nvpengyou-taotao.jpg',
+      zhRole: '你们的合租室友', enRole: 'Your roommate',
+      zhDesc: '合租的室友，你们吵架的见证人；她端着杯子听完，只说一句「你心虚的样子，比照片更像问题」。',
+      enDesc: 'Your roommate and the witness to every argument. She listens over a mug and says only: the way you are dodging is more of a problem than the photo.' },
+  ],
+
+  // ===== 第三批多角色 cast（21–30 中适合群像的 9 部；亡国公主按提案保持 solo-only，不进本表）=====
+
+  // 薄情帝王&痴傻皇后（古代·宫廷）
+  'xiaoyan-chisha': [
+    { id: 'xiaoyan', zh: '萧砚', en: 'Xiao Yan', lead: true,
+      zhRole: '大梁皇帝', enRole: 'Emperor of Liang',
+      zhDesc: '七岁落水被五岁的你救起，登基后履行诺言立你为后，却早就后悔了；朝堂请废后那天他沉默很久，只说了一个「准」字。',
+      enDesc: 'You pulled him from the water when he was seven. He kept his promise and made you empress \u2014 and has regretted it for years. When the court asked to depose you he was silent a long while, then said one word: yes.' },
+    { id: 'xietaihou', zh: '谢太后', en: 'Dowager Empress Xie', avatar: '/img/roleplay/xiaoyan-chisha-xietaihou.jpg',
+      zhRole: '萧砚的母后', enRole: 'Xiao Yan\u2019s mother',
+      zhDesc: '从一开始就看不上这个救过皇帝、却什么都学不会的皇后；选妃、废后，递到他案前的折子都是她先点的头。',
+      enDesc: 'She never accepted the empress who once saved her son and can learn nothing. The petitions for concubines and for deposition passed her first.' },
+    { id: 'liuchengxiang', zh: '柳承相', en: 'Chancellor Liu', avatar: '/img/roleplay/xiaoyan-chisha-liuchengxiang.jpg',
+      zhRole: '当朝宰相', enRole: 'Chancellor of Liang',
+      zhDesc: '请废后的折子出自他的手笔；他不恨你，只是觉得一个痴傻的皇后对大梁的朝局毫无用处。',
+      enDesc: 'The petition to depose you was written by his hand. He does not hate you \u2014 he simply finds a dull-witted empress of no use to the court.' },
+    { id: 'qinghe', zh: '青禾', en: 'Qinghe', avatar: '/img/roleplay/xiaoyan-chisha-qinghe.jpg',
+      zhRole: '你宫里的宫女', enRole: 'Your palace maid',
+      zhDesc: '宫里只认你一个主子的宫女；她替你梳头、替你把记不住的事写在小纸条上，也替你挡住那些听不懂的嘲笑。',
+      enDesc: 'The one maid in the palace who serves only you. She combs your hair, writes down what you cannot remember, and stands in front of the mockery you cannot understand.' },
+  ],
+
+  // 隐藏富豪小少爷&清醒女友（现代·校园）
+  'chenboyuan-qingxing': [
+    { id: 'chenboyuan', zh: '陈泊远', en: 'Chen Boyuan', lead: true,
+      zhRole: '陈氏集团独子 / 外卖骑手', enRole: 'The Chen Group\u2019s only son, working as a delivery rider',
+      zhDesc: '与家里闹掰后隐姓埋名，靠送外卖维生，和你在一起三年从没说过自己有钱；今天他送完最后一单，看见你从一辆黑色宝马的副驾下来。',
+      enDesc: 'He broke with his family, hid who he was and lived off deliveries. Three years with you and he never once mentioned money. Today, after his last order, he watched you step out of the passenger seat of a black BMW.' },
+    { id: 'akuan', zh: '阿宽', en: 'A-Kuan', avatar: '/img/roleplay/chenboyuan-qingxing-akuan.jpg',
+      zhRole: '和他一起送外卖的兄弟', enRole: 'His delivery partner',
+      zhDesc: '跟他跑了两年外卖的兄弟，只知道他叫「小陈」；他见过这人一天只吃一顿，好把省下的钱给你买生日蛋糕。',
+      enDesc: 'Two years of delivering takeout together, and all he knows is \u201cXiao Chen\u201d. He has watched him skip meals for a week to buy you a birthday cake.' },
+    { id: 'chenfu', zh: '陈父', en: 'Chen Senior', avatar: '/img/roleplay/chenboyuan-qingxing-chenfu.jpg',
+      zhRole: '南城陈氏的当家人', enRole: 'Head of the Chen family',
+      zhDesc: '断过他所有的卡、也等了他三年的人；他要的从来不是儿子低头，是他回来接手这个家。',
+      enDesc: 'He cut off every card and then waited three years. He never wanted his son to bow \u2014 he wants him to come home and take over.' },
+    { id: 'miaomiao', zh: '苗苗', en: 'Miaomiao', avatar: '/img/roleplay/chenboyuan-qingxing-miaomiao.jpg',
+      zhRole: '你的室友', enRole: 'Your roommate',
+      zhDesc: '你的室友，最先看出他不对劲的人；她说一个天天送外卖的人，不该认得那么多贵得要命的餐厅。',
+      enDesc: 'Your roommate and the first to suspect him. A man who delivers takeout all day, she says, should not know that many absurdly expensive restaurants.' },
+  ],
+
+  // 刺杀失败后成为暴君贵妃（古代·宫廷）
+  'shenyu-lingchaoyue': [
+    { id: 'shenyu', zh: '沈聿', en: 'Shen Yu', lead: true,
+      zhRole: '暴君', enRole: 'The tyrant',
+      zhDesc: '从小被送到敌国做质子受尽虐待，归国后极度缺爱，后宫一个妃子都没有；发现你总想杀他之后反倒来了兴致，笑着教你怎么杀得更准。',
+      enDesc: 'Sent as a child hostage and abused, he came home starved of love and keeps no harem at all. When he found out you keep trying to kill him he was amused instead \u2014 and smilingly taught you how to aim better.' },
+    { id: 'gaodequan', zh: '高德全', en: 'Gao Dequan', avatar: '/img/roleplay/shenyu-lingchaoyue-gaodequan.jpg',
+      zhRole: '御前贴身太监', enRole: 'The emperor\u2019s personal eunuch',
+      zhDesc: '伺候陛下十年的老太监，最会揣摩圣意；你每一次失手，他都比你先算到陛下会不会动怒。',
+      enDesc: 'Ten years at the emperor\u2019s elbow and he reads every mood. After each failed attempt of yours he knows, before you do, whether it will amuse him or enrage him.' },
+    { id: 'lutaiyi', zh: '陆太医', en: 'Physician Lu', avatar: '/img/roleplay/shenyu-lingchaoyue-lutaiyi.jpg',
+      zhRole: '太医院太医', enRole: 'Imperial physician',
+      zhDesc: '太医院里唯一肯替你上药的人；你身上的伤，他都写成「跌损」，从不多问一个字。',
+      enDesc: 'The only physician who will dress your wounds. Every bruise you carry he records as a fall, and never asks a single question.' },
+    { id: 'dachangongzhu', zh: '大长公主', en: 'Grand Princess', avatar: '/img/roleplay/shenyu-lingchaoyue-dachangongzhu.jpg',
+      zhRole: '先帝长姐', enRole: 'The late emperor\u2019s elder sister',
+      zhDesc: '宗室里说话最重的人；她恨你一个舞姬坐上贵妃之位，更恨陛下拿她这个姑母一点办法也没有。',
+      enDesc: 'The heaviest voice in the imperial clan. She despises a dancing girl seated as imperial consort \u2014 and despises even more that the emperor will not bend to his aunt.' },
+  ],
+
+  // 你也不想让丈夫知道吧（现代·都市）
+  'peizhisheng-suwan': [
+    { id: 'peizhisheng', zh: '裴知嵊', en: 'Pei Zhisheng', lead: true,
+      zhRole: '裴氏集团董事长 / 你失踪四年的初恋', enRole: 'Chairman of the Pei Group, the first love who vanished from your life',
+      zhDesc: '对外温和绅士，实则手段狠辣、掌控欲极强；四年不见，你早已是他放不下的执念，他借工作之名靠近你，要把你一点点重新攥回手里。',
+      enDesc: 'A gentleman in public and ruthless underneath, with a grip that never lets go. Four years apart and you are still his obsession; he comes at you through work, meaning to close his hand around you again, inch by inch.' },
+    { id: 'zhousheng', zh: '周晟', en: 'Zhou Sheng', avatar: '/img/roleplay/peizhisheng-suwan-zhousheng.jpg',
+      zhRole: '你的丈夫', enRole: 'Your husband',
+      zhDesc: '平庸却敏感的丈夫，靠关系被塞进裴氏；他比谁都爱你，也比谁都怕你见过更好的世界。',
+      enDesc: 'An ordinary, thin-skinned husband pushed into the Pei Group on connections. He loves you more than anyone \u2014 and fears more than anyone that you have seen a better world.' },
+    { id: 'hemishu', zh: '何秘书', en: 'Secretary He', avatar: '/img/roleplay/peizhisheng-suwan-hemishu.jpg',
+      zhRole: '裴知嵊的秘书', enRole: 'Pei Zhisheng\u2019s secretary',
+      zhDesc: '跟了裴知嵊六年的秘书；他是公司里最早闻到味道的人，也是唯一一个字都不敢说的人。',
+      enDesc: 'Six years at Pei Zhisheng\u2019s side. He smelled this before anyone else in the building, and he is the only one who dares not say a word.' },
+    { id: 'sunian', zh: '苏念', en: 'Su Nian', avatar: '/img/roleplay/peizhisheng-suwan-sunian.jpg',
+      zhRole: '你的闺蜜', enRole: 'Your closest friend',
+      zhDesc: '从大学陪你到现在的朋友；她是唯一敢劝你收手的人，也是唯一知道你当年为什么走的人。',
+      enDesc: 'Your friend since university. She is the only one who tells you to stop \u2014 and the only one who knows why you left in the first place.' },
+  ],
+
+  // 乖乖，别抛弃我（现代·娱乐圈）
+  'shenshu-jiangjia': [
+    { id: 'shenshu', zh: '沈殊', en: 'Shen Shu', lead: true,
+      zhRole: '京市只手遮天的人物 / 你的金主', enRole: 'The man who owns this city, and your patron',
+      zhDesc: '素来稳重自持、在名利场上如鱼得水，唯独对你不可救药地痴迷；大你七岁，自卑又多疑，你越推拒他越没有安全感。',
+      enDesc: 'Composed and sure-footed among the powerful, and hopelessly fixated on you. Seven years older, self-doubting and suspicious \u2014 and the more you push him away, the less safe he feels.' },
+    { id: 'zhaojie', zh: '赵姐', en: 'Sister Zhao', avatar: '/img/roleplay/shenshu-jiangjia-zhaojie.jpg',
+      zhRole: '你的经纪人', enRole: 'Your manager',
+      zhDesc: '带了你五年的经纪人，最懂这个圈子的规矩；她劝你别把沈殊的事往外说，也劝你别真的把他逼到绝路。',
+      enDesc: 'Five years as your manager and she knows every rule of this business. She tells you to keep Shen Shu out of it \u2014 and warns you not to push him past the edge.' },
+    { id: 'jiangli', zh: '姜黎', en: 'Jiang Li', avatar: '/img/roleplay/shenshu-jiangjia-jiangli.jpg',
+      zhRole: '同剧女星', enRole: 'The actress in your cast',
+      zhDesc: '和你同组的女星，明里暗里都在争；她是圈里最早知道沈殊为你做过什么的人。',
+      enDesc: 'Your co-star, competing with you in daylight and in the dark. She was the first in the industry to learn what Shen Shu has done for you.' },
+    { id: 'shenmu', zh: '沈母', en: 'Shen\u2019s mother', avatar: '/img/roleplay/shenshu-jiangjia-shenmu.jpg',
+      zhRole: '逼他联姻的母亲', enRole: 'His mother, who arranged the match',
+      zhDesc: '儿子的婚事她拿主意拿了三十年；可见过你之后，她第一次明白这件事她说了不算。',
+      enDesc: 'For thirty years her son\u2019s marriage has been hers to decide. After meeting you, for the first time she understands it is not.' },
+  ],
+
+  // 你只能是朕的皇后（古代·宫廷）
+  'xiaoyan-qianqian': [
+    { id: 'xiaoyan', zh: '萧晏', en: 'Xiao Yan', lead: true,
+      zhRole: '当朝皇帝 / 你的晏哥哥', enRole: 'The young emperor, your Yan-gege',
+      zhDesc: '开窍极早、假装胸无大志与摄政王周旋，只为护你周全；认定你之后便天崩地裂也不放手 —— 你嫁哪家，哥哥就抄哪家。',
+      enDesc: 'He learned young and pretends to want nothing while he plays the regent, only to keep you safe. Once he has decided on you, not even the sky falling will make him let go \u2014 marry anyone else and he will ruin that house.' },
+    { id: 'liutaihou', zh: '柳太后', en: 'Dowager Empress Liu', avatar: '/img/roleplay/xiaoyan-qianqian-liutaihou.jpg',
+      zhRole: '萧晏的母后', enRole: 'Xiao Yan\u2019s mother',
+      zhDesc: '当年点头把你送进宫的人；她一手护着萧晏长大，也最清楚他对你这份心思有多沉。',
+      enDesc: 'She was the one who let you be sent into the palace. She raised Xiao Yan herself, and knows better than anyone how heavy his heart is where you are concerned.' },
+    { id: 'laochengxiang', zh: '老丞相', en: 'The old chancellor', avatar: '/img/roleplay/xiaoyan-qianqian-laochengxiang.jpg',
+      zhRole: '你的祖父', enRole: 'Your grandfather',
+      zhDesc: '你的祖父，满朝里唯一敢当面劝他放你回家的人；他一把年纪跪在殿外，跪的是孙女的命。',
+      enDesc: 'Your grandfather, the only man at court who dares tell the emperor to let you go home. He kneels outside the hall at his age \u2014 for his granddaughter\u2019s life.' },
+    { id: 'mengnvguan', zh: '孟女官', en: 'Officer Meng', avatar: '/img/roleplay/xiaoyan-qianqian-mengnvguan.jpg',
+      zhRole: '掌宫规的女官', enRole: 'Mistress of palace rules',
+      zhDesc: '教过你跪、教过你说话的女官；她说这宫里最要紧的规矩是「看见当没看见」，可你被抢进宫那晚，替你开门的正是她。',
+      enDesc: 'She taught you how to kneel and how to speak. The first rule of the palace, she said, is to see nothing. On the night you were carried in, she was the one who opened the door.' },
+  ],
+
+  // 求求你，摸摸我吧（现代·都市）
+  'shenjian-jiangnian': [
+    { id: 'shenjian', zh: '沈霁安', en: 'Shen Ji\u2019an', lead: true,
+      zhRole: '失语的天才歌剧演员 / 你的竹马', enRole: 'A silent former opera prodigy, your childhood friend',
+      zhDesc: '十二岁一场意外后终生失语，曾想过轻生，是你把他从最暗的地方拉回来；在外矜持高冷，一回到你面前就变成要亲亲要抱抱的大狗。',
+      enDesc: 'One accident at twelve took his voice for good, and he once thought of ending it \u2014 you were the one who pulled him out of the dark. Aloof and cold with everyone else, and a clingy, needy puppy the moment he is back in front of you.' },
+    { id: 'shenayi', zh: '沈阿姨', en: 'Auntie Shen', avatar: '/img/roleplay/shenjian-jiangnian-shenayi.jpg',
+      zhRole: '沈霁安的母亲', enRole: 'Shen Ji\u2019an\u2019s mother',
+      zhDesc: '沈家唯一还站在儿子这边的人；她早就把你当成半个女儿，只怕有一天你会走。',
+      enDesc: 'The only one in the family still standing with her son. She has long treated you as half a daughter, and her only fear is that one day you will leave.' },
+    { id: 'linlaoshi', zh: '林老师', en: 'Teacher Lin', avatar: '/img/roleplay/shenjian-jiangnian-linlaoshi.jpg',
+      zhRole: '他的手语老师', enRole: 'His sign-language teacher',
+      zhDesc: '从十二岁教他手语教到现在的老师，也是他仅有的朋友；他比谁都清楚，沈霁安只有在你这儿才像个正常人。',
+      enDesc: 'He has taught Shen Ji\u2019an sign language since he was twelve, and is his only friend. He knows better than anyone that only around you does the boy seem like an ordinary man.' },
+    { id: 'liuyi', zh: '刘姨', en: 'Auntie Liu', avatar: '/img/roleplay/shenjian-jiangnian-liuyi.jpg',
+      zhRole: '住楼下的邻居', enRole: 'The neighbour downstairs',
+      zhDesc: '住楼下的邻居阿姨，天天看得到他在楼下等你；她说这孩子一站就是几个钟头，喊都喊不动。',
+      enDesc: 'The neighbour downstairs who sees him waiting outside for you almost every day. He stands there for hours, she says, and will not be called away.' },
+  ],
+
+  // 雨夜捡到的他会暖床（现代·都市）
+  'lijinyan-xiaxia': [
+    { id: 'lijinyan', zh: '厉烬言', en: 'Li Jinyan', lead: true,
+      zhRole: '雨夜被你捡回来的男人', enRole: 'The man you brought home on a rainy night',
+      zhDesc: '对外话少疏离、做事狠绝不含糊，唯独对你毫无底线地宠；他话不多，却默默把你的生活一点点接管，再没打算走。',
+      enDesc: 'Terse and distant with the world, ruthless when he has to be, and utterly without limits where you are concerned. He says little, quietly takes your life over piece by piece \u2014 and has no intention of leaving.' },
+    { id: 'wangshen', zh: '王婶', en: 'Auntie Wang', avatar: '/img/roleplay/lijinyan-xiaxia-wangshen.jpg',
+      zhRole: '对门的邻居', enRole: 'The neighbour across the hall',
+      zhDesc: '住对门的邻居，最先起疑的人；她见过他半夜出门、天亮才回，劝你多留个心眼。',
+      enDesc: 'The neighbour across the hall and the first to grow suspicious. She has seen him leave at midnight and come back at dawn, and tells you to watch yourself.' },
+    { id: 'laogui', zh: '老鬼', en: 'Lao Gui', avatar: '/img/roleplay/lijinyan-xiaxia-laogui.jpg',
+      zhRole: '厉烬言的旧识', enRole: 'A man from Li Jinyan\u2019s past',
+      zhDesc: '带着旧账找上门的人；他管厉烬言叫「烬哥」，也把那段没人肯提的过去带到了你家门口。',
+      enDesc: 'He arrives at your door with an old debt. He calls Li Jinyan \u201cJin-ge\u201d, and drags a past nobody will speak of to your doorstep.' },
+    { id: 'xiaotang', zh: '小唐', en: 'Xiao Tang', avatar: '/img/roleplay/lijinyan-xiaxia-xiaotang.jpg',
+      zhRole: '你的同事', enRole: 'Your coworker',
+      zhDesc: '和你一间办公室的同事；她只是觉得你家里藏了个人——你这半年再没加过一次班。',
+      enDesc: 'The colleague at the next desk. She only suspects someone is living at your place, because in six months you have not worked a single evening.' },
+  ],
+
+  // 捡回来的少年只想守着姐姐（现代·都市）
+  'linzhao-xiaxia': [
+    { id: 'linzhao', zh: '林昭', en: 'Lin Zhao', lead: true,
+      zhRole: '你捡回来的少年', enRole: 'The boy you took in',
+      zhDesc: '人前干净乖巧、总是低着头跟在你身后；只剩你们两个人时就像变了个人，黏着你、缠着你，只想要你身边只有他一个。',
+      enDesc: 'Clean, quiet and obedient in front of others, always a step behind you with his head down. Alone with you he becomes someone else \u2014 clinging, winding himself around you, wanting to be the only person at your side.' },
+    { id: 'laoli', zh: '老李', en: 'Old Li', avatar: '/img/roleplay/linzhao-xiaxia-laoli.jpg',
+      zhRole: '巷口杂货店老板', enRole: 'The corner shopkeeper',
+      zhDesc: '巷口开杂货店的老李，看着林昭在屋檐下蹲了三天；他劝你把孩子送去派出所，你没听。',
+      enDesc: 'He runs the shop at the mouth of the alley and watched Lin Zhao crouch under that eaves for three days. He told you to take the boy to the police. You did not.' },
+    { id: 'aning', zh: '阿宁', en: 'A-Ning', avatar: '/img/roleplay/linzhao-xiaxia-aning.jpg',
+      zhRole: '你的朋友', enRole: 'Your friend',
+      zhDesc: '唯一见过林昭本人的朋友；她劝你别把来路不明的少年留在家里，走之前又回头问你要不要她留宿。',
+      enDesc: 'The one friend who has met Lin Zhao. She tells you not to keep a boy of unknown origin in your flat \u2014 then turns back at the door to ask whether you want her to stay the night.' },
+    { id: 'zhaodefa', zh: '赵德发', en: 'Zhao Defa', avatar: '/img/roleplay/linzhao-xiaxia-zhaodefa.jpg',
+      zhRole: '林昭的舅舅', enRole: 'Lin Zhao\u2019s uncle',
+      zhDesc: '唯一找得到林昭的人；他一路问到这条巷子，说孩子是他姐姐留下的，他必须带回去。',
+      enDesc: 'The only person who can find Lin Zhao. He has asked his way to this alley and says the boy was his sister\u2019s \u2014 and that he must take him back.' },
+  ],
+};
+
+/** 给 cast 头像加内容版本号（`?v=<hash>`）：配合 immutable 缓存，换图后 URL 立即失效 */
+function withCastAvatarVersion(avatar?: string): string | undefined {
+  if (!avatar) return undefined;
+  const m = /^\/img\/roleplay\/([A-Za-z0-9-]+)\.(jpg|jpeg|png|webp)$/.exec(avatar);
+  if (!m) return avatar; // 非受控路径原样返回（侧表由服务端自写，不构成注入面）
+  const v = castAvatarHash(m[1]);
+  return v ? avatar + '?v=' + v : avatar;
+}
+
+/** 某剧本的多角色名单（已按语言本地化）；无则空数组。不做「是否真的启用」判断（调用方按 length 判） */
+export interface LocalizedCastMember { id: string; name: string; role?: string; desc?: string; avatar?: string; lead?: boolean }
+export function scenarioCast(id: string, lang: RPLang): LocalizedCastMember[] {
+  const list = SCENARIO_CAST[id];
+  if (!list || list.length === 0) return [];
+  /** 按语言取字段（en 缺省回落 zh；zh 缺省回落 en），zh-TW 再过 toZhTw —— 与剧本其它文案同口径 */
+  const pick = (zh?: string, en?: string): string => {
+    const raw = (lang === 'en' ? (en || zh) : (zh || en)) || '';
+    return (lang === 'zh-TW' ? toZhTw(raw) : raw).trim();
+  };
+  return list
+    .map((m) => {
+      const out: LocalizedCastMember = { id: m.id, name: pick(m.zh, m.en) };
+      const role = pick(m.zhRole, m.enRole);
+      const desc = pick(m.zhDesc, m.enDesc);
+      if (role) out.role = role;
+      if (desc) out.desc = desc;
+      if (m.avatar) out.avatar = withCastAvatarVersion(m.avatar);
+      if (m.lead) out.lead = true;
+      return out;
+    })
+    .filter((m) => m.name.length > 0);
+}
+
 // ============ 剧本库（可继续追加新剧本） ============
 export const SCENARIOS: RoleplayScenario[] = [
   {
@@ -646,7 +1331,12 @@ export const SCENARIOS: RoleplayScenario[] = [
       },
       background: '裴、林两家联姻，本定的是你姐姐，姐姐却在成亲前夜逃婚。林家舍不得这门亲，便让你披上嫁衣、替姐出嫁。',
       openingScene: '洞房花烛夜，你坐在床边，看他进来挑盖头。他本想着应付了事，掀开盖头才发现，眼前这张哭花了的脸，绝不是定亲时说的那位林家长女。',
-      openingAssistant: '红烛燃着，喜房里静得只剩烛芯偶尔"啪"地一响。他踏进门，脚步不疾不徐，抬手挑开那方盖头时，神情还是淡淡的，像在完成一件长辈交代的差事。\n\n盖头滑落，露出一张哭得梨花带雨的脸，眼尾通红，正怯怯地仰头看他。他手上的动作一顿，凤眼微微眯起，声音清冷："你是林家的哪个？定亲的，不该是你。"',
+      // 多角色试水（2026-10-01）：开场白也按【角色名】标记写，进剧情时逐段打字机揭示
+      //（见 RoleplayPage 的 openingTyped）——所以"第一段旁白 → 李嬷嬷 → 世子"会一个气泡一个气泡地长出来。
+      openingAssistant: '红烛燃着，喜房里静得只剩烛芯偶尔"啪"地一响。喜娘们垂手立在两侧，谁都不敢抬头。\n\n【李嬷嬷】"吉时到——请世子爷挑盖头。"\n【裴修远】他踏进门，脚步不疾不徐，抬手挑开那方盖头时神情还是淡淡的，像在完成一件长辈交代的差事。盖头滑落，露出一张哭得梨花带雨的脸，眼尾通红，正怯怯地仰头看他。他手上的动作一顿，凤眼微微眯起。"你是林家的哪个？定亲的，不该是你。"',
+      // 多角色线的**专属开场**（两条线可以不同）：同一夜，但把"这一屋子人"摆明（李嬷嬷 / 世子 / 翠屏）。
+      multiOpeningScene: '洞房花烛夜，喜房里站着一屋子人：掌事的李嬷嬷、陪嫁的翠屏，还有掀盖头的世子。你替姐姐坐上了花轿，而知道这件事的人，不止你一个。',
+      multiOpeningAssistant: '红烛燃着，喜房里静得只剩烛芯偶尔"啪"地一响。喜娘们垂手退到两侧，谁都不敢抬头。\n\n【李嬷嬷】"吉时到——请世子爷挑盖头。"\n【裴修远】他踏进门，脚步不疾不徐，抬手挑开那方盖头时神情还是淡淡的，像在完成一件长辈交代的差事。盖头滑落，露出一张哭得梨花带雨的脸，眼尾通红，正怯怯地仰头看他。他手上的动作一顿，凤眼微微眯起。"你是林家的哪个？定亲的，不该是你。"\n【翠屏】她缩在门边，两手把帕子绞成一团，膝盖一软就跪了下去，声音发颤："回、回世子爷，我家小姐她……"（大姑娘，你到底去了哪儿啊。）',
     },
     en: {
       title: 'The Night She Married in Her Sister\u2019s Place',
@@ -671,7 +1361,9 @@ export const SCENARIOS: RoleplayScenario[] = [
       },
       background: 'The Pei and Lin families arranged a marriage with your elder sister — but on the eve of the wedding, your sister ran away. Unwilling to lose the match, the Lin family dressed you in the bridal robes and sent you in your sister’s place.',
       openingScene: 'On the wedding night, you sit by the bed and watch him come to lift the veil. He means only to get it over with — until he finds that the tear-streaked face before him is nothing like the eldest Lin daughter the match was promised to.',
-      openingAssistant: 'The red candles burn, and the bridal chamber is so still that only the occasional soft pop of a wick breaks the quiet. He steps in, unhurried, and lifts the veil with an indifferent air, as if completing a task his elders assigned.\n\nThe veil falls away to reveal a face streaked with tears, eyes red-rimmed, timidly looking up at him. His hand pauses, his phoenix eyes narrowing slightly, voice cold: "Which daughter of the Lin house are you? The one promised to me — it should not be you."',
+      openingAssistant: 'The red candles burn, and the bridal chamber is so still that only the occasional soft pop of a wick breaks the quiet. The maids stand with lowered hands, not one of them daring to look up.\n\n【Matron Li】"The auspicious hour has come \u2014 young master, lift the veil."\n【Pei Xiuyuan】He steps in, unhurried, and lifts the veil with an indifferent air, as if completing a task his elders assigned. The veil falls away to reveal a face streaked with tears, eyes red-rimmed, timidly looking up at him. His hand pauses, his phoenix eyes narrowing slightly. "Which daughter of the Lin house are you? The one promised to me \u2014 it should not be you."',
+      multiOpeningScene: 'Wedding night, and the bridal chamber holds a whole household: Matron Li who ran the rites, Cuiping the maid who came with you, and the heir lifting the veil. You took your sister\u2019s place on the bridal sedan \u2014 and you are not the only one who knows it.',
+      multiOpeningAssistant: 'The red candles burn, and the bridal chamber is so still that only the occasional soft pop of a wick breaks the quiet. The maids step back to either side, not one of them daring to look up.\n\n【Matron Li】"The auspicious hour has come \u2014 young master, lift the veil."\n【Pei Xiuyuan】He steps in, unhurried, and lifts the veil with an indifferent air, as if completing a task his elders assigned. The veil falls away to reveal a face streaked with tears, eyes red-rimmed, timidly looking up at him. His hand pauses, his phoenix eyes narrowing slightly. "Which daughter of the Lin house are you? The one promised to me \u2014 it should not be you."\n【Cuiping】She shrinks by the doorway, twisting her handkerchief into a knot, then drops to her knees, voice shaking: "Reporting to the young master \u2014 my lady, she\u2026" (Eldest Miss, wherever did you go.)',
     }
   },
   {
@@ -1863,7 +2555,9 @@ export const SCENARIOS: RoleplayScenario[] = [
       },
       background: '你曾是一个普通姑娘，因暴君治下的贪官而家破人亡，被竹马谢长宴赎回养大，以为能嫁给他。可成年那天，他家被抄、满门尽灭，你因不是他家的人幸免于难。为了复仇，你潜入宫中当了舞姬，准备伺机刺杀他。',
       openingScene: '宫宴之后。他醉醺醺地说没看尽兴，又要让舞姬单独跳一支舞。你柔柔地走到他面前，弯弯行了个礼。',
-      openingAssistant: '殿内烛火晃动，他靠在榻上，醉眼带笑，嗓音懒散：“方才那支舞……没看尽兴。再舞一支，跳给朕一个人看。”你盈盈行礼，垂下眼帘——指尖那根簪子，轻得就像一次心跳。'
+      openingAssistant: '殿内烛火晃动，他靠在榻上，醉眼带笑，嗓音懒散：“方才那支舞……没看尽兴。再舞一支，跳给朕一个人看。”你盈盈行礼，垂下眼帘——指尖那根簪子，轻得就像一次心跳。',
+      multiOpeningScene: '宫宴散到一半，他已经喝多了，眯着眼说没看尽兴，还要你单独再舞一支。殿里灯火通明，御前的高德全垂手候在阶下，大长公主坐在上首，手里的酒盏一直没放下。',
+      multiOpeningAssistant: '殿里的丝竹换了一支曲子。他斜倚在龙椅上，指尖一下一下敲着扶手。\n\n【沈聿】“过来。”他抬手招你，声音懒洋洋的，眼里却没有半分醉意，“就跳方才那支。朕还没看够。”\n【高德全】他躬身上前一步，把温好的酒换到他手边，压着嗓子提醒：“陛下，贵妃娘娘今日已经舞过两回了。”\n【大长公主】上首传来一声轻响，酒盏搁在了案上。“陛下，”她的声音很稳，“一个舞姬，封了贵妃也还是舞姬。让她在宗亲面前一遍遍地跳，宗亲们看的是陛下的脸面。”\n他连眼皮都没抬。“姑母，”他慢慢地说，“朕的脸面，什么时候轮到你替朕看了？”'
     },
     en: {
       title: 'The Consort Who Tried to Kill the Tyrant',
@@ -1888,7 +2582,9 @@ export const SCENARIOS: RoleplayScenario[] = [
       },
       background: 'You were once an ordinary girl whose family was destroyed by corrupt officials under the tyrant. Raised by your childhood friend Xie Changyan, you thought you would marry him. But on the day you came of age his family was raided and killed to the last; only you, being not of his blood, survived. To avenge them, you entered the palace as a dancer, waiting to assassinate him.',
       openingScene: 'After the palace banquet. Drunk, he says he has not had his fill and wants a dancer to perform alone. You walk softly up to him and bow.',
-      openingAssistant: 'The candlelight flickers. He reclines on the couch, smiling with drunken eyes, his voice lazy: “That dance… I have not had my fill. Dance another, just for me.” You bow gracefully, lowering your gaze — the hairpin at your fingertips is as light as a heartbeat.'
+      openingAssistant: 'The candlelight flickers. He reclines on the couch, smiling with drunken eyes, his voice lazy: “That dance… I have not had my fill. Dance another, just for me.” You bow gracefully, lowering your gaze — the hairpin at your fingertips is as light as a heartbeat.',
+      multiOpeningScene: 'The banquet is half over and he is drunk enough to say the dancing did not satisfy him — he wants one more, from you alone. The hall is bright with lamps; Gao Dequan waits below the dais, and the Grand Princess sits at the head table with her cup untouched.',
+      multiOpeningAssistant: 'The musicians change tune. He slouches on the throne, tapping one finger on the armrest.\n\n【Shen Yu】“Come here.” He beckons, voice lazy, and his eyes are not drunk in the least. “That last dance. I have not had enough.”\n【Gao Dequan】He steps forward, sets warmed wine by his hand, and murmurs: “Your Majesty, the consort has already danced twice today.”\n【Grand Princess】A cup clicks down on the table at the head of the hall. “Your Majesty,” she says, steady, “a dancing girl made consort is still a dancing girl. Making her dance again before the clan shows them whose face is being worn thin.”\nHe does not lift his eyes. “Aunt,” he says slowly, “since when do you decide what my face is worth?”'
     }
   },
   {
@@ -2351,9 +3047,16 @@ function flatScenario(s: RoleplayScenario, lang: RPLang) {
     title: L.title, tagline: L.tagline, shortDesc: L.shortDesc,
     ai: L.ai, user: L.user, background: L.background,
     openingScene: quotes.finish(L.openingScene), openingAssistant: quotes.finish(L.openingAssistant),
+    // 多角色线的专属开场（可选）：没写就 undefined，前端回落通用开场（两条线允许不同剧情线）
+    ...(L.multiOpeningScene ? { multiOpeningScene: quotes.finish(L.multiOpeningScene) } : {}),
+    ...(L.multiOpeningAssistant ? { multiOpeningAssistant: quotes.finish(L.multiOpeningAssistant) } : {}),
     contentNote: L.contentNote || '',
     tags,
     audience: SCENARIO_AUDIENCE[s.id] || 'her',
+    // 多角色名单（无这张侧表的剧本 = 空数组 → 前端不做任何多角色渲染，行为与改造前一致）
+    // 主角色的头像**就是剧本头像**（含 hash 版本号）：在这里补上，任何消费 cast 的展面都自动拿到同一张脸，
+    // 不必各自去认 lead（详情页此前就是漏了这层判断，主角位上显示成「名字首字」色块）。
+    cast: scenarioCast(s.id, lang).map((c) => (c.lead ? { ...c, avatar } : c)),
   };
 }
 
@@ -3278,6 +3981,52 @@ export function buildAntiRepeatBlock(
 }
 
 /**
+ * 多角色同场 · 输出格式块（2026-10-01 多角色试水）
+ *
+ * 为什么需要它：剧情提示词本来就允许模型一次演多人（`_COMMON_RULES_TEXT_ZH` 第 8 条、
+ * `CLASSIC_RULES_TEXT_ZH` §二「NPC 调度规则」），但**输出里没有任何"谁在说"的标记**——
+ * 前端只能把一整段塞进一个气泡。这里补的只是**标记协议**，不改生成管线（仍是一次流式调用）。
+ *
+ * 两个位置约束（都是实测/既有实现决定的，别随手挪）：
+ *   1. **必须排在 `roleplayTaskInstr` 之后**——任务指令里写着「不要输出任何说明或标记」，
+ *      本块要压过它（composeRoleplaySystem 的顺序＝权重，越靠后越压得住），否则模型不敢写标记；
+ *      同时**必须排在回合纪律之前**（纪律块里关于收尾的条款仍要占最后一段）。
+ *   2. 标记只用全角【】——与「一拍计划」的【本拍】同形但不同名（beatPlan.ts 只认【本拍】/ [BEAT]，
+ *      对本块的名字一律放行，两者不冲突）；也不碰（）——那是心声标记（见 roleplayText.ts）。
+ *
+ * 名字**逐字照抄**是硬要求：标记名要能跟前端的角色名单精确匹配，翻译/加称谓/加标点都会导致
+ * 该段落回「旁白」渲染（宁可回退、不可乱认）。
+ *
+ * 消融开关 `RP_MULTICAST=0`：只对本块生效（有 cast 的剧本退回"一段到底"的老行为）。
+ */
+export function buildMulticastBlock(lang: RPLang, names: readonly string[], userName: string): string {
+  const list = names.filter((n) => String(n || '').trim()).join(lang === 'en' ? ', ' : '、');
+  const n0 = names[0] || (lang === 'en' ? 'Character A' : '角色甲');
+  const n1 = names[1] || (lang === 'en' ? 'Character B' : '角色乙');
+  const u = userName || (lang === 'en' ? 'the player' : '玩家');
+  if (lang === 'en') {
+    const en = '\n\n[MULTI-CHARACTER SCENE — OUTPUT FORMAT · overrides any earlier "no marks" rule]'
+      + 'You are playing several characters at once in this scene. Only these may speak: ' + list + '.'
+      + '\n1. EVERY paragraph that belongs to a character (their action, expression or line) MUST start with the tag 【name】 — copy the name exactly as written above: no translation, no titles, no punctuation inside the brackets.'
+      + '\n2. One paragraph belongs to exactly one character: write their action first, then their line, all under that one tag.'
+      + '\n3. Scene or environment description that belongs to nobody must have NO tag (it renders as neutral narration). Always start a new paragraph between speakers.'
+      + '\n4. At most 3 characters may speak in one reply. Never invent a name outside the list, and never split one speech between two tags.'
+      + '\n5. You never write ' + u + '\u2019s actions, lines or thoughts.'
+      + '\nExample (follow this shape exactly):\n【' + n0 + '】He glances at the door, fingers curling in his sleeve. "Who is outside?"\n【' + n1 + '】"Reporting to the young master — the matron has come to pay her respects."';
+    return en;
+  }
+  const zh = '\n\n【多角色同场 · 输出格式（压过上文任何「不要标记」的说法）】'
+    + '本场景由你一人分饰多角，可以开口的只有这几位：' + list + '。'
+    + '\n1. **每一段**只要属于某个角色（他的动作、神态或台词），就必须以「【角色名】」开头，名字要逐字照抄上面写的，不要翻译、不要加称谓、不要在里面加标点。'
+    + '\n2. 一个段落只属于一个角色：先写他的动作神态，紧接着写他说的话，都在同一个标记之下。'
+    + '\n3. 不属于任何角色的场景、环境交代**不要加标记**（它会显示成中性的旁白）；不同角色之间必须换段。'
+    + '\n4. 一轮最多让 3 位角色开口，不要凭空造名单之外的名字，也不要把同一段话拆给两个人。'
+    + '\n5. 你绝不代写「' + u + '」的动作、台词与心理。'
+    + '\n示例（严格照这个形状写）：\n【' + n0 + '】他抬眼看向门口，指尖在袖中收拢。"谁在外面？"\n【' + n1 + '】"回世子，是嬷嬷来请安。"';
+  return lang === 'zh-TW' ? toZhTw(zh) : lang === 'zh' ? toZhSimple(zh) : zh;
+}
+
+/**
  * 组装剧情 system prompt —— **唯一入口**，两处（官方剧本 / 自建剧本）都走它。
  *
  * 为什么要抽出来：顺序本身就是提示词权重。而「成人块 → 任务指令 → 字体指令 → 回合纪律 → 剧情偏好」
@@ -3297,6 +4046,12 @@ export function composeRoleplaySystem(opts: {
   innerMonologueEnabled?: boolean;
   /** 字体指令（自建剧本需要显式指定输出语言；官方剧本为 undefined） */
   langHint?: string;
+  /**
+   * 多角色同场格式块（由调用方按剧本 cast 预生成，见 buildMulticastBlock）。
+   * 位置：**任务指令之后、回合纪律之前**——任务指令写着「不要输出任何标记」，本块要压过它；
+   * 同时不能挤到纪律块后面（收尾纪律始终占最末一段之一）。缺省/空串不注入。
+   */
+  multicastBlock?: string;
   /** 用户在本剧本的「我的偏好」自由文本：钉在 system 最末尾 = 全篇最高权重；缺省/空串不注入 */
   userPreference?: string;
   /** 方案 B：本轮「禁止复现」清单（含前缀换行），拼在**最后**（偏好块之后）；缺省/空串不注入 */
@@ -3304,7 +4059,7 @@ export function composeRoleplaySystem(opts: {
   /** 本轮要逐字保护的专名（角色名/昵称）：转换时绕开词表，见 `protectedNames` */
   protectTerms?: readonly string[];
 }): string {
-  const { sys, lang, style, taskInstr, adult, userId, innerMonologueEnabled, langHint, userPreference, avoidBlock } = opts;
+  const { sys, lang, style, taskInstr, adult, userId, innerMonologueEnabled, langHint, multicastBlock, userPreference, avoidBlock } = opts;
   // 含前缀换行的偏好块（没写偏好＝空串）；先算出来，纪律块要知道自己在不在最末
   const prefBlock = buildUserPrefBlock(userPreference, lang, opts.protectTerms);
   return sys
@@ -3313,6 +4068,8 @@ export function composeRoleplaySystem(opts: {
     + (adult ? '\n\n' + buildUnlimitedModeBlock(lang, style) : '')
     + '\n\n' + taskInstr
     + (langHint || '')
+    // 多角色标记协议：必须晚于任务指令（压过它的「不要标记」），早于回合纪律（收尾条款仍占末段）
+    + (multicastBlock || '')
     + '\n\n' + buildTurnDisciplineBlock(lang, style, !!prefBlock, adult)
     + prefBlock
     // 禁止复现清单永远最末：它是**本轮**才生成的机械约束，权重必须压过一切通用规则
@@ -3704,7 +4461,7 @@ export function adultDirectTerms(lang: RPLang): string[] {
     .replace(/\[[^\]]*\]/g, ' ')
     .replace(/[（(][^）)]*[）)]/g, ' ');   // 去掉「（禁止回避词：…）」这类说明
   return Array.from(new Set(
-    cleaned.split(/[\/、,，;；|\n]+/)
+    cleaned.split(/[/、,，;；|\n]+/)
       .map((s) => s.replace(/^[\s*·・\-–—]+|[\s*·・\-–—]+$/g, '').trim())
       .filter((s) => (lang === 'en' ? s.length >= 3 && /^[a-z][a-z '’-]*$/i.test(s) : s.length >= 2)),
   ));
@@ -4042,12 +4799,13 @@ export interface RoleplayMessage {
   content: string;
 }
 
-/** 生成角色扮演回复 */
-const EMPTY_ROLEPLAY_REPLY_FALLBACK: Record<string, string> = {
-  en: 'He looks at you, his voice lowering a little. “I’m listening. Go on.”',
-  zh: '他看向你，语气放轻了些。「我在听，你继续。」',
-  'zh-TW': '他看向你，語氣放輕了些。「我在聽，你繼續。」',
-};
+/**
+ * 这里曾经有一个 EMPTY_ROLEPLAY_REPLY_FALLBACK 三语兜底句表（2026-09-28 审查 P1-1 已删除）。
+ * 它会把「他看向你，语气放轻了些。「我在听，你继续。」」当成角色的回复返回——被显示、被落盘、
+ * 并被回灌给模型，正是 2026-09-15 事故的同一形态（红线⑥）。失败只能是失败态 + 重试，
+ * 所以空回复现在抛错（见 roleplayReplyWithEmptyRetry），历史里已落盘的旧兜底句由
+ * src/lib/fallbackBubbles.ts 的登记表在读/写两侧剔除。
+ */
 
 /**
  * 剥掉「一拍计划」行（B 方案，2026-09-24）。
@@ -4063,14 +4821,20 @@ function stripBeatPlanLine(reply: string): string {
   return r.body;
 }
 
-/** 空回复兜底：模型没吐字时重试一次，仍为空则回退到兜底句（同一次请求内重试，不额外消耗聊天额度） */
-export async function roleplayReplyWithEmptyRetry(generate: () => Promise<string>, lang: RPLang): Promise<string> {
+/**
+ * 空回复：模型没吐字时重试一次；仍为空则**抛错（失败态）**，绝不返回任何「角色台词」。
+ *
+ * 为什么不再有兜底句（红线⑥，2026-09-28 审查 P1-1）：兜底句会被当成角色说过的话显示、
+ * 落盘（roleplaySessions.save）并回灌给模型。失败只能是失败态 + 重试：这里抛错，由路由 catch
+ * 回滚额度并返回「生成失败，请稍后重试」，前端给出重试入口。
+ */
+export async function roleplayReplyWithEmptyRetry(generate: () => Promise<string>): Promise<string> {
   const first = await generate();
   if (first) return first;
   const second = await generate();
   if (second) return second;
-  console.warn('⚠️ [Roleplay] 模型连续两次返回空回复，本轮改用兜底句');
-  return EMPTY_ROLEPLAY_REPLY_FALLBACK[lang] || EMPTY_ROLEPLAY_REPLY_FALLBACK.zh;
+  console.warn('⚠️ [Roleplay] 模型连续两次返回空回复 → 本轮判为失败（不编台词，红线⑥）');
+  throw new Error('roleplay_empty_reply');
 }
 
 /** 一轮剧情回复的最终结果（含"写完没有"的判定，供路由下发给前端与埋点） */
@@ -4279,7 +5043,7 @@ export async function roleplayReplyWithContinuation(
 export async function roleplayReply(
   scenario: RoleplayScenario,
   history: RoleplayMessage[],
-  options?: { userId?: string; lang?: RPLang; aiName?: string; userName?: string; userPreference?: string; narrativeStyle?: RoleplayNarrativeStyle; onToken?: (delta: string) => void; signal?: AbortSignal; innerMonologueEnabled?: boolean; thinkingLevel?: ThinkingLevel; unlimited?: boolean; onQueue?: (info: { ahead: number; waiting: number; running: number; maxConcurrent: number }) => void; onMeta?: (m: { unlimited: boolean; model: string }) => void;
+  options?: { userId?: string; lang?: RPLang; aiName?: string; userName?: string; userPreference?: string; narrativeStyle?: RoleplayNarrativeStyle; onToken?: (delta: string) => void; signal?: AbortSignal; innerMonologueEnabled?: boolean; thinkingLevel?: ThinkingLevel; unlimited?: boolean; /** 'solo'（缺省，只有主角）| 'multi'（cast 同场）—— 决定是否注入群像 prompt 块 */ mode?: RoleplayMode | string; onQueue?: (info: { ahead: number; waiting: number; running: number; maxConcurrent: number }) => void; onMeta?: (m: { unlimited: boolean; model: string }) => void;
     /**
      * B 方案：把上游这一轮的 `finish_reason` 透出去（`length` = 撞上 max_tokens 被截断）。
      * 为什么必须透：在这之前整条链路只有"文本"，`length` 与模型自己收尾（`stop`）长得一模一样，
@@ -4317,8 +5081,25 @@ export async function roleplayReply(
   // 名字是标识符：客户端给的那份就是界面显示的那份，原样用（见 displayName 的文件说明）
   const aiName = displayName(options?.aiName, L.ai.name, lang);
   const userName = displayName(options?.userName, L.user.name, lang);
-  // 专名（角色名/昵称）在整条链路上逐字保护：转换绕开词表，见 protectedNames
-  const protect = protectedNames(aiName, userName);
+  /**
+   * 多角色同场（2026-10-01）：只有 cast.length >= 2 的剧本才启用。
+   *   · 主角色（lead）的标记名跟随用户自定义名（与前端开场白替换、前端解析器三处同口径）；
+   *   · 其余成员用侧表里按语言本地化好的名字。
+   * 关掉的方式：`RP_MULTICAST=0`（消融/止血），或从 SCENARIO_CAST 里移除该剧本。
+   */
+  const castAll = scenarioCast(scenario.id, lang);
+  /**
+   * 群像只在**用户选了多角色线**时生效（2026-10-01 双模式）。
+   * ⚠️ 以前是「只要这剧本有 cast 就注入」—— 双模式之后那不成立：用户演单角色线时，
+   * 配角绝不能出现（否则 solo 线会莫名其妙多出人来，还会污染它自己的历史）。
+   */
+  const wantMulti = parseRoleplayMode(options?.mode) === 'multi';
+  const cast = wantMulti && castAll.length >= 2 && process.env.RP_MULTICAST !== '0'
+    ? castAll.map((m) => (m.lead ? { ...m, name: aiName } : m))
+    : [];
+  const castNames = cast.map((m) => m.name);
+  // 专名（角色名/昵称 + 全部 cast 名）在整条链路上逐字保护：转换绕开词表，见 protectedNames
+  const protect = protectedNames(aiName, userName, ...castNames);
   // 第 5 位（userPreference）刻意留空：偏好块已改由 composeRoleplaySystem 钉在 system 最末尾（最高权重）
   const sys = buildSystemPrompt(scenario, lang, aiName, userName, undefined, style, viaCompat);
 
@@ -4334,9 +5115,17 @@ export async function roleplayReply(
   /**
    * 反重复清单仍按**完整**半截正文抽（锚点只影响喂给模型的上下文，不该削弱负例证据来源）。
    */
-  const avoidHistory: RoleplayMessage[] = continuation
+  const avoidHistoryRaw: RoleplayMessage[] = continuation
     ? [...history, { role: 'assistant', content: continuation.partial }]
     : effHistory;
+  /**
+   * 多角色（2026-10-01）：禁止复现清单要在**剃掉说话人标记**的文本上抽——标记每轮都出现
+   *（`【裴修远】`），留着会把"角色名标记"当成复读片段去点名禁止，正好压掉本功能要求的输出格式。
+   * 只对有 cast 的剧本剃；单角色剧本 castNames 为空 → 逐字原样（行为不变）。
+   */
+  const avoidHistory: RoleplayMessage[] = castNames.length
+    ? avoidHistoryRaw.map((m) => ({ ...m, content: stripCastTags(m.content, castNames) }))
+    : avoidHistoryRaw;
 
   const historyText = effHistory.map(m =>
     m.role === 'assistant'
@@ -4358,6 +5147,8 @@ export async function roleplayReply(
   const system = composeRoleplaySystem({
     sys, lang, style, adult: viaCompat, userId: options?.userId,
     innerMonologueEnabled: options?.innerMonologueEnabled,
+    // 多角色剧本才注入标记协议（cast.length < 2 → 空串，system 逐字与改造前一致）
+    multicastBlock: cast.length >= 2 ? buildMulticastBlock(lang, castNames, userName) : '',
     taskInstr,
     userPreference: options?.userPreference,
     protectTerms: protect,
@@ -4407,7 +5198,7 @@ export async function roleplayReply(
   };
   // 空回复重试（外层）→ 成人档「台词直称」定向重试（最外层，只在实际走无限制模型时生效）
   const out = await roleplayReplyWithSpokenRetry(
-    (nudge) => roleplayReplyWithEmptyRetry(() => generateOnce(nudge), lang),
+    (nudge) => roleplayReplyWithEmptyRetry(() => generateOnce(nudge)),
     { lang, adult: viaCompat },
   );
   return out.text;
@@ -4471,7 +5262,6 @@ export async function roleplayReplyCustom(
   const name = displayName(options?.aiName, s.aiName || (lang === 'en' ? 'the character' : '角色'), lang);
   const userName = displayName(options?.userName, lang === 'en' ? 'You' : tw ? '用戶' : '用户', lang);
   const protect = protectedNames(name, userName);
-  const p = (v: string) => normalizeRplangText(v, lang, protect);
   const rulesText = pickRulesText(style, lang, userName, viaCompat);
 
   const sys = buildCustomScenarioSystem(s, lang, rulesText, protect);
@@ -4553,7 +5343,7 @@ export async function roleplayReplyCustom(
   };
   // 自建剧本与官方剧本同一套闸门（空回复重试 → 成人档「台词直称」定向重试）
   const out = await roleplayReplyWithSpokenRetry(
-    (nudge) => roleplayReplyWithEmptyRetry(() => generateOnce(nudge), lang),
+    (nudge) => roleplayReplyWithEmptyRetry(() => generateOnce(nudge)),
     { lang, adult: viaCompat },
   );
   return out.text;
@@ -5018,7 +5808,6 @@ export async function roleplayReviseCustom(
 ): Promise<Partial<CustomDraftFields>> {
   const lang = options?.lang === 'en' ? 'en' : options?.lang === 'zh-TW' ? 'zh-TW' : 'zh';
   const p = (v: string) => normalizeRplangText(v, lang);
-  const tw = lang === 'zh-TW';
   const isEn = lang === 'en';
   // 无限制模式：用户偏好决定是否用去限制模型；viaCompat 表示本回合确实走了它（决定是否注入放开尺度的提示词块）
   // 辅助调用：默认走 DeepSeek 官方；用户在剧本生成处选了无限制模型时才走主分支

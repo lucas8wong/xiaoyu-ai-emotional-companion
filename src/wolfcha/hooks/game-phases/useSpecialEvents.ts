@@ -84,7 +84,7 @@ export function useSpecialEvents(
 
     // 先持久化会话终态，再继续清理本地流程。
     const winnerType = winner === "village" ? "villager" : "wolf";
-    await gameSessionTracker.end(winnerType, true).catch((err) => {
+    await gameSessionTracker.end(winnerType, true).catch((err: unknown) => {
       console.error("[game-session] Failed to end:", err);
     });
 

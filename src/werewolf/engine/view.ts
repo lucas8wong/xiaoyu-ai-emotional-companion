@@ -104,7 +104,15 @@ export function viewFor(
 ): WerewolfView {
   const me = playerAt(state, seat);
   if (!me) throw new Error(`seat ${seat} not found`);
-  const spectatorReveal = opts.spectatorReveal !== false;
+  /**
+   * 默认值按「场上有几个真人」决定（2026-09-29 审查 A7-P3-5）。
+   * 单人局（只有 1 个真人）→ 出局后允许旁观全见：体验更好，也不存在串通。
+   * **一旦出现第 2 个真人 → 必须关闭**，否则等于把底牌直接告诉还活着的那个真人。
+   * 此前这里恒为 true（`!== false`），而线上调用方（api/services/werewolf.ts）都不传 opts
+   * → 多人局一直在泄漏底牌，与函数上方自己的注释互相矛盾。
+   */
+  const humanCount = state.players.filter((p) => p.kind === 'human').length;
+  const spectatorReveal = opts.spectatorReveal !== undefined ? opts.spectatorReveal : humanCount <= 1;
   const ended = state.status === 'ended';
   /** 出局旁观（单人局）或局终复盘时，亮出全部底牌 */
   const revealAll = ended || (spectatorReveal && !me.alive);

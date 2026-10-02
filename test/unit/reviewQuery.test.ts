@@ -13,7 +13,6 @@ import { queryArchive, localDayOf, dayStartMs, dayEndMs, normalizeQuery } from '
 import type { ReviewReadState } from '../../api/services/reviewReads';
 
 const USER = 'u_abc12345';
-const OTHER = 'u_other111';
 let seq = 0;
 const ids = () => `rv_${++seq}`;
 

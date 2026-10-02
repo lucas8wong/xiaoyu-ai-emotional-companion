@@ -1,7 +1,7 @@
 /**
  * 新用户界面导览（UI Tour）
  * 告诉新用户「这些功能在哪里」：了解小愈 / 我的(会员·邀请) / 心情打卡 / 我的记录 / 个性化偏好 / 界面外观(皮肤) / 反馈
- * 游客首次访问、以及新注册用户（WelcomeGuide 之后）各展示一次（localStorage 标记）
+ * 游客首次访问、以及新注册用户各展示一次（localStorage 标记；注册后直接进主页，不再有前置引导）
  */
 
 import { Info, User as UserIcon, CalendarDays, Settings2, MessageSquareHeart, Check, Sparkles, X, History, Palette, ChevronRight, Compass } from 'lucide-react';

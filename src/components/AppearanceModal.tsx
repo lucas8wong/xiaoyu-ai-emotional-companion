@@ -2,7 +2,7 @@
  * 界面外观（独立弹窗）
  * 从「个性化偏好」里拆出来：只展示皮肤切换 + 白板卡片透明度调节，不混入 AI 对话偏好。
  */
-import { X, Palette } from 'lucide-react';
+import { Palette } from 'lucide-react';
 import SkinSwitcher from './SkinSwitcher';
 import { useSkin } from './SkinProvider';
 import { t } from '../i18n';

@@ -171,6 +171,11 @@ class ReengageStore {
 
   get(userId: string): ReengageRecord | undefined { return this.map.get(userId); }
 
+  /** 注销清理（2026-09-28 审查 P1-8）：删除该用户的召回记录（含 lastContextRef = 会话/剧本标题） */
+  removeByUser(userId: string): void {
+    if (this.map.delete(userId)) this.save();
+  }
+
   private ensure(userId: string): ReengageRecord {
     const cur = this.map.get(userId) || { userId, channel: 'email', lastSentAt: null, sentCount: 0, lastFeature: null, optedOut: false };
     this.map.set(userId, cur);
@@ -901,7 +906,7 @@ export function buildHookPrompt(feature: EngagementFeature, cand: Candidate, lan
   );
 }
 
-async function generateHook(cand: Candidate, lang: Lang): Promise<{ subject: string; body: string; sender?: string }> {
+async function generateHook(cand: Candidate, lang: Lang): Promise<{ subject: string; body: string; sender?: string; fallback?: boolean }> {
   try {
     const client = createDeepSeekClient();
     const res = await client.models.generateContent({
@@ -919,7 +924,8 @@ async function generateHook(cand: Candidate, lang: Lang): Promise<{ subject: str
   } catch (e) {
     console.warn('[Reengage] 生成主动消息文案失败，回落兜底:', (e as Error)?.message);
   }
-  return fallbackHook(cand.feature, lang);
+  // 兜底句是**系统文案**，不是角色生成的话：标记出来，投递侧据此禁止把它写进 chatMessages（红线⑥，2026-09-28 审查 P1-2）。
+  return { ...fallbackHook(cand.feature, lang), fallback: true };
 }
 
 // ---------------------------------------------------------------------------
@@ -977,7 +983,7 @@ export function appendInAppMessage(cand: Candidate, body: string): boolean {
   }
 }
 
-async function deliverOutreach(cand: Candidate, hook: { subject: string; body: string; sender?: string }): Promise<boolean> {
+async function deliverOutreach(cand: Candidate, hook: { subject: string; body: string; sender?: string; fallback?: boolean }): Promise<boolean> {
   /**
    * 先落 App 内消息（聊一聊角色）：这一步同时是"未读角标"的唯一来源。
    * 它在推送/邮件之前，因为三种结果都要它：inapp 通道靠它投递；push 通道即使推送失败，
@@ -987,8 +993,12 @@ async function deliverOutreach(cand: Candidate, hook: { subject: string; body: s
    * 流失召回（reengage）走的是邮件/推送那条老路：那条路的对象**可能从没开过主动开关**，
    * 把"好久不见"写成角色发来的消息塞进他的聊天窗口，等于绕过用户的显式同意
    * （红线：不制造依赖、主动联系以用户开关为前提）。这一点是 2026-09-20 复核时补的闸门。
+   *
+   * 2026-09-28 审查 P1-2 补第二道闸门：`generateHook` 失败时会回落兜底句（fallbackHook），
+   * 那是**系统文案**。它一旦被 appendInAppMessage 写进 chatMessages，就会以「角色说过的话」
+   * 显示、落盘、并回灌给模型（红线⑥）。所以只有 `hook.fallback !== true`（模型真生成了）才允许写入。
    */
-  const inApp = cand.feature === 'chat' && cand.intent !== 'reengage'
+  const inApp = cand.feature === 'chat' && cand.intent !== 'reengage' && hook.fallback !== true
     ? appendInAppMessage(cand, hook.body)
     : false;
   if (cand.channel === 'inapp') return inApp;

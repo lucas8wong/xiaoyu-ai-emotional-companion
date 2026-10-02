@@ -6,10 +6,11 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { X, Download, Copy, Check, CalendarDays, ListChecks, Image as ImageIcon, Share2 } from 'lucide-react';
+import { Download, Copy, Check, CalendarDays, ListChecks, Image as ImageIcon, Share2 } from 'lucide-react';
 import * as QRCode from 'qrcode';
 import { toPng } from 'html-to-image';
 import { t, getLang } from '../i18n';
+import { SUPPORT_IG_URL } from '../lib/support';
 import { useSkin } from './SkinProvider';
 import RoleplayRichText from './RoleplayRichText';
 import Modal from './ui/Modal';
@@ -50,7 +51,8 @@ function shareStamp(): string {
 }
 
 const SITE_SHARE_URL = 'https://myxiaoyu.com/';
-const IG_PROFILE_URL = 'https://www.instagram.com/your_xiaoyu';
+// IG 主页统一走 lib/support.ts 的常量（与客服入口同一份，避免两处漂移）
+const IG_PROFILE_URL = SUPPORT_IG_URL;
 // 分享卡固定宽度 = 聊天页内容宽度（视口-24px≈366px + 卡片内边距24px = 390px），保证气泡换行与聊天完全一致
 const SHARE_CARD_WIDTH = 390;
 

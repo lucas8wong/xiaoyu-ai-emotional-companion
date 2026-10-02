@@ -11,7 +11,9 @@ import { ensureAsrReady } from './services/asr.js';
 import { maybeGrantProTrialOnStartup } from './services/proTrial.js';
 import { runReengagementCycle, isReengageEnabled } from './services/reengage.js';
 import { runSelfHealCycle, selfHealMode, deleteAllowed } from './services/selfHeal.js';
+import { buildReviewArchive, isReviewBuildRunning } from './services/reviewBuilder.js';
 import { quotaStore } from './services/quota.js';
+import { assertStorageReady } from './storage/persistence.js';
 
 /**
  * 可选：启动 faster-whisper 侧车（本地 CPU 亚秒级 ASR）。
@@ -106,9 +108,57 @@ function startSelfHealScheduler(): void {
   console.log(`🩺 [SelfHeal] 已开启（模式 ${mode}，每 ${intervalMin} 分钟一次；内容删除类${deleteAllowed() ? '已允许' : '默认只报告'}）。`);
 }
 
+
+/**
+ * 🔍 审阅档案定时增量并档（2026-09-29 新增）。
+ *
+ * 为什么要有它（真实病根）：2026-09-25 把「审阅队列」从静态快照改成**增量档案**，解决了
+ * 「重建会把旧记录挤掉」；但**没人重建**的话新记录照样进不来 —— 档案停在 09-25 那一次，
+ * 到 09-29 页面上最新记录还在 09-24，用户看到的就是「审阅 tab 只有 9/23 的」。
+ * 后台按钮虽然是入口，但不能指望人记得每天点；所以加一个常驻定时器，
+ * 与后台按钮**共用** `services/reviewBuilder.ts` 的同一份编排（含 fail-closed 去标识化断言）。
+ *
+ * 开关/间隔（都在 .env，全部可选）：
+ *   REVIEW_ARCHIVE_AUTO=0          关掉自动更新（仍可后台手动「更新档案」）
+ *   REVIEW_ARCHIVE_INTERVAL_MIN    间隔分钟，默认 360（6 小时；下限 15 分钟）
+ * 边界：只在内存里构建 + 写 `data/review-queue.jsonl`（审阅副本），不碰任何用户数据；
+ * 与后台按钮并发时后到的一律跳过（buildReviewArchive 内部有互斥，这里再判一次是省一次扫描）。
+ */
+function startReviewArchiveScheduler(): void {
+  if (process.env.REVIEW_ARCHIVE_AUTO === '0') {
+    console.log('🔍 [ReviewArchive] 自动更新已关闭（REVIEW_ARCHIVE_AUTO=0）；后台仍可手动「🔄 更新档案」。');
+    return;
+  }
+  const intervalMin = Number(process.env.REVIEW_ARCHIVE_INTERVAL_MIN || 360);
+  const intervalMs = Math.max(15, intervalMin) * 60 * 1000;
+  const run = () => {
+    if (isReviewBuildRunning()) return; // 后台按钮正在跑，跳过本轮
+    try {
+      const s = buildReviewArchive({ limit: 500, source: 'scheduler' });
+      void s; // buildReviewArchive 内部已打印一行摘要与写审计
+    } catch (e) {
+      console.warn('🔍 [ReviewArchive] 自动更新失败:', (e as Error)?.message);
+    }
+  };
+  // 启动后稍等再跑第一次（别和启动期的其它初始化抢时间），之后每 intervalMs 一次
+  setTimeout(() => {
+    run();
+    setInterval(run, intervalMs);
+  }, 45_000);
+  console.log(`🔍 [ReviewArchive] 自动增量并档已开启，每 ${intervalMin} 分钟一次（REVIEW_ARCHIVE_AUTO=0 可关）。`);
+}
+
 /**
  * start server with port
  */
+// 存储自检（2026-09-28 审查 P1-7）：目录/写入不可用就**拒绝启动**，绝不带着「静默丢数据」对外服务。
+const storageCheck = assertStorageReady();
+if (!storageCheck.ok) {
+  console.error('❌ [Storage] 存储自检失败，拒绝启动（避免静默丢数据）:', storageCheck.dir, storageCheck.detail);
+  process.exit(1);
+}
+console.log('✅ [Storage] 存储自检通过:', storageCheck.dir, '(' + storageCheck.detail + ')');
+
 const PORT = process.env.PORT || 3001;
 
 const server = app.listen(PORT, () => {
@@ -121,6 +171,8 @@ const server = app.listen(PORT, () => {
   startReengageScheduler();
   // 🩺 自愈巡检（默认开启；SELF_HEAL=off 关闭、=dry 只观察）
   startSelfHealScheduler();
+  // 🔍 审阅档案增量并档（默认开启，每 6h；REVIEW_ARCHIVE_AUTO=0 关闭）
+  startReviewArchiveScheduler();
   // 预热本地 embedding 模型（后台加载，不阻塞启动；用于「全量记忆召回」）
   ensureEmbeddingReady().then((ok) => {
     console.log(`🧠 [Embedding] semantic-recall model ${ok ? 'ready' : 'unavailable (fallback to recent-window)'}`);

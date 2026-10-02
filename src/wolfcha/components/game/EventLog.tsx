@@ -42,7 +42,8 @@ const iconClassNames: Record<PublicEventTone, string> = {
   success: "text-[var(--color-gold)]",
 };
 
-const eventIcons: Record<PublicEventIcon, ComponentType<{ size?: number; className?: string }>> = {
+// size 放宽到 string | number：phosphor 的 IconProps.size 是 string | number，收窄成 number 会让图标组件不可赋值（2026-09-28 C2）。
+const eventIcons: Record<PublicEventIcon, ComponentType<{ size?: number | string; className?: string }>> = {
   night: MoonStars,
   death: Skull,
   shot: Crosshair,

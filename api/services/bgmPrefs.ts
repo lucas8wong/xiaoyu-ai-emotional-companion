@@ -46,6 +46,14 @@ export class BgmPrefStore {
     this.saveToDisk();
     return this.getByUser(userId);
   }
+
+  /** 注销清理（2026-09-28 审查 P1-8）：删除该用户的全部配乐偏好 */
+  removeByUser(userId: string): void {
+    if (Object.prototype.hasOwnProperty.call(this.data, userId)) {
+      delete this.data[userId];
+      this.saveToDisk();
+    }
+  }
 }
 
 export const bgmPrefStore = new BgmPrefStore();

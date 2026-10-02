@@ -21,12 +21,14 @@ import fs from 'node:fs';
 import Database from 'better-sqlite3';
 import { sqliteDbPath } from '../storage/sqliteProvider.js';
 import { runNewcomerProTrial } from '../services/proTrialNewcomer.js';
+import { runHolidayGift } from '../services/holidayGift.js';
 import { runRegisterBonusBackfill, runRegisterBonusEmailRetry } from '../services/registerBonusBackfill.js';
 import { getClientIp } from '../services/geo.js';
 import { selfExcludeStore } from '../services/selfExclude.js';
 import { werewolfAdminStats } from '../services/werewolf.js';
 import { isTestAccount, isDeveloperAccount } from '../services/accountFilters.js';
 import { buildReferralReport } from '../services/adminReferrals.js';
+import { referralEventStore } from '../services/referralEvents.js';
 import { SYSTEM_USER_ID } from '../services/usage.js';
 // 控制台「会员到期」口径（会员有效期 / 7 天 Pro 体验 / 已过期 / 永久 / 从未开通）：
 // 列表与 CSV 导出共用 services/memberExpiry.ts 一份口径（可被单测直接覆盖）
@@ -379,6 +381,32 @@ router.get('/referrals', async (req: Request, res: Response): Promise<void> => {
 });
 
 /**
+ * 邀请**归因**口径（与「📣 邀请推广」榜同源，2026-09-29 加）。
+ *
+ * 为什么列表页需要它：`quota.inviteCount` 只统计**已结算**的邀请——按 2026-09-19 的 B 方案，
+ * 被邀人**真的开口用过**才算数（防薅羊毛）。所以只看 `inviteCount` 会把「有人经他链接注册了、
+ * 还在等首次使用」的邀请人显示成「没邀请到人」，这是**假阴性**，运营据此联系人就错了。
+ * 返回：
+ *  - `attributed`：台账里归到他名下的注册人数（`signup` + `signup_pending`）；
+ *  - `rejected`：人来了但被反套利拦下（同设备/IP、邀请人太新、超上限…）的记录数，供详情解释。
+ * 调用方用 `max(inviteCount, attributed)` 得当期归因总数——台账（2026-09-19）之前的历史只存在于
+ * `inviteCount` 里，取下限会把老邀请人算少。
+ */
+function inviteAttributionMap(): { attributed: Map<string, number>; rejected: Map<string, number> } {
+  const attributed = new Map<string, number>();
+  const rejected = new Map<string, number>();
+  for (const e of referralEventStore.listAll()) {
+    if (!e?.inviterId) continue;
+    if (e.kind === 'signup' || e.kind === 'signup_pending') {
+      attributed.set(e.inviterId, (attributed.get(e.inviterId) || 0) + 1);
+    } else if (e.kind === 'signup_rejected') {
+      rejected.set(e.inviterId, (rejected.get(e.inviterId) || 0) + 1);
+    }
+  }
+  return { attributed, rejected };
+}
+
+/**
  * 运营端：用户详情审计（配额 + 历史记录 + 订单）
  * GET /api/payment/admin/users/:userId?token=xxx
  */
@@ -393,6 +421,7 @@ router.get('/users/:userId', async (req: Request, res: Response): Promise<void> 
   const orders = paymentStore.listAll().filter(o => o.userId === userId).sort((a, b) => b.createdAt - a.createdAt);
   const { memoryStorage } = await import('../storage/memory.js');
   const { usageStore } = await import('../services/usage.js');
+  const { activityStore } = await import('../services/activity.js'); // 📤 邀请复制次数（动作口径）
   const usage = usageStore.get(userId) || null;
   const sessions = memoryStorage.getActiveSessions()
     .filter(s => s.userId === userId)
@@ -412,6 +441,29 @@ router.get('/users/:userId', async (req: Request, res: Response): Promise<void> 
       quota,
       // 归一后的「所有额度池」（可用/已用/总量），供控制台渲染额度明细表
       quotaDetail: quotaStore.describeQuota(userId),
+      /**
+       * 🎟/📣 邀请（2026-09-29 用户要求「也要能看到他们是否复制了邀请链接以及是否邀请到人」）：
+       * 动作口径（复制过几次、最近一次）来自 activityStore；结果口径（拉来几人、拿到多少额度）
+       * 来自 quotaStore；`invitedBy/inviterName` 是「他是被谁拉进来的」，三项一起给，控制台一次渲染完。
+       */
+      invite: (() => {
+        const qrec = quotaStore.getRecord(userId);
+        const act = activityStore.get(userId);
+        const inviterAcc = qrec?.invitedBy ? accountStore.getById(qrec.invitedBy) : null;
+        const { attributed, rejected } = inviteAttributionMap();
+        return {
+          count: qrec?.inviteCount || 0,
+          // 归因人数（含还没结算的），见 inviteAttributionMap 的注释：只看 count 会假阴性
+          attributed: Math.max(qrec?.inviteCount || 0, attributed.get(userId) || 0),
+          rejected: rejected.get(userId) || 0,
+          credits: (qrec?.inviteCount || 0) * INVITE_BONUS_COUNT,
+          copyCount: act?.inviteCopyCount || 0,
+          copiedAt: act?.inviteCopiedAt || null,
+          code: qrec?.inviteCodeUsed || null,
+          invitedBy: qrec?.invitedBy || null,
+          inviterName: inviterAcc ? (inviterAcc.username || (inviterAcc.email || '').split('@')[0]) : null,
+        };
+      })(),
       usage: usage ? {
         requests: usage.requests,
         tokens: usage.promptTokens + usage.completionTokens + usage.cachedTokens,
@@ -1077,6 +1129,8 @@ router.get('/users', async (req: Request, res: Response): Promise<void> => {
 
   /** 🎭 徽章「今日」列（全量口径页也要显示，见 todayRoleplayByUser 注释） */
   const rpTodayMap = await todayRoleplayByUser();
+  /** 📣 邀请归因（一次请求只建一次 Map；口径见 inviteAttributionMap 注释） */
+  const inviterAttr = inviteAttributionMap();
 
   const makeRow = (acc: any) => {
     const q = quotaUsers.get(acc.userId);
@@ -1117,13 +1171,25 @@ router.get('/users', async (req: Request, res: Response): Promise<void> => {
       loginCount: act?.loginCount ?? 0,
       lastLoginText: act?.lastLoginAt ? new Date(act.lastLoginAt).toLocaleString('zh-CN') : null,
       lastActiveText: act?.lastActiveAt ? new Date(act.lastActiveAt).toLocaleString('zh-CN') : null,
+      // 🎟/📣 邀请（2026-09-29 用户要求「也要能看到他们是否复制了邀请链接以及是否邀请到人」）：
+      //  · `inviteCopyCount/inviteCopiedAt` = **动作**（activityStore，复制过几次，不随区间变）
+      //  · `inviteCount` = **结果**（quotaStore，真的拉来几个注册用户）
+      //  两个口径分开返回，控制台既能看到「复制了但没人注册」的人，也能看到「拉来 N 人」的人。
+      inviteCode: q?.inviteCodeUsed || null,
+      invitedBy: q?.invitedBy || null,
+      inviteCount: q?.inviteCount || 0,
+      inviteCredits: (q?.inviteCount || 0) * INVITE_BONUS_COUNT,
+      // 归因人数（含「已注册、还在等首次使用」的），见 inviteAttributionMap：只看 inviteCount 会假阴性
+      inviteAttributed: Math.max(q?.inviteCount || 0, inviterAttr.attributed.get(acc.userId) || 0),
+      inviteRejected: inviterAttr.rejected.get(acc.userId) || 0,
+      inviteCopyCount: act?.inviteCopyCount ?? 0,
+      inviteCopiedAt: act?.inviteCopiedAt ?? null,
     };
   };
 
   const allRows = accounts.map(makeRow);
   const testers = allRows.filter(r => isTestAccount(r));
   const users = allRows.filter(r => !isTestAccount(r));
-
   // 游客合并为一栏（未注册账户的所有设备用户汇总；开发者账号也算已注册，避免其用量被当作游客）
   // 系统行（无 userId 的运营内部调用：运营 AI / 皮肤风格 / Instagram 文案）单独一栏，不计入游客
   const accountIds = new Set(allAccounts.map(a => a.userId));
@@ -1318,6 +1384,8 @@ router.get('/activity', async (req: Request, res: Response): Promise<void> => {
     const { werewolfLedger } = await import('../services/werewolfLedger.js');
     const { resolveRoleplayTitle, resolveWenyouTitle } = await import('../services/scenarioTitle.js');
     const wwByUser = new Map(werewolfLedger.userSummaries().map(s => [s.userId, s]));
+    /** 📣 邀请归因（一次请求只建一次 Map；口径见 inviteAttributionMap 注释） */
+    const inviterAttr = inviteAttributionMap();
     /** 文游进度摘要：进行中剧本（解析成标题）+ 结局数 + 存档数；**不读正文**（控制台不需要，也避免把私密内容带出来） */
     const wenyouBriefOf = (userId: string) => {
       const p = wenyouSavesStore.get(userId);
@@ -1497,6 +1565,11 @@ router.get('/activity', async (req: Request, res: Response): Promise<void> => {
         phone: acc.phone || null,
         plan: q ? quotaStore.getPlan(q) : 'free',
         unlocked: !!q?.unlockUntil && q.unlockUntil > Date.now(),
+        // 🎫 会员状态（2026-09-28）：控制台「统计卡下钻」列表与「用户行为」详情卡要一眼看出
+        //   「这个人是不是会员」——口径与「用户」页/CSV 导出**同源**（expiryFieldsOf）：
+        //   expiryKind = lifetime 永久 / membership 在期 / trial 仅 Pro 体验 / expired 已过期 / none 从未开通。
+        //   注意：`trial` 必须与「Pro 会员」区分开（用户页早就这么分，见 admin.html 的会员徽章注释）。
+        ...expiryFieldsOf(q, now),
         // 💳 额度总览（用户行为页也要看得到每个人的可用/已用；口径与「用户」页同源＝describeQuota）
         quota: q ? quotaStore.describeQuota(acc.userId) : null,
         isTest: isTestAccount(acc),
@@ -1523,6 +1596,13 @@ router.get('/activity', async (req: Request, res: Response): Promise<void> => {
         inviteCount: q?.inviteCount || 0,
         inviteCredits: (q?.inviteCount || 0) * INVITE_BONUS_COUNT,
         inviteBonus: INVITE_BONUS_COUNT,
+        // 📣 归因人数（含「已注册、还在等首次使用」）与「被反套利拦下」的记录数——
+        // 只看 inviteCount（已结算）会把「有人注册但还没开口」的邀请人显示成「没邀请到人」
+        inviteAttributed: Math.max(q?.inviteCount || 0, inviterAttr.attributed.get(acc.userId) || 0),
+        inviteRejected: inviterAttr.rejected.get(acc.userId) || 0,
+        // 📤 是否复制过专属邀请链接（动作口径；与上面的邀请结果口径分开）
+        inviteCopyCount: act?.inviteCopyCount ?? 0,
+        inviteCopiedAt: act?.inviteCopiedAt ?? null,
         likeCount: roleplayLikeStore.getUserLikeCount(acc.userId),
         likedStory: roleplayLikeStore.getUserLikeCount(acc.userId) > 0,
         likedScenarios: likedScenariosOf(acc.userId),
@@ -1593,6 +1673,9 @@ router.get('/activity', async (req: Request, res: Response): Promise<void> => {
         checkinDates: checkinAllDates.get(id) || [],
         installCount: act?.installCount ?? 0,
         installedAt: act?.installedAt ?? null,
+        // 游客设备也能复制邀请链接（注册前先分享）；注册时 activityStore.mergeFrom 会并到账号
+        inviteCopyCount: act?.inviteCopyCount ?? 0,
+        inviteCopiedAt: act?.inviteCopiedAt ?? null,
         lastActiveAt,
         lastFeature: act?.lastFeature ?? null,
         churn: churnOf(lastActiveAt),
@@ -1768,6 +1851,9 @@ router.get('/activity', async (req: Request, res: Response): Promise<void> => {
           roleplayCount: 0,
           installCount: 0,
           likeCount: 0,
+          // 邀请复制是**累计**口径（没有按日事件表），这里取该设备的累计值（无记录为 0/null）
+          inviteCopyCount: activityStore.get(id)?.inviteCopyCount ?? 0,
+          inviteCopiedAt: activityStore.get(id)?.inviteCopiedAt ?? null,
           likedScenarios: [],
           logins: [],
           lastChat: null,
@@ -1832,7 +1918,11 @@ router.post('/users/:userId/unlock', async (req: Request, res: Response): Promis
     res.status(401).json({ success: false, error: '无权限' });
     return;
   }
-  const days = Math.max(1, Number(req.query?.days || 30));
+  // 2026-09-29 审查 A1-P2：Number('abc') = NaN，Math.max(1, NaN) = NaN → unlockUntil 被写成 NaN →
+  // JSON 里落成 null，而 base 取的是用户**原有**到期时间，等于把已付的剩余天数直接抹掉。
+  // 必须显式校验成有限整数并夹到 1..365；非法值退回默认 30（与 create-checkout 的夹取口径一致）。
+  const daysRaw = Number(req.query?.days ?? 30);
+  const days = Number.isFinite(daysRaw) ? Math.min(365, Math.max(1, Math.trunc(daysRaw))) : 30;
   const plan = String(req.query?.plan || 'plus') === 'pro' ? 'pro' : 'plus';
   const userId = String(req.params.userId);
 
@@ -2142,6 +2232,10 @@ router.post('/review-queue/build', async (req: Request, res: Response): Promise<
    * **并进档案**」，不是「页面显示多少」。原来 50 会把有资格的都截掉——实测 09-20 那次
    * 386 条候选里筛出 105 条有资格，只进了 50 条，另外 55 条从视图里消失。
    * 档案的意义就是不再丢记录，所以默认取满（上限 2000）。
+   *
+   * 2026-09-29：这串编排搬到 `services/reviewBuilder.ts`，与「服务端定时器」
+   * （server.ts 的 startReviewArchiveScheduler）共用**同一份口径**；本路由只负责
+   * 鉴权、解析参数、把结果/错误翻译成 HTTP。抽出去的原因见那个文件头部注释。
    */
   const limit = Math.min(Math.max(1, Number(req.query?.limit) || 500), 2000);
   const minUserTurns = Math.max(1, Number(req.query?.['min-turns']) || 2);
@@ -2149,141 +2243,20 @@ router.post('/review-queue/build', async (req: Request, res: Response): Promise<
   const includeTest = includeTestRaw === '1' || includeTestRaw === 'true';
 
   try {
-    const { buildReviewQueue, assertDeidentified } = await import('../services/reviewQueue.js');
-    const { preferenceStore } = await import('../services/preferences.js');
-    const { memoryStorage } = await import('../storage/memory.js');
-    const { roleplaySessionStore } = await import('../services/roleplaySessions.js');
-    const { accountStore } = await import('../services/accounts.js');
-    const { isTestAccount, isDeveloperAccount } = await import('../services/accountFilters.js');
-    const { isTestRequest } = await import('../services/activity.js');
-
-    const chatSessions = memoryStorage.getActiveSessions();
-    const roleplayRecords = roleplaySessionStore.listAll();
-
-    // 取值检查要的「已知身份值」：结构检查发现不了「userId 被拼进了正文」
-    const known = new Set<string>();
-    for (const s of chatSessions) if (typeof s.userId === 'string') known.add(s.userId);
-    for (const r of roleplayRecords) if (typeof r.userId === 'string') known.add(r.userId);
-
-    /**
-     * 「这条是不是真实用户」——测试 / 开发身份默认不入队。
-     * 复用既有判据（`accountFilters` 的服务层口径 + `isTestRequest` 的 deviceId 规则），
-     * 不在这里另写一份正则——`accountFilters.ts` 开篇就写明要避免「两处各写一份、口径漂移」。
-     */
-    const isTestUser = (userId: string): boolean => {
-      if (isTestRequest(undefined, userId)) return true;
-      const acc = accountStore.getById(userId);
-      if (acc && (isTestAccount(acc) || isDeveloperAccount(acc))) return true;
-      return false;
-    };
-
-    const result = buildReviewQueue({
-      chatSessions,
-      roleplayRecords,
-      // 「允许用于改进服务」开关真正生效的地方：关掉的用户不进队列
-      shouldInclude: (userId: string) => preferenceStore.get(userId).dataEnhance !== false,
-      // 测试 / 开发身份整条排除（与上一档分开计数，口径才说得清）
-      isTestUser,
-      includeTest,
-      limit,
-      minUserTurns,
-      /**
-       * 基础设置快照（审阅必需）：陪伴方式 / 深度思考档位 / 地区语气 / 括号心理 …。
-       * 键由 reviewQueue 的白名单过滤，所以这里整份偏好丢进去也不会泄露——
-       * 尤其 roleplayUnlimitedByScenario 那张以剧本 id 为 key 的表会被白名单挡掉。
-       */
-      getUserSettings: (userId: string) => {
-        const p = preferenceStore.get(userId);
-        return {
-          mode: p.mode,
-          tone: p.tone,
-          storyStyle: p.storyStyle,
-          region: p.region,
-          intensity: p.intensity,
-          language: p.language,
-          thinkingLevel: p.thinkingLevel,
-          chatInnerMonologue: p.chatInnerMonologueEnabled !== false,
-          roleplayInnerMonologue: p.roleplayInnerMonologueEnabled !== false,
-          smartFit: p.smartFitEnabled !== false,
-          roleplayUnlimited: p.roleplayUnlimited === true,
-          proactivePush: p.proactivePush === true,
-          proactiveFrequency: p.proactiveFrequency,
-        };
-      },
+    const { buildReviewArchive } = await import('../services/reviewBuilder.js');
+    const summary = buildReviewArchive({
+      limit, minUserTurns, includeTest, source: 'admin', ip: req.ip || '',
     });
-
-    // fail-closed：有泄露就抛，一个字节都不写
-    assertDeidentified(result.items, Array.from(known));
-
-    /**
-     * 并进**增量档案**（不再整体覆盖）。三件事必须按顺序做完：
-     *   ① merge：按「对话身份键」去重——同一段对话续写刷新正文，不新增一条；
-     *   ② 迁移已读标记：v1 键（含尾条）→ v2 键（只锚开头）。不做这步，用户之前标过的
-     *      「已读」会在换口径的当天集体变回未读（进度凭空消失）；
-     *   ③ prune：清掉不在档案里的键（迁移遗留 + 超出档案上限被丢的）——不清的话这份
-     *      文件会随着每次重建单调变大。
-     */
-    const { loadArchive, mergeArchive, writeArchive, archiveRange, ARCHIVE_VERSION, ARCHIVE_NOTE } =
-      await import('../services/reviewArchive.js');
-    const { archiveKeys } = await import('../services/reviewQuery.js');
-    const { reviewReadStore } = await import('../services/reviewReads.js');
-
-    const before = loadArchive();
-    const now = Date.now();
-    const merged = mergeArchive(before.items, result.items, { now });
-
-    let migrated = 0;
-    for (const [oldKey, newKey] of Object.entries(merged.keyMap)) {
-      if (reviewReadStore.rename(oldKey, newKey)) migrated += 1;
-    }
-    const pruned = reviewReadStore.prune(archiveKeys(merged.items));
-
-    const meta = {
-      version: ARCHIVE_VERSION,
-      generatedAt: new Date(now).toISOString(),
-      itemCount: result.items.length,
-      archivedTotal: merged.items.length,
-      added: merged.added,
-      refreshed: merged.refreshed,
-      dropped: merged.dropped,
-      range: archiveRange(merged.items),
-      stats: result.stats,
-      note: ARCHIVE_NOTE,
-    };
-
-    // fail-closed：过一遍**整个档案**（不只是本次新增的那批）——宁可不出文件，也不出带身份的档案
-    assertDeidentified({ meta, items: merged.items }, Array.from(known));
-    writeArchive(merged.items, meta);
-
-    const { auditStore } = await import('../services/audit.js');
-    auditStore.log(
-      'review_build',
-      `生成审阅档案：本次候选 ${result.items.length} 条 → 新增 ${merged.added} / 刷新 ${merged.refreshed}，档案共 ${merged.items.length} 条`
-      + `${merged.dropped ? `（超上限丢弃 ${merged.dropped}）` : ''}`
-      + `${migrated ? ` · 迁移已读标记 ${migrated}` : ''}${pruned ? ` · 清理失效标记 ${pruned}` : ''}`
-      + `（跳过：测试/开发身份 ${result.stats.skippedTest}、dataEnhance 关闭 ${result.stats.skippedByDataEnhance}、轮数不足 ${result.stats.skippedByFilter}${includeTest ? '；⚠️ 本次含测试身份' : ''}）`,
-      req.ip || '',
-    );
-
-    res.json({
-      success: true,
-      data: {
-        itemCount: result.items.length,
-        added: merged.added,
-        refreshed: merged.refreshed,
-        dropped: merged.dropped,
-        archivedTotal: merged.items.length,
-        migratedReads: migrated,
-        prunedReads: pruned,
-        stats: result.stats,
-      },
-    });
+    res.json({ success: true, data: summary });
   } catch (e) {
-    // 去标识化断言失败也走这里。这类错误要让管理员**看见原因**（否则无从修），
+    // 去标识化断言失败 / 并发构建要让管理员**看见原因**（否则无从修）；
     // 其余一律走 safeError 的通用文案，不把内部细节抛给前端。
-    const detail = e instanceof Error && e.message.includes('去标识化断言失败')
-      ? e.message.slice(0, 400)
-      : safeError('generic', e);
+    const msg = e instanceof Error ? e.message : '';
+    if (msg.includes('REVIEW_BUILD_BUSY')) {
+      res.status(409).json({ success: false, error: '审阅档案正在生成中，请稍后再试' });
+      return;
+    }
+    const detail = msg.includes('去标识化断言失败') ? msg.slice(0, 400) : safeError('generic', e);
     res.status(500).json({ success: false, error: detail });
   }
 });
@@ -2418,11 +2391,17 @@ router.post('/feedback-reward', async (req: Request, res: Response): Promise<voi
     res.status(400).json({ success: false, error: '更新失败' });
     return;
   }
+  const note = typeof message === 'string' ? message.trim().slice(0, 500) : '';
   const { quotaStore } = await import('../services/quota.js');
-  quotaStore.addBonus(f.userId, count, 'feedback');
+  // note 一并写进 pendingReward：站内恭喜弹窗据此展示运营者的回复（ack 只清弹窗，信仍在信箱）
+  quotaStore.addBonus(f.userId, count, 'feedback', note || undefined);
+  // 站内信箱留一封信：邮件只到得了「有邮箱的注册用户」，而且看完就沉底；
+  // 无邮箱的游客 + 当时没看邮件的人，只能靠这封信看到运营者的回复（2026-09-30）。
+  const { inboxStore } = await import('../services/inbox.js');
+  inboxStore.add(f.userId, { kind: 'reward', rewardCount: count, reason: 'feedback', body: note });
   // 发邮件通知（注册用户有邮箱，游客跳过）；message 为运营者的回复，随邮件一起发
   const { notifyRewardByEmail } = await import('../services/rewardNotifier.js');
-  notifyRewardByEmail(f.userId, count, 'feedback', typeof message === 'string' ? message.trim().slice(0, 500) : undefined);
+  notifyRewardByEmail(f.userId, count, 'feedback', note || undefined);
   res.json({ success: true, data: { id: f.id, reward: count } });
 });
 
@@ -3331,6 +3310,107 @@ router.post('/newcomer-pro-trial', async (req: Request, res: Response): Promise<
     backupPath,
   });
   res.json({ success: true, data: report });
+});
+
+/**
+ * 运营端：节日礼——给「所有注册用户」赠送 N 天完整 Pro（含活动窗口内新注册的用户）。
+ * POST /api/payment/admin/holiday-gift
+ *   ?apply=1    真实执行（缺省即 dry-run：只统计、不改数据）
+ *   &force=1    忽略 marker 重新处理全部候选（⚠️ 会重复延长时间，仅特殊情况下用）
+ *   &days=N     赠送天数（缺省 .env HOLIDAY_GIFT_DAYS / 1）
+ *   &exclude=   逗号分隔要排除的 userId 或邮箱
+ *   &backup=1   dry-run 也做一致性备份（apply 缺省即备份）
+ * 活动标识/窗口读 .env：HOLIDAY_GIFT_ID / HOLIDAY_GIFT_START / HOLIDAY_GIFT_END。
+ * 返回：{ success, data: HolidayGiftRunReport }
+ */
+router.post('/holiday-gift', (req: Request, res: Response): void => {
+  if (!isAdmin(req)) {
+    res.status(401).json({ success: false, error: '无权限' });
+    return;
+  }
+  const apply = String(req.query?.apply ?? req.body?.apply ?? '') === '1';
+  const force = String(req.query?.force ?? req.body?.force ?? '') === '1';
+  const days = Number(req.query?.days ?? req.body?.days ?? 0);
+  const wantBackup = apply || String(req.query?.backup ?? req.body?.backup ?? '') === '1';
+  const exclude = String(req.query?.exclude ?? req.body?.exclude ?? '')
+    .split(',').map((s) => s.trim()).filter(Boolean);
+
+  let backupPath: string | undefined;
+  if (wantBackup) {
+    try {
+      backupPath = backupDataToTemp('holiday-gift-backup');
+    } catch (e) {
+      res.status(500).json({ success: false, error: '备份失败，已中止（防止未备份即改数据）', detail: (e as Error)?.message });
+      return;
+    }
+  }
+
+  try {
+    const report = runHolidayGift({
+      days: days > 0 ? days : undefined,
+      dryRun: !apply,
+      force,
+      exclude,
+      backupPath,
+    });
+    res.json({ success: true, data: report });
+  } catch (e) {
+    res.status(400).json({ success: false, error: (e as Error)?.message || '执行失败' });
+  }
+});
+
+/**
+ * 运营端：节日礼·站内三语公告（幂等：同一 HOLIDAY_GIFT_ID 只发一次）。
+ * POST /api/payment/admin/holiday-gift/announce?apply=1
+ *   ?apply=1  真实发布（缺省 dry-run：只回传将发布的文案）
+ * 返回：{ success, data: HolidayGiftAnnounceResult }
+ */
+router.post('/holiday-gift/announce', async (req: Request, res: Response): Promise<void> => {
+  if (!isAdmin(req)) {
+    res.status(401).json({ success: false, error: '无权限' });
+    return;
+  }
+  const apply = String(req.query?.apply ?? req.body?.apply ?? '') === '1';
+  try {
+    const { publishHolidayGiftAnnouncement } = await import('../services/holidayGiftMail.js');
+    const result = await publishHolidayGiftAnnouncement({ apply });
+    res.json({ success: true, data: result });
+  } catch (e) {
+    res.status(400).json({ success: false, error: (e as Error)?.message || '发布公告失败' });
+  }
+});
+
+/**
+ * 运营端：节日礼·群发邮件（走独立群发通道 CAMPAIGN_SMTP_*，默认 myxiaoyu2026@gmail.com；
+ * 不占主通道验证码/改密的额度）。给所有注册用户发「你已获得 N 天完整 Pro」。
+ * POST /api/payment/admin/holiday-gift/mail
+ *   ?apply=1    真实发送（缺省 dry-run：只出名单/样例/预估）
+ *   &limit=N    本次发送上限（不得超过 HOLIDAY_GIFT_MAIL_HARD_LIMIT，默认 200）
+ *   &sample=N   dry-run 样例封数（默认 3）
+ *   &crisis=1   允许发给处于情绪危机的用户（默认排除，见服务注释）
+ * 返回：{ success, data: HolidayGiftMailSummary }
+ */
+router.post('/holiday-gift/mail', async (req: Request, res: Response): Promise<void> => {
+  if (!isAdmin(req)) {
+    res.status(401).json({ success: false, error: '无权限' });
+    return;
+  }
+  const apply = String(req.query?.apply ?? req.body?.apply ?? '') === '1';
+  const limit = Number(req.query?.limit ?? req.body?.limit ?? 0);
+  const sampleCount = Number(req.query?.sample ?? req.body?.sample ?? 0);
+  const includeCrisis = String(req.query?.crisis ?? req.body?.crisis ?? '') === '1';
+  try {
+    const { runHolidayGiftMail } = await import('../services/holidayGiftMail.js');
+    const summary = await runHolidayGiftMail({
+      apply,
+      limit: limit > 0 ? limit : undefined,
+      sampleCount: sampleCount > 0 ? sampleCount : undefined,
+      includeCrisis,
+    });
+    res.json({ success: true, data: summary });
+  } catch (e) {
+    res.status(400).json({ success: false, error: (e as Error)?.message || '发送失败' });
+  }
 });
 
 /**

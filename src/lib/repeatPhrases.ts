@@ -76,8 +76,8 @@ export function splitSentences(text: string): string[] {
 /** 去掉片段两端的括号/标点残渣（只动标点与两端空白，词句保持原样） */
 export function trimResidue(s: string): string {
   return String(s || '')
-    .replace(/^[\s。）)」』”"'（(「『【\[]+/, '')
-    .replace(/[\s（(「『【\[」』】\]）)】”"']+$/, '')
+    .replace(/^[\s。）)」』”"'（(「『【[]+/, '')
+    .replace(/[\s（(「『【[」』】\]）)】”"']+$/, '')
     .trim();
 }
 

@@ -155,6 +155,8 @@ export function validateSceneArtRequest(input: { scenarioId?: unknown; theme?: u
 
 // —— 每用户每日上限（进程内；重启即清零。上限本身不是安全边界，只是单卡保护）——
 const usage = new Map<string, { day: string; count: number }>();
+/** 正在出图的预留名额（2026-09-29 审查 A4-P2）：与 usage 一起构成「used + inflight >= cap」 */
+const inFlight = new Map<string, number>();
 const lastAutoAt = new Map<string, number>();
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -297,9 +299,18 @@ export async function generateSceneArt(
   if (!SCENE_ART_ENABLED) {
     return { ok: false, degraded: true, code: 'DISABLED', message: '按需出图未开启', used: q.used, cap: q.cap, plan: q.plan };
   }
-  if (q.remain <= 0) {
+  /**
+   * 并发闸门（2026-09-29 审查 A4-P2）：这里是典型的「检查后动作」——
+   * 读到 q.remain → await 云端出图（最长 120s）→ 出图成功才 bumpUsage。
+   * 期间同一用户的并发请求都各自看到同一个 remain → 一次能出远超上限的**付费**图；
+   * 而且计数在进程内存里，重启即清零。所以把「正在出图」的名额也计入配额（used + inflight）。
+   */
+  const pending = inFlight.get(userId) || 0;
+  if (q.remain - pending <= 0) {
     return { ok: false, code: 'DAILY_CAP', message: `今日专属画面已用完（${q.plan} 档 ${q.cap} 张/天）`, used: q.used, cap: q.cap, plan: q.plan };
   }
+  inFlight.set(userId, pending + 1);
+  try {
 
   // 白名单校验在调用方做；这里再取一次 prompt（同一函数，双保险）
   const v = validateSceneArtRequest({ scenarioId, theme });
@@ -349,6 +360,11 @@ export async function generateSceneArt(
     ok: true, url: cacheUrl(scenarioId, theme, ext) + '?v=' + fileVersion(cacheFile(scenarioId, theme, ext)),
     cached: false, seconds: out.seconds, used: after.used, cap: after.cap, plan: after.plan,
   };
+  } finally {
+    // 无论成功、降级还是抛错，都要把预留的名额还回去（否则配额会被这次请求永久占掉一张）
+    const n = (inFlight.get(userId) || 1) - 1;
+    if (n <= 0) inFlight.delete(userId); else inFlight.set(userId, n);
+  }
 }
 
 /** 当前出图后端信息（给后台/健康检查看：用了哪家、有没有配 key、支持不支持负向词） */

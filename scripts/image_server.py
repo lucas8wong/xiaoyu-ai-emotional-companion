@@ -45,6 +45,9 @@ PORT = int(os.environ.get("SCENE_ART_PORT", "8004"))
 IDLE_UNLOAD_S = float(os.environ.get("SCENE_ART_IDLE_UNLOAD_S", "0"))
 MIN_FREE_GB = float(os.environ.get("SCENE_ART_MIN_FREE_GB", "10.5"))
 STEPS = int(os.environ.get("SCENE_ART_STEPS", "4"))
+# CFG 强度。默认 0.0 = sdxl-turbo 的原生用法（此时 diffusers 会**忽略 negative_prompt**）。
+# 换成完整 SDXL（stabilityai/stable-diffusion-xl-base-1.0）时把它设成 ~6.5，负向词才真正生效。
+GUIDANCE = float(os.environ.get("SCENE_ART_GUIDANCE", "0.0"))
 
 app = FastAPI()
 _lock = threading.Lock()          # 单卡并发=1：后到者排队，不并发抢显存
@@ -104,7 +107,25 @@ def get_pipe():
         torch = _torch()
         print(f"[scene-art] loading {MODEL_ID} (free {free:.1f}GB) ...", flush=True)
         t0 = time.perf_counter()
-        pipe = AutoPipelineForText2Image.from_pretrained(MODEL_ID, torch_dtype=torch.float16, variant="fp16")
+        # 社区底模（国风系等）常是**单文件 .safetensors**（不是 diffusers 目录，没有 model_index.json），
+        # 这种必须走 from_single_file；否则 from_pretrained 会直接报缺 model_index.json。
+        if MODEL_ID.lower().endswith((".safetensors", ".ckpt")) or os.path.isfile(MODEL_ID):
+            # ⚠️ from_single_file 只在**具体 pipeline 类**上（AutoPipelineForText2Image 没有这个方法，实测报
+            # AttributeError）。先按 SD1.5 试，失败再按 SDXL 试 —— 两种单文件 checkpoint 都能覆盖。
+            from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline
+            try:
+                pipe = StableDiffusionPipeline.from_single_file(MODEL_ID, torch_dtype=torch.float16)
+            except Exception as e1:
+                print(f"[scene-art] SD1.5 single-file load failed ({type(e1).__name__}), trying SDXL", flush=True)
+                pipe = StableDiffusionXLPipeline.from_single_file(MODEL_ID, torch_dtype=torch.float16)
+        else:
+          try:
+            pipe = AutoPipelineForText2Image.from_pretrained(MODEL_ID, torch_dtype=torch.float16, variant="fp16")
+          except Exception as e:
+            # 很多社区底模（如国风系）没有 fp16 variant 文件，直接再试一次不带 variant。
+            # 不这么兜的话换底模会以 "no variant fp16" 直接加载失败。
+            print(f"[scene-art] variant=fp16 unavailable ({type(e).__name__}), retrying without it", flush=True)
+            pipe = AutoPipelineForText2Image.from_pretrained(MODEL_ID, torch_dtype=torch.float16)
         pipe.set_progress_bar_config(disable=True)
         pipe.to("cuda")
         print(f"[scene-art] ready in {time.perf_counter() - t0:.1f}s", flush=True)
@@ -127,6 +148,9 @@ class GenRequest(BaseModel):
     seed: Optional[int] = None
     width: int = 1024
     height: int = 576
+    # 负向词（可选）。**只在 guidance > 1 时被使用**——guidance = 0 时 diffusers 会忽略它，
+    # 所以老调用方（sceneArt.ts 不带该字段）行为一字不变。
+    negative: Optional[str] = None
 
 
 @app.get("/health")
@@ -153,8 +177,11 @@ def generate(req: GenRequest):
         t0 = time.perf_counter()
         torch.cuda.reset_peak_memory_stats()
         g = torch.Generator(device="cpu").manual_seed(int(seed))
-        img = pipe(prompt=req.prompt.strip()[:400], num_inference_steps=STEPS, guidance_scale=0.0,
-                   width=req.width, height=req.height, generator=g).images[0]
+        kwargs = dict(prompt=req.prompt.strip()[:400], num_inference_steps=STEPS, guidance_scale=GUIDANCE,
+                      width=req.width, height=req.height, generator=g)
+        if GUIDANCE > 1.0 and req.negative:
+            kwargs["negative_prompt"] = req.negative[:300]
+        img = pipe(**kwargs).images[0]
         buf = io.BytesIO()
         img.save(buf, format="WEBP", quality=82, method=6)
         secs = time.perf_counter() - t0

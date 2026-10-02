@@ -4,7 +4,6 @@
  */
 
 import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
 import { SkinFeedbackIcon } from './SkinIcon';
 import { saveFeedback } from '../services/api';
 import { useAppStore } from '../store/useAppStore';

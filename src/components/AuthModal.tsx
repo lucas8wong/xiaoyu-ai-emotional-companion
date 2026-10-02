@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { X, Loader2, Mail, Lock, Info, Ticket, User as UserIcon, ShieldCheck, Eye, EyeOff, Gift, Compass } from 'lucide-react';
 import {
   login,
+  loginWithGoogle,
   register,
   sendEmailCode,
   resetPassword,
@@ -13,6 +14,7 @@ import {
   type AuthUser,
 } from '../services/api';
 import { t } from '../i18n';
+import GoogleSignInButton from './GoogleSignInButton';
 import LangSwitch from './LangSwitch';
 import { useAppStore } from '../store/useAppStore';
 import Modal from './ui/Modal';
@@ -33,6 +35,8 @@ interface AuthModalProps {
    * 由调用方从后端数字算好传入；拿不到就不显示这一句（不渲染 `undefined 条`）。
    */
   registeredDailyTiao?: number;
+  /** Google OAuth Client ID（后端 /api/payment/quota 下发）；为空则不渲染「用 Google 继续」 */
+  googleClientId?: string;
 }
 
 type Tab = 'login' | 'register' | 'reset';
@@ -52,7 +56,7 @@ const HEARD_FROM_OPTIONS: { value: string; labelKey: string }[] = [
   { value: 'other', labelKey: 'heardFromOther' },
 ];
 
-export default function AuthModal({ open, onClose, onLoginSuccess, onRegistered, initialTab = 'login', initialEmail = '', initialCode = '', registerChatBonus = 0, registerProPromoActive = false, registerProDays = 0, registeredDailyTiao }: AuthModalProps) {
+export default function AuthModal({ open, onClose, onLoginSuccess, onRegistered, initialTab = 'login', initialEmail = '', initialCode = '', registerChatBonus = 0, registerProPromoActive = false, registerProDays = 0, registeredDailyTiao, googleClientId = '' }: AuthModalProps) {
   const [tab, setTab] = useState<Tab>(initialTab);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
@@ -131,6 +135,21 @@ export default function AuthModal({ open, onClose, onLoginSuccess, onRegistered,
     }
   };
 
+  // Google 一键登录/注册：服务端验签 ID token，返回结构与 login 一致；isNew 时才触发「注册成功」回调
+  const handleGoogle = async (credential: string) => {
+    setBusy(true); setMessage(null);
+    const r = await loginWithGoogle(credential, t('nicknameDefault'));
+    setBusy(false);
+    if (r.success && r.data) {
+      setAuth(r.data.token, r.data.user);
+      onLoginSuccess(r.data.user);
+      if (r.data.isNew) onRegistered?.();
+      onClose();
+    } else {
+      setMessage({ type: 'err', text: r.error || t('errGoogleFailed') });
+    }
+  };
+
   const handleRegister = async () => {
     if (!rEmail.trim()) { setMessage({ type: 'err', text: t('errNeedEmail') }); return; }
     // 邮箱格式校验（与后端一致：有@、有点、无连续点/结尾点）
@@ -203,6 +222,18 @@ export default function AuthModal({ open, onClose, onLoginSuccess, onRegistered,
     }
   };
 
+  // 「用 Google 继续」+「或」分隔线：登录与注册两个 tab 共用同一段（两处各写一遍必然漂移）
+  const googleBlock = googleClientId ? (
+    <div className="space-y-3">
+      <GoogleSignInButton clientId={googleClientId} onCredential={handleGoogle} disabled={busy} />
+      <div className="flex items-center gap-3">
+        <span className="flex-1 h-px bg-gray-200" />
+        <span className="text-[11px] text-ink-soft">{t('orDivider')}</span>
+        <span className="flex-1 h-px bg-gray-200" />
+      </div>
+    </div>
+  ) : null;
+
   const inputCls = "w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent";
   const labelCls = "block text-xs text-ink-soft mb-1";
 
@@ -252,6 +283,7 @@ export default function AuthModal({ open, onClose, onLoginSuccess, onRegistered,
         {/* 登录 */}
         {tab === 'login' && (
           <div className="space-y-3">
+            {googleBlock}
             <div>
               <label className={labelCls} htmlFor="auth-label-account">{t('labelAccount')}</label>
               <div className="relative">
@@ -283,6 +315,7 @@ export default function AuthModal({ open, onClose, onLoginSuccess, onRegistered,
         {/* 注册 */}
         {tab === 'register' && (
           <div className="space-y-3">
+            {googleBlock}
             {registerProPromoActive && registerProDays > 0 ? (
               <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
                 <Gift className="w-4 h-4 text-amber-700 shrink-0" />

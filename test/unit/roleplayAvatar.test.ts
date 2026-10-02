@@ -29,14 +29,29 @@ test('角色扮演：剧本 avatar 派生正确——有头像文件→?v=内容
   }
 });
 
-test('角色扮演：头像文件与剧本 id 一一对应（无孤儿文件；暂无头像剧本走 emoji 回退）', () => {
+test('角色扮演：头像文件与剧本 id / 已登记配角 一一对应（无孤儿文件）', () => {
   const ids = new Set(SCENARIOS.map((s) => s.id));
+  /**
+   * 配角头像（2026-10-01）：文件名是 `<scenarioId>-<castId>.jpg`，登记在 SCENARIO_CAST 的 `avatar`。
+   * 所以"无孤儿文件"的判据要同时认这两类，不能只看剧本 id（否则新增配角图必红）。
+   */
+  const castFiles = new Set(
+    listScenarios('zh').flatMap((s: any) => (s.cast || []).map((c: any) => String(c.avatar || '')))
+      .map((u: string) => (/^\/img\/roleplay\/([A-Za-z0-9-]+)\.jpg/.exec(u) || [])[1])
+      .filter(Boolean),
+  );
   const files = readdirSync(IMG_DIR).filter((f) => f.endsWith('.jpg')).map((f) => f.replace(/\.jpg$/, ''));
   for (const f of files) {
-    assert.ok(ids.has(f), '多余头像文件（无对应剧本）：' + f);
+    assert.ok(ids.has(f) || castFiles.has(f), '多余头像文件（既无对应剧本、也未登记为配角头像）：' + f);
   }
+  // 主头像文件数仍应与「有主头像的剧本数」一致（配角文件不混进这一口径）
+  const mainFiles = files.filter((f) => ids.has(f));
   const withAvatar = SCENARIOS.filter((s) => existsSync(path.join(IMG_DIR, s.id + '.jpg'))).length;
-  assert.strictEqual(withAvatar, files.length, '有头像文件的剧本数应等于头像文件数');
+  assert.strictEqual(withAvatar, mainFiles.length, '有头像文件的剧本数应等于主头像文件数');
+  // 反向：登记了配角头像却没图 → 前端会静默回退「名字首字」色块，必须当场发现
+  for (const c of castFiles) {
+    assert.ok(files.includes(c), '登记了配角头像但文件不存在：' + c);
+  }
 });
 
 test('角色扮演：avatar 只接受受控站内路径（防御注入/外链/版本化查询串）', () => {

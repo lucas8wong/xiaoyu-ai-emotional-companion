@@ -9,7 +9,7 @@
  */
 
 import { Router } from 'express';
-import { isSafeHttpUrl } from '../services/news.js';
+import { isSafeHttpUrl, fetchPublicUrl } from '../services/news.js';
 
 const router = Router();
 
@@ -95,10 +95,11 @@ async function fetchHtml(url: string): Promise<string> {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT);
   try {
-    const res = await fetch(url, {
+    // 用 fetchPublicUrl：redirect 改为 manual + 每一跳重新校验，避免「校验首跳、被 302 带进内网」
+    // （2026-09-28 审查 B3）。
+    const res = await fetchPublicUrl(url, {
       headers: { 'User-Agent': UA, Accept: 'text/html,application/xhtml+xml,*/*;q=0.8' },
       signal: ctrl.signal,
-      redirect: 'follow',
     });
     if (!res.ok) return '';
     const body = res.body;
@@ -203,7 +204,7 @@ router.get('/image', async (req, res) => {
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT);
       try {
-        const r = await fetch(cand, { headers: { 'User-Agent': UA }, signal: ctrl.signal });
+        const r = await fetchPublicUrl(cand, { headers: { 'User-Agent': UA }, signal: ctrl.signal });
         if (r.ok) {
           const ct = r.headers.get('content-type') || 'image/jpeg';
           const buf = Buffer.from(await r.arrayBuffer());

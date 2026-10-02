@@ -147,7 +147,7 @@ test('标点硬要求：要求「叙述」也断句，别只覆盖对话引号�
   const en = rp.buildPunctuationDirective('en');
   assert.ok(/narration as much as to dialogue/.test(en), 'en 没说清覆盖叙述');
   // 指令自己不能自相矛盾：要求别人断句的文字本身不能是长串
-  const PUNCT = /[。！？；：，、…—～·「」『』“”‘’（）《》〈〉【】〔〕\s.,!?;:'"()\[\]{}<>~\-_/\\|]/;
+  const PUNCT = /[。！？；：，、…—～·「」『』“”‘’（）《》〈〉【】〔〕\s.,!?;:'"()[\]{}<>~\-_/\\|]/;
   for (const t of [zh, en]) {
     let best = 0, cur = 0;
     for (const ch of t) { if (PUNCT.test(ch)) { cur = 0; continue; } cur += 1; if (cur > best) best = cur; }

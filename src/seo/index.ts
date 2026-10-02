@@ -28,7 +28,7 @@ export const SEO_PAGES: SeoPageDef[] = [
 ];
 
 /** sitemap 里除内容页之外的固定公开页（首页 / FAQ；`/s/*` 分享页有意不进 sitemap，避免薄内容稀释） */
-export const STATIC_SITEMAP_PATHS = ['/', '/faq'];
+export const STATIC_SITEMAP_PATHS = ['/', '/faq', '/privacy'];
 
 /** 按路径查页（`/zh/<slug>` 或 `/<slug>`） */
 export function findSeoPageByPath(pathname: string): SeoPageDef | undefined {

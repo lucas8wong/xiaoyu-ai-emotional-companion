@@ -4,7 +4,7 @@
  * 移动端优先
  */
 
-import { X, MessageCircle, Compass, Sparkles, Languages } from 'lucide-react';
+import { MessageCircle, Compass, Sparkles, Languages } from 'lucide-react';
 import { t } from '../i18n';
 import Modal from './ui/Modal';
 

@@ -585,6 +585,8 @@ async function genSidecar(req: ImageGenRequest, timeoutMs: number): Promise<Back
         worldview: req.worldview || '',
         theme: req.theme || '',
         prompt: req.prompt,
+        // 负向词：侧车只有在 guidance > 1（换完整 SDXL 时）才会真正使用；turbo 下会忽略
+        negative: req.negative || '',
         width: req.width, height: req.height, seed: req.seed,
       }),
       signal: ac.signal,

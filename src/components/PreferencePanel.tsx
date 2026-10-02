@@ -9,10 +9,11 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { savePreferences, getQuota, getCachedPlan, subscribePush, unsubscribePush, sendPushTestSelf, getOutreachSubjects, muteOutreachSubject, unmuteOutreachSubject, reportTimezone, isLoggedIn, type Region, type Intensity, type ChatRelationKind } from '../services/api';
-import { subscribeToPush, unsubscribeFromPush } from '../services/notifications';
+import { subscribeToPush, unsubscribeFromPush, isPushSupported } from '../services/notifications';
+import PushInstallGuide from './PushInstallGuide';
+import type { PwaInstallMode } from '../hooks/usePwaInstall';
 import { getCachedPreferences, setCachedPreferences, loadPreferences } from '../lib/prefsCache';
 import { getLang, t } from '../i18n';
-import { useAppStore } from '../store/useAppStore';
 import { CHIP, GroupLabel, OptionGroup, ToggleRow } from './ui/controls';
 
 /**
@@ -71,6 +72,12 @@ interface PreferencePanelProps {
   /** 直达「主动找我」：打开时滚动并高亮 AI 主动找我开关（不自动开） */
   focusProactivePush?: boolean;
   /**
+   * 「AI 主动找我」里的「装到桌面/主屏」引导（2026-10-02 用户真机反馈）：
+   * 由 Home 的 usePwaInstall 单例注入（与底部轻提示/⋯ 里的「保存 Xiaoyu」共用同一份
+   * beforeinstallprompt）。不传则不显示（聊一聊/理一理的 tone 变体本就没有推送区块）。
+   */
+  pwaInstall?: { installed: boolean; mode: PwaInstallMode; promptInstall: () => Promise<string> } | null;
+  /**
    * 关系类型（2026-09-21）：朋友 / 损友 / 家人 / 恋人。
    *
    * 面板自己**不碰数据源**：由调用方（ChatPage）决定写哪儿——
@@ -88,7 +95,7 @@ interface PreferencePanelProps {
   name?: string;
 }
 
-export default function PreferencePanel({ onFeedback, showStoryStyle = false, onRequestMembership, variant = 'full', focusProactivePush = false, relationValue, onRelationChange, hideRelation = false, name }: PreferencePanelProps) {
+export default function PreferencePanel({ onFeedback, showStoryStyle = false, onRequestMembership, variant = 'full', focusProactivePush = false, pwaInstall = null, relationValue, onRelationChange, hideRelation = false, name }: PreferencePanelProps) {
   // 哪些区块显示：tone=语气组；global=全局组；full=全部
   const showTone = variant === 'tone' || variant === 'full';
   const showGlobal = variant === 'global' || variant === 'full';
@@ -126,6 +133,10 @@ export default function PreferencePanel({ onFeedback, showStoryStyle = false, on
   const [pushBusy, setPushBusy] = useState(false);
   const [pushFreq, setPushFreq] = useState<'random' | 'frequent' | 'occasional' | 'intense'>(cached?.proactiveFrequency ?? 'random');
   const [pushStatus, setPushStatus] = useState<string | null>(null);
+  // 当前环境能不能真的收到 Web Push（iOS Safari 标签页 = 不能）→ 决定要不要显示「先装到主屏」引导
+  const [pushUsable] = useState(() => isPushSupported());
+  // 状态色调：info=琥珀（不是错误，如站内/邮件兜底）；error=红色（权限被拒、订阅失败）
+  const [pushStatusKind, setPushStatusKind] = useState<'error' | 'info'>('error');
   const [pushTestBusy, setPushTestBusy] = useState(false);
   const [pushTestStatus, setPushTestStatus] = useState<string | null>(null);
   const [outreachSubjects, setOutreachSubjects] = useState<{ subjectKey: string; feature: string; label: string; muted: boolean }[]>([]);
@@ -274,15 +285,20 @@ export default function PreferencePanel({ onFeedback, showStoryStyle = false, on
           persist({ proactivePush: true, proactiveFrequency: pushFreq });
           void reportTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
         } else if (isLoggedIn()) {
-          // 推送不可用（浏览器不支持 / 大陆网络访问不到 Google 推送服务）→ 邮件兜底
+          // 推送不可用（iOS Safari 标签页没装主屏 / 大陆网络访问不到 Google 推送服务）→ 兜底通道：
+          // 站内消息（写进「聊一聊」的未读）+ 长期未回时的邮件召回。
+          // **这不是错误**，所以用琥珀提示（info），红色只留给「权限被拒 / 订阅失败」。
           setPushEnabled(true);
           setPushStatus(t('profileProactivePushEmailFallback'));
+          setPushStatusKind('info');
           persist({ proactivePush: true, proactiveFrequency: pushFreq });
           void reportTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
         } else if (res.reason === 'denied') {
           setPushStatus(t('profileProactivePushDenied'));
+          setPushStatusKind('error');
         } else {
           setPushStatus(t('profileProactivePushEmailNeedLogin'));
+          setPushStatusKind('info');
         }
       } else {
         const endpoint = await unsubscribeFromPush();
@@ -292,6 +308,7 @@ export default function PreferencePanel({ onFeedback, showStoryStyle = false, on
       }
     } catch (e) {
       setPushStatus(t('profileProactivePushDenied'));
+      setPushStatusKind('error');
       console.warn('[Push] 开关操作失败:', (e as Error)?.message);
     } finally {
       setPushBusy(false);
@@ -452,7 +469,17 @@ className={CHIP.base + ' ' + (intensity === v ? CHIP.on : CHIP.off)}>{t(key)}</b
           </button>
         </div>
 
-        {pushStatus && <p className="text-[11px] text-red-500 leading-snug mt-1.5">{pushStatus}</p>}
+        {/* 「装到桌面/主屏」引导：没装好之前推送永远不会来，用户不会因为一行小字就去装 App */}
+        {pwaInstall && (
+          <PushInstallGuide
+            installed={pwaInstall.installed}
+            mode={pwaInstall.mode}
+            pushUsable={pushUsable}
+            promptInstall={pwaInstall.promptInstall}
+          />
+        )}
+
+        {pushStatus && <p className={'text-[11px] leading-snug mt-1.5 ' + (pushStatusKind === 'info' ? 'text-amber-600' : 'text-red-500')}>{pushStatus}</p>}
 
         {pushEnabled && (
           <div className="mt-2 bg-white border border-clay-border rounded-lg px-3 py-2.5">

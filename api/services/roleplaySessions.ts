@@ -67,9 +67,26 @@ export interface RoleplayMessage {
    */
   incomplete?: boolean;
 }
+/**
+ * 剧情「模式」（2026-10-01 双模式）：定义与判据在 `src/lib/roleplayMode.ts`（前端/服务端共用一份）。
+ *   solo  = 单角色线（只有主角 AI，原有行为）
+ *   multi = 多角色线（cast 同场，逐角色气泡）
+ *
+ * 一部剧本对**每个用户最多两条记录**（solo + multi），消息/偏好/重新开始互相独立
+ * —— 这就是「每部剧本最多一个多角色 + 一个单角色存档」。
+ */
+import { type RoleplayMode, DEFAULT_ROLEPLAY_MODE } from '../../src/lib/roleplayMode.js';
+export type { RoleplayMode };
+export { DEFAULT_ROLEPLAY_MODE };
+
 export interface RoleplaySessionRecord {
   userId: string;
   scenarioId: string;
+  /**
+   * 这条记录属于哪条线。**可选**：老数据没有这个字段 ⇒ 一律当 `solo`（不批量重写，
+   * 读取时惰性改键，见 loadFromDisk 与 keyOf 的注释）。
+   */
+  mode?: RoleplayMode;
   messages: RoleplayMessage[];
   /** 用户在本剧本里的独特偏好/需求（自由文本），持久随剧情保存，AI 后续始终参考 */
   userPreference?: string;
@@ -97,7 +114,15 @@ const MAX_CONTENT = 4000;
  */
 const MAX_VERSIONS = 5;
 
-const keyOf = (userId: string, scenarioId: string) => userId + '::' + scenarioId;
+/**
+ * 会话主键：`userId::scenarioId::mode`。
+ *
+ * ⚠️ 2026-10-01 之前是 `userId::scenarioId`（每剧本一份）。加 mode 后同一剧本最多两条记录；
+ * **老数据不批量重写**——loadFromDisk 读到没有 `mode` 的记录时按 `solo` 重新键入内存，
+ * 下一次 saveToDisk() 自然写成新格式。这样迁移是幂等的，也不需要停机改文件。
+ */
+const keyOf = (userId: string, scenarioId: string, mode: RoleplayMode = DEFAULT_ROLEPLAY_MODE) =>
+  userId + '::' + scenarioId + '::' + mode;
 
 /**
  * 一条消息落盘时的**字段投影**（save() 与 heal() 共用）。
@@ -192,7 +217,9 @@ class RoleplaySessionStore {
     if (Array.isArray(parsed)) {
       parsed.forEach((r: RoleplaySessionRecord) => {
         if (r?.userId && r?.scenarioId && Array.isArray(r.messages)) {
-          this.items.set(keyOf(r.userId, r.scenarioId), r);
+          // 老记录没有 mode ⇒ 按 solo 归档（并在内存里就换成新键，下次落盘即完成迁移）
+          const mode: RoleplayMode = r.mode === 'multi' ? 'multi' : 'solo';
+          this.items.set(keyOf(r.userId, r.scenarioId, mode), { ...r, mode });
         }
       });
     }
@@ -204,8 +231,22 @@ class RoleplaySessionStore {
     } catch { /* 忽略 */ }
   }
 
-  get(userId: string, scenarioId: string): RoleplayMessage[] | null {
-    const r = this.items.get(keyOf(userId, scenarioId));
+  /**
+   * 取某个剧本的会话记录。
+   *   · 传了 mode → **精确**取那一档（单角色 / 多角色各一份存档）；
+   *   · 不传 → 取两档里 `updatedAt` **更晚**的那份 —— 老调用方（与你的旅程 / 跨模式桥 / 自愈）
+   *     关心的都是「用户最近在演哪条线」，给最近的那份才符合直觉。
+   */
+  private pickRecord(userId: string, scenarioId: string, mode?: RoleplayMode): RoleplaySessionRecord | undefined {
+    if (mode) return this.items.get(keyOf(userId, scenarioId, mode));
+    const a = this.items.get(keyOf(userId, scenarioId, 'solo'));
+    const b = this.items.get(keyOf(userId, scenarioId, 'multi'));
+    if (a && b) return a.updatedAt >= b.updatedAt ? a : b;
+    return a || b;
+  }
+
+  get(userId: string, scenarioId: string, mode?: RoleplayMode): RoleplayMessage[] | null {
+    const r = this.pickRecord(userId, scenarioId, mode);
     if (!r || !Array.isArray(r.messages) || r.messages.length === 0) return null;
     return r.messages;
   }
@@ -215,21 +256,27 @@ class RoleplaySessionStore {
    * ⚠️ `scenarioTitle` 是 2026-09-18 为「🩺 自愈引擎」的**复查**加的（修复回填快照后要能读出来验证）；
    * 老调用方只读 messages/userPreference，多这一个字段不影响兼容。
    */
-  getRecord(userId: string, scenarioId: string): { messages: RoleplayMessage[] | null; userPreference?: string; scenarioTitle?: string } {
-    const r = this.items.get(keyOf(userId, scenarioId));
+  getRecord(userId: string, scenarioId: string, mode?: RoleplayMode): { messages: RoleplayMessage[] | null; userPreference?: string; scenarioTitle?: string; mode: RoleplayMode } {
+    const r = this.pickRecord(userId, scenarioId, mode);
     return {
       messages: r && Array.isArray(r.messages) && r.messages.length > 0 ? r.messages : null,
       userPreference: r?.userPreference || '',
+      // 回传「这份档是哪条线」：调用方（路由/跨模式桥）据此知道读到的是单角色还是多角色线
+      mode: r?.mode === 'multi' ? 'multi' : 'solo',
       ...(r?.scenarioTitle ? { scenarioTitle: r.scenarioTitle } : {}),
     };
   }
 
-  /** 用户在本剧本的独特偏好/需求文本（无则空串） */
-  getPreference(userId: string, scenarioId: string): string {
-    return this.items.get(keyOf(userId, scenarioId))?.userPreference || '';
+  /** 用户在本剧本的独特偏好/需求文本（无则空串）。偏好与档案同档：两条线各存各的 */
+  getPreference(userId: string, scenarioId: string, mode?: RoleplayMode): string {
+    return this.pickRecord(userId, scenarioId, mode)?.userPreference || '';
   }
 
-  save(userId: string, scenarioId: string, messages: RoleplayMessage[], userPreference?: string, scenarioTitle?: string): RoleplaySaveResult {
+  /**
+   * 保存某条线的整份历史。
+   * ⚠️ `mode` 是**第 6 个位置参数**（追加在末尾）：老调用方不传 ⇒ 默认 solo，行为与加 mode 之前一致。
+   */
+  save(userId: string, scenarioId: string, messages: RoleplayMessage[], userPreference?: string, scenarioTitle?: string, mode: RoleplayMode = DEFAULT_ROLEPLAY_MODE): RoleplaySaveResult {
     const all = (messages || [])
       .filter((m: RoleplayMessage) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
       // 🚨 服务端最后一道护栏（2026-09-15 线上事故）：前端「失败兜底 / 系统提示」文案曾被当成角色台词落盘，
@@ -238,7 +285,7 @@ class RoleplaySessionStore {
       // 判定只针对 assistant、只做整串精确匹配；user 的消息一律不动。
       .filter((m: RoleplayMessage) => !(m.role === 'assistant' && isFallbackBubble(m.content)));
     if (all.length === 0) return { saved: false };
-    const existing = this.items.get(keyOf(userId, scenarioId));
+    const existing = this.items.get(keyOf(userId, scenarioId, mode));
     // 保留已有时间戳（每次重存历史不覆盖）；缺失时间戳的补发：复用上次同位置时间戳，
     // 否则按消息位置顺序用当前时间（新增消息在原有消息之后，时间自然更晚）。
     const prevTs = (existing?.messages || []).slice(-MAX_MSGS).map((m) => m.timestamp);
@@ -263,9 +310,10 @@ class RoleplaySessionStore {
     const pref = userPreference !== undefined ? userPreference : (existing?.userPreference || '');
     // 标题快照：本次解析到就更新，解析不到（剧本已在别处被删）就沿用上次的快照，别把真名抹掉。
     const snap = (scenarioTitle || '').trim() || existing?.scenarioTitle;
-    this.items.set(keyOf(userId, scenarioId), {
+    this.items.set(keyOf(userId, scenarioId, mode), {
       userId,
       scenarioId,
+      mode,
       messages: clean,
       userPreference: pref,
       ...(snap ? { scenarioTitle: snap.slice(0, 200) } : {}),
@@ -292,9 +340,9 @@ class RoleplaySessionStore {
    *
    * @returns 是否真的落盘
    */
-  heal(userId: string, scenarioId: string, patch: { messages?: RoleplayMessage[]; scenarioTitle?: string }): boolean {
-    const key = keyOf(userId, scenarioId);
-    const existing = this.items.get(key);
+  heal(userId: string, scenarioId: string, patch: { messages?: RoleplayMessage[]; scenarioTitle?: string }, mode?: RoleplayMode): boolean {
+    const existing = this.pickRecord(userId, scenarioId, mode);
+    const key = existing ? keyOf(userId, scenarioId, existing.mode) : keyOf(userId, scenarioId, mode);
     if (!existing) return false;
     let messages = existing.messages || [];
     if (patch.messages) {
@@ -323,32 +371,47 @@ class RoleplaySessionStore {
   }
 
   /** 仅保存用户偏好（独立于消息更新，避免覆盖） */
-  savePreference(userId: string, scenarioId: string, userPreference: string): void {
-    const existing = this.items.get(keyOf(userId, scenarioId));
+  savePreference(userId: string, scenarioId: string, userPreference: string, mode: RoleplayMode = DEFAULT_ROLEPLAY_MODE): void {
+    const existing = this.items.get(keyOf(userId, scenarioId, mode));
     const record: RoleplaySessionRecord = {
       userId,
       scenarioId,
+      mode,
       messages: existing?.messages || [],
       userPreference: userPreference || '',
       // 🚨 逐字段重建：新字段不显式搬过来就会被静默丢掉（本文件 save() 同理）
       ...(existing?.scenarioTitle ? { scenarioTitle: existing.scenarioTitle } : {}),
       updatedAt: this.nextUpdatedAt(existing?.updatedAt),
     };
-    this.items.set(keyOf(userId, scenarioId), record);
+    this.items.set(keyOf(userId, scenarioId, mode), record);
     this.saveToDisk();
   }
 
-  delete(userId: string, scenarioId: string): void {
-    if (this.items.delete(keyOf(userId, scenarioId))) this.saveToDisk();
+  /**
+   * 删除某条线的存档。
+   * ⚠️ 不传 mode 时**只删 solo**（老客户端「重新开始」的语义 = 单一存档；不能顺手把多角色线也清掉）。
+   */
+  delete(userId: string, scenarioId: string, mode: RoleplayMode = DEFAULT_ROLEPLAY_MODE): void {
+    if (this.items.delete(keyOf(userId, scenarioId, mode))) this.saveToDisk();
   }
 
   /** 该用户玩过的剧情（按场景去重，含最后游玩时间与剧名快照；供「与你的旅程」剧情足迹） */
-  listByUser(userId: string): { scenarioId: string; updatedAt: number; scenarioTitle?: string }[] {
-    const out: { scenarioId: string; updatedAt: number; scenarioTitle?: string }[] = [];
+  listByUser(userId: string): { scenarioId: string; updatedAt: number; scenarioTitle?: string; mode: RoleplayMode }[] {
+    /**
+     * 双模式之后同一剧本最多两条记录，而本方法的契约是「**按场景去重**的足迹」——
+     * 所以这里显式保留**每条线里 updatedAt 更晚**的那份，并带上 mode 供调用方标注
+     *（否则「与你的旅程」里同一部剧会出现两次）。
+     */
+    const best = new Map<string, { scenarioId: string; updatedAt: number; scenarioTitle?: string; mode: RoleplayMode }>();
     for (const r of this.items.values()) {
-      if (r.userId === userId) out.push({ scenarioId: r.scenarioId, updatedAt: r.updatedAt, scenarioTitle: r.scenarioTitle });
+      if (r.userId !== userId) continue;
+      const mode: RoleplayMode = r.mode === 'multi' ? 'multi' : 'solo';
+      const prev = best.get(r.scenarioId);
+      if (!prev || r.updatedAt >= prev.updatedAt) {
+        best.set(r.scenarioId, { scenarioId: r.scenarioId, updatedAt: r.updatedAt, scenarioTitle: r.scenarioTitle, mode });
+      }
     }
-    return out.sort((a, b) => a.updatedAt - b.updatedAt);
+    return Array.from(best.values()).sort((a, b) => a.updatedAt - b.updatedAt);
   }
 
   /** 全部剧情会话（运营端用户行为分析用） */
@@ -370,7 +433,7 @@ class RoleplaySessionStore {
     let changed = false;
     for (const [k, r] of Array.from(this.items.entries())) {
       if (r.userId === oldId) {
-        const nk = keyOf(newId, r.scenarioId);
+        const nk = keyOf(newId, r.scenarioId, r.mode === 'multi' ? 'multi' : 'solo');
         const existing = this.items.get(nk);
         if (!existing || r.updatedAt >= existing.updatedAt) {
           this.items.set(nk, { ...r, userId: newId });

@@ -29,9 +29,8 @@ import type { OutputLang } from './zhConvert.js';
 import { COMPANION_STANCE, NO_META_NARRATION_RULE } from './companionStance.js';
 import {
   CHAT_SLOP_ZH, CHAT_SLOP_EN, CHAT_FIRST_TURN_ZH, CHAT_FIRST_TURN_EN,
-  CHAT_ADULT_REDIRECT_ZH, CHAT_ADULT_REDIRECT_EN, CHAT_EXPLICIT_STEER_ZH, CHAT_EXPLICIT_STEER_EN,
-  buildChatAntiRepeatBlock, buildChatLengthTargetBlock, buildChatSlopBlock,
-  buildChatFirstTurnBlock, buildChatAdultRedirectBlock, buildChatExplicitSteerBlock,
+  CHAT_ADULT_REDIRECT_ZH, CHAT_ADULT_REDIRECT_EN, CHAT_EXPLICIT_STEER_ZH,
+  buildChatAntiRepeatBlock, buildChatLengthTargetBlock,
 } from './chatVoice.js';
 import { buildChatRelationBlock } from './chatRelation.js';
 import { buildChatStateBlock } from './chatState.js';

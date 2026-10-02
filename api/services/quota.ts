@@ -103,6 +103,13 @@ export const PRO_DAILY_CREDIT = Number(process.env.PRO_DAILY_CREDIT || 1500); //
 export const UNIT_CREDIT = Number(process.env.UNIT_CREDIT || 2); // 1 标准单次 ≈ 普通聊一聊短消息的平均点数（前端「≈ N 条」换算锚点）
 
 /**
+ * 「累计获得赠送点数」这个字段从哪天开始记（运营端口径说明用）。
+ * 之前只存余额、不存累计，所以**老记录算不出「赠送已用」**——控制台对老记录显示「—」并标注这个起点，
+ * 不用 0 冒充（0 会被读成「一次都没用过」，是错的）。改口径只改这一行。
+ */
+export const CREDIT_GRANT_TRACKING_SINCE = '2026-09-29';
+
+/**
  * ── 游客（未注册）每日点数上限（2026-09-27 用户拍板）────────────────────────────
  *
  * 口径：**游客 5 条/天；注册账号免费档 20 条/天，且注册再一次性赠送 20 条**
@@ -331,7 +338,10 @@ export interface UserRecord {
   autoPlayUsed?: number; // 当日已用托管回合数
   genDate?: string; // 千世书 AI 生成剧本按天记账日期 YYYY-MM-DD（仅 pro/lifetime）
   genUsed?: number; // 当日已用 AI 生成剧本次数
-  pendingReward?: { count: number; reason: string; at: number }; // 待通知的奖励（用户下次登录/刷新时恭喜提示后清除）
+  // 待通知的奖励（用户下次登录/刷新时恭喜提示后清除）。
+  // note = 运营者随奖励写给用户的话（目前仅反馈奖励会带）：弹窗据此展示，
+  // 同时那封信已落进「小愈信箱」（api/services/inbox.ts），ack 只清弹窗、不清信。
+  pendingReward?: { count: number; reason: string; at: number; note?: string };
   invitedBy?: string;               // 邀请归属：注册时经 ?ref= 记录的邀请人 userId
   inviteDeviceKey?: string;         // 被邀人注册时的设备指纹哈希（供「设备/IP 不同」反套利）
   inviteIp?: string;                // 被邀人注册时的 IP（供「设备/IP 不同」反套利）
@@ -363,6 +373,14 @@ export interface UserRecord {
   creditDate?: string;              // 每日记账日期 YYYY-MM-DD
   creditUsedToday?: number;         // 今日已用点数（对每日上限）
   creditBonus?: number;             // 持久赠送点数（注册/邀请/反馈/打卡），先于每日上限消耗
+  /**
+   * **累计获得**的赠送点数（只统计、不参与扣减）。为什么要单独一个字段：`creditBonus` 是**余额**，
+   * 扣减直接做减法，账本里既没有「累计获得」也没有「累计已用」——运营端想问「他赠送的额度用了多少」
+   * 就算不出来（2026-09-29 用户提问：「赠送余额为什么没用已用的记录？」）。
+   * 从现在起每次发放都累加，`已用 = 累计获得 − 当前余额`。
+   * ⚠️ 历史发放无法回算 → 老记录该字段为 `undefined`，运营端显示「—」并标注起点。
+   */
+  creditGrantedTotal?: number;
   createdAt: number;
 }
 
@@ -572,6 +590,23 @@ class QuotaStore {
     return user;
   }
 
+  /**
+   * 节日礼：赠送 N 天完整 Pro（与老用户 7 天体验共用 `trialProUntil` 字段，但**不写**
+   * `trialProGrantedAt`）。
+   *
+   * 为什么不写 trialProGrantedAt：那个标记是「新人 7 天试用已领」的判据（`isNewcomerEligible`）；
+   * 节日礼通常只有 1 天，若也打上该标记，会把当天新注册的用户**永久排除**在之后的 7 天新人礼之外
+   * ——小礼吃掉大礼。故节日礼只加时间、不打标记；谁领过由节日礼自己的 marker 记（见 holidayGift.ts）。
+   * 与 `grantProTrial` 一致：从「当前更晚的日期」起算，可叠加/延长。
+   */
+  grantProGift(userId: string, days: number): UserRecord {
+    const user = this.ensureUser(userId);
+    const base = (user.trialProUntil && user.trialProUntil > Date.now()) ? user.trialProUntil : Date.now();
+    user.trialProUntil = base + days * 24 * 60 * 60 * 1000;
+    this.saveToDisk();
+    return user;
+  }
+
   /** 是否处于 7 天 Pro 老用户体验期内 */
   isProTrialActive(user: UserRecord): boolean {
     return !!user.trialProUntil && user.trialProUntil > Date.now();
@@ -743,6 +778,12 @@ class QuotaStore {
     const chatUsed = user.chatFreeUsed || 0;
     const today = this.todayKey();
     const chatUsedToday = user.chatDate === today ? (user.chatCount || 0) : 0;
+    /**
+     * 赠送余额的「累计获得 / 已用」：余额是实打实的，累计只有 2026-09-29 起有记录。
+     * 老记录（undefined）→ 已用返回 null（前端显示「—」），**不能用 0 冒充**。
+     * `已用 = 累计获得 − 当前余额`，下限 0（防止人工调账/历史迁移让余额高于累计时出现负数）。
+     */
+    const bonusGranted = typeof user.creditGrantedTotal === 'number' ? user.creditGrantedTotal : null;
     return {
       plan,
       creditEnabled: isCreditQuotaEnabled(),
@@ -752,6 +793,9 @@ class QuotaStore {
       chat: { total: chatTotal, used: chatUsed, remain: Math.max(0, chatTotal - chatUsed) },
       credit: {
         bonusTiao: toTiao(cq.bonus),
+        bonusGrantedTiao: toTiao(bonusGranted),
+        bonusUsedTiao: bonusGranted === null ? null : toTiao(Math.max(0, bonusGranted - (cq.bonus || 0))),
+        grantSince: CREDIT_GRANT_TRACKING_SINCE,
         remainTodayTiao: toTiao(cq.remainToday),
         usedTodayTiao: toTiao(cq.usedToday),
         dailyCapTiao: toTiao(cq.dailyCap),
@@ -946,8 +990,27 @@ class QuotaStore {
     if (n <= 0) return;
     this.warnIfNotTiao(n, 'addCreditBonus');
     user.creditBonus = (user.creditBonus || 0) + n;
+    // 累计获得（只统计；退款/结算补收**不算**发放，见 settleCredit / rollbackCredit 不动它）
+    user.creditGrantedTotal = (user.creditGrantedTotal || 0) + n;
     const prev = user.pendingReward?.count || 0;
     user.pendingReward = { count: prev + n, reason, at: Date.now() };
+    this.saveToDisk();
+  }
+
+  /**
+   * 只把点数退回余额、**不计入「累计获得」**（退款 / 补偿专用）。
+   *
+   * 为什么必须与 `addCreditBonus` 分开：控制台的「赠送已用」= 累计获得 − 余额。
+   * 退款若被当成「发放」，累计就虚高、已用虚低 —— 运营端会以为用户几乎没消耗（2026-09-29 修）。
+   * 典型场景：狼人杀局账的预留令牌随进程重启丢失，结算时只能直接退余额（`wolfchaCompat`）。
+   * 另外它**不写 pendingReward**：退款不是奖励，不该给用户弹「恭喜获得额度」。
+   */
+  refundCreditBonus(userId: string, points: number, _reason: string = 'refund'): void {
+    const user = this.ensureUser(userId);
+    const n = Math.max(0, Math.round(points));
+    if (n <= 0) return;
+    this.warnIfNotTiao(n, 'refundCreditBonus');
+    user.creditBonus = (user.creditBonus || 0) + n;
     this.saveToDisk();
   }
 
@@ -1072,9 +1135,12 @@ class QuotaStore {
    * 点数余额与旧的条数余额，正是本次要消灭的两套账。
    * `count` 的口径始终是「条」：换算 = `count × UNIT_CREDIT`，用户拿到的当量不变。
    */
-  private grantReward(user: UserRecord, count: number, reason: string, pool: 'structure' | 'chat'): void {
+  private grantReward(user: UserRecord, count: number, reason: string, pool: 'structure' | 'chat', note?: string): void {
     if (count > 0 && isCreditQuotaEnabled()) {
-      user.creditBonus = (user.creditBonus || 0) + Math.max(0, Math.round(count * UNIT_CREDIT));
+      const pts = Math.max(0, Math.round(count * UNIT_CREDIT));
+      user.creditBonus = (user.creditBonus || 0) + pts;
+      // 累计获得（只统计；与 addCreditBonus 同一口径，两处都必须记，否则「已用」会虚高）
+      user.creditGrantedTotal = (user.creditGrantedTotal || 0) + pts;
     } else if (pool === 'structure') {
       user.bonusFree = (user.bonusFree || 0) + count;
     } else {
@@ -1082,16 +1148,24 @@ class QuotaStore {
     }
     // 记录待通知奖励：用户下次登录/刷新时，前端拉配额看到 pendingReward 后恭喜提示并消费
     const prev = user.pendingReward?.count || 0;
-    user.pendingReward = { count: prev + count, reason, at: Date.now() };
+    // note 只在本条奖励**带了附言**时覆盖（后到的无附言奖励不清掉上一条还没读的附言）
+    const keptNote = note ? String(note).slice(0, 500) : user.pendingReward?.note;
+    user.pendingReward = {
+      count: prev + count,
+      reason,
+      at: Date.now(),
+      ...(keptNote ? { note: keptNote } : {}),
+    };
     this.saveToDisk();
   }
 
   /**
    * 给用户增加额外免费次数（注册/邀请/反馈/打卡奖励）
    * @param reason 奖励原因（用于邮件与站内恭喜提示）
+   * @param note 运营者随奖励写给用户的话（可选）：会进 pendingReward，供站内弹窗展示
    */
-  addBonus(userId: string, count: number = INVITE_BONUS, reason: string = 'reward'): void {
-    this.grantReward(this.ensureUser(userId), count, reason, 'structure');
+  addBonus(userId: string, count: number = INVITE_BONUS, reason: string = 'reward', note?: string): void {
+    this.grantReward(this.ensureUser(userId), count, reason, 'structure', note);
   }
 
 

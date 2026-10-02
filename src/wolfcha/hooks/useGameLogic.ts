@@ -117,7 +117,7 @@ export function useGameLogic() {
     if (isRestorableGameState(gameState) && gameState.players.length > 0 && gameState.gameSessionId) {
       console.info("[wolfcha] Restoring game session from previous state");
       gameSessionTracker.rehydrate(gameState.gameSessionId, gameState.startTime ?? Date.now());
-      void gameSessionTracker.syncProgressImmediate().catch((error) => {
+      void gameSessionTracker.syncProgressImmediate().catch((error: unknown) => {
         console.error("[game-session] Failed to sync restored session:", error);
       });
       setGameStarted(true);
@@ -1427,7 +1427,7 @@ export function useGameLogic() {
         usedCustomKey: false,
         modelUsed: MODEL_ID,
         sessionId: gameSessionId,
-      }).catch((err) => {
+      }).catch((err: unknown) => {
         console.error("[game-session] Failed to create:", err);
         return null;
       });
@@ -1647,7 +1647,7 @@ export function useGameLogic() {
       }
 
       if (sessionId) {
-        await gameSessionTracker.markRunning().catch((error) => {
+        await gameSessionTracker.markRunning().catch((error: unknown) => {
           console.error("[game-session] Failed to mark session running:", error);
         });
       }
@@ -1749,7 +1749,7 @@ export function useGameLogic() {
     } catch (error) {
       clearCancellableTimeouts();
       if (sessionId) {
-        await gameSessionTracker.markFailed().catch((statusError) => {
+        await gameSessionTracker.markFailed().catch((statusError: unknown) => {
           console.error("[game-session] Failed to mark session failed:", statusError);
         });
       }
@@ -1802,7 +1802,7 @@ export function useGameLogic() {
   /** 重新开始 */
   const restartGame = useCallback(() => {
     flowController.current.interrupt();
-    void gameSessionTracker.abandon().catch((error) => {
+    void gameSessionTracker.abandon().catch((error: unknown) => {
       console.error("[game-session] Failed to abandon session:", error);
     });
     gameSessionTracker.reset();

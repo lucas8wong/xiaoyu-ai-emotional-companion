@@ -21,6 +21,94 @@
  *   2. **剥标记不许吞掉正文**：剥完一个字都不剩 → 判定为"没剥"（宁可留一个标记，也不要把回复清空）。
  */
 
+
+/* ───────────────── 来源引用标记（2026-09-29 · 第四轮） ───────────────── */
+
+/**
+ * 为什么需要标记：来源归属不能靠**文字匹配**。
+ *
+ * 实测（2026-09-29 用户第三次反馈「给出新闻信息不跟着来源」）：那一轮**确实调用了 web_search**
+ * （服务端日志 `🔧 [tool] web_search` 有据），但模型把结果**意译成了自己的话**——标题、域名、URL
+ * 一个都没原样出现，于是按标题/域名/URL 的匹配**一条都归不上**，来源行要么空、要么退回整轮堆在最后一条。
+ * 结论：归属必须由**模型显式声明**，服务端照单执行；文字匹配只留作兜底。
+ *
+ * 做法与上面的「交接信号」完全同源：速览条目在提示词里带编号（[1] [2] …），模型转述某一条时
+ * 在那句话末尾写上 `[[3]]`；服务端①把它**剥掉**（用户看不到、绝不落盘，红线 6）②据此把该条的
+ * 出处挂到**那条气泡**下面。
+ */
+/** 标记本体（用于探测） */
+const CITE_RE = /\[\[\s*(\d{1,2})\s*\]\]/g;
+/**
+ * 剥离用的规则：标记本体 **+ 中文正文里它前面那个空格**。
+ * 为什么连空格一起剥：模型习惯写「…过生日了 [[1]]，粉圈…」，只剥标记会留下「了 ，」这种空隙。
+ * ⚠️ 流式过滤器与 extractCitations 必须用**同一条**规则 —— 否则「打字时看到的」和「重进看到的」不一样。
+ */
+const CITE_STRIP_RE = /(?<=[\u4e00-\u9fff])[ \t]*\[\[\s*\d{1,2}\s*\]\]|\[\[\s*\d{1,2}\s*\]\]/g;
+/** 流式过滤要扣住的最大尾长（`[[12]]` 全形 + 余量） */
+const CITE_HOLD = 10;
+
+/**
+ * 把一条完整回复里的引用标记剥掉，并返回用到的编号。
+ * `at` ＝ 标记去掉之后、它在**正文**里的字符偏移 —— 调用方据此判断它属于哪一段（哪条气泡）。
+ * 单遍实现：`replace` 回调拿到本次匹配的偏移，减去此前已剥掉的总长度，就是它在正文里的位置。
+ */
+export function extractCitations(text: string): { text: string; cites: { n: number; at: number }[] } {
+  const raw = text || '';
+  CITE_RE.lastIndex = 0;
+  if (!CITE_RE.test(raw)) return { text: raw, cites: [] };
+  const cites: { n: number; at: number }[] = [];
+  let removed = 0;
+  const out = raw.replace(CITE_STRIP_RE, (full: string, offset: number) => {
+    const n = Number(/\[\[\s*(\d{1,2})/.exec(full)?.[1] || 0);
+    if (Number.isFinite(n) && n >= 1) cites.push({ n, at: offset - removed });
+    removed += full.length;
+    return '';
+  });
+  return cites.length ? { text: out, cites } : { text: raw, cites: [] };
+}
+
+/**
+ * 流式版：标记可能**被切成多个 delta**，所以扣住「可能是标记开头」的尾巴，完整标记出现时剥掉。
+ * 与 createChatHandoffFilter 同一套做法；这里不负责记编号（编号位置在最终正文上重算，更稳）。
+ * 用法：`feed(delta)` → 可安全下发的文本；流结束时**必须**调一次 `flush()`。
+ */
+export function createCitationFilter() {
+  let buf = '';
+  /**
+   * 尾部有多少字符**可能是没写完的标记**，先扣住不发。
+   * ⚠️ 2026-09-29 实测踩到的坑：一开始只扣「等于 `[[` 前缀」的尾巴，而模型常把标记切在
+   * `[[1` + `]]` 之间 —— `[[1` 不匹配 `[[` 前缀，于是被直接放出去，用户就看到了半截标记
+   * （而且前端 `s.full = 流式文本` 一旦拿到就不再用最终正文，等于标记永久留在气泡里）。
+   * 正确判据：尾巴匹配 `[[` + 最多两位数字 + 空白 到结尾，才可能是没写完的标记。
+   */
+  const tailHold = (s: string): number => {
+    // ① **没写完的标记**：`[[` + 最多两位数字 + 最多两个右括号（模型实测会把标记切成 `[[1` + `]]`,
+    //    甚至 `[[1]` + `]` —— 只扣「[[ + 数字」会漏掉后一种，用户就看到半截标记了）；
+    // ② 中文后面那个空格（它后面可能就跟一个标记）
+    const m = /\[\[\s*\d{0,2}\s*\]{0,2}\s*$|(?<=[\u4e00-\u9fff])[ \t]+$/.exec(s);
+    if (!m) return 0;
+    return Math.min(m[0].length, CITE_HOLD);
+  };
+  return {
+    feed(delta: string): string {
+      buf += delta || '';
+      CITE_RE.lastIndex = 0;
+      // 与 extractCitations 同一条剥离规则（含「吃掉中文标记前那个空格」）
+      if (CITE_RE.test(buf)) { CITE_RE.lastIndex = 0; buf = buf.replace(CITE_STRIP_RE, ''); }
+      const hold = tailHold(buf);
+      const emit = buf.slice(0, buf.length - hold);
+      buf = buf.slice(buf.length - hold);
+      return emit;
+    },
+    flush(): string {
+      CITE_RE.lastIndex = 0;
+      if (CITE_RE.test(buf)) { CITE_RE.lastIndex = 0; buf = buf.replace(CITE_STRIP_RE, ''); }
+      const out = buf; buf = '';
+      return out;
+    },
+  };
+}
+
 /** 交接标记（模型输出、服务端剥离；同时接受几种写法，大小写不敏感） */
 export const CHAT_HANDOFF_MARK = '[[RP-UNLOCK]]';
 

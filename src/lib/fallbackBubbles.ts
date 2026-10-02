@@ -73,6 +73,34 @@ export const LOCAL_FALLBACK_BUBBLES: readonly string[] = [
    */
   '我在的。慢慢说，我会认真听。🌱',
   '我在的。慢慢說，我會認真聽。🌱',
+  /**
+   * 剧情「空回复兜底句」旧文案（2026-09-28 补，审查 P1-1）：来源 api/services/roleplay.ts 的
+   * EMPTY_ROLEPLAY_REPLY_FALLBACK（已随红线⑥修复删除）。**线上历史里可能已落盘**，
+   * 所以必须登记，供 selfHeal / 前端读历史 / 服务端 save() 三处剔除。
+   */
+  '他看向你，语气放轻了些。「我在听，你继续。」',
+  '他看向你，語氣放輕了些。「我在聽，你繼續。」',
+  'He looks at you, his voice lowering a little. “I’m listening. Go on.”',
+  /**
+   * 主动召回兜底句（2026-09-28 补，审查 P1-2）：来源 api/services/reengage.ts 的 fallbackHook。
+   * 只有 chat 档的 body 曾被 appendInAppMessage 当成角色发言写进 chatMessages（现已加闸），
+   * 但历史里可能已落盘，必须登记以便读/写两侧剔除。
+   */
+  '有些话还停在昨天，今天想继续的话，我随时都在。',
+  '有些話還停在昨天，今天想繼續的話，我隨時都在。',
+  'You left some words unspoken — whenever you’re ready, I’ll be here.',
+  /**
+   * AI 狼人杀（wolfcha 移植版）的失败文案（2026-09-28 补，审查 P1-3）：来源
+   * src/wolfcha 的 dayPhase.timeout / gameMaster.tooManyRequests。超时与限流曾把这几句
+   * 当成**角色发言**推入发言队列并落盘（红线⑥，与 src/werewolf 引擎 applyFailedTurn 的
+   * 「只发中性事件、不编台词」正好相反）。代码已改为抛失败态，这里登记是为了剔除历史数据。
+   */
+  '我没啥想说的',
+  '我沒啥想說的',
+  'I have nothing to say',
+  '（请求过于频繁，稍后再试）',
+  '（請求過於頻繁，稍後再試）',
+  'Too many requests, please try again later.',
 ];
 
 const FALLBACK_SET = new Set(LOCAL_FALLBACK_BUBBLES.map(s => s.trim()));

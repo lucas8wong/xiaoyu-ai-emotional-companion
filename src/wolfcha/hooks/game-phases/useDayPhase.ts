@@ -163,7 +163,18 @@ export function useDayPhase(
         if (!isValid()) { resolve("timeout"); return; }
         controller.abort();
         // 超时兜底仍属于本次请求；关闭网络回调后才能写入。
-        if (displayedCount === 0) appendToSpeechQueue(t("dayPhase.timeout"), id, 0);
+        // 超时是**失败态**：绝不替角色编台词（红线⑥，2026-09-28 审查 P1-3）。
+        // 与 catch 分支同一处理：保留已确认段落、暂停推进、给「重试发言」入口。
+        failedRequestRef.current = request;
+        if (displayedCount === 0) setDialogue(speakerHost, t("dayPhase.interrupted"), false);
+        toast.error(getLocale() === "zh" ? "发言生成失败，游戏已暂停推进" : "Speech failed. Progress is paused.", {
+          duration: Infinity,
+          action: { label: getLocale() === "zh" ? "重试发言" : "Retry speech", onClick: () => {
+            if (!request.isValid()) return;
+            activeRequestRef.current = null;
+            void runAISpeech(store.get(gameStateAtom), player, options);
+          } },
+        });
         finalizeSpeechQueue({ requestId: id });
         setIsWaitingForAI(false);
         resolve("timeout");

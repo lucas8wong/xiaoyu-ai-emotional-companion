@@ -10,6 +10,7 @@ import 'dotenv/config';
 import { Router, type Request, type Response } from 'express';
 import { safeError } from '../services/safeError.js';
 import { listScenarios, getScenario, getScenarioInfo, roleplayReply, roleplayReplyCustom, roleplayReplyWithContinuation, roleplaySuggestions, roleplaySuggestionsCustom, searchScenarios, listTagGroups, getDisplayLikes, roleplayDraftCustom, roleplayReviseCustom, isCompleteCustomDraft, normalizeCustomIdea, unlimitedActiveFor, unlimitedForScenario, roleplayTurnLengthBand, roleplayContinuationBudget, type CustomDraftFields, type RoleplayMessage, type RPLang, type RoleplayNarrativeStyle } from '../services/roleplay.js';
+import { parseRoleplayMode, type RoleplayMode } from '../../src/lib/roleplayMode.js';
 import { preferenceStore } from '../services/preferences.js';
 import { mergeContinuationGuarded, trimAdditionToBudget } from '../../src/lib/replyCompleteness.js';
 import { toZhTw, toOutputLang } from '../services/zhConvert.js';
@@ -32,6 +33,7 @@ import { notifyNewUgcSubmission } from '../services/adminNotifier.js';
 import { roleplayUnlimitedAvailable, roleplayRoutingSummary } from '../services/roleplayModel.js';
 import { isAdultConfirmed } from '../services/adultConfirm.js';
 import { runRepeatGate, repeatGateEnabled } from '../services/repeatGate.js';
+import { assessReplyRepeat, assessSuggestionsRepeat } from '../services/repeatRefund.js';
 import { createBeatPlanFilter } from '../../src/lib/beatPlan.js';
 
 /** 校验用户上传的图片 data URL：仅允许 JPEG/PNG/WebP 的 base64，且总长度受限（避免超大 Blob 撑爆 JSON） */
@@ -165,7 +167,15 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
   let quotaConsumed = 0;
   let creditToken: string | null = null;
   try {
-    const { scenarioId, messages, lang, aiName, userName, userPreference, narrativeStyle, innerMonologueEnabled, thinkingLevel, continueTurn } = req.body || {};
+    const { scenarioId, messages, lang, aiName, userName, userPreference, narrativeStyle, innerMonologueEnabled, thinkingLevel, continueTurn, replacedReply, mode } = req.body || {};
+    /**
+     * 本回合演的是哪条线（solo = 只有主角；multi = cast 同场）。
+     * ⚠️ 这是**生成侧**的开关：单角色线**绝不能**注入群像块 —— 否则用户演 solo 时会莫名多出配角。
+     * 缺省 solo，与「老数据/老客户端 = 单存档」同一口径。
+     */
+    const rpMode: RoleplayMode = parseRoleplayMode(mode);
+    /** 重新生成时前端回传的「被替换掉的那一版」：判重退费要拿它当「上一段」（服务端 history 里没有它） */
+    const prevVersion = typeof replacedReply === 'string' ? replacedReply.slice(0, 4000) : '';
     const sid = String(scenarioId || '');
     const userId = resolveUserId(req);
     quotaUserId = userId;
@@ -271,7 +281,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
 
     const rpLang: RPLang = String(lang || '') === 'en' ? 'en' : String(lang || '') === 'zh-TW' ? 'zh-TW' : 'zh';
     const rpStyle: RoleplayNarrativeStyle = String(narrativeStyle || '') === 'classic' ? 'classic' : 'immersive';
-    const nameOpts = { userId, lang: rpLang, aiName: String(aiName || '').slice(0, 20), userName: String(userName || '').slice(0, 20), userPreference: String(userPreference || '').slice(0, 2000), narrativeStyle: rpStyle, innerMonologueEnabled: typeof innerMonologueEnabled === 'boolean' ? innerMonologueEnabled : undefined, thinkingLevel: typeof thinkingLevel === 'string' ? (thinkingLevel as any) : undefined, unlimited: unlimitedOverride };
+    const nameOpts = { userId, lang: rpLang, aiName: String(aiName || '').slice(0, 20), userName: String(userName || '').slice(0, 20), userPreference: String(userPreference || '').slice(0, 2000), narrativeStyle: rpStyle, innerMonologueEnabled: typeof innerMonologueEnabled === 'boolean' ? innerMonologueEnabled : undefined, thinkingLevel: typeof thinkingLevel === 'string' ? (thinkingLevel as any) : undefined, unlimited: unlimitedOverride, mode: rpMode };
 
     /**
      * 跑一轮生成（含 C 方案自动续写）。
@@ -369,6 +379,28 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
       return gate.accepted && gate.outcome.payload ? gate.outcome.payload : first;
     };
 
+    /**
+     * 判重退费（2026-10-01）：把本轮**最终**回复与「上一段回复」比。
+     * 比较对象优先用前端回传的被替换版本（重新生成），再补 history 里最后几条 AI 回复。
+     * 判重失败/超时一律按「不重复」处理，绝不让判重把主流程拖坏。
+     */
+    const assessFinalRepeat = async (finalReply: string): Promise<{ free: boolean; degree: number }> => {
+      try {
+        const prevList: string[] = [];
+        if (prevVersion.trim()) prevList.push(prevVersion);
+        for (let i = turnHistory.length - 1; i >= 0 && prevList.length < 4; i--) {
+          const m = turnHistory[i];
+          if (m.role === 'assistant' && String(m.content || '').trim()) prevList.push(String(m.content));
+        }
+        const a = await assessReplyRepeat(finalReply, prevList, rpLang, { userId });
+        if (a.duplicate) console.log('[RepeatRefund] 剧情回合判重：' + a.source + ' degree=' + a.degree.toFixed(2) + ' ' + a.detail);
+        return { free: a.duplicate, degree: a.degree };
+      } catch (e) {
+        console.warn('⚠️ [RepeatRefund] 剧情回合判重异常（按不重复处理，照常扣费）：' + ((e as Error)?.message || e));
+        return { free: false, degree: 0 };
+      }
+    };
+
     if (streamMode) {
       // 流式：逐 token 下发，不让用户对着 spinner 空等整段回复
       res.status(200);
@@ -445,14 +477,20 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
           : rpLang === 'en' ? (scenario?.en?.title || '') : (scenario?.zh?.title || '');
         activityStore.trackFeature(userId, 'roleplay', { detail: rpTitle, mode: 'roleplay', ip: getClientIp(req), country: getClientCountry(req) });
       }
-      if (creditToken && quotaUserId) { quotaStore.commitCredit(quotaUserId, creditToken); creditToken = null; }
+      const repeat = outputSafe ? await assessFinalRepeat(finalReply) : { free: false, degree: 0 };
+      if (repeat.free) {
+        // 判为重复：不 commit、改回滚 —— 本次不消耗额度
+        if (creditToken && quotaUserId) { quotaStore.rollbackCredit(quotaUserId, creditToken); creditToken = null; }
+        for (let i = 0; i < quotaConsumed; i++) { if (quotaUserId) quotaStore.rollbackChat(quotaUserId); }
+        quotaConsumed = 0;
+      } else if (creditToken && quotaUserId) { quotaStore.commitCredit(quotaUserId, creditToken); creditToken = null; }
       /**
        * B 方案：done 里带上「本轮写完没有」——`finishReason` 是上游原值（`length` = 撞上 max_tokens），
        * `incomplete` 是服务端的文本判据结果（见 src/lib/replyCompleteness.ts），`continued` 是自动续写次数。
        * 前端据此：仍不完整时给「没写完 + 续写」入口；埋点区分 PARTIAL_LENGTH / PARTIAL_UNCLOSED / PARTIAL_MID_SENTENCE。
        * 老前端不认识这几个字段 → 行为与改造前完全一致（兼容）。
        */
-      res.write('data: ' + JSON.stringify({ type: 'done', data: { reply: finalReply, incomplete, finishReason: outcome.finishReason, continued: outcome.continued } }) + '\n\n');
+      res.write('data: ' + JSON.stringify({ type: 'done', data: { reply: finalReply, incomplete, finishReason: outcome.finishReason, continued: outcome.continued, free: repeat.free, repeated: repeat.free, repeatDegree: repeat.degree } }) + '\n\n');
       stopHeartbeat();
       res.end();
       return;
@@ -473,8 +511,14 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
       activityStore.trackFeature(userId, 'roleplay', { detail: rpTitle, mode: 'roleplay', ip: getClientIp(req), country: getClientCountry(req) });
     }
 
-    if (creditToken && quotaUserId) { quotaStore.commitCredit(quotaUserId, creditToken); creditToken = null; }
-    res.json({ success: true, data: { reply: finalReply, incomplete, finishReason: outcome.finishReason, continued: outcome.continued } });
+    const repeat = outputSafe ? await assessFinalRepeat(finalReply) : { free: false, degree: 0 };
+    if (repeat.free) {
+      // 判为重复：不 commit、改回滚 —— 本次不消耗额度
+      if (creditToken && quotaUserId) { quotaStore.rollbackCredit(quotaUserId, creditToken); creditToken = null; }
+      for (let i = 0; i < quotaConsumed; i++) { if (quotaUserId) quotaStore.rollbackChat(quotaUserId); }
+      quotaConsumed = 0;
+    } else if (creditToken && quotaUserId) { quotaStore.commitCredit(quotaUserId, creditToken); creditToken = null; }
+    res.json({ success: true, data: { reply: finalReply, incomplete, finishReason: outcome.finishReason, continued: outcome.continued, free: repeat.free, repeated: repeat.free, repeatDegree: repeat.degree } });
   } catch (error) {
     // AI 调用失败时回滚已扣减的额度（与理一理/聊一聊保持一致，避免失败也扣费）
     for (let i = 0; i < quotaConsumed; i++) { if (quotaUserId) quotaStore.rollbackChat(quotaUserId); }
@@ -548,7 +592,7 @@ router.post('/suggestions', async (req: Request, res: Response): Promise<void> =
   let quotaConsumed = false;
   let creditToken: string | null = null;
   try {
-    const { scenarioId, messages, lang, aiName, userName, userPreference, narrativeStyle } = req.body || {};
+    const { scenarioId, messages, lang, aiName, userName, userPreference, narrativeStyle, previousSuggestions } = req.body || {};
     const sid = String(scenarioId || '');
     const userId = resolveUserId(req);
     quotaUserId = userId;
@@ -566,6 +610,8 @@ router.post('/suggestions', async (req: Request, res: Response): Promise<void> =
       res.status(400).json({ success: false, error: '缺少对话内容' });
       return;
     }
+    /** 前端上一批建议：本轮判重退费的比较对象（缺省=首次生成，无可比对象） */
+    const prevSuggestions: string[] = Array.isArray(previousSuggestions) ? previousSuggestions.map((x: unknown) => String(x || '')).filter(Boolean) : [];
 
     // 规范化历史：只保留 role/content，最多 24 条
     const history: RoleplayMessage[] = messages
@@ -617,8 +663,30 @@ router.post('/suggestions', async (req: Request, res: Response): Promise<void> =
       return;
     }
 
+    /**
+     * 判重退费（2026-10-01）：新一批建议与**上一批建议**比。
+     * 判到重复就**不 commit、改回滚**——本次不消耗额度，并把 duplicate/free 回执前端，
+     * 由前端保留上一批建议并提示「这次的建议和上次一样，本次未扣额度」。
+     * 注意：判重失败/超时一律按「不重复」处理（照常扣费），绝不让判重把主流程拖坏。
+     */
+    let duplicate = false;
+    let repeatDegree = 0;
+    try {
+      const a = await assessSuggestionsRepeat(safe, prevSuggestions, rpLang, { userId });
+      repeatDegree = a.degree;
+      if (a.duplicate) {
+        duplicate = true;
+        console.log('[RepeatRefund] 建议批次判重：' + a.source + ' degree=' + a.degree.toFixed(2) + ' ' + a.detail);
+        if (creditToken && quotaUserId) { quotaStore.rollbackCredit(quotaUserId, creditToken); creditToken = null; }
+        if (quotaConsumed && quotaUserId) quotaStore.rollbackChat(quotaUserId);
+        quotaConsumed = false;
+      }
+    } catch (e) {
+      console.warn('⚠️ [RepeatRefund] 建议判重异常（按不重复处理，照常扣费）：' + ((e as Error)?.message || e));
+    }
+
     if (creditToken && quotaUserId) { quotaStore.commitCredit(quotaUserId, creditToken); creditToken = null; }
-    res.json({ success: true, data: { suggestions: safe, quota: quotaStore.getQuota(userId), chatQuota: quotaStore.getChatQuota(userId) } });
+    res.json({ success: true, data: { suggestions: safe, duplicate, free: duplicate, repeatDegree, quota: quotaStore.getQuota(userId), chatQuota: quotaStore.getChatQuota(userId) } });
   } catch (error) {
     if (creditToken && quotaUserId) { quotaStore.rollbackCredit(quotaUserId, creditToken); creditToken = null; }
     if (quotaConsumed && quotaUserId) quotaStore.rollbackChat(quotaUserId);
@@ -630,9 +698,12 @@ router.post('/suggestions', async (req: Request, res: Response): Promise<void> =
 
 /**
  * 会话持久化（跨设备）：登录用户按账号保存，游客按设备指纹保存
- * GET    /api/roleplay/session?scenarioId=   → { messages: [...] | null }
- * POST   /api/roleplay/session               { scenarioId, messages }
- * DELETE /api/roleplay/session?scenarioId=
+ * GET    /api/roleplay/session?scenarioId=&mode=   → { messages: [...] | null, mode }
+ * POST   /api/roleplay/session               { scenarioId, messages, mode }
+ * DELETE /api/roleplay/session?scenarioId=&mode=
+ *
+ * `mode`：solo（单角色线）/ multi（多角色线）。**每部剧本每条线各一份存档**。
+ * 缺省 solo —— 老客户端（只会传 scenarioId）读到的仍是它当年那一份，不会因为多出多角色线而串档。
  */
 router.get('/session', (req: Request, res: Response): void => {
   const scenarioId = String(req.query?.scenarioId || '');
@@ -641,17 +712,19 @@ router.get('/session', (req: Request, res: Response): void => {
     return;
   }
   const userId = resolveUserId(req);
-  const record = roleplaySessionStore.getRecord(userId, scenarioId);
-  res.json({ success: true, data: { messages: record.messages, userPreference: record.userPreference || '' } });
+  const mode = parseRoleplayMode(req.query?.mode);
+  const record = roleplaySessionStore.getRecord(userId, scenarioId, mode);
+  res.json({ success: true, data: { messages: record.messages, userPreference: record.userPreference || '', mode } });
 });
 
 router.post('/session', (req: Request, res: Response): void => {
-  const { scenarioId, messages, userPreference } = req.body || {};
+  const { scenarioId, messages, userPreference, mode } = req.body || {};
   if (!scenarioId) {
     res.status(400).json({ success: false, error: '参数错误' });
     return;
   }
   const userId = resolveUserId(req);
+  const rpMode = parseRoleplayMode(mode);
   let blocked: string | null = null;
   if (Array.isArray(messages)) {
     const sid = String(scenarioId);
@@ -659,7 +732,7 @@ router.post('/session', (req: Request, res: Response): void => {
     // 「与你的旅程 / 运营控制台」会退化成 custom_xxx 内部 id。这里在保存那一刻把剧名落在会话上，
     // 之后读取仍优先取实时标题（改名即时生效），快照只在解析不到时兜底。
     const snapTitle = resolveRoleplayTitle(sid, userId, 'zh').title;
-    const result = roleplaySessionStore.save(userId, sid, messages, typeof userPreference === 'string' ? userPreference.slice(0, 4000) : undefined, snapTitle || undefined);
+    const result = roleplaySessionStore.save(userId, sid, messages, typeof userPreference === 'string' ? userPreference.slice(0, 4000) : undefined, snapTitle || undefined, rpMode);
     /**
      * 🚨 未完成回合护栏命中（2026-09-18，见 src/lib/rpWriteGuard.ts 的 dropsSavedReply）：
      * 客户端想把「还没有回复的这一轮」截断保存 —— 以前这一步会**静默抹掉已生成的回复**，
@@ -681,7 +754,7 @@ router.post('/session', (req: Request, res: Response): void => {
       blocked = result.blocked;
     }
   } else if (typeof userPreference === 'string') {
-    roleplaySessionStore.savePreference(userId, String(scenarioId), userPreference.slice(0, 4000));
+    roleplaySessionStore.savePreference(userId, String(scenarioId), userPreference.slice(0, 4000), rpMode);
   } else {
     res.status(400).json({ success: false, error: '参数错误' });
     return;
@@ -697,7 +770,7 @@ router.delete('/session', (req: Request, res: Response): void => {
     return;
   }
   const userId = resolveUserId(req);
-  roleplaySessionStore.delete(userId, scenarioId);
+  roleplaySessionStore.delete(userId, scenarioId, parseRoleplayMode(req.query?.mode));
   res.json({ success: true });
 });
 

@@ -1,6 +1,6 @@
 /**
  * 地区语气 + 语气程度 选择器（复用组件）
- * 用法：引导页（WelcomeGuide）、对话内「地区语气」轻提示卡片（RegionNudgeCard）
+ * 用法：对话内「地区语气」轻提示卡片（RegionNudgeCard）
  * 与 PreferencePanel 保持一致：中文 10 地区，英文 4 风格；强度 自然/明显/很强
  */
 import { getLang, t } from '../i18n';

@@ -122,6 +122,13 @@ class PushSubscriptionStore {
     if (this.items.length !== before) this.save();
   }
 
+  /** 注销清理（2026-09-28 审查 P1-8）：删除该用户全部推送订阅（endpoint/keys/UA 都是个人数据） */
+  removeByUser(userId: string): void {
+    const before = this.items.length;
+    this.items = this.items.filter((r) => r.userId !== userId);
+    if (this.items.length !== before) this.save();
+  }
+
   /** 设备打开 App 时「打卡」：按端点更新该订阅的 User-Agent（让旧订阅也能在控制台识别设备） */
   setUaByEndpoint(endpoint: string, ua: string): boolean {
     const r = this.items.find((x) => x.subscription.endpoint === endpoint);

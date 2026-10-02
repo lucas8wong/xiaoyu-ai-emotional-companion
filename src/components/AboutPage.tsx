@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { ArrowLeft, BookOpen, Coins, AlertTriangle, ShieldCheck, Info, Crown, Umbrella, PartyPopper, HeartHandshake, Lock, Fingerprint, Copy, Check, UserPlus } from 'lucide-react';
 import { t } from '../i18n';
-import { getInviteLink, isLoggedIn } from '../services/api';
+import { getInviteLink, isLoggedIn, trackInviteCopy } from '../services/api';
 import FeedbackButton from './FeedbackButton';
 import SocialFollow from './SocialFollow';
 import BrandHeart from './BrandHeart';
@@ -42,7 +42,8 @@ export default function AboutPage({ onBack, onOpenPrivacy, onOpenMembership, onN
   const [inviteCopied, setInviteCopied] = useState(false);
   const loggedIn = isLoggedIn();
   const copyInvite = () => {
-    try { navigator.clipboard.writeText(getInviteLink()); setInviteCopied(true); setTimeout(() => setInviteCopied(false), 1600); } catch { setInviteCopied(false); }
+    // 埋点：控制台要能看出「复制过邀请链接」的人（失败静默，见 trackInviteCopy）
+    try { navigator.clipboard.writeText(getInviteLink()); void trackInviteCopy(); setInviteCopied(true); setTimeout(() => setInviteCopied(false), 1600); } catch { setInviteCopied(false); }
   };
   // 三功能插图：治愈主题统一「方块内圆形裁剪」，chat 与 structure / story 保持一致；经典/禅意仍用圆角方块兜底。
   const aboutImgShape = skin === 'healing' ? 'rounded-full' : 'rounded-xl';

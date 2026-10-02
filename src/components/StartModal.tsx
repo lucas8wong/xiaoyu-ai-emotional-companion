@@ -3,7 +3,7 @@
  * 通用组件，三语言；复用各功能入口的标题与描述，保持文案一致
  */
 
-import { X, MessageCircleHeart, Compass, Drama } from 'lucide-react';
+import { MessageCircleHeart, Compass, Drama } from 'lucide-react';
 import { t } from '../i18n';
 import { useSkin } from './SkinProvider';
 import Modal from './ui/Modal';

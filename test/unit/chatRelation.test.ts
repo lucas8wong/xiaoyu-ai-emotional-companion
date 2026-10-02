@@ -9,7 +9,10 @@
  *   ④ 三语齐全，且 en 不串中文、zh-TW 是繁体；
  *   ⑤ `CHAT_RELATION=0` 是干净的空串（消融臂 = 改动前行为）；
  *   ⑥ 接线正确：内置小愈读**用户级偏好**、自定义角色读**角色字段**、**剧情角色不注入**（Q4=A 口径）；
- *      并且"连发"规则真的进了 system（本次解除了原来的禁止拆条）。
+ *      并且"连发"规则真的进了 system（本次解除了原来的禁止拆条）；
+ *   ⑦ 第二条红线（2026-10-02）：四档 × 三气氛都带着「玩梗要 TA 先起头 / 不许替 TA 认定 / 不许给 TA 出题」
+ *      三条禁令，并逐字点名封掉「你还想装没追？」「别装了」这一族句式；损友档的旧措辞（"谁也别想在对方面前装"、
+ *      "翻 TA 的旧账"）不得回归，同时"怼"的许可保留 —— 只改"怼什么"，不改玩梗强度。
  *
  * 最后一条不变量与 `chatVoice.test.ts` 咬合：关系块**不许**把「我在呢 / 慢慢说」请回提示词
  * （那两句是被模型当标准答案抄的样板，见 chatVoice.ts 文件头）。
@@ -116,6 +119,41 @@ test('CHAT_RELATION=0：整体返回空串（消融臂 = 改动前行为）', ()
   } finally {
     if (prev === undefined) delete process.env.CHAT_RELATION; else process.env.CHAT_RELATION = prev;
   }
+});
+
+/* ───────── ⑦ 第二条红线（2026-10-02）：不替 TA 认定、不主动开火、不出题 ───────── */
+
+test('红线：四档 × 三种气氛都带着「不替 TA 认定 / 玩梗要 TA 先起头 / 不出题」三条禁令', () => {
+  for (const k of KINDS) {
+    for (const sc of ['playful', 'tender', 'neutral'] as const) {
+      const t = block(k, sc);
+      assert.ok(t.includes('玩梗要 TA 先起头'), `${k}/${sc} 缺「先起头」`);
+      assert.ok(t.includes('不许替 TA 认定'), `${k}/${sc} 缺「不替 TA 认定」`);
+      assert.ok(t.includes('不许给 TA 出题'), `${k}/${sc} 缺「不出题」`);
+      // 逐字点名被封的那一族句式（本次实测就是它：你还想装没追？）
+      assert.ok(t.includes('你还想装没追？') && t.includes('别装了'), `${k}/${sc} 没点名封掉「装」字句`);
+    }
+  }
+  const en = block('buddy', 'playful', 'en');
+  assert.ok(!/[\u4e00-\u9fff]/.test(en), '英文块里不许夹中文');
+  assert.ok(en.includes('Banter needs a first move from them'));
+  assert.ok(en.includes('Never decide anything about them') && en.includes('Do not set them a test'));
+});
+
+test('损友档改写：不再让 TA「别装」（旧措辞不得回归），但「怼」的许可保留', () => {
+  const b = block('buddy');
+  assert.ok(!b.includes('谁也别想在对方面前装'), '旧措辞「谁也别想在对方面前装」是本次攻击性的种子，不许回来');
+  assert.ok(!b.includes('翻 TA 的旧账'), '「翻旧账」等于拿记忆当武器，不许回来');
+  assert.ok(b.includes('怼'), '损友仍然可以怼（只改"怼什么"，不改玩梗强度）');
+  assert.ok(b.includes('有来有往'));
+  const enB = block('buddy', 'neutral', 'en');
+  assert.ok(!/show off in front of them/i.test(enB) && !/[Ff]ire back, dig up/.test(enB), '英文档的对应旧措辞也要清掉');
+});
+
+test('playful 块：可以怼那句话，但不许把 TA 说成在装（玩闹里也一样）', () => {
+  const p = block('buddy', 'playful');
+  assert.ok(p.includes('加码'));
+  assert.ok(p.includes('不许把 TA 说成在装'), 'playful 块必须写明这条，本次翻车就发生在玩闹口吻里');
 });
 
 /* ───────── ⑥ 接线：真实 system ───────── */

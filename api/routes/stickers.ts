@@ -10,6 +10,7 @@
 
 import { Router } from 'express';
 import { checkContentSafety } from '../services/safety.js';
+import { fetchPublicUrl } from '../services/news.js';
 
 const router = Router();
 
@@ -17,11 +18,16 @@ const DEFAULT_UPSTREAM = 'https://v3.alapi.cn/api/doutu';
 
 /** 同词结果缓存（5 分钟）：避免重复搜索再次命中 ALAPI 免费额度限流（code=429） */
 const CACHE_TTL = 5 * 60 * 1000;
+/** 搜索缓存上限（2026-09-29 审查 A3-P2） */
+const CACHE_MAX = 500;
 const cache = new Map<string, { items: StickerItem[]; ts: number }>();
 
 /** 图片代理内存缓存（24h，上限 500 张）：重复检索/滚动不再反复打上游，首屏并行加载更快 */
 const IMG_CACHE_TTL = 24 * 60 * 60 * 1000;
 const IMG_CACHE_MAX = 500;
+/** 图片代理的安全边界（2026-09-28 审查 B2/B3）：此前既无超时也无体积上限 */
+const IMG_FETCH_TIMEOUT = 8000;
+const IMG_MAX_BYTES = 8 * 1024 * 1024; // 8MB
 const imgCache = new Map<string, { buf: Buffer; ct: string; ts: number }>();
 
 interface StickerItem {
@@ -163,6 +169,12 @@ router.get('/search', async (req, res) => {
       .filter((it) => checkContentSafety(it.title || '').safe)
       .slice(0, 20);
     cache.set(q, { items, ts: Date.now() });
+    // 内存上限（2026-09-29 审查 A3-P2）：图片缓存早有 500 上限，搜索缓存此前无上限——
+    // 任意关键词都能各塞一条，长期运行会一直涨。
+    if (cache.size > CACHE_MAX) {
+      const oldest = cache.keys().next().value;
+      if (oldest !== undefined) cache.delete(oldest);
+    }
     res.json({ success: true, data: { items } });
   } catch (e) {
     console.error('[stickers] search failed:', (e as Error)?.message);
@@ -190,19 +202,31 @@ router.get('/img', async (req, res) => {
   const candidates = swapped && swapped !== u ? [u, swapped] : [u];
   for (const cand of candidates) {
     try {
-      const r = await fetch(cand);
-      if (r.ok) {
-        const ct = r.headers.get('content-type') || 'image/jpeg';
-        const buf = Buffer.from(await r.arrayBuffer());
-        imgCache.set(cand, { buf, ct, ts: Date.now() });
-        if (imgCache.size > IMG_CACHE_MAX) {
-          const first = imgCache.keys().next().value;
-          if (first) imgCache.delete(first);
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), IMG_FETCH_TIMEOUT);
+      try {
+        // fetchPublicUrl：逐跳校验重定向（否则公网图 302 到内网就能被这里代理读回，2026-09-28 审查 B3）。
+        const r = await fetchPublicUrl(cand, { signal: ctrl.signal });
+        if (r.ok) {
+          const ct = r.headers.get('content-type') || 'image/jpeg';
+          const ab = await r.arrayBuffer();
+          // 体积上限：此前无上限，上游返回超大文件即可吃满内存（2026-09-28 审查 B2）。
+          if (ab.byteLength <= IMG_MAX_BYTES) {
+            const buf = Buffer.from(ab);
+            imgCache.set(cand, { buf, ct, ts: Date.now() });
+            if (imgCache.size > IMG_CACHE_MAX) {
+              const first = imgCache.keys().next().value;
+              if (first) imgCache.delete(first);
+            }
+            res.set('Content-Type', ct);
+            res.set('Cache-Control', 'public, max-age=86400');
+            res.send(buf);
+            return;
+          }
         }
-        res.set('Content-Type', ct);
-        res.set('Cache-Control', 'public, max-age=86400');
-        res.send(buf);
-        return;
+      } finally {
+        // 内层 finally 保证超时定时器一定被清掉（否则每次代理都留一个 8s 定时器）
+        clearTimeout(timer);
       }
     } catch { /* 尝试下一候选 */ }
   }

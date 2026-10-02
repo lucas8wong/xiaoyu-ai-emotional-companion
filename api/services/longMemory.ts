@@ -292,7 +292,7 @@ class LongMemoryStore {
     // 2) 取代关系：新信息推翻旧记忆 → 旧条目标「已被更新」（保留、不删、不再注入）
     for (const { input, entry } of applied) {
       for (const r of input.replaces || []) {
-        const target = String(r || '').replace(/^[\s"'「『【\[]+|[\s"'」』】\]]+$/g, '').trim();
+        const target = String(r || '').replace(/^[\s"'「『【[]+|[\s"'」』】\]]+$/g, '').trim();
         if (target.length < 4) continue;
         for (const e of entries) {
           if (e.id === entry.id || createdIds.has(e.id) || e.status === 'superseded') continue;

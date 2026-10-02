@@ -6,8 +6,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { X, Share2, Copy, Check, Gift, Crown, Ticket } from 'lucide-react';
-import { getInviteLink, getPayConfig, getQuota, applyInviteCode, isLoggedIn } from '../services/api';
+import { Share2, Copy, Check, Gift, Crown, Ticket } from 'lucide-react';
+import { getInviteLink, getPayConfig, getQuota, applyInviteCode, isLoggedIn, trackInviteCopy } from '../services/api';
 import { quotaTierTiao } from '../lib/quotaTiers';
 import { t } from '../i18n';
 import Modal from './ui/Modal';
@@ -58,6 +58,8 @@ export default function QuotaPromptModal({ open, onClose, onOpenFeedback, onOpen
   const copyInvite = () => {
     try {
       navigator.clipboard.writeText(getInviteLink());
+      // 埋点：控制台要能看出「复制过邀请链接」的人（失败静默，见 trackInviteCopy）
+      void trackInviteCopy();
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch { setCopied(false); }

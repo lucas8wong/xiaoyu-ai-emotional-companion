@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { X, ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { savePreferences } from '../services/api';
 import { loadPreferences, setCachedPreferences } from '../lib/prefsCache';
 import { t } from '../i18n';

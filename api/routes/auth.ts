@@ -10,6 +10,8 @@ import { sendEmailCode, emailCodeStore } from '../services/email.js';
 import { getAuthUser } from '../services/session.js';
 import { getClientCountry, getClientIp } from '../services/geo.js';
 import { rateLimit } from '../middleware/rateLimit.js';
+import { GOOGLE_CLIENT_ID, googleConfigured, verifyGoogleIdToken } from '../services/googleAuth.js';
+import { bindGuestAndTrack, grantSignupRewards } from '../services/onboardNewAccount.js';
 
 const router = Router();
 
@@ -23,7 +25,7 @@ const limitSendCode = rateLimit({
   message: '验证码发送过于频繁，请 10 分钟后再试',
   key: (req) => {
     const email = String(req.body?.email || '').toLowerCase();
-    return (req.ip || 'unknown') + ':' + email;
+    return (getClientIp(req) || 'unknown') + ':' + email;
   },
 });
 
@@ -50,21 +52,9 @@ router.post('/register', limitRegister, async (req: Request, res: Response): Pro
   // 注册成功才消费验证码（一次性）
   emailCodeStore.verify(regEmail, 'register', regCode);
 
-  // 注册即送（限时活动）：活动期内新账户获得 20 条对话额度（chat credit）；游客不享受
-  try {
-    const { quotaStore, REGISTER_CHAT_BONUS_COUNT } = await import('../services/quota.js');
-    if (quotaStore.isChatBonusActive()) {
-      quotaStore.addChatBonus(result.user.userId, REGISTER_CHAT_BONUS_COUNT, 'register');
-      console.log(`🎁 [Register] 注册限时奖励: userId=${result.user.userId.slice(0, 8)} +对话${REGISTER_CHAT_BONUS_COUNT}条`);
-      // 发邮件通知（注册用户有邮箱）
-      const { notifyRewardByEmail } = await import('../services/rewardNotifier.js');
-      notifyRewardByEmail(result.user.userId, REGISTER_CHAT_BONUS_COUNT, 'register');
-    } else {
-      console.log('ℹ️ [Register] 注册限时活动已结束，不发放对话奖励');
-    }
-  } catch (e) {
-    console.warn('⚠️ [Register] 注册奖励处理失败:', (e as Error)?.message);
-  }
+  // 新账号奖励（限时对话额度 / 新人 Pro / 节日礼）——与 Google 建号**共用**同一实现，
+  // 见 services/onboardNewAccount.ts；两条入口各写一份是「活动只发一半用户」的事故源头。
+  await grantSignupRewards(result.user.userId);
 
   // 预设邀请码：注册时输入匹配的邀请码 → 额外送对话额度（与注册立得叠加）
   let appliedInviteBonus = 0;
@@ -98,7 +88,7 @@ router.post('/register', limitRegister, async (req: Request, res: Response): Pro
     try {
       const { quotaStore, INVITE_BONUS_COUNT } = await import('../services/quota.js');
       const deviceId = String(req.headers['x-device-id'] || '');
-      const inviteeIp = req.ip || '';
+      const inviteeIp = getClientIp(req) || '';
       const inviterAccount = accountStore.getById(refStr);
       let inviterUserId: string;
       if (inviterAccount) {
@@ -137,62 +127,9 @@ router.post('/register', limitRegister, async (req: Request, res: Response): Pro
     }
   }
 
-  // 记录本账号注册时的设备/IP（供其日后作为邀请人时的「设备/IP 不同」比较）
-  try {
-    const { quotaStore: qs } = await import('../services/quota.js');
-    qs.noteDevice(result.user.userId, String(req.headers['x-device-id'] || ''), req.ip || '');
-  } catch { /* 忽略 */ }
-
-  // 游客数据并入账号：注册前以游客身份使用的额度/会话/记忆/偏好全部保留
-  // 孤儿归因：把「同一设备指纹、不同 IP」的历史游客记录也一并合并（找回 IP 漂移期间的邀请奖励）
-  try {
-    const deviceId = String(req.headers['x-device-id'] || '');
-    if (deviceId) {
-      const { quotaStore: qs } = await import('../services/quota.js');
-      const { mergeGuestData } = await import('../services/mergeGuest.js');
-      const targets = new Set<string>();
-      // 同一设备指纹下的所有历史游客记录（含当前 IP 与历史不同 IP 的孤儿）
-      for (const id of qs.listByDeviceKey(qs.identifyByDevice(deviceId), result.user.userId)) {
-        targets.add(id);
-      }
-      // 当前 IP 的游客记录兜底（老记录可能还没打 deviceKey 标签）
-      const guestId = qs.identify(deviceId, req.ip || '');
-      if (guestId !== result.user.userId) targets.add(guestId);
-      for (const id of targets) mergeGuestData(id, result.user.userId);
-    }
-  } catch (e) {
-    console.warn('⚠️ [Register] 游客数据合并失败:', (e as Error)?.message);
-  }
-
-  // 行为追踪：注册成功（首次登录）
-  try {
-    const { activityStore } = await import('../services/activity.js');
-    activityStore.trackLogin(result.user.userId, { method: 'register', ip: getClientIp(req), country: getClientCountry(req) });
-  } catch { /* 追踪失败不影响注册 */ }
-
-  // 新人 Pro 限时活动：注册即送 7 天 Pro + 按 IP 地区语言发恭喜邮件（仅活动期内生效；失败不影响注册）
-  try {
-    const { maybeGrantNewcomerProTrial } = await import('../services/proTrialNewcomer.js');
-    const gift = await maybeGrantNewcomerProTrial(result.user.userId);
-    if (gift.granted) {
-      console.log(`🎁 [Register] 新人 Pro 试用已发放: userId=${result.user.userId.slice(0, 8)} emailed=${gift.emailed}`);
-    } else if (gift.reason && gift.reason !== 'campaign-inactive') {
-      console.log(`ℹ️ [Register] 新人 Pro 试用未发放 (${gift.reason}): userId=${result.user.userId.slice(0, 8)}`);
-    }
-  } catch (e) {
-    console.warn('⚠️ [Register] 新人 Pro 试用发放失败:', (e as Error)?.message);
-  }
-
-  // 来源归因（identify/merge）：把该匿名设备上的 first-touch 落到这个账号上，
-  // 否则「注册用户全都像凭空出现」——后续才能回答「哪个渠道带来注册/付费」。
-  // 只存渠道维度，不存 IP/邮箱；客户端带来的 first 优先（它在落地那一刻就记下了）。
-  try {
-    const deviceId = String(req.headers['x-device-id'] || '');
-    const { attributionStore } = await import('../services/attribution.js');
-    attributionStore.recordSignup(result.user.userId, deviceId, (req.body || {}).attr);
-  } catch (e) {
-    console.warn('⚠️ [Register] 来源归因记录失败:', (e as Error)?.message);
-  }
+  // 设备/IP 记录 + 游客数据并入 + 行为追踪 + 来源归因 —— 与 Google 建号**共用**同一实现
+  // （见 services/onboardNewAccount.ts）。抽出来是为了「两台入口天生一致」。
+  await bindGuestAndTrack(req, result.user.userId, 'register');
 
   const token = accountStore.createToken(result.user.userId);
   res.json({ success: true, data: { token, user: accountStore.getPublic(result.user), inviteBonus: appliedInviteBonus } });
@@ -210,6 +147,11 @@ router.post('/login', limitLogin, async (req: Request, res: Response): Promise<v
   }
   // 登录识别仅用邮箱（手机号/用户名不作登录标识；昵称仅作展示名）
   const user = accountStore.findByEmail(String(account).trim().toLowerCase());
+  // Google 建的账号没有密码：给一句明确提示，否则用户只会以为记错了密码、反复重试
+  if (user && !accountStore.hasPassword(user)) {
+    res.status(401).json({ success: false, error: '该账号使用 Google 登录，请点「用 Google 继续」；或用「忘记密码」设置一个密码' });
+    return;
+  }
   if (!user || !accountStore.verifyPassword(user, String(password))) {
     res.status(401).json({ success: false, error: '邮箱或密码错误' });
     return;
@@ -219,7 +161,7 @@ router.post('/login', limitLogin, async (req: Request, res: Response): Promise<v
     const deviceId = String(req.headers['x-device-id'] || '');
     if (deviceId) {
       const { quotaStore: qs } = await import('../services/quota.js');
-      const guestId = qs.identify(deviceId, req.ip || '');
+      const guestId = qs.identify(deviceId, getClientIp(req) || '');
       const { mergeGuestData } = await import('../services/mergeGuest.js');
       mergeGuestData(guestId, user.userId);
     }
@@ -230,7 +172,7 @@ router.post('/login', limitLogin, async (req: Request, res: Response): Promise<v
   // 记录本账号最近一次设备/IP（供其作为邀请人时的「设备/IP 不同」比较）
   try {
     const { quotaStore: qs } = await import('../services/quota.js');
-    qs.noteDevice(user.userId, String(req.headers['x-device-id'] || ''), req.ip || '');
+    qs.noteDevice(user.userId, String(req.headers['x-device-id'] || ''), getClientIp(req) || '');
   } catch { /* 忽略 */ }
 
   // 行为追踪：登录成功
@@ -241,6 +183,72 @@ router.post('/login', limitLogin, async (req: Request, res: Response): Promise<v
 
   const token = accountStore.createToken(user.userId);
   res.json({ success: true, data: { token, user: accountStore.getPublic(user) } });
+});
+
+/**
+ * Google 一键登录 / 注册
+ * POST /api/auth/google { credential, defaultName? }
+ *
+ * credential = 前端 Google Identity Services 返回的 ID token（JWT），服务端验签后取 sub/email。
+ * 三种分支：
+ *   ① 该 Google 账号已绑定过 → 直接登录；
+ *   ② 邮箱已存在 → 绑定 Google 后登录（安全性：该邮箱在注册时已用验证码证明过归属，
+ *      且 Google 侧 email_verified=true，两边都证明「这个人拥有这个邮箱」）；
+ *   ③ 都不存在 → 建号（无密码），并发放入驻奖励。
+ *
+ * 返回结构与 /login 完全一致（token + user），前端无需分支处理。
+ */
+router.post('/google', limitLogin, async (req: Request, res: Response): Promise<void> => {
+  if (!googleConfigured) {
+    res.status(503).json({ success: false, error: 'Google 登录尚未配置' });
+    return;
+  }
+  const credential = String((req.body || {}).credential || '');
+  if (!credential) {
+    res.status(400).json({ success: false, error: '缺少 Google 登录凭据' });
+    return;
+  }
+  const verdict = await verifyGoogleIdToken(credential);
+  if (!verdict.ok) {
+    res.status(401).json({ success: false, error: verdict.error || 'Google 登录失败' });
+    return;
+  }
+  const { sub, email, name } = verdict.claims;
+
+  let user = accountStore.findByGoogleSub(sub);
+  let isNewAccount = false;
+  if (!user) {
+    const byEmail = accountStore.findByEmail(email);
+    if (byEmail) {
+      if (!accountStore.linkGoogle(byEmail.userId, sub)) {
+        res.status(409).json({ success: false, error: '该 Google 账号已绑定其它账户，请联系我们处理' });
+        return;
+      }
+      user = accountStore.findByGoogleSub(sub) || byEmail;
+      console.log(`🔗 [Google] 已绑定既有账号: userId=${user.userId.slice(0, 8)}`);
+    } else {
+      // 昵称优先用 Google 资料里的名字；没有就用前端按界面语言传来的兜底名
+      const created = accountStore.createOAuthAccount({
+        email,
+        googleSub: sub,
+        username: name || String((req.body || {}).defaultName || ''),
+      });
+      if (!created.user) {
+        res.status(400).json({ success: false, error: created.error || '创建账号失败' });
+        return;
+      }
+      user = created.user;
+      isNewAccount = true;
+      console.log(`🆕 [Google] 新建账号: userId=${user.userId.slice(0, 8)}`);
+    }
+  }
+
+  // 与邮箱注册共用同一套收尾（设备记录 / 游客数据并入 / 行为追踪 / 来源归因）
+  await bindGuestAndTrack(req, user.userId, isNewAccount ? 'register' : 'google');
+  if (isNewAccount) await grantSignupRewards(user.userId);
+
+  const token = accountStore.createToken(user.userId);
+  res.json({ success: true, data: { token, user: accountStore.getPublic(user), isNew: isNewAccount } });
 });
 
 /**
@@ -390,6 +398,9 @@ router.delete('/account', async (req: Request, res: Response): Promise<void> => 
     // 5. 删除反馈
     const { feedbackStore } = await import('../services/feedback.js');
     feedbackStore.removeByUser(userId);
+    // 5-1. 删除站内信箱（小愈信箱：运营者写给该用户的信）
+    const { inboxStore } = await import('../services/inbox.js');
+    inboxStore.removeByUser(userId);
     // 5a. 删除长期记忆（用户画像/关键事实）
     const { longMemoryStore } = await import('../services/longMemory.js');
     longMemoryStore.deleteByUser(userId);
@@ -427,6 +438,24 @@ router.delete('/account', async (req: Request, res: Response): Promise<void> => 
     // 5c2. 删除千世书自建剧本
     const { wenyouScenariosStore } = await import('../services/wenyouScenarios.js');
     wenyouScenariosStore.deleteByUser(userId);
+    /**
+     * 5c3. 注销清理（2026-09-28 审查 P1-8）：以下 6 个 per-user 存储此前**不在注销清单里**，
+     * 而注销接口明确回复「所有个人信息已永久删除」——千世书存档（进行中的局 + 命名存档 + 结局）、
+     * 浏览器推送订阅（endpoint/keys/UA）、配乐偏好、皮肤记录、召回记录（lastContextRef = 会话/剧本标题）、
+     * 狼人杀开局台账，全部属于个人数据，必须一起清。
+     */
+    const { wenyouSavesStore } = await import('../services/wenyouSaves.js');
+    wenyouSavesStore.deleteByUser(userId);
+    const { pushSubscriptionStore } = await import('../services/push.js');
+    pushSubscriptionStore.removeByUser(userId);
+    const { bgmPrefStore } = await import('../services/bgmPrefs.js');
+    bgmPrefStore.removeByUser(userId);
+    const { skinUsageStore } = await import('../services/skinUsage.js');
+    skinUsageStore.removeByUser(userId);
+    const { reengageStore } = await import('../services/reengage.js');
+    reengageStore.removeByUser(userId);
+    const { werewolfLedger } = await import('../services/werewolfLedger.js');
+    werewolfLedger.removeByUser(userId);
     // 5d. 删除用量统计（token/成本，per-user 记录）
     const { usageStore } = await import('../services/usage.js');
     usageStore.deleteByUser(userId);

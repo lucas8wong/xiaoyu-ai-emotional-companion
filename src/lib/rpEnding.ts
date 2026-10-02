@@ -51,7 +51,7 @@ const RP_TRAILING_TERMINATORS = new RegExp('([' + RP_TERMINATORS + ']+)$');
 /** 尾部的装饰（空白、引号、书名号、括号）——判据只看正文与句末标点 */
 const RP_TAIL_DECORATION = /(?:[\s\u3000]|[」』”"’）)】\]]+)+$/;
 /** 头部的装饰（空白、开引号、书名号、括号） */
-const RP_HEAD_DECORATION = /^[\s\u3000「『“‘"（(【\[]+/;
+const RP_HEAD_DECORATION = /^[\s\u3000「『“‘"（(【[]+/;
 
 /** 去掉尾巴上的装饰与空白 */
 function stripTailDecoration(s: string): string {

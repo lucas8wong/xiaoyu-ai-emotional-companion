@@ -1,7 +1,7 @@
 /**
  * 心情打卡（独立弹窗，从「我的」独立出来）
  */
-import { X, CalendarDays } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import MoodCheckinView from './MoodCheckinView';
 import { t } from '../i18n';
 import Modal from './ui/Modal';

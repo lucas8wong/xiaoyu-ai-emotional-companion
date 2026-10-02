@@ -406,8 +406,24 @@ const SKIP = new Set(['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT', 'CODE', 'PRE', 'NO
 const HAN = /[\u4e00-\u9fff]/;
 const PHRASES = Object.keys(FLAT_EN).sort((a, b) => b.length - a.length);
 
-function replacePhrases(text: string): string {
+/**
+ * zh→en 词典替换。
+ *
+ * ⚠️ 2026-09-29 审查 A6-P2-2 修复：这里**只做整节点匹配 + 短片段子串替换**。
+ * 之前对每个文本节点无差别做子串替换，而词典里有「小/大/中/年/月/级」这类单字键，
+ * 于是**中文正文被改坏**（本地模式的剧情正文本来就是中文设计）：
+ *   「我心中一横，大步走出，年幼的…」→「我心Medium一横，Large步走出，year幼的…」
+ * 规则：
+ *  1. 整节点（trim 后）命中词典 → 直接换（按钮/标签/剧本名等 UI 文案，安全）；
+ *  2. 否则只有当片段**较短且不含句读**时才做子串替换（「第3章」这类内嵌 UI 片段）；
+ *  3. 成句的中文（含 ，。！？、；：… 或长度 > 12）一律原样保留 —— 那是玩家要读的正文。
+ */
+export function replacePhrases(text: string): string {
   if (!HAN.test(text)) return text;
+  const trimmed = text.trim();
+  const exact = FLAT_EN[trimmed];
+  if (exact) return text.replace(trimmed, exact);
+  if (trimmed.length > 12 || /[，。！？、；：…—「」『』（）《》]/.test(trimmed)) return text;
   let out = text;
   for (const zh of PHRASES) {
     if (!zh) continue;

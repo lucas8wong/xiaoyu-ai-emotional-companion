@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { X, Loader2, Compass, Heart, CalendarDays, Sparkles, Bird, GitCommitHorizontal, BookOpen, Milestone, ChevronDown, MessageCircleHeart, Drama } from 'lucide-react';
+import { Loader2, Compass, Heart, CalendarDays, Sparkles, Bird, GitCommitHorizontal, BookOpen, Milestone, ChevronDown, MessageCircleHeart, Drama } from 'lucide-react';
 import { getJourney, type JourneyData, type JourneyCharacter, type JourneyMoment } from '../services/api';
 import { t, getLang } from '../i18n';
 import { memoryWhenText } from '../lib/memoryTime';

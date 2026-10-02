@@ -4,11 +4,11 @@
  */
 
 import { useEffect, useRef, useState, useMemo, useCallback, lazy, Suspense } from 'react';
-import { ArrowLeft, ArrowDown, Send, Loader2, Wand2, SlidersHorizontal, Share2, Plus, Trash2, X, Pencil, Check, ImagePlus, MapPin, Pin, CornerUpLeft, Copy, Mic, MicOff, ChevronDown, Eye, Camera, Smile, Volume2, UserPlus, BookOpen, RefreshCw, MessageSquare } from 'lucide-react';
+import { ArrowLeft, ArrowDown, ArrowRight, Send, Loader2, Wand2, SlidersHorizontal, Share2, Plus, Trash2, X, Pencil, Check, ImagePlus, MapPin, Pin, CornerUpLeft, Copy, Mic, MicOff, ChevronDown, Eye, Camera, Smile, Volume2, UserPlus, BookOpen, RefreshCw, MessageSquare } from 'lucide-react';
 import { BTN } from './ui/controls';
 import { SkinFeedbackIcon } from './SkinIcon';
 import { useAppStore } from '../store/useAppStore';
-import { chatSendStream, getQuota, getPayConfig, getChatSessions, getChatSession, deleteChatSession, renameChatSession, pinChatSession, getInviteLink, isLoggedIn, getChatCharacters, createChatCharacter, updateChatCharacter, deleteChatCharacter, getChatCharacterGrowth, deleteMemory, asr, ttsToAudio, savePreferences, quotaChatRemain, quotaIsUnlimited, reportAiFailure, getCharacterStory, syncStoryCharacter, getChatInbox, markChatRead, type ChatMessage, type ChatSessionMeta, type QuotaInfo, type ChatCharacterMeta, type ChatCharacterGrowth, type ChatRedirectHint, type StoryView, type ChatInboxRow, type ChatRelationKind } from '../services/api';
+import { chatSendStream, getQuota, getPayConfig, getChatSessions, getChatSession, deleteChatSession, renameChatSession, pinChatSession, getInviteLink, trackInviteCopy, isLoggedIn, getChatCharacters, createChatCharacter, updateChatCharacter, deleteChatCharacter, getChatCharacterGrowth, deleteMemory, asr, ttsToAudio, savePreferences, quotaChatRemain, quotaIsUnlimited, reportAiFailure, getCharacterStory, syncStoryCharacter, getChatInbox, markChatRead, type ChatMessage, type ChatSource, type ChatSessionMeta, type QuotaInfo, type ChatCharacterMeta, type ChatCharacterGrowth, type ChatRedirectHint, type StoryView, type ChatInboxRow, type ChatRelationKind } from '../services/api';
 import { guestQuotaLineText } from '../lib/quotaTiers';
 import { VoiceSettingsModal, VoiceConfigPicker, DEFAULT_VOICE_CONFIG, loadVoiceConfig, saveVoiceConfig, composeVoice, effectiveDialect, loadVoiceEnabled, saveVoiceEnabled, type VoiceConfig } from './VoiceSettingsModal';
 import { getCachedPreferences, setCachedPreferences, loadPreferences } from '../lib/prefsCache';
@@ -20,6 +20,9 @@ import StoryShareModal, { type StoryBubble } from './StoryShareModal';
 import TypingDots from './TypingDots';
 import AiFeedbackMark from './AiFeedbackMark';
 import LinkCard from './LinkCard';
+import ChatSources from './ChatSources';
+import { mergeSources } from '../lib/chatServerMessages';
+import { findMessageLinks } from '../lib/messageLinks';
 import PageTourBanner from './PageTourBanner';
 import FeatureCoachmarks, { type CoachStep } from './FeatureCoachmarks';
 import EmotionInput from './EmotionInput';
@@ -143,37 +146,24 @@ function stripMarkdown(text: string): string {
 
 /**
  * 把 AI 回复里的 URL 渲染成微信/QQ 式的可点击「链接卡片」。
- * 识别带协议与裸域名链接；邮箱域名（user@example.com）不算链接；
- * 剥离尾随中/英文标点，标点留给正文。裸链接自动补 https://。
+ * 识别规则（裸域名、邮箱排除、尾随标点剥离、中文路径）都在 lib/messageLinks——
+ * 纯函数、可单测；2026-10-03 把「中文路径被截断 → 点开 404」的判据钉在那里。
+ * 这里只负责：命中的 URL 换成 LinkCard，周围正文原样留下。
  */
-const URL_RE = /(?:https?:\/\/)?(?:[\w-]+\.)+[a-z]{2,63}(?::\d+)?(?:\/[^\s<>"'，。！？；：、（）【】「」『』—…\u4e00-\u9fff]*)?/gi;
 function renderMessageText(text: string): React.ReactNode[] {
   const cleaned = stripMarkdown(text);
   const out: React.ReactNode[] = [];
   let last = 0;
   let key = 0;
-  let m: RegExpExecArray | null;
-  URL_RE.lastIndex = 0;
-  while ((m = URL_RE.exec(cleaned))) {
-    // 邮箱里的域名（user@example.com）不算链接
-    if (m.index > 0 && cleaned[m.index - 1] === '@') continue;
-    if (m.index > last) out.push(cleaned.slice(last, m.index));
-    const raw = m[0];
-    let url = raw;
-    const trailMatch = url.match(/[.,;:!?)\]}>"']+$/);
-    let tail = '';
-    if (trailMatch) { tail = trailMatch[0]; url = url.slice(0, -tail.length); }
-    // 裸链接（无协议）要成卡片需带路径 或 www. 开头；否则当作普通文本，避免误判文件名/版本号
-    const hasScheme = /^https?:\/\//i.test(url);
-    const isCard = hasScheme || /^www\./i.test(url) || url.includes('/');
-    if (isCard && url) {
-      const href = hasScheme ? url : 'https://' + url;
-      out.push(<LinkCard key={key++} url={href} />);
-      if (tail) out.push(tail);
+  for (const link of findMessageLinks(cleaned)) {
+    if (link.index > last) out.push(cleaned.slice(last, link.index));
+    if (link.href) {
+      out.push(<LinkCard key={key++} url={link.href} />);
+      if (link.tail) out.push(link.tail);
     } else {
-      out.push(raw);
+      out.push(link.raw);
     }
-    last = m.index + raw.length;
+    last = link.index + link.raw.length;
   }
   if (last < cleaned.length) out.push(cleaned.slice(last));
   return out;
@@ -342,7 +332,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
   const { meta } = useSkin(); // 当前皮肤：AI 陪伴头像随皮肤切换
   const {
     chatSessionId, setChatSessionId,
-    chatMessages, setChatMessages,
+    chatMessages, setChatMessages, setChatMessageSources,
     chatSessions, setChatSessions,
     addChatMessage,
     updateChatMessage,
@@ -1339,6 +1329,63 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
     requestScrollToBottom(streaming ? 'auto' : 'smooth');
   }, [chatMessages.length, sending, streaming, lastMsgLen, typing, searching, vvHeight]);
 
+  /**
+   * 用最终正文**重建本轮的助手气泡**（2026-09-29 输出卫生闸专用）。
+   *
+   * 为什么需要：流式是边生成边显示的，而「剥掉开头自言自语」与「自言自语重生成」都是**事后**才知道的 ——
+   * 那时原文已经画在屏幕上了（而且前端优先用流式文本，不重建就会**永久留着一个错误版本**）。
+   * 所以服务端在 done 里带 revised=true 时，这里按最终正文重排气泡，保证「打字时看到的」
+   * 与「最终 / 重进历史看到的」一致。段落口径与分段发送器、服务端完全一致：split('\n\n')→trim→丢空段。
+   */
+  const rebuildTurnBubbles = (finalReply: string) => {
+    const list = useAppStore.getState().chatMessages;
+    const ids: string[] = [];
+    for (let i = list.length - 1; i >= 0 && list[i].role === 'assistant'; i--) ids.unshift(list[i].id);
+    if (!ids.length) return;
+    const parts = String(finalReply || '').split('\n\n').map(p => p.trim()).filter(Boolean);
+    if (!parts.length) return;
+    const start = list.findIndex(x => x.id === ids[0]);
+    if (start < 0) return;
+    const rebuilt = parts.map(p => newMsg('assistant', p));
+    setChatMessages([...list.slice(0, start), ...rebuilt, ...list.slice(start + ids.length)]);
+  };
+
+  /**
+   * 把来源挂到**对应的那条气泡**上（2026-09-29 用户实测反馈后重做）。
+   *
+   * 两条来源、两种归属，规则与历史还原（src/lib/chatServerMessages.ts）逐字一致：
+   *  · `segSources[j]` = 第 j 段（＝第 j 条气泡）**自己引用**的来源 → 挂那条气泡
+   *    （用户要的正是这个：讲这条新闻的那条气泡下面，挂这条新闻的出处）；
+   *  · `turnSources` = 整轮（web_search 工具命中）→ 挂**最后一条**（原来的语义）；
+   *  · 最后一条两者都有 → 合并去重。
+   *
+   * 段↔气泡的对齐：分段发送器把回复按 \n\n 拆成气泡，所以「本轮连续的助手气泡」按顺序就是各段。
+   * 数量对不上（理论上不会）时退回「全部挂最后一条」——绝不因为对齐失败把来源丢掉。
+   * ⚠️ 必须在 cancelStream() 之前调用：那会 ++sendGenRef，之后的迟到逻辑一律作废。
+   */
+  const attachSourcesBySegment = (turnSources?: ChatSource[], segSources?: (ChatSource[] | null)[]) => {
+    const list = useAppStore.getState().chatMessages;
+    const ids: string[] = [];
+    for (let i = list.length - 1; i >= 0 && list[i].role === 'assistant'; i--) ids.unshift(list[i].id);
+    if (!ids.length) return;
+    /**
+     * 先把「段 → 来源」摊成一张与气泡一一对应的表，再统一写回。
+     * ⚠️ 段数比气泡多时（理论上不该发生）把多出来的并到**最后一条**，绝不静默丢弃 ——
+     * 2026-09-29 实测踩过：那时 `aligned=false` 会把整批来源直接吞掉，用户看到的就是「一条来源都没有」。
+     */
+    const perBubble: ChatSource[][] = ids.map(() => []);
+    (segSources || []).forEach((s, j) => {
+      if (!s || !s.length) return;
+      const target = Math.min(j, ids.length - 1);
+      perBubble[target] = mergeSources(perBubble[target], s);
+    });
+    ids.forEach((id, j) => {
+      const isLast = j === ids.length - 1;
+      const merged = mergeSources(perBubble[j], isLast ? (turnSources || []) : []);
+      if (merged.length) setChatMessageSources(id, merged);
+    });
+  };
+
   // —— 拟人化分段发送（一个段落 = 一条气泡；段落内容到达即开气泡并逐字浮出，段落间保留「正在输入」）——
   const openBubble = (s: StreamState, text: string): string => {
     const m = newMsg('assistant', text);
@@ -1886,10 +1933,18 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
           s.full = full || r.data.reply;
           s.ended = true;
           await waitRevealDone();
+          // 输出卫生闸改过正文（剥掉开头自言自语 / 重生成）→ 用最终正文重建本轮气泡，
+          // 否则屏幕上会永久留着那段自言自语（前端优先用流式文本）。必须在 cancelStream() 之前。
+          if (r.data.revised) rebuildTurnBubbles(r.data.reply);
+          // 来源按段挂到对应气泡（整轮来源挂最后一条）—— 必须赶在 cancelStream() 之前（见该函数注释）
+          attachSourcesBySegment(r.data.sources, r.data.sourceSegments);
           cancelStream();
         } else {
           // 无 token 流式（极端情况）：直接补完整回复
           const fbMsg = newMsg('assistant', r.data!.reply);
+          // 无分段时只有一段：段来源与整轮来源合并后一起挂
+          const fbSources = mergeSources(r.data.sourceSegments?.[0] || [], r.data.sources || []);
+          if (fbSources.length) fbMsg.sources = fbSources;
           addChatMessage(fbMsg);
           preloadTextAudio(fbMsg.id, r.data!.reply);
         }
@@ -2202,7 +2257,8 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
 
   // 复制专属邀请链接：每邀请 1 人注册得邀请奖励（数值取配置）
   const copyInvite = () => {
-    try { navigator.clipboard.writeText(getInviteLink()); setInviteCopied(true); setTimeout(() => setInviteCopied(false), 1500); } catch { /* 忽略 */ }
+    // 埋点：控制台要能看出「复制过邀请链接」的人（失败静默，见 trackInviteCopy）
+    try { navigator.clipboard.writeText(getInviteLink()); void trackInviteCopy(); setInviteCopied(true); setTimeout(() => setInviteCopied(false), 1500); } catch { /* 忽略 */ }
   };
 
   // —— 消息操作：长按（移动端）/ 悬停 ⋯（桌面）/ 右键 打开 回复·复制 菜单 ——
@@ -3007,27 +3063,47 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
                 {charLoading ? (getLang() === 'en' ? 'Loading…' : '加载中…') : greetingText}
               </div>
             </div>
-            {/* 快速开始 */}
+            {/* 快速开始：这三颗是空对话页的**主入口**。
+                2026-09-27 用户反馈「看不出能点」——病根是它们和下面的说明文字同一层级：
+                1px 细描边 + 无阴影 + 无箭头 + 约 38px 高，且唯一的「可点」信号是 hover（手机上根本没有 hover）。
+                现在把「可点」做成**静态**四件套，hover/active 只作锦上添花（better-ui：每个状态变化都要有静态线索）：
+                  ① 2px 厚描边 + shadow-soft（与 .card-soft / .btn-primary 同一套「厚描边=实体」的黏土语言）；
+                  ② 右侧常显箭头（第二信号，不依赖指针形状）；
+                  ③ min-h-[44px] 触控高度（原来约 38px，未达 44 下限）；
+                  ④ hover 时描边转主色、箭头圈填充、整颗上浮；按下 scale(0.98) 回弹（与 .btn-primary 同参数）。
+                左侧 pl-9 与右侧「pr-3 + 28px 箭头圈 + gap-2」等宽，是为了让居中文字**光学居中**，
+                而不是被箭头挤得偏左（better-ui：光学对齐优先于几何对齐）。 */}
             <div className="flex flex-col gap-2.5 max-w-xs mx-auto">
               {starters.map(s => (
                 <button
                   key={s}
                   onClick={() => handleSend(s)}
-                  className="w-full text-sm text-primary-text bg-white border border-clay-border rounded-full px-4 py-2.5 hover:bg-primary-lighter transition-all"
+                  className="group w-full min-h-[44px] flex items-center gap-2 text-sm font-medium text-primary-text bg-white border-2 border-clay-border rounded-full pl-9 pr-3 py-2 shadow-soft cursor-pointer transition-[background-color,border-color,box-shadow,transform] duration-150 hover:border-primary hover:bg-primary-lighter hover:-translate-y-0.5 hover:shadow-lift active:translate-y-0 active:scale-[0.98]"
                 >
-                  {s}
+                  <span className="flex-1 text-center leading-snug">{s}</span>
+                  <span
+                    aria-hidden="true"
+                    className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center bg-primary-lighter text-primary-text transition-[background-color,color,transform] duration-150 group-hover:bg-primary group-hover:text-white group-hover:translate-x-0.5"
+                  >
+                    <ArrowRight className="w-4 h-4" strokeWidth={2} />
+                  </span>
                 </button>
               ))}
             </div>
+            {/* 次级入口：同样给「厚描边 + 阴影 + 常显箭头」的可点三件套，只是字号更小、更靠近说明位。 */}
             <button
               onClick={() => handleSend(t('chatNewsPrompt'))}
-              className="block mx-auto mt-4 max-w-[92%] text-[12px] text-center text-ink bg-white/75 border border-clay-border rounded-lg px-2.5 py-1.5 hover:bg-white/90 transition-colors"
+              className="group flex items-center gap-1.5 mx-auto mt-4 max-w-[92%] text-[12.5px] text-ink bg-white/90 border-2 border-clay-border rounded-full px-3.5 py-2 shadow-soft cursor-pointer transition-[background-color,border-color,box-shadow,transform] duration-150 hover:border-primary hover:bg-white hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
             >
-              {t('chatNewsHint')}
+              <span className="min-w-0 text-center">{t('chatNewsHint')}</span>
+              <ArrowRight className="w-3.5 h-3.5 flex-shrink-0 text-primary-text transition-transform duration-150 group-hover:translate-x-0.5" strokeWidth={2.5} />
             </button>
-            {/* 生活能力提示：放在「能聊热点新闻」下面；浅底深字，保证在棉花糖/深色等任何皮肤下都清晰 */}
-            <div className="mx-auto mt-3 max-w-[92%]">
-              <span className="inline-flex items-start gap-1 text-[11px] leading-snug text-ink bg-white/75 border border-clay-border rounded-lg px-2.5 py-1.5 select-none">
+            {/* 生活能力提示：它**不是按钮**（点了不会发生任何事），所以刻意和上面那颗按钮拉开层级 ——
+                无描边、无箭头、无阴影，只剩一层浅白底保证在棉花糖/深色等任何皮肤下都读得清。
+                2026-09-27 之前它和「新闻」按钮同为 1px 描边白盒，这正是「到底哪些能点」说不清的另一半原因：
+                可点性要靠**一致的正向信号**（描边+阴影+箭头），不能靠「长得都一样」。 */}
+            <div className="mx-auto mt-3 max-w-[92%] text-center">
+              <span className="inline-flex items-start gap-1 text-[11px] leading-snug text-ink-soft bg-white/70 rounded-lg px-2.5 py-1.5 select-none cursor-default">
                 <span className="mt-px">🌦️</span>
                 <span>{t('chatLifeHint')}</span>
               </span>
@@ -3124,6 +3200,9 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
                     ) : m.content)}
                   </div>
                 </div>
+                {/* 来源行（2026-09-29）：本轮 web_search 的命中，常显在气泡下方 —— 用户不必先知道「可以要链接」。
+                    只对带 sources 的 assistant 消息有内容（组件自身对空数组返回 null）；位置在气泡与「时间/操作行」之间。 */}
+                {m.role === 'assistant' && <ChatSources sources={m.sources} />}
                 {/* 时间戳 + 助手回复的反馈小标 + **常显的回复/编辑/复制图标**（2026-09 从 ⋯ 弹层里拿出来：
                     图标不写字，靠 aria-label + title 说话；编辑只对「最后一条用户消息」出现） */}
                 <div className={`mt-0.5 flex items-center gap-1.5 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>

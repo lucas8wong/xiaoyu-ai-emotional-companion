@@ -11,3 +11,7 @@ export const SUPPORT_EMAIL = 'myxiaoyu2026@gmail.com';
 
 /** 小红书一键直达（xhslink 短链；换号只改这一行） */
 export const SUPPORT_XHS_URL = 'https://xhslink.cn/o/Ax8zQ9yXCPs';
+
+/** Instagram 主页/私信入口（付款客服的第二条私信通道；换号只改这两行） */
+export const SUPPORT_IG_HANDLE = '@your_xiaoyu';
+export const SUPPORT_IG_URL = 'https://instagram.com/your_xiaoyu';

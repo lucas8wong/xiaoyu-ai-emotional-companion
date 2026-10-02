@@ -244,10 +244,13 @@ export default function Home() {
   }, [gameState.phase]);
 
   const handleViewAnalysis = useCallback(() => {
-    const basePath = slug ? `/${slug}` : "";
-    const gameIdShort = gameState.gameId?.substring(0, 6).toUpperCase() || "";
-    router.push(`${basePath}/analysis#${gameIdShort}`);
-  }, [router, slug, gameState.gameId]);
+    /**
+     * 2026-09-29 审查 A7-P2-1：`/analysis` 路由**没有移植到小愈**（src/App.tsx 里不存在），
+     * 而 shim 的 router.push 是整页跳转 → 点「复盘报告」会刷新到一个空路由（白屏）。
+     * 在分析页真正补上之前，这里只给一句明确提示，不再跳转。
+     */
+    toast.info('复盘报告暂未开放 / Post-game analysis is not available yet');
+  }, []);
 
   const clearDayNightBlinkTimers = useCallback(() => {
     dayNightBlinkTimeoutsRef.current.forEach((t) => window.clearTimeout(t));

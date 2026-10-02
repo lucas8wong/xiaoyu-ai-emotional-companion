@@ -757,11 +757,6 @@ export async function* generateAISpeechStream(
     });
   } catch (error) {
     const raw = String(error);
-    const isRateLimited = raw.includes("429") || raw.includes("limit_requests");
-    const sanitizedSpeech = sanitizeSeatMentions(sanitizeModelArtifacts(fullResponse), state.players);
-    const visibleSpeech = isRateLimited && !fullResponse.trim()
-      ? t("gameMaster.tooManyRequests")
-      : sanitizedSpeech;
     await aiLogger.log({
       type: "speech",
       request: {
@@ -769,17 +764,11 @@ export async function* generateAISpeechStream(
         messages,
         player: { playerId: player.playerId, displayName: player.displayName, seat: player.seat, role: player.role },
       },
-      response: { content: visibleSpeech, duration: Date.now() - startTime },
+      response: { content: sanitizeSeatMentions(sanitizeModelArtifacts(fullResponse), state.players), duration: Date.now() - startTime },
       error: raw,
     });
-
-    if (isRateLimited) {
-      if (!fullResponse.trim()) {
-        yield visibleSpeech;
-      }
-      return;
-    }
-
+    // 限流同样是**失败**：绝不把「请求过于频繁」当成角色的发言（红线⑥，2026-09-28 审查 P1-3）。
+    // 一律抛给调用方走失败态，由对方给出重试入口。
     throw error;
   }
 }
@@ -842,8 +831,6 @@ export async function generateAISpeechSegments(
     return segments;
   } catch (error) {
     const raw = String(error);
-    const isRateLimited = raw.includes("429") || raw.includes("limit_requests");
-    const fallback = isRateLimited ? t("gameMaster.tooManyRequests") : "";
     await aiLogger.log({
       type: "speech",
       request: {
@@ -851,14 +838,10 @@ export async function generateAISpeechSegments(
         messages,
         player: { playerId: player.playerId, displayName: player.displayName, seat: player.seat, role: player.role },
       },
-      response: { content: fallback, duration: Date.now() - startTime },
+      response: { content: "", duration: Date.now() - startTime },
       error: raw,
     });
-
-    if (isRateLimited) {
-      return [fallback];
-    }
-
+    // 同 generateAISpeechStream：失败不编台词（红线⑥，2026-09-28 审查 P1-3）。
     throw error;
   }
 }
@@ -1012,8 +995,6 @@ export async function generateAISpeechSegmentsStream(
   } catch (error) {
     if (options.signal?.aborted) throw error;
     const raw = String(error);
-    const isRateLimited = raw.includes("429") || raw.includes("limit_requests");
-    const rateLimitResult = isRateLimited && !parseError ? [t("gameMaster.tooManyRequests")] : null;
     await aiLogger.log({
       type: "speech",
       request: {
@@ -1027,19 +1008,15 @@ export async function generateAISpeechSegmentsStream(
         },
       },
       response: {
-        content: emittedSegments.length ? emittedSegments.join("\n") : rateLimitResult?.join("\n") ?? "",
+        content: emittedSegments.length ? emittedSegments.join("\n") : "",
         raw: accumulatedContent,
         duration: Date.now() - startTime,
       },
       error: raw,
     });
 
-    if (rateLimitResult) {
-      if (emittedSegments.length === 0) options.onSegmentReceived?.(rateLimitResult[0], 0);
-      options.onComplete?.(emittedSegments.length ? emittedSegments : rateLimitResult);
-      return emittedSegments.length ? emittedSegments : rateLimitResult;
-    }
-
+    // 限流是**失败态**，不是角色的台词：不再伪造「请求过于频繁」当成发言（红线⑥，2026-09-28 审查 P1-3）。
+    // 交给调用方：useDayPhase 的 catch 会暂停推进、保留已确认段落，并给出「重试发言」入口。
     options.onError?.(String(error));
     throw error;
   }

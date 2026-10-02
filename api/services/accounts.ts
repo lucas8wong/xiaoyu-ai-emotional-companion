@@ -25,10 +25,15 @@ export interface Account {
   username?: string;
   phone?: string;
   email: string;
+  /** 密码散列。**Google 等第三方登录建的账号为空串**（没有密码）——见 hasPassword() */
   passwordHash: string;
   salt: string;
   iterations?: number; // 散列迭代次数（旧账户缺失时按 LEGACY_ITERATIONS 校验并自动升级）
   createdAt: number;
+  /** Google 的稳定用户标识（ID token 的 sub）。用于「同一个人换邮箱也登得回来」，与 email 无关 */
+  googleSub?: string;
+  /** 已绑定的第三方登录方式（目前只有 'google'）。仅作展示/排障；鉴权一律以 googleSub 为准 */
+  providers?: string[];
 }
 
 interface TokenRecord {
@@ -130,6 +135,66 @@ class AccountStore {
     return undefined;
   }
 
+  /** 按 Google 子标识（sub）查账号 */
+  findByGoogleSub(googleSub: string): Account | undefined {
+    const sub = normalize(googleSub);
+    if (!sub) return undefined;
+    for (const a of this.accounts.values()) if (a.googleSub === sub) return a;
+    return undefined;
+  }
+
+  /** 该账号是否设置过密码（Google 建的账号一开始没有；走「找回密码」即可补上） */
+  hasPassword(user: Account): boolean {
+    return Boolean(user.passwordHash && user.salt);
+  }
+
+  /**
+   * Google 首次建号：**不设密码**（passwordHash/salt 为空串）。
+   * 这类账号只能通过 Google 登录，或先「找回密码」设一个密码再用密码登录。
+   */
+  createOAuthAccount(input: { email: string; googleSub: string; username?: string }): { user: Account | null; error?: string } {
+    const email = normalize(input.email).toLowerCase();
+    // 与 register() 同一套邮箱校验（禁止连续点/结尾点；至少两级域名）
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || /\.\./.test(email) || /\.$/.test(email)) {
+      return { user: null, error: '邮箱格式不正确' };
+    }
+    if (this.findByEmail(email)) return { user: null, error: '该邮箱已注册' };
+    if (input.googleSub && this.findByGoogleSub(input.googleSub)) return { user: null, error: '该 Google 账号已绑定其它账户' };
+    const username = normalize(input.username).slice(0, 20);
+    const user: Account = {
+      userId: uuidv4(),
+      username: username || undefined,
+      email,
+      passwordHash: '',
+      salt: '',
+      createdAt: Date.now(),
+      googleSub: input.googleSub,
+      providers: ['google'],
+    };
+    this.accounts.set(user.userId, user);
+    this.saveAccounts();
+    return { user };
+  }
+
+  /**
+   * 把 Google 子标识绑到已有账号（子标识已在路由层验签，这里只落库 + 去重）。
+   * 返回 false 的情况：账号不存在 / 空 sub / 该账号已绑别的 Google 账号 / 该 Google 账号已绑别人。
+   */
+  linkGoogle(userId: string, googleSub: string): boolean {
+    const acc = this.accounts.get(userId);
+    const sub = normalize(googleSub);
+    if (!acc || !sub) return false;
+    if (acc.googleSub && acc.googleSub !== sub) return false;
+    const existing = this.findByGoogleSub(sub);
+    if (existing && existing.userId !== userId) return false;
+    acc.googleSub = sub;
+    const providers = new Set(acc.providers || []);
+    providers.add('google');
+    acc.providers = Array.from(providers);
+    this.saveAccounts();
+    return true;
+  }
+
   /**
    * 列出所有账号（用于管理端）
    */
@@ -145,6 +210,9 @@ class AccountStore {
   }
 
   verifyPassword(user: Account, password: string): boolean {
+    // 第三方登录（Google）建的账号没有密码 → 一律不能走密码登录。
+    // 空串/空盐绝不能与"用户输入空密码"匹配成功，所以这里先挡一道。
+    if (!user.passwordHash || !user.salt) return false;
     const iters = user.iterations || LEGACY_ITERATIONS;
     if (hashPassword(password, user.salt, iters) !== user.passwordHash) return false;
     // 旧散列强度 → 登录成功后透明升级到当前强度（下一次登录即生效）

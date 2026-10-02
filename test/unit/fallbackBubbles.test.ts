@@ -93,3 +93,15 @@ test('兜底表自检：每条都非空且首尾无空白（否则整串匹配�
     assert.equal(isFallbackBubble(s), true);
   }
 });
+
+test('剧情「空回复兜底句」旧文案已登记，历史数据可被剔除（红线⑥ 回归守卫）', () => {
+  // 这三条是 api/services/roleplay.ts 曾用过的兜底台词；实现已改为抛错失败态，
+  // 但线上历史里可能已落盘，必须仍能被读/写两侧识别并剔除。
+  for (const s of [
+    '他看向你，语气放轻了些。「我在听，你继续。」',
+    '他看向你，語氣放輕了些。「我在聽，你繼續。」',
+    'He looks at you, his voice lowering a little. “I’m listening. Go on.”',
+  ]) {
+    assert.equal(isFallbackBubble(s), true, `未登记为兜底文案: ${s}`);
+  }
+});

@@ -63,6 +63,15 @@ class WerewolfLedger {
   }
 
   /** 最近 N 条（新的在前） */
+  /** 注销清理（2026-09-28 审查 P1-8）：删除该用户的开局台账 */
+  removeByUser(userId: string): void {
+    const before = this.items.length;
+    this.items = this.items.filter((e) => e.userId !== userId);
+    if (this.items.length !== before) {
+      try { writeJson(FILE, this.items); } catch { /* 台账落盘失败不阻断注销 */ }
+    }
+  }
+
   recent(limit = 20): LedgerEntry[] {
     return this.items.slice(-limit).reverse();
   }

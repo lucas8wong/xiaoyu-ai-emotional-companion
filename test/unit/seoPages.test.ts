@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 import {
   SEO_PAGES,
   SITE_ORIGIN,
+  STATIC_SITEMAP_PATHS,
   findSeoPage,
   seoAlternates,
   seoPagePath,
@@ -178,7 +179,9 @@ test('sitemap：覆盖注册表每一个 URL（先跑 npm run sitemap）', () =>
   for (const loc of locs) {
     if (!loc.startsWith(SITE_ORIGIN)) continue;
     const rel = loc.slice(SITE_ORIGIN.length);
-    if (rel === '/' || rel === '/faq') continue;
+    // 固定公开页（首页 / FAQ / 隐私政策…）以 STATIC_SITEMAP_PATHS 为准 —— 与生成器同一份真源。
+    // 原先这里硬编码 '/ 与 /faq'，于是新增固定页要记得改两处，这次加 /privacy 就漏了一处。
+    if (STATIC_SITEMAP_PATHS.includes(rel)) continue;
     if (rel.startsWith('/s/')) continue; // 千世书分享页有意不进 sitemap
     assert.ok(known.has(loc), `sitemap 里的 ${rel} 已不在注册表中（死链，请运行 npm run sitemap）`);
   }

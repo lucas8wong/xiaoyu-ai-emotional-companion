@@ -15,6 +15,7 @@ import type { ReactNode } from 'react';
 import { Check, Star } from 'lucide-react';
 import { SkinPlanIcon } from '../SkinIcon';
 import { IconChip } from './Surface';
+import { StrikePrice } from './DiscountBadge';
 
 export type PlanKey = 'free' | 'plus' | 'pro';
 
@@ -146,7 +147,8 @@ export default function PlanCard({
             <div className="flex items-baseline gap-1.5 flex-wrap">
               <span className={'text-xl font-bold tabular-nums ' + th.price}>{price}</span>
               {unit ? <span className="text-[11px] text-ink-soft">{unit}</span> : null}
-              {originalPrice ? <span className="text-[11px] text-ink-soft line-through tabular-nums">{originalPrice}</span> : null}
+              {/* 原价划线统一走 ui/DiscountBadge 的 StrikePrice（四处必须同款，否则「哪个是原价」会读错） */}
+              {originalPrice ? <StrikePrice>{originalPrice}</StrikePrice> : null}
             </div>
           ) : null}
           {priceNote ? <p className="text-[11px] text-ink-soft mt-0.5 tabular-nums">{priceNote}</p> : null}

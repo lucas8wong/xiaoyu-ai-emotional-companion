@@ -16,13 +16,14 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Check, Mail, MessageCircle } from 'lucide-react';
+import { Check, Mail, MessageCircle, Instagram } from 'lucide-react';
 import { t } from '../i18n';
 import { getPayConfig, type PayConfig, type PayTerm } from '../services/api';
 import { mainPrice, otherPrices } from '../lib/payPrice';
-import { SUPPORT_EMAIL, SUPPORT_XHS_URL } from '../lib/support';
+import { SUPPORT_EMAIL, SUPPORT_XHS_URL, SUPPORT_IG_URL } from '../lib/support';
 import MembershipCompare from './MembershipCompare';
 import Modal from './ui/Modal';
+import { DiscountBadge, StrikePrice, OfferDeadline } from './ui/DiscountBadge';
 import SegmentedControl from './ui/SegmentedControl';
 import PlanCard, { PLAN_THEME, SKIN_ACCENT_CTA, SKIN_ACCENT_SURFACE } from './ui/PlanCard';
 
@@ -65,6 +66,16 @@ export default function MembershipModal({ open, onClose, onOpenPay, onOpenRenew,
     if (!proP) return '';
     const r = days / 30;
     return mainPrice(config, proP.usd * r, proP.hkd * r, proP.cny * r);
+  };
+  /**
+   * 续费档位的**原价**（同样按天比例）——2026-09-29 用户截图指出「续费这里还是看不到是折扣价」：
+   * 续费价是按**折后**月价 × 天数折算的（服务端实扣同源），但界面只印了价格、没提优惠，
+   * 于是看起来像原价。原价用 `originalUsd/Hkd/Cny` × 同一比例，与服务端 `getPriceIn` 的口径一致。
+   */
+  const renewOrigPrice = (days: number): string => {
+    if (!proP?.originalUsd) return '';
+    const r = days / 30;
+    return mainPrice(config, proP.originalUsd * r, (proP.originalHkd ?? 0) * r, (proP.originalCny ?? 0) * r);
   };
 
   // 指定购买方式下的 Pro 本币价 + 另两币种折算
@@ -121,6 +132,21 @@ export default function MembershipModal({ open, onClose, onOpenPay, onOpenRenew,
             }))}
           />
 
+          {/* 折扣行（2026-09-29）：续费价格是按**折后**月价按天折算的，但这一屏此前只印价格、不提优惠，
+              用户截图指出「这个情况下还是看不到是折扣价的情况」。徽章 + 原价划线随所选时长实时变化。 */}
+          {launch && renewOrigPrice(renewDays) ? (
+            <div className="flex flex-col items-center gap-0.5 -mt-1">
+              <span className="flex items-center justify-center gap-2 flex-wrap">
+                <DiscountBadge tone="offer">{t('membershipLaunchOffer', { pct: config?.discountPct ?? 50 })}</DiscountBadge>
+                <span className="text-[11px] text-ink-soft">
+                  {t('memOriginalPrice')} <StrikePrice>{renewOrigPrice(renewDays)}</StrikePrice>
+                </span>
+              </span>
+              {/* 期限（有 offerEndsAt 才显示） */}
+              <OfferDeadline until={config?.offerEndsAt} />
+            </div>
+          ) : null}
+
           {/* 续费 CTA（皮肤强调色 → 主色，与首页会员横幅同源） */}
           <button
             onClick={() => onOpenRenew && onOpenRenew(renewDays)}
@@ -175,6 +201,14 @@ export default function MembershipModal({ open, onClose, onOpenPay, onOpenRenew,
             originalPrice={launch && upgradeTerm === 'monthly' && proP?.originalUsd
               ? mainPrice(config, proP.originalUsd, proP.originalHkd, proP.originalCny)
               : null}
+            /* 折扣标注：这张「Plus→Pro 升级卡」此前只显示划线原价、**没有折扣标注**——
+               同一个价格在「免费档三卡」里带标记、在这里不带，正是用户说的「所有情况都要标」的漏网处（2026-09-29） */
+            badge={launch && upgradeTerm === 'monthly' && proP?.originalUsd
+              ? <span className="inline-flex flex-col items-start gap-0.5">
+                  <DiscountBadge tone="offer">{t('membershipLaunchOffer', { pct: config?.discountPct ?? 50 })}</DiscountBadge>
+                  <OfferDeadline until={config?.offerEndsAt} />
+                </span>
+              : null}
             recommended
             recommendedLabel={t('membershipRecommended')}
             /* 权益四项用对比表「Pro 專屬」那套键（`memProOnly*`，三语齐全）——
@@ -208,6 +242,9 @@ export default function MembershipModal({ open, onClose, onOpenPay, onOpenRenew,
         <span className="text-ink-soft">{t('payHelpTitle')}</span>
         <a href={SUPPORT_XHS_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-medium text-primary-text hover:text-primary-strong underline underline-offset-2">
           <MessageCircle className="w-3 h-3" /> {t('payHelpXhs')}
+        </a>
+        <a href={SUPPORT_IG_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-medium text-primary-text hover:text-primary-strong underline underline-offset-2">
+          <Instagram className="w-3 h-3" /> {t('payHelpIg')}
         </a>
         <a href={'mailto:' + SUPPORT_EMAIL} className="inline-flex items-center gap-1 font-medium text-primary-text hover:text-primary-strong underline underline-offset-2">
           <Mail className="w-3 h-3" /> {SUPPORT_EMAIL}

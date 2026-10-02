@@ -2,6 +2,7 @@
  * 邀请反馈（用户侧）API
  * GET  /api/referral/summary     —— 当前登录用户的「我的邀请记录」
  * POST /api/referral/invite-code —— 注册后补填预设邀请码（注册时没填的人补领额度，一人一次）
+ * POST /api/referral/copied      —— 「我复制了专属邀请链接」上报（运营端看「是否复制过」，一人可多次）
  *
  * 回答用户自己的问题：「有没有人通过我的链接注册？我因此拿到多少额度 / 会员天数？」
  * 数据源与运营端「📣 邀请推广」**同源**（`services/adminReferrals.ts` 的 `buildMyReferralSummary`），
@@ -17,6 +18,9 @@ import { resolveUserId } from '../services/session.js';
 import { accountStore } from '../services/accounts.js';
 import { buildMyReferralSummary } from '../services/adminReferrals.js';
 import { quotaStore } from '../services/quota.js';
+import { activityStore, isTestRequest } from '../services/activity.js';
+import { getClientIp } from '../services/geo.js';
+import { isSelfExcludedIp } from '../services/selfExclude.js';
 import { rateLimit } from '../middleware/rateLimit.js';
 
 const router = Router();
@@ -79,6 +83,35 @@ router.post('/invite-code', limitInviteCode, async (req: Request, res: Response)
     console.error('Invite code apply error:', error);
     res.status(500).json({ success: false, error: '补填失败，请稍后再试' });
   }
+});
+
+/**
+ * POST /api/referral/copied  —— 用户端「复制了我的专属邀请链接」上报（2026-09-29）
+ *
+ * 为什么需要埋点：运营端要能区分三类人——「压根不知道有邀请入口」（一次没复制）、
+ * 「复制了但没人注册」（该给话术/激励）、「复制且真的拉来人」。此前只有**结果**（inviteCount），
+ * 没有**动作**，所以前两类分不开。
+ *
+ * 口径与 `/api/pwa/install` 同源：测试/内网设备与运营自查 IP 不记（避免污染）；
+ * 识别用户走 resolveUserId（登录→账号，游客→设备指纹+IP 哈希），游客期复制也算，
+ * 注册时由 activityStore.mergeFrom 并到账号头上。
+ * 只记行为计数，**不影响活跃度分桶**（见 activityStore.trackInviteCopy 的注释）。
+ */
+router.post('/copied', (req: Request, res: Response): void => {
+  const deviceId = String(req.headers['x-device-id'] || '');
+  const clientIp = getClientIp(req);
+  if (isTestRequest(req.ip, deviceId) || (clientIp && isSelfExcludedIp(clientIp))) {
+    res.json({ success: true, recorded: false });
+    return;
+  }
+  const userId = resolveUserId(req);
+  if (!userId) {
+    res.json({ success: true, recorded: false });
+    return;
+  }
+  const country = String(req.headers['cf-ipcountry'] || req.headers['x-vercel-ip-country'] || '').slice(0, 2);
+  activityStore.trackInviteCopy(userId, { ip: clientIp, country });
+  res.json({ success: true, recorded: true });
 });
 
 export default router;

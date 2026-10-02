@@ -68,6 +68,11 @@ export class SkinUsageStore {
     return this.map.get(userId);
   }
 
+  /** 注销清理（2026-09-28 审查 P1-8）：删除该用户/设备的皮肤记录 */
+  removeByUser(userId: string): void {
+    if (this.map.delete(userId)) this.saveToDisk();
+  }
+
   /** 列出全部记录（调试/测试用） */
   listAll(): SkinUsageRecord[] {
     return Array.from(this.map.values());

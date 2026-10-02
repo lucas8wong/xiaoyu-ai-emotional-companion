@@ -5,9 +5,9 @@
  */
 
 import { useEffect, useState } from 'react';
-import { X, Crown, User as UserIcon, Gift, Copy, Check, HeartHandshake, KeyRound, Trash2, LogOut, ChevronDown, ChevronUp, ChevronRight, Ticket } from 'lucide-react';
+import { Crown, User as UserIcon, Gift, Copy, Check, HeartHandshake, LogOut, ChevronDown, ChevronUp, ChevronRight, Ticket, Mail } from 'lucide-react';
 import SocialFollow from './SocialFollow';
-import { getQuota, getPayConfig, getReferralSummary, renameUser, changePassword, deleteAccount, getInviteLink, logout, getSubscriptionStatus, getStripePortal, fetchCurrentUser, applyInviteCode, quotaChatRemain, quotaIsUnlimited, type QuotaInfo, type AuthUser, type SubscriptionStatus, type MyReferralSummary } from '../services/api';
+import { getQuota, getPayConfig, getReferralSummary, renameUser, changePassword, deleteAccount, getInviteLink, trackInviteCopy, logout, getSubscriptionStatus, getStripePortal, fetchCurrentUser, applyInviteCode, getInbox, quotaChatRemain, quotaIsUnlimited, type QuotaInfo, type AuthUser, type SubscriptionStatus, type MyReferralSummary } from '../services/api';
 import { t } from '../i18n';
 import Modal from './ui/Modal';
 import { BTN, INPUT, Section } from './ui/controls';
@@ -21,12 +21,14 @@ interface ProfileModalProps {
   onOpenMembership: () => void;
   /** 打开「邀请好友」弹窗看完整的邀请记录（弹窗里是明细列表） */
   onOpenInvite?: () => void;
+  /** 打开「小愈信箱」（运营者写给用户的信：奖励回复等）。由 Home 关掉本弹窗后再开，避免弹窗套弹窗 */
+  onOpenInbox?: () => void;
   onNeedLogin: () => void;
   /** 昵称修改成功后的新用户：同步回主页等处的登录态展示 */
   onRenamed?: (user: AuthUser) => void;
 }
 
-export default function ProfileModal({ open, onClose, onLogout, onOpenMembership, onOpenInvite, onNeedLogin, onRenamed }: ProfileModalProps) {
+export default function ProfileModal({ open, onClose, onLogout, onOpenMembership, onOpenInvite, onOpenInbox, onNeedLogin, onRenamed }: ProfileModalProps) {
   const [quota, setQuota] = useState<QuotaInfo | null>(null);
   // 邀请记录摘要（谁能看到自己的邀请战绩——用户反馈「找不到」后的入口）：与邀请弹窗同一份口径
   const [referral, setReferral] = useState<MyReferralSummary | null>(null);
@@ -55,6 +57,8 @@ export default function ProfileModal({ open, onClose, onLogout, onOpenMembership
   /** 本次会话刚补填成功的码（服务端配额刷新前先本地生效，入口立即变成「已使用」） */
   const [inviteApplied, setInviteApplied] = useState('');
   const [inviteBusy, setInviteBusy] = useState(false);
+  // 小愈信箱未读数（卡片红点）；0 = 不显示徽标
+  const [inboxUnread, setInboxUnread] = useState(0);
 
   useEffect(() => {
     if (!open) return;
@@ -76,6 +80,8 @@ export default function ProfileModal({ open, onClose, onLogout, onOpenMembership
     getQuota().then(r => { if (r.success && r.data) setQuota(r.data); });
     getPayConfig().then(r => { if (r.success && r.data && r.data.bonuses) setBonuses(r.data.bonuses); });
     getSubscriptionStatus().then(r => { if (r.success && r.data) setSub(r.data.data); });
+    // 小愈信箱未读数（失败静默：入口本身不受影响，红点宁可漏报也不要卡住弹窗）
+    getInbox().then(r => { if (r.success && r.data) setInboxUnread(r.data.unread); }).catch(() => { /* 忽略 */ });
   }, [open]);
 
   const handleManageSub = async () => {
@@ -123,8 +129,14 @@ export default function ProfileModal({ open, onClose, onLogout, onOpenMembership
   };
 
   const handleDelete = async () => {
+    /**
+     * 注销确认词必须覆盖**界面会提示的每一种写法**（2026-09-28 审查 B4）：
+     * zh-TW 的指引与报错都在让用户输入「刪除」，而这里只认「删除」/「delete」——
+     * 结果繁体用户永远注销不了账号（用户权利/合规被卡死，还陷入「输入了却说不对」的死循环）。
+     */
+    const ACCEPTED_DELETE_WORDS = ['删除', '刪除', 'delete'];
     const confirmWord = delConfirm.trim().toLowerCase();
-    if (confirmWord !== '删除' && confirmWord !== 'delete') { setDelMsg({ type: 'err', text: t('errDeleteConfirm') }); return; }
+    if (!ACCEPTED_DELETE_WORDS.includes(confirmWord)) { setDelMsg({ type: 'err', text: t('errDeleteConfirm') }); return; }
     setBusy(true);
     const r = await deleteAccount();
     setBusy(false);
@@ -133,7 +145,8 @@ export default function ProfileModal({ open, onClose, onLogout, onOpenMembership
   };
 
   const handleCopyInvite = () => {
-    try { navigator.clipboard.writeText(getInviteLink()); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { setCopied(false); }
+    // 埋点：控制台要能看出「复制过邀请链接」的人（失败静默，见 trackInviteCopy）
+    try { navigator.clipboard.writeText(getInviteLink()); void trackInviteCopy(); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch { setCopied(false); }
   };
 
   /**
@@ -246,6 +259,26 @@ export default function ProfileModal({ open, onClose, onLogout, onOpenMembership
             </div>
           )}
         </Section>
+
+        {/* 小愈信箱：运营者写给这个用户的信（奖励回复等）都留在这里，随时可回看。
+            为什么入口要有未读红点：发奖励时首页那条琥珀横幅 5 秒后 ack 即清，
+            用户错过横幅后，这里是唯一能再看到那段回复的地方。 */}
+        {onOpenInbox && (
+          <Section className="mb-4" icon={<Mail className="w-3.5 h-3.5" />} title={t('inboxTitle')} desc={t('inboxDesc')}>
+            <button
+              onClick={onOpenInbox}
+              className={BTN.subtle + ' ' + BTN.size + ' flex items-center justify-center gap-2'}
+            >
+              <Mail className="w-4 h-4 text-primary" />
+              {t('inboxOpen')}
+              {inboxUnread > 0 && (
+                <span className="inline-flex items-center rounded-full bg-amber-500 text-white text-[10px] font-semibold px-1.5 py-0.5 leading-none">
+                  {t('inboxUnread', { n: inboxUnread })}
+                </span>
+              )}
+            </button>
+          </Section>
+        )}
 
         {/* 分享邀请（裂变入口） */}
         <Section className="mb-4" icon={<Gift className="w-3.5 h-3.5" />} title={t('profileInviteTitle')} desc={t('profileInviteDesc', { n: bonuses.invite, m: bonuses.inviteMax })}>

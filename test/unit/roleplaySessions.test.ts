@@ -20,6 +20,42 @@ test('save/get：保存消息、按序返回', () => {
   assert.strictEqual(msgs![1].content, '你好呀');
 });
 
+test('🔀 双模式：单角色线 / 多角色线各一份存档，互不覆盖、只清自己那条', () => {
+  const u2 = 'user-dualmode';
+  const s2 = 'sc-dualmode';
+  roleplaySessionStore.save(u2, s2, [{ role: 'user', content: '单角色第一句' }, { role: 'assistant', content: '单角色回复' }], undefined, undefined, 'solo');
+  roleplaySessionStore.save(u2, s2, [{ role: 'user', content: '多角色第一句' }, { role: 'assistant', content: '【李嬷嬷】多角色回复' }], undefined, undefined, 'multi');
+
+  const solo = roleplaySessionStore.get(u2, s2, 'solo')!;
+  const multi = roleplaySessionStore.get(u2, s2, 'multi')!;
+  assert.strictEqual(solo[0].content, '单角色第一句');
+  assert.strictEqual(multi[0].content, '多角色第一句', '两条线不能互相覆盖');
+
+  // 不传 mode → 取**最近更新**的那份（multi 后写，所以是 multi）
+  assert.strictEqual(roleplaySessionStore.get(u2, s2)![0].content, '多角色第一句');
+
+  // 删 solo 不影响 multi（「重新开始」只该清当前那条线）
+  roleplaySessionStore.delete(u2, s2, 'solo');
+  assert.strictEqual(roleplaySessionStore.get(u2, s2, 'solo'), null);
+  assert.ok(roleplaySessionStore.get(u2, s2, 'multi'), '删一条线不能把另一条也清掉');
+
+  // 「与你的旅程」的足迹按剧本去重：同一剧本两条线只应出现一次
+  const list = roleplaySessionStore.listByUser(u2).filter(x => x.scenarioId === s2);
+  assert.strictEqual(list.length, 1, 'listByUser 必须按场景去重');
+  assert.strictEqual(list[0].mode, 'multi', '去重保留最近更新的那条');
+});
+
+test('🔀 双模式：老数据（无 mode）当 solo，绝不串到多角色线', () => {
+  const u3 = 'user-legacy';
+  const s3 = 'sc-legacy';
+  // 不传 mode = 老调用方口径（solo）
+  roleplaySessionStore.save(u3, s3, [{ role: 'user', content: '老存档' }, { role: 'assistant', content: '老回复' }]);
+  assert.strictEqual(roleplaySessionStore.get(u3, s3, 'solo')![0].content, '老存档');
+  assert.strictEqual(roleplaySessionStore.get(u3, s3, 'multi'), null, '老存档不能被当成多角色线');
+  const rec = roleplaySessionStore.listAll().find(r => r.userId === u3 && r.scenarioId === s3);
+  assert.strictEqual(rec?.mode, 'solo', '落盘时要写上 mode=solo，迁移才算完成');
+});
+
 test('save 过滤非法消息 + 裁剪内容 + 空消息 no-op', () => {
   roleplaySessionStore.save(u, sc, [
     { role: 'user', content: '有效' },

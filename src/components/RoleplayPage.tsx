@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback, lazy, Suspense, type TouchEvent as ReactTouchEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { bottomAnchorPx } from '../lib/viewportAnchor';
-import { ArrowLeft, ArrowDown, Send, Sparkles, RotateCcw, ChevronLeft, ChevronRight, User, Heart, ScrollText, BookOpen, AlertTriangle, Coins, Info, Pencil, Trash2, Upload, Search, X, Share2, Star, LayoutGrid, ExternalLink, SlidersHorizontal, Music, Volume2, VolumeX, MoreHorizontal, Palette, Moon } from 'lucide-react';
+import { ArrowLeft, ArrowDown, Send, Sparkles, RotateCcw, ChevronLeft, ChevronRight, User, Users, Heart, ScrollText, BookOpen, AlertTriangle, Coins, Info, Pencil, Trash2, Upload, Search, X, Share2, Star, LayoutGrid, ExternalLink, SlidersHorizontal, Music, Volume2, VolumeX, MoreHorizontal, Palette, Moon } from 'lucide-react';
 import { getRoleplayScenarios, getRoleplayScenario, roleplayChatStream, roleplaySuggest, getQuota, getCachedPlan, getRoleplaySession, saveRoleplaySession, saveRoleplayPreference, deleteRoleplaySession, isLoggedIn, createCustomRoleplay, listCustomRoleplay, deleteCustomRoleplay, publishCustomRoleplay, updateCustomRoleplay, roleplayCustomDraft, roleplayCustomRevise, getFeaturedRoleplay, getCommunityRoleplay, searchRoleplayScenarios, getRoleplayTags, likeRoleplayScenario, savePreferences, getPreferences, setScenarioUnlimited, quotaChatRemain, quotaIsUnlimited, confirmAdult, importStoryCharacter, type RoleplayScenarioInfo, type RoleplayMessage, type CustomScenarioInfo, type CustomStatus, type AuthUser, type RoleplayTagData, type QuotaInfo, type UserPreferences, getSceneArt, generateSceneArt, reportAiFailure, roleplayModelConfig } from '../services/api';
 import { getCachedPreferences, setCachedPreferences } from '../lib/prefsCache';
 import { markLocalAdultConfirmed } from '../lib/adultGate';
@@ -22,6 +22,8 @@ import { shouldAutoRetry, failCodeOf, AUTO_RETRY_DELAY_MS, AUTO_RETRY_MAX } from
 import { canRegenerateAt, startRegenerate, finishRegenerate, switchVersionIn, toRequestMessages, versionsOf, versionIndex, activeContent, canEditAt, canSwitchUserBranchAt, startEditResend, switchUserBranchIn, commitUserBranch, lastUserIndex } from '../lib/rpVersions';
 import { looksIncomplete, incompleteCode, type IncompleteReason } from '../lib/replyCompleteness';
 import { hasThoughtMarker } from '../lib/roleplayText';
+import { parseCastSegments, stripCastTags, hasCastSpeaker, type CastName } from '../lib/roleplayCast';
+import { type RoleplayMode, parseRoleplayMode, DEFAULT_ROLEPLAY_MODE } from '../lib/roleplayMode';
 import { detectStuck, detectOocMeta, recordBridgeEvent, isIdleEnough, canShowBridge, readBridgeBudget, markBridgeShown, markBridgeDismissed, bridgeEnabled, buildBridgeDraft, BRIDGE_MIN_TURNS, type BridgeSeed, type BridgeTrigger } from '../lib/rpBridge';
 import RoleplayRichText from './RoleplayRichText';
 import { t, getLang } from '../i18n';
@@ -142,6 +144,32 @@ function RPCover({ s, imgClass, fallbackClass }: { s?: (Pick<RoleplayScenarioInf
   return <img src={s.avatar} alt={alt} loading="lazy" decoding="async" onError={() => setBroken(true)} className={imgClass + ' flex-shrink-0 object-cover'} />;
 }
 
+/**
+ * 群像剧本的**角色头像**（2026-10-01）
+ *
+ * 三档（与「谁是主角」的语义对齐）：
+ *   1. **主角色（lead）** → 头像**就是剧本头像**（走 `RPCover`，自带 onError → emoji 回退）；
+ *   2. 其它角色 → 自带的 `avatar`；图挂了也回退到第 3 档；
+ *   3. 都没有 → 「名字首字」色块（由调用方给底色/尺寸）。
+ *
+ * 为什么抽成组件：详情页「同场角色」与聊天气泡里的说话人头像**必须是同一张脸**。
+ * 之前两处各写一份，详情页那份没认 `lead`，于是主角位上显示的是「裴」字色块
+ *（用户截图指出「主角的位置都要有主角头像」）—— 抽成一份就不会再分叉。
+ */
+function CastAvatar({ member, scenario, imgClass, textClass }: {
+  member: { name: string; avatar?: string; lead?: boolean };
+  scenario?: RoleplayScenarioInfo | null;
+  imgClass: string;
+  textClass: string;
+}) {
+  const [broken, setBroken] = useState(false);
+  if (member.lead && scenario) return <RPCover s={scenario} imgClass={imgClass} fallbackClass={textClass} />;
+  if (member.avatar && !broken) {
+    return <img src={member.avatar} alt={member.name} loading="lazy" decoding="async" onError={() => setBroken(true)} className={imgClass} />;
+  }
+  return <span className={textClass}>{(member.name || '?').trim().charAt(0)}</span>;
+}
+
 /** 星野式竖版人物卡片：3:4 大图 + 顶部点赞角标 + 底部标题/文案/标签叠加 */
 function RPStoryCard({ s, onOpen, onLike, liked, count }: {
   s: RoleplayScenarioInfo;
@@ -160,6 +188,16 @@ function RPStoryCard({ s, onOpen, onLike, liked, count }: {
     >
       <RPCover s={s} imgClass="absolute inset-0 w-full h-full transition-transform duration-500 group-hover:scale-[1.05]" fallbackClass="absolute inset-0 flex items-center justify-center text-5xl" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/10" />
+      {/* 多角色角标（2026-10-01）：名单 >= 2 人的剧本在卡片左上角标出（右上角是点赞，不冲突） */}
+      {(s.cast?.length ?? 0) >= 2 && (
+        <span
+          data-testid="rp-multi-badge"
+          className="absolute left-2 top-2.5 inline-flex items-center gap-0.5 rounded-full bg-primary-strong/90 backdrop-blur-sm px-1.5 py-1 text-[10px] font-bold leading-none text-white shadow-sm"
+        >
+          <Users className="w-3 h-3" />
+          {t('rpBothModesBadge')}
+        </span>
+      )}
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); e.preventDefault(); onLike(); }}
@@ -222,7 +260,13 @@ interface RoleplayPageProps {
 }
 
 // —— 剧情会话持久化：登录/游客都写后端（跨设备、供控制台查看）；游客本地作镜像与兜底 ——
-const rpSessionKey = (id: string) => 'cure_rp_session_' + id;
+/**
+ * 会话本地键：**solo 沿用旧键**（`cure_rp_session_<id>`），multi 加后缀。
+ * 这样老用户的本地存档一字不动地继续可用，多角色线从空档开始 —— 不需要任何本地迁移。
+ */
+const rpSessionKey = (id: string, mode: RoleplayMode = 'solo') => 'cure_rp_session_' + id + (mode === 'multi' ? '_multi' : '');
+/** 记住用户在这部剧本里上次选的是哪条线（下次进详情页默认选它） */
+const rpModeKey = (id: string) => 'cure_rp_mode_' + id;
 // —— 角色名自定义（跨语言沉浸）：AI 角色名 / 用户自己的名字，按剧本存 localStorage ——
 const rpNamesKey = (id: string) => 'cure_rp_names_' + id;
 function loadRpNames(id: string): { ai: string; user: string } | null {
@@ -234,28 +278,29 @@ function saveRpNames(id: string, ai: string, user: string): void {
   lsSet(rpNamesKey(id), JSON.stringify({ ai, user }));
 }
 // —— 用户偏好/独特需求（每剧本）：登录/游客都写后端（跨设备、供控制台查看）；游客本地作镜像与兜底 ——
-const rpPrefKey = (id: string) => 'cure_rp_pref_' + id;
-function loadLocalPreference(id: string): string {
-  return lsGet(rpPrefKey(id)) || '';
+const rpPrefKey = (id: string, mode: RoleplayMode = 'solo') => 'cure_rp_pref_' + id + (mode === 'multi' ? '_multi' : '');
+function loadLocalPreference(id: string, mode: RoleplayMode = 'solo'): string {
+  return lsGet(rpPrefKey(id, mode)) || '';
 }
-function saveLocalPreference(id: string, text: string): void {
-  lsSet(rpPrefKey(id), text);
+function saveLocalPreference(id: string, mode: RoleplayMode, text: string): void {
+  lsSet(rpPrefKey(id, mode), text);
 }
-async function loadPreference(id: string): Promise<string> {
+/** 「我的偏好」也按线走：单角色线与多角色线可以有不同偏好（同档同偏好） */
+async function loadPreference(id: string, mode: RoleplayMode = 'solo'): Promise<string> {
   if (isLoggedIn()) {
     try {
-      const r = await getRoleplaySession(id);
+      const r = await getRoleplaySession(id, mode);
       if (r.success && r.data) return r.data.userPreference || '';
     } catch { /* 后端异常 → 兜底本地 */ }
-    return loadLocalPreference(id); // 后端无偏好/失败 → 本地兜底
+    return loadLocalPreference(id, mode); // 后端无偏好/失败 → 本地兜底
   }
-  return loadLocalPreference(id);
+  return loadLocalPreference(id, mode);
 }
-async function savePreference(id: string, text: string): Promise<void> {
+async function savePreference(id: string, mode: RoleplayMode, text: string): Promise<void> {
   // 本地始终镜像（离线/后端失败兜底；游客也保留本机可续）
-  saveLocalPreference(id, text);
+  saveLocalPreference(id, mode, text);
   try {
-    await saveRoleplayPreference(id, text); // 登录/游客都写后端（供控制台查看游客剧情偏好）
+    await saveRoleplayPreference(id, text, mode); // 登录/游客都写后端（供控制台查看游客剧情偏好）
   } catch { /* 后端失败忽略（本地已保存） */ }
 }
 /**
@@ -265,18 +310,18 @@ async function savePreference(id: string, text: string): Promise<void> {
  * `messages[last].content.length` 抛错 → 无 ErrorBoundary → 整页白屏。
  * 返回语义保持「null = 没有可用会话」，调用方不要再用真值判断。
  */
-function loadLocalSession(id: string): RoleplayMessage[] | null {
-  const clean = sanitizeMessages(lsGetJson<unknown>(rpSessionKey(id), null));
+function loadLocalSession(id: string, mode: RoleplayMode = 'solo'): RoleplayMessage[] | null {
+  const clean = sanitizeMessages(lsGetJson<unknown>(rpSessionKey(id, mode), null));
   return clean.length > 0 ? clean : null;
 }
-function saveLocalSession(id: string, msgs: RoleplayMessage[]): void {
-  lsSet(rpSessionKey(id), JSON.stringify(sanitizeMessages(msgs)));
+function saveLocalSession(id: string, mode: RoleplayMode, msgs: RoleplayMessage[]): void {
+  lsSet(rpSessionKey(id, mode), JSON.stringify(sanitizeMessages(msgs)));
 }
-function clearLocalSession(id: string): void {
-  lsRemove(rpSessionKey(id));
+function clearLocalSession(id: string, mode: RoleplayMode): void {
+  lsRemove(rpSessionKey(id, mode));
 }
-async function loadSession(id: string): Promise<RoleplayMessage[] | null> {
-  const msgs = await loadSessionRaw(id);
+async function loadSession(id: string, mode: RoleplayMode = 'solo'): Promise<RoleplayMessage[] | null> {
+  const msgs = await loadSessionRaw(id, mode);
   /**
    * 读盘即**播种**「最近一次真的写下去的会话快照」（2026-09 编辑重发时补）。
    *
@@ -285,19 +330,19 @@ async function loadSession(id: string): Promise<RoleplayMessage[] | null> {
    * 判据只能返回 false → 那个「以 user 结尾的中间态」会被真的写进本地镜像与服务端。
    * 对游客尤其致命：本地镜像就是他唯一的历史。
    */
-  if (msgs && msgs.length > 0) lastWrittenSession.set(id, msgs);
+  if (msgs && msgs.length > 0) lastWrittenSession.set(rpSnapshotKey(id, mode), msgs);
   return msgs;
 }
 /** `loadSession` 的本体（上面那层包壳负责播种写入快照） */
-async function loadSessionRaw(id: string): Promise<RoleplayMessage[] | null> {
+async function loadSessionRaw(id: string, mode: RoleplayMode = 'solo'): Promise<RoleplayMessage[] | null> {
   /** 本地兜底（游客的唯一来源 / 登录用户后端失败或没记录时） */
   const fromLocal = (): RoleplayMessage[] | null => {
-    const local = loadLocalSession(id);
+    const local = loadLocalSession(id, mode);
     return local ? stripFallbackBubbles(local) : null;
   };
   if (isLoggedIn()) {
     try {
-      const r = await getRoleplaySession(id);
+      const r = await getRoleplaySession(id, mode);
       // 服务端消息同样过形状校验：库里的**历史遗留数据**不受写入侧过滤器的保护（加载路径不校验）
       const clean = stripFallbackBubbles(sanitizeMessages(r.success ? r.data?.messages : null));
       if (clean.length > 0) return clean;
@@ -314,8 +359,10 @@ async function loadSessionRaw(id: string): Promise<RoleplayMessage[] | null> {
  * 「本地先写下去、后端拒写」，让游客 / 后端回退路径拿到一份比服务端少一条回复的分叉数据。
  */
 const lastWrittenSession = new Map<string, RoleplayMessage[]>();
+/** 写入快照的键：**每条线各一份**（否则演多角色线时会被单角色线的快照判成"重复/截断"） */
+const rpSnapshotKey = (id: string, mode: RoleplayMode) => id + '::' + mode;
 
-async function saveSession(id: string, msgs: RoleplayMessage[]): Promise<void> {
+async function saveSession(id: string, mode: RoleplayMode, msgs: RoleplayMessage[]): Promise<void> {
   // 兜底双保险：任何情况下都不把「失败提示」当成角色台词落盘（历史遗留数据也顺带清掉）
   const clean = stripFallbackBubbles(msgs);
   /**
@@ -333,22 +380,26 @@ async function saveSession(id: string, msgs: RoleplayMessage[]): Promise<void> {
    * 「重新生成」的正经用法一点不受影响（判据 3 不成立）。服务端那道护栏保留，用来兜底挡
    * 旧客户端 / 另一台设备的落后状态。
    */
-  if (dropsSavedReply(lastWrittenSession.get(id), clean)) {
-    console.info('[roleplay] 跳过「未完成回合」的截断写入（保留已有回复）:', id, clean.length, '条');
+  if (dropsSavedReply(lastWrittenSession.get(rpSnapshotKey(id, mode)), clean)) {
+    console.info('[roleplay] 跳过「未完成回合」的截断写入（保留已有回复）:', id, mode, clean.length, '条');
     return;
   }
   // 本地始终镜像（游客可离线续写、后端失败兜底）
-  saveLocalSession(id, clean);
-  lastWrittenSession.set(id, clean);
+  saveLocalSession(id, mode, clean);
+  lastWrittenSession.set(rpSnapshotKey(id, mode), clean);
   try {
-    await saveRoleplaySession(id, clean); // 登录/游客都写后端（供控制台查看游客剧情记录）
+    await saveRoleplaySession(id, clean, undefined, mode); // 登录/游客都写后端（供控制台查看游客剧情记录）
   } catch { /* 后端失败忽略（本地已保存） */ }
 }
-function clearSession(id: string): void {
-  lastWrittenSession.delete(id); // 重开这段剧情：快照随之作废，别拿旧历史去比对
-  clearLocalSession(id);
-  try { localStorage.removeItem(rpPrefKey(id)); } catch { /* 忽略 */ }
-  deleteRoleplaySession(id).catch(() => {}); // 登录/游客都删后端（游客若已在后端则一并清除）
+/**
+ * 「重新开始」：**只清当前这条线**的存档（另一条线原样保留）。
+ * 这就是双模式的直接体现 —— 把多角色线重开，不该顺手抹掉用户的单角色线。
+ */
+function clearSession(id: string, mode: RoleplayMode): void {
+  lastWrittenSession.delete(rpSnapshotKey(id, mode)); // 重开这段剧情：快照随之作废，别拿旧历史去比对
+  clearLocalSession(id, mode);
+  try { localStorage.removeItem(rpPrefKey(id, mode)); } catch { /* 忽略 */ }
+  deleteRoleplaySession(id, mode).catch(() => {}); // 登录/游客都删后端（游客若已在后端则一并清除）
 }
 
 export default function RoleplayPage({ onBack, onNeedLogin, authUser, onOpenMembership, onNeedPay, initialScenarioId, initialWenyouGame, initialCreate, initialPrefOpen, initialAdultIntent, onAdultGateChange, onGoChat, onOpenChat }: RoleplayPageProps) {
@@ -441,6 +492,24 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   const [scenarios, setScenarios] = useState<RoleplayScenarioInfo[]>([]);
   const [selected, setSelected] = useState<RoleplayScenarioInfo | null>(null);
   const [messages, setMessages] = useState<RoleplayMessage[]>([]);
+  /**
+   * 当前演的是哪条线（2026-10-01 双模式）：solo = 单角色线，multi = 多角色线。
+   * 两条线**各有独立存档与偏好**；详情页的模式开关决定进哪条，并记住用户上次的选择。
+   */
+  const [rpMode, setRpMode] = useState<RoleplayMode>(DEFAULT_ROLEPLAY_MODE);
+  /**
+   * 开场白打字机（O1，2026-10-01）
+   *
+   * 需求：「第一条信息出来的时候是流式的」——多角色剧本里还要"每个角色的气泡逐个出现"。
+   * 做法：进一部**没有存档**的剧本时，开场白不瞬间全出，而是把已揭示的字符数记在这里，
+   * 渲染时切片；因为多角色解析器是流式容错的，切片推进时自然就是"旁白先长出来 → 李嬷嬷
+   * 的气泡出现、再长 → 世子的气泡再出现"。
+   *
+   * 值 = 已揭示字符数；null = 不在动画中（存档续演、用户已发言、重新开始前）。
+   * ⚠️ **只影响渲染**：`messages` 里始终是完整原文（落盘/回灌/分享/复制一律取全文），
+   *     所以动画中途刷新也不会把半截开场白写进业务数据（红线⑥的同类风险）。
+   */
+  const [openingTyped, setOpeningTyped] = useState<number | null>(null);
   const [input, setInput] = useState('');
   // 输入框自动增高：内容换行时撑高完整显示（上限 160px，超出后在框内滚动），空态保持一行
   const rpInputRef = useRef<HTMLTextAreaElement>(null);
@@ -450,6 +519,19 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     el.style.height = 'auto';
     el.style.height = Math.min(el.scrollHeight, 160) + 'px';
   }, [input]);
+  /**
+   * 开场白打字机的推进器。
+   * 步长按整段长度算（约 120 帧走完）：短开场不至于"刷"地一下，长开场也不会让人干等。
+   * 只在**第 0 条 assistant 消息**是开场白时生效（见渲染处的切片），不新增/不修改任何消息。
+   */
+  useEffect(() => {
+    if (openingTyped === null) return;
+    const total = messages[0]?.content?.length ?? 0;
+    if (openingTyped >= total) { setOpeningTyped(null); return; }
+    const step = Math.max(1, Math.round(total / 120));
+    const id = window.setTimeout(() => setOpeningTyped((n) => Math.min(total, (n ?? 0) + step)), 22);
+    return () => window.clearTimeout(id);
+  }, [openingTyped, messages]);
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tipOpen, setTipOpen] = useState(false);
@@ -688,9 +770,14 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     return () => { window.clearTimeout(t0); if (rpStyleHintTimer.current) window.clearTimeout(rpStyleHintTimer.current); };
   }, [stage, flashStyleHint]);
 
-  const changeNarrativeStyle = (v: 'classic' | 'immersive') => {
+  /**
+   * @param flash 是否弹那层 3.5s 浮层提示。详情页（进剧情之前）**不弹**——
+   *   它把两种写法的说明直接铺在卡片里，浮层只会重复一遍；聊天页的顶栏药丸仍然要弹
+   *   （那里只有两个词，没有解释空间）。除这一个参数外，三处入口共用同一份副作用。
+   */
+  const changeNarrativeStyle = (v: 'classic' | 'immersive', flash = true) => {
     setNarrativeStyle(v);
-    flashStyleHint();
+    if (flash) flashStyleHint();
     try { localStorage.setItem('rp_narrative_style', v); } catch { /* ignore */ }
     // 服务端为准（跨设备同步）：失败也不回滚——下次进页面会以服务端值纠正过来
     savePreferences({ narrativeStyle: v }).then(r => {
@@ -919,6 +1006,15 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   const rpSelectedRef = useRef<RoleplayScenarioInfo | null>(null);
   useEffect(() => { rpSelectedRef.current = selected; }, [selected]);
 
+  /**
+   * 本轮剧情生成的中断句柄（2026-09-29 审查 A5-P2-3）。
+   * 此前两个 AbortController 建好后**从未 abort**（文件里 0 处 .abort()），也没有卸载清理、
+   * 没有「这一轮还是不是当前轮」的身份校验 → 离开页面或切换剧本后，在途的流仍会往 state 写，
+   * 自动存档还会把它存到**当前选中**的剧本 id 下（等于把 A 的对话存成 B 的）。
+   */
+  const rpTurnAbortRef = useRef<AbortController | null>(null);
+  useEffect(() => () => { rpTurnAbortRef.current?.abort(); }, []);
+
   /** 18+ 确认框点「我已年满 18 岁」：服务端留痕成功后，继续原本的开启动作 */
   const confirmAdultAndEnable = async () => {
     setAdultGateBusy(true);
@@ -1080,6 +1176,10 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   const [suggestLoading, setSuggestLoading] = useState(false);
   const [suggestError, setSuggestError] = useState('');
   const [chatQuota, setChatQuota] = useState<QuotaInfo | null>(null);
+  /** 判重退费：本回合因与上一段重复而免扣额度。⚠️ 只做 UI 提示，绝不写进 messages（红线 6） */
+  const [repeatFreeNotice, setRepeatFreeNotice] = useState(false);
+  /** 判重退费：本次建议与上一批重复、未扣额度 */
+  const [suggestDuplicate, setSuggestDuplicate] = useState(false);
   const rpIsPro = chatQuota ? (chatQuota.plan === 'pro' || !!chatQuota.lifetime) : getCachedPlan() === 'pro';
 
   // —— 关键时刻自动画面（Pro 权益，默认关）——
@@ -1186,6 +1286,8 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   // 搜索：query 非空时展示搜索结果（后端加权），标签 chips 快速筛选
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<(RoleplayScenarioInfo & { matched?: string[] })[] | null>(null); // null=未搜索
+  // 注：2026-10-01 曾加过「多角色/单角色」筛选，双模式落地后它不再区分任何东西（每部剧本都有两条线）
+  // → 已移除；改用卡片上的「群像可选」角标做提示。列表仍按点赞排序。
   const [searching, setSearching] = useState(false);
   const [tagData, setTagData] = useState<RoleplayTagData | null>(null); // 热门 + 分组标签
   const [tagFilter, setTagFilter] = useState(''); // 全部标签页内快速筛选
@@ -1647,34 +1749,38 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
    * ②更旧的请求可能晚于更新的请求落盘，把新内容盖回去（线上日志抓到过：2 条的旧状态落在 3 条新状态之后）。
    * 现在同一时刻只有一个写请求在途，期间只保留最新一份，收尾再补写一次。
    */
-  const saveQueueRef = useRef<ReturnType<typeof createSerialSaveQueue<{ id: string; msgs: RoleplayMessage[] }>> | null>(null);
+  const saveQueueRef = useRef<ReturnType<typeof createSerialSaveQueue<{ id: string; mode: RoleplayMode; msgs: RoleplayMessage[] }>> | null>(null);
   useEffect(() => {
     if (stage !== 'chat' || !selected) return;
     if (!saveQueueRef.current) {
-      saveQueueRef.current = createSerialSaveQueue<{ id: string; msgs: RoleplayMessage[] }>(
-        (job) => saveSession(job.id, job.msgs),
+      saveQueueRef.current = createSerialSaveQueue<{ id: string; mode: RoleplayMode; msgs: RoleplayMessage[] }>(
+        (job) => saveSession(job.id, job.mode, job.msgs),
       );
     }
-    // payload 带上剧本 id：切剧本时排队中的「上一个剧本的尾状态」不会写进新剧本
-    saveQueueRef.current.enqueue({ id: selected.id, msgs: messages });
-  }, [messages, stage, selected]);
+    // payload 带上剧本 id + 模式：切剧本/切模式时，排队中的尾状态不会写进另一部剧本或另一条线
+    saveQueueRef.current.enqueue({ id: selected.id, mode: rpMode, msgs: messages });
+  }, [messages, stage, selected, rpMode]);
 
   // 进入剧本详情时检查是否有可继续的剧情（登录用户查后端，游客查本地）
   // 依赖 stage：退出聊天回到详情时 selected 未变，需在 stage 变为 detail 时重新检查 hasSaved
   useEffect(() => {
     if (!selected || stage !== 'detail') return;
     let alive = true;
-    loadSession(selected.id).then(saved => {
+    // 「有进行中的剧情」按**当前选中的模式**判定：单角色有档但多角色没档时，多角色应显示「开始」
+    loadSession(selected.id, rpMode).then(saved => {
       // ⚠️ 2026-09-17 修复：loadSession 现在**总是返回数组**（无会话 = `[]`，见 stripFallbackBubbles），
       // 所以 `saved != null` 恒为真 → 每部剧本（含从没演过的）都显示「继续剧情 + 有进行中的剧情」。
       // 必须按长度判断：空数组 = 没有会话。
       if (alive) setHasSaved(hasResumableSession(saved));
     });
     return () => { alive = false; };
-  }, [selected, stage]);
+  }, [selected, stage, rpMode]);
 
-  const enterChat = async (s: RoleplayScenarioInfo, opts?: { gesture?: boolean }) => {
+  const enterChat = async (s: RoleplayScenarioInfo, opts?: { gesture?: boolean; mode?: RoleplayMode }) => {
     if (opts?.gesture) { bgm.markUserGesture(); bgm.tryPlay(); } // 用户点击进入 → 允许出声；详情页配乐被浏览器拦下时在此手势续播
+    const mode: RoleplayMode = opts?.mode ?? rpMode;
+    setRpMode(mode);
+    try { lsSet(rpModeKey(s.id), mode); } catch { /* 存储被禁：不影响本会话 */ }
     setSelected(s);
     // 成人模式开关：「本人用无限制模型建的剧本」进来自动是开的（用户可手动关，且只关这一个）。
     // 和服务端 unlimitedForScenario 同一套优先级，切剧本时重算，不留上一个剧本的状态。
@@ -1684,11 +1790,15 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     const uName = (savedNames?.user || '').trim() || s.user.name;
     setAiName(aName);
     setUserName(uName);
-    // 偏好与上次会话并行拉取（深链打开更快）
-    const [pref, saved] = await Promise.all([loadPreference(s.id), loadSession(s.id)]);
+    // 偏好与上次会话并行拉取（深链打开更快）；**都按当前模式走**（两条线各一份档、各一份偏好）
+    const [pref, saved] = await Promise.all([loadPreference(s.id, mode), loadSession(s.id, mode)]);
     setUserPreference(pref);
     setPrefDraft(pref);
-    let opening = s.openingAssistant || s.openingScene || '';
+    /**
+     * 开场白按模式取：多角色线可用 `multiOpeningAssistant/Scene` 写一段**专属开场**
+     *（两条线允许不同剧情线），没写就回落到通用开场。
+     */
+    let opening = (mode === 'multi' ? (s.multiOpeningAssistant || s.multiOpeningScene) : '') || s.openingAssistant || s.openingScene || '';
     // 开场文本里的默认名替换为自定义名（跨语言沉浸）
     if (aName !== s.ai.name && opening) opening = opening.split(s.ai.name).join(aName);
     // ⚠️ 2026-09-17 修复（线上反馈「无存档进剧情时开场白被吞」的根因）：
@@ -1700,6 +1810,8 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     //                        ② 这里改用纯函数 pickInitialMessages（**只认非空数组**），并有单测钉死。
     const initial = pickInitialMessages(saved, opening);
     setMessages(initial);
+    // 新会话（没有存档）才播开场白打字机；续演存档一律不播（用户是回来接着看的，不该重放）
+    setOpeningTyped(!hasResumableSession(saved) && (initial[0]?.content?.length ?? 0) > 0 ? 0 : null);
     /**
      * 🚨 2026-09-18：会话尾部停在一条**没人接的用户消息**上时，把失败态恢复出来。
      *
@@ -1732,8 +1844,10 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
 
   const confirmRestartAction = () => {
     if (!selected) return;
-    clearSession(selected.id);
-    setMessages([{ role: 'assistant', content: selected.openingAssistant || selected.openingScene }]);
+    clearSession(selected.id, rpMode); // 只清当前这条线（另一条线原样保留）
+    const freshOpening = (rpMode === 'multi' ? (selected.multiOpeningAssistant || selected.multiOpeningScene) : '') || selected.openingAssistant || selected.openingScene;
+    setMessages([{ role: 'assistant', content: freshOpening }]);
+    setOpeningTyped(freshOpening ? 0 : null);
     setSendFailed(null);
     setInput('');
     setUserPreference('');
@@ -1922,8 +2036,8 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
    * 单次尝试：只发请求 + 收敛结果，**不动** sendFailed / 版本收尾（由 runTurn 决定）。
    * 返回值是「这一轮到底怎么样了」的分类，便于自动重试与埋点判断。
    */
-  const attemptTurn = async (base: RoleplayMessage[], prefOverride?: string): Promise<
-    { kind: 'ok'; reply: string; incomplete: IncompleteReason | null; continued: number; meta: MetaInfo | null } | { kind: 'quota' } | { kind: 'partial'; full: string; meta: MetaInfo | null } | { kind: 'abort' } | { kind: 'fail'; code: string; status?: number; error?: string }
+  const attemptTurn = async (base: RoleplayMessage[], prefOverride?: string, replacedReply?: string): Promise<
+    { kind: 'ok'; reply: string; incomplete: IncompleteReason | null; continued: number; meta: MetaInfo | null; free: boolean } | { kind: 'quota' } | { kind: 'partial'; full: string; meta: MetaInfo | null } | { kind: 'abort' } | { kind: 'fail'; code: string; status?: number; error?: string }
   > => {
     let full = '';
     // 本轮实际使用的模型：服务端在选定 provider 后、开始生成前通过 {type:'meta'} 下发一次。
@@ -1935,13 +2049,18 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     //    2026-09-17 的记录里「41 条里 40 条未记录」就是这里漏的：runTurn 的 finish() 重新构造消息对象、
     //    没带上 meta，于是流式过程中带过 meta 的那条被定稿时覆盖掉了。
     const metaRef: { current: MetaInfo | null } = { current: null };
+    // 先掐掉上一轮在途的流（避免两条流同时写同一份 state），并登记本轮句柄（2026-09-29 审查 A5-P2-3）
+    rpTurnAbortRef.current?.abort();
     const ac = new AbortController();
+    rpTurnAbortRef.current = ac;
     try {
       // 剧情走流式：逐 token 追加，不让用户对着 spinner 空等整段回复（不刻意变慢）
       // ⚠️ 上下文一律过 toRequestMessages：content 取「**当前选中**的那一版」——
       //    否则切了版本/重抽之后，会把用户已经看不见的旧版当台词回灌给模型（本轮功能的关键不变量）
       const r = await roleplayChatStream(selected!.id, toRequestMessages(base), rpLang, aiName.trim() || undefined, userName.trim() || undefined, prefOverride ?? userPreference, narrativeStyle, {
         onDelta: (delta) => {
+          // 这一轮已被切走/被新请求取代：流里的 delta 一律丢弃，绝不写进当前 state
+          if (rpTurnAbortRef.current !== ac) return;
           full += delta;
           setQueueInfo(null); // 一旦开始出字，排队就结束了，立刻撤掉提示
           setMessages([...base, { role: 'assistant', content: full, ...assistantMetaOf(metaRef.current, narrativeStyle) }]);
@@ -1955,7 +2074,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
         // A 方案：服务端正在重写这一版（重写期间不再有 delta，最终由 done.reply 覆盖）
         onRewrite: () => { setContinuing(false); setRewriting(true); },
         signal: ac.signal,
-      }, innerOn, thinkingLevel);
+      }, innerOn, thinkingLevel, false, replacedReply, rpMode);
       setQueueInfo(null); // 流式已结束（无论成败），排队态一律清掉，避免残留提示
       setContinuing(false);
       setRewriting(false);
@@ -1967,6 +2086,8 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
           incomplete: (r.data.incomplete ?? null) as IncompleteReason | null,
           continued: Number(r.data.continued) || 0,
           meta: metaRef.current,
+          // 判重退费：服务端判到这一条与上一段重复 → 本次未扣额度（UI 据此提示用户）
+          free: r.data.free === true,
         };
       }
       if (isQuotaExhaustedResp(r)) return { kind: 'quota' };
@@ -1996,6 +2117,8 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
    * 判定见 `src/lib/autoRetry.ts`（已流出内容 / 4xx 业务错误 / 用户取消都不重试）。
    */
   const runTurn = async (base: RoleplayMessage[], prefOverride?: string, regenPrev?: RoleplayMessage, rollbackTo?: RoleplayMessage[]) => {
+    // 新一轮开始：先撤掉上一条「重复免扣」提示（是否免扣由服务端 done.free 决定）
+    setRepeatFreeNotice(false);
     /** 本轮的审计信息（meta）：定稿时要用，所以在这一层持有，见 finish() */
     let outcomeMeta: MetaInfo | null = null;
     /** attemptTurn 的返回是联合类型（quota/abort/fail 没有 meta 字段），这里统一取一次 */
@@ -2024,7 +2147,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
      */
     const restore = (): void => { if (rollbackTo) setMessages(rollbackTo); else restorePrev(); };
     try {
-      let outcome = await attemptTurn(base, prefOverride);
+      let outcome = await attemptTurn(base, prefOverride, regenPrev?.content);
       rememberMeta(outcome);
       const firstCode = outcome.kind === 'fail' ? outcome.code : '';
 
@@ -2035,7 +2158,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
         console.warn('[roleplay] 首次失败，立即自动再 call 一次:', outcome.code, outcome.status || '');
         // AUTO_RETRY_DELAY_MS 默认 0 = 不等（连接已经坏了，等再久那条连接也不会好；新请求会新建连接）
         if (AUTO_RETRY_DELAY_MS > 0) await new Promise((r) => setTimeout(r, AUTO_RETRY_DELAY_MS));
-        outcome = await attemptTurn(base, prefOverride);
+        outcome = await attemptTurn(base, prefOverride, regenPrev?.content);
         rememberMeta(outcome);
       }
 
@@ -2049,6 +2172,8 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
         }
         setMessages([...base, outcome.incomplete ? { ...fresh, incomplete: true } : fresh]);
         setSendFailed(null);
+        // 判重退费：本条与上一段重复 → 服务端已回滚额度，这里只提示用户（不写进 messages）
+        setRepeatFreeNotice(outcome.free);
         if (firstCode) reportAiFailure('roleplay', firstCode, true); // 自动重试救回来了（用户无感）
       } else if (outcome.kind === 'quota') {
         // 额度用完：交给统一门控（游客→注册 / 已注册→分享/反馈），不把付费墙文案当作 AI 消息
@@ -2091,6 +2216,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     const baseMsgs = lastUser >= 0 ? commitUserBranch(messages, lastUser) : messages;
     setSending(true);
     setSendFailed(null);
+    setOpeningTyped(null);          // 用户发言了 → 开场白打字机立即收尾（messages 里本来就是全文）
     setInput('');
     setEditTarget(null);            // 正常发送一律退出编辑态（编辑态的发送走 editResend，见 submitComposer）
     stickToBottomRef.current = true; // 发送后回到最新，跟随后续回复（对齐聊一聊）
@@ -2207,10 +2333,17 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     }
     setSuggestLoading(true);
     setSuggestError('');
+    // 上一批建议 = 本轮判重退费的比较对象（清空前先留一份）
+    const prevSuggestions = suggestions;
+    setSuggestDuplicate(false);
     setSuggestions([]);
     try {
-      const r = await roleplaySuggest(selected.id, toRequestMessages(messages), rpLang, aiName.trim() || undefined, userName.trim() || undefined, userPreference, narrativeStyle);
-      if (r.success && r.data && Array.isArray(r.data.suggestions) && r.data.suggestions.length > 0) {
+      const r = await roleplaySuggest(selected.id, toRequestMessages(messages), rpLang, aiName.trim() || undefined, userName.trim() || undefined, userPreference, narrativeStyle, prevSuggestions);
+      if (r.success && r.data && r.data.duplicate) {
+        // 与上一批重复：服务端已回滚额度（本次不扣），保留上一批并提示用户
+        setSuggestions(prevSuggestions);
+        setSuggestDuplicate(true);
+      } else if (r.success && r.data && Array.isArray(r.data.suggestions) && r.data.suggestions.length > 0) {
         setSuggestions(r.data.suggestions);
       } else if (isQuotaExhaustedResp(r)) {
         onNeedPay?.();
@@ -2260,7 +2393,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     if (!selected) return;
     const text = prefDraft.trim();
     setUserPreference(text);
-    await savePreference(selected.id, text);
+    await savePreference(selected.id, rpMode, text);
     setPrefOpen(false);
   };
 
@@ -2294,7 +2427,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     if (fb) {
       updatedPref = (userPreference.trim() ? userPreference + '\n' : '') + '· 用户希望：' + fb;
       setUserPreference(updatedPref);
-      await savePreference(selected.id, updatedPref);
+      await savePreference(selected.id, rpMode, updatedPref);
     }
     setMessages(start.base); // 从这条起重写（其后对话由用户在弹窗里确认后清掉）
     await runTurn(start.base, updatedPref, start.prev);
@@ -2320,27 +2453,35 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     if (!target || target.role !== 'assistant' || !target.content.trim()) return;
     const base = messages.slice(0, i + 1); // 含这条半截回复：服务端取最后一条 assistant 当断点
     const rest = messages.slice(0, i);
+    // 先掐掉上一轮在途的流（避免两条流同时写同一份 state），并登记本轮句柄（2026-09-29 审查 A5-P2-3）
+    rpTurnAbortRef.current?.abort();
     const ac = new AbortController();
+    rpTurnAbortRef.current = ac;
     let full = target.content;
     // 用可变持有对象而不是 `let meta: T | null`：后者会被 TS 的控制流分析收窄成 never
     //（赋值发生在 await 之后的回调里，编译器在主流程上看不到它被改写）。
     const metaRef: { current: { adult: boolean; model: string } | null } = { current: null };
     setContinuing(true);
     setSendFailed(null);
+    setRepeatFreeNotice(false);
     setRegenerateOpen(false);
     try {
       const r = await roleplayChatStream(selected.id, toRequestMessages(base), rpLang, aiName.trim() || undefined, userName.trim() || undefined, userPreference, narrativeStyle, {
         onDelta: (delta) => {
+          // 这一轮已被切走/被新请求取代：流里的 delta 一律丢弃，绝不写进当前 state
+          if (rpTurnAbortRef.current !== ac) return;
           // 续写增量直接接在同一段正文后面（不新增气泡），并把「没写完」标记临时撤掉
           full += delta;
           setMessages([...rest, { ...target, content: full, incomplete: undefined }]);
         },
         onMeta: (m) => { metaRef.current = m; },
         signal: ac.signal,
-      }, innerOn, thinkingLevel, true);
+      }, innerOn, thinkingLevel, true, undefined, rpMode);
       if (r.success && r.data) {
         const reason = (r.data.incomplete ?? null) as IncompleteReason | null;
         if (reason) reportAiFailure('roleplay', incompleteCode(reason) || 'PARTIAL', false);
+        // 判重退费：续写后仍与上一段重复 → 服务端已回滚额度（只提示，不写进 messages）
+        setRepeatFreeNotice(r.data.free === true);
         // 续写后的全文作为这条的新一版（旧半截留在 ◀/▶ 里，可回看/可比对）
         const done = finishRegenerate(target, r.data.reply);
         const meta = metaRef.current;
@@ -3150,6 +3291,11 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   // ===== 剧本详情 =====
   if (stage === 'detail' && selected) {
     const s = selected;
+    /**
+     * 「开场剧情」卡显示的是**场景**文本（与改造前一致：这里一直是 openingScene）。
+     * ⚠️ 注：进聊天时用的开场是**台词**优先（`openingAssistant`），两者取舍不同 —— 别顺手统一。
+     */
+    const detailOpening = (rpMode === 'multi' ? (s.multiOpeningScene || s.multiOpeningAssistant) : '') || s.openingScene;
     return (
       <>
         {adultOverlays}
@@ -3225,6 +3371,14 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
             <div className={`relative pt-40 sm:pt-48 ${s.avatar ? 'pb-6' : 'min-h-[16rem] pb-6'} px-5 text-white`}>
               <h1 className="text-2xl font-bold mt-2.5 leading-tight drop-shadow-sm">{s.title}</h1>
               {s.tagline && <p className="text-sm text-white/85 mt-1.5 leading-snug line-clamp-2">{s.tagline}</p>}
+              {/* 多角色角标（2026-10-01）：与列表卡片同一处标记，进详情页也一眼看得出 */}
+              {(s.cast?.length ?? 0) >= 2 && (
+                <div className="mt-2.5">
+                  <span data-testid="rp-multi-badge-detail" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary-strong/90 backdrop-blur-sm text-white text-[11px] font-bold leading-none">
+                    <Users className="w-3 h-3" />{t('rpBothModesBadge')} · {s.cast!.length}
+                  </span>
+                </div>
+              )}
               {s.tags && s.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2.5">
                   {s.tags.map(tag => (
@@ -3270,6 +3424,37 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
             <p className="text-sm text-gray-700 leading-relaxed mt-1.5"><b className="text-gray-800">{t('rpPersonality')}: </b>{s.ai.personality}</p>
             <p className="text-sm text-gray-700 leading-relaxed mt-1.5"><b className="text-gray-800">{t('rpSpeech')}: </b>{s.ai.speech}</p>
           </div>
+
+          {/* 同场角色（多角色剧本）：把**全部**角色的身份与一句话介绍列出来 ——
+              主角的详细设定在上面的 AI 角色卡里，这里仍保留一条（带「主角」标记），
+              这样"这部戏有谁"是一份完整名单，而不是让玩家自己去拼。 */}
+          {(s.cast?.length ?? 0) >= 2 && (
+            <div className="card-white-readable backdrop-blur-md rounded-2xl border border-gray-100 p-4 shadow-sm" data-testid="rp-cast-section">
+              <p className="text-xs font-bold text-primary-text mb-2 flex items-center gap-1.5">
+                <Users className="w-4 h-4" />{t('rpCastSection')} · {s.cast!.length}
+              </p>
+              <p className="text-[11px] text-ink-soft leading-relaxed mb-3">{t('rpCastSectionHint')}</p>
+              <div className="space-y-3">
+                {s.cast!.map(c => (
+                  <div key={c.id} className="flex gap-2.5" data-testid={'rp-cast-card-' + c.id}>
+                    <div className="w-9 h-9 rounded-full overflow-hidden bg-primary-soft flex items-center justify-center flex-shrink-0 text-[13px] font-semibold text-primary-text ring-1 ring-primary/20">
+                      <CastAvatar member={c} scenario={s} imgClass="w-full h-full object-cover" textClass="text-[13px] font-semibold" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold text-gray-800 flex items-center gap-1.5 flex-wrap">
+                        {c.name}
+                        {c.role && <span className="text-[10px] font-normal text-ink-soft">{c.role}</span>}
+                        {c.lead && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary-soft text-primary-text leading-none">{t('rpCastLeadTag')}</span>
+                        )}
+                      </p>
+                      {c.desc && <p className="text-[12px] text-gray-700 leading-relaxed mt-0.5">{c.desc}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 用户角色卡 */}
           <div className="card-white-readable backdrop-blur-md rounded-2xl border border-gray-100 p-4 shadow-sm">
@@ -3317,12 +3502,83 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
             <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{s.background}</p>
           </div>
 
-          {/* 开场剧情 */}
+          {/* 开场剧情（按当前模式显示：多角色线可写专属开场） */}
           <div className="card-white-readable backdrop-blur-md rounded-2xl border border-gray-100 p-4 shadow-sm">
             <p className="text-xs font-bold text-gray-800 mb-2 flex items-center gap-1.5">
               <BookOpen className="w-4 h-4 text-primary" />{t('roleplayOpening')}
             </p>
-            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{s.openingScene}</p>
+            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{detailOpening}</p>
+          </div>
+
+          {/**
+            * 模式选择（2026-10-01 双模式）：同一部剧本两条线，**各一份存档**、互不影响。
+            * 只有登记了 cast（>= 2 人）的剧本才显示这张卡；其余仍是纯单角色剧本。
+            */}
+          {(s.cast?.length ?? 0) >= 2 && (
+            <div className="card-white-readable backdrop-blur-md rounded-2xl border border-gray-100 p-4 shadow-sm" data-testid="rp-mode-switch">
+              <p className="text-xs font-bold text-gray-800 mb-2 flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-primary" />{t('rpModeTitle')}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { key: 'solo' as const, label: t('rpModeSolo'), hint: t('rpModeSoloHint') },
+                  { key: 'multi' as const, label: t('rpModeMulti'), hint: t('rpModeMultiHint') },
+                ]).map(o => (
+                  <button
+                    key={o.key}
+                    type="button"
+                    data-testid={'rp-mode-' + o.key}
+                    aria-pressed={rpMode === o.key}
+                    onClick={() => {
+                      setRpMode(o.key);
+                      try { lsSet(rpModeKey(s.id), o.key); } catch { /* 存储被禁：仅本次会话生效 */ }
+                    }}
+                    className={'text-left rounded-xl border px-3 py-2.5 transition-all ' + (rpMode === o.key
+                      ? 'border-primary bg-primary-lighter/70 ring-1 ring-primary/30'
+                      : 'border-clay-border bg-white/70 hover:border-primary/50')}
+                  >
+                    <span className="block text-[13px] font-bold text-gray-800">{o.label}</span>
+                    <span className="mt-0.5 block text-[11px] leading-snug text-ink-soft">{o.hint}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/**
+            * 叙事模式（2026-10-02，用户要求「开始剧情的时候就要能选」）：
+            * 以前这一项只在**进了对话之后**（顶栏药丸）和偏好抽屉里能改，等于用户先开演、
+            * 写完一轮才发现"原来还能是小说/对话"。现在把它提到详情页、紧挨着进入按钮。
+            * ⚠️ 三处入口（这里 / 聊天顶栏 / 偏好抽屉）**共用** narrativeStyle 与 changeNarrativeStyle，
+            * 不要各写一份状态，否则会出现在 A 处改了、B 处还显示旧值。
+            */}
+          <div className="card-white-readable backdrop-blur-md rounded-2xl border border-gray-100 p-4 shadow-sm" data-testid="rp-narrative-switch">
+            <p className="text-xs font-bold text-gray-800 mb-1 flex items-center gap-1.5">
+              <Pencil className="w-4 h-4 text-primary" />{t('rpStyleSection')}
+            </p>
+            <p className="text-[11px] leading-snug text-ink-soft mb-3">{t('rpStyleSectionHint')}</p>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { key: 'classic' as const, label: t('rpStyleClassic'), hint: t('rpStyleClassicHint') },
+                { key: 'immersive' as const, label: t('rpStyleImmersive'), hint: t('rpStyleImmersiveHint') },
+              ]).map(o => (
+                <button
+                  key={o.key}
+                  type="button"
+                  data-testid={'rp-narrative-' + o.key}
+                  aria-pressed={narrativeStyle === o.key}
+                  onClick={() => changeNarrativeStyle(o.key, false)}
+                  className={'text-left rounded-xl border px-3 py-2.5 transition-all ' + (narrativeStyle === o.key
+                    ? 'border-primary bg-primary-lighter/70 ring-1 ring-primary/30'
+                    : 'border-clay-border bg-white/70 hover:border-primary/50')}
+                >
+                  <span className="block text-[13px] font-bold text-gray-800">
+                    {o.label}{narrativeStyle === o.key ? ' ✓' : ''}
+                  </span>
+                  <span className="mt-0.5 block text-[11px] leading-snug text-ink-soft">{o.hint}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <SourceAttribution src={s.source} sourceUrl={s.sourceUrl} />
@@ -3433,7 +3689,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
                 )}
                 <div className="mt-4 space-y-2">
                   <button
-                    onClick={() => { setTipOpen(false); enterChat(s, { gesture: true }); }}
+                    onClick={() => { setTipOpen(false); enterChat(s, { gesture: true, mode: rpMode }); }}
                     className="w-full bg-primary-strong text-white font-semibold rounded-full py-2.5 hover:bg-primary active:scale-[0.98] transition-all"
                   >
                     {t('roleplayTipConfirm')}
@@ -3459,6 +3715,23 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   // ===== 剧情对话 =====
   const s = selected;
   const rpContext = messages.map(m => (m.role === 'user' ? (getLang() === 'en' ? 'Me: ' : '我：') : (aiName || s?.ai?.name || (getLang() === 'en' ? 'Them' : 'TA')) + (getLang() === 'en' ? ': ' : '：')) + m.content).join('\n');
+  /**
+   * 多角色（群像）渲染上下文（2026-10-01）
+   *   · 只有 cast.length >= 2 才启用；
+   *   · 主角色（lead）的标记名跟随用户自定义名 —— 与后端 roleplayReply、开场白替换**三处必须同口径**，
+   *     否则前端认不出服务端下发的标记，整段会退回旁白；
+   *   · 单角色剧本 cast 为空 → 下面所有分支都走原路径，行为逐字不变。
+   */
+  const castNames: CastName[] = (s?.cast?.length ?? 0) >= 2
+    ? (s!.cast as CastName[]).map(c => (c.lead && aiName.trim() ? { ...c, name: aiName.trim() } : c))
+    : [];
+  const castActive = castNames.length >= 2;
+  /** 要"没有标记"的展面（长图分享 / TTS / 引用）统一走它；单角色剧本原样返回 */
+  const withoutTags = (text: string): string => (castActive ? stripCastTags(text, castNames) : text);
+  /** 群像气泡的小头像：与详情页「同场角色」共用同一个组件（主角=剧本头像） */
+  const castAvatar = (member: CastName) => (
+    <CastAvatar member={member} scenario={s} imgClass="w-full h-full object-cover" textClass="text-[11px]" />
+  );
   return (
     <>
       {adultOverlays}
@@ -3488,7 +3761,18 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
         partnerName={aiName || s?.ai?.name || t('appName')}
         titleNameKey="rpShareTitleWithName"
         subtitle={s ? s.title : undefined}
-        bubbles={messages.map((m): StoryBubble => ({ side: m.role === 'user' ? 'me' : 'them', name: m.role === 'user' ? t('chatShareMe') : (aiName || s?.ai?.name || t('appName')), content: m.content }))}
+        bubbles={messages.flatMap((m): StoryBubble[] => {
+          if (m.role === 'user') return [{ side: 'me', name: t('chatShareMe'), content: m.content }];
+          const fallbackName = aiName || s?.ai?.name || t('appName');
+          // 多角色：长图里按说话人拆成多条，各自带自己的名字（标记不落进长图）
+          if (castActive) {
+            const segs = parseCastSegments(m.content, castNames);
+            if (hasCastSpeaker(segs)) {
+              return segs.map((seg): StoryBubble => ({ side: 'them', name: seg.speaker ? seg.speaker.name : fallbackName, content: seg.text }));
+            }
+          }
+          return [{ side: 'them', name: fallbackName, content: m.content }];
+        })}
       />
       {/* ⚠️ 2026-09-15 用户要求顶栏也跟随「卡片不透明度」变透明 → 与气泡/输入栏同一套
           （`card-white` + 毛玻璃；默认 80% 时观感与原来的 bg-white/85 几乎一致，往下拖才明显透出场景）。
@@ -3689,19 +3973,57 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
           const userVers = m.role === 'user' ? versionsOf(m) : [];
           const userVi = userVers.length > 0 ? versionIndex(m) : 0;
           const branchOk = m.role === 'user' && canSwitchUserBranchAt(messages, i);
+          /**
+           * 多角色分段（2026-10-01）：只有 assistant + 该剧本有 cast 时才解析；
+           * 解析器是**流式容错**的，所以流式打字过程中每个渲染帧都能拿到当前已判定的段落，
+           * 打字机自然就是"上一位说完、下一位的气泡才出现"。识别不到标记 → multi 为假 → 原单气泡。
+           */
+          /**
+           * 开场白打字机（O1）：只切**第 0 条 assistant 消息的渲染文本**——
+           * 解析与显示都用切片，复制/落盘/长图分享/TTS 仍取 m.content 全文。
+           * 多角色剧本下，切片推进 + 流式容错解析器 = 每个角色的气泡逐个出现、各自逐字长出来。
+           */
+          const shown = openingTyped !== null && i === 0 && m.role === 'assistant' ? m.content.slice(0, openingTyped) : m.content;
+          const segs = castActive && m.role === 'assistant' ? parseCastSegments(shown, castNames) : [];
+          const multi = castActive && hasCastSpeaker(segs);
           return (
           <div key={i} className={'flex items-end gap-2 ' + (m.role === 'user' ? 'justify-end' : 'justify-start')}>
-            {m.role === 'assistant' && (
+            {m.role === 'assistant' && !multi && (
               <div className="w-8 h-8 rounded-full overflow-hidden bg-primary-soft flex items-center justify-center flex-shrink-0 text-base ring-1 ring-primary/20 shadow-sm">
                 <RPCover s={s} imgClass="w-full h-full" fallbackClass="text-base" />
               </div>
             )}
             <div className={'flex flex-col max-w-[85%] ' + (m.role === 'user' ? 'items-end' : 'items-start')}>
+              {multi ? (
+                /* 群像：一段一个气泡。带标记的段落 = 该角色（自己的头像 + 名字 + 台词卡），
+                   没有标记的段落 = 旁白（缩进对齐台词、无名字、字色更淡）。
+                   与单气泡共用同一套 surface token（card-white），四套皮肤下都不翻车。 */
+                <div className="flex flex-col gap-1.5 w-full" data-testid={'rp-cast-group-' + i}>
+                  {segs.map((seg, k) => (seg.speaker ? (
+                    <div key={k} className="flex items-end gap-2" data-testid={'rp-cast-seg-' + i + '-' + k}>
+                      <div className="w-7 h-7 rounded-full overflow-hidden bg-primary-soft flex items-center justify-center flex-shrink-0 text-[11px] font-medium text-primary-text ring-1 ring-primary/20 shadow-sm">
+                        {castAvatar(seg.speaker)}
+                      </div>
+                      <div className="flex flex-col items-start min-w-0">
+                        <div className="mb-0.5 px-1 text-[11px] font-medium text-ink-soft">{seg.speaker.name}</div>
+                        <div className="max-w-full rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed whitespace-pre-wrap break-words shadow-sm card-white backdrop-blur-sm text-ink border border-gray-100 rounded-bl-sm">
+                          <RoleplayRichText text={seg.text} lang={rpLang} />
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div key={k} className="pl-9 max-w-full rounded-2xl px-3.5 py-2 text-[13.5px] leading-relaxed whitespace-pre-wrap break-words card-white backdrop-blur-sm text-ink-soft border border-gray-100 rounded-bl-sm" data-testid={'rp-cast-narration-' + i + '-' + k}>
+                      <RoleplayRichText text={seg.text} lang={rpLang} />
+                    </div>
+                  )))}
+                </div>
+              ) : (
               <div className={'max-w-full rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed whitespace-pre-wrap break-words shadow-sm ' + (m.role === 'user' ? 'bg-primary-strong text-white rounded-br-sm' : 'card-white backdrop-blur-sm text-ink border border-gray-100 rounded-bl-sm') + (editTarget === i ? ' ring-2 ring-amber-300 ring-offset-1 ring-offset-white/40' : '')}>
                 {/* 用户消息直出原文；AI 回复走三档渲染（对白「」/旁白/括号心声），
                     复制 / 落盘 / 长图分享 / TTS 一律仍取 m.content 原文 */}
-                {m.role === 'user' ? m.content : <RoleplayRichText text={m.content} lang={rpLang} />}
+                {m.role === 'user' ? m.content : <RoleplayRichText text={shown} lang={rpLang} />}
               </div>
+              )}
               {/* 我发的那句话：编辑重发入口 + 分支切换（◀ n/m ▶）。
                   只有「最后一条用户消息」出现（2A）；编辑过之后才出现切换器（1B）。
                   与 AI 回复那排小胶囊同一套视觉，但右对齐（贴着用户气泡）。 */}
@@ -3791,15 +4113,17 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
                 <div className="mt-1 flex items-center gap-1.5 w-full">
                   <AiFeedbackMark context={rpContext} />
                   {/* 常显复制：不用长按也能单独复制 TA 的这一条（引用回复需后端存 replyTo，本轮未做） */}
-                  <CopyButton text={m.content} />
+                  {/* 复制/配音取**剃掉标记**的文本：多角色剧本的 m.content 里带着【角色名】标记，
+                      原样复制会把标记粘给别人、原样合成会把角色名念出来（落盘与版本切换仍用原文）。 */}
+                  <CopyButton text={withoutTags(m.content)} />
                   {/* 角色配音：听 TA 说这一轮（开启配音后出现；未合成时是静态入口，点了才合成） */}
-                  {rpVoiceEnabled && m.content.trim() ? (
+                  {rpVoiceEnabled && withoutTags(m.content).trim() ? (
                     <VoiceMessage
-                      src={voice.readyUrl(String(i), m.content)?.url}
-                      duration={voice.readyUrl(String(i), m.content)?.duration ?? null}
+                      src={voice.readyUrl(String(i), withoutTags(m.content))?.url}
+                      duration={voice.readyUrl(String(i), withoutTags(m.content))?.duration ?? null}
                       playing={voice.speakingId === String(i)}
                       loading={voice.loadingId === String(i)}
-                      onToggle={() => voice.toggle(String(i), m.content)}
+                      onToggle={() => voice.toggle(String(i), withoutTags(m.content))}
                       accent="brand"
                       loadingLabel={t('voiceAiLoading')}
                       notReadyLabel={t('voiceTapToGenerate')}
@@ -4019,6 +4343,11 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
             </div>
           ) : suggestions.length > 0 ? (
             <>
+              {suggestDuplicate && (
+                <p data-testid="rp-suggest-duplicate" className="mb-1.5 rounded-lg border border-amber-200 bg-amber-50/80 px-2.5 py-1.5 text-[11.5px] leading-relaxed text-amber-900">
+                  {t('rpSuggestDuplicate')}
+                </p>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-[40vh] overflow-y-auto">
                 {suggestions.map((sg, i) => (
                   <button
@@ -4036,6 +4365,22 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
             suggestError ? <p className="text-[11px] text-ink-soft leading-relaxed">{suggestError}</p> : null
           )}
         </div>
+        {/* 判重退费提示（2026-10-01）：这一条与上一段重复 → 服务端已回滚额度、本次不扣。
+            ⚠️ 纯 UI 提示，绝不写进 messages（红线 6）。 */}
+        {repeatFreeNotice && (
+          <div data-testid="rp-repeat-free-banner" className="mb-2 flex items-start gap-2 rounded-xl border border-primary/30 bg-primary-soft/70 px-2.5 py-1.5 text-[11.5px] leading-relaxed text-gray-700">
+            <Sparkles className="w-3.5 h-3.5 shrink-0 mt-[2px] text-primary-text" />
+            <span className="flex-1">{t('rpRepeatFreeBanner')}</span>
+            <button
+              type="button"
+              data-testid="rp-repeat-free-dismiss"
+              onClick={() => setRepeatFreeNotice(false)}
+              className="shrink-0 rounded-full border border-primary/30 bg-white/90 px-2 py-0.5 text-[11px] leading-none font-medium text-primary-text shadow-sm transition-colors hover:bg-primary-soft"
+            >
+              {t('profileCancel')}
+            </button>
+          </div>
+        )}
         {/* 编辑重发提示条（2A：只有最后一条用户消息能改）。说清两件事：
             ① 重发会从这句重新接下去（否则用户会以为只是改个错别字、剧情不受影响）；
             ② 原来那一版不会丢，留成可切回的分支（1B 的承诺，要写出来用户才敢用）。 */}
@@ -4292,6 +4637,11 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
               </button>
             </div>
             <p className="text-[12px] text-ink-soft mb-3">{t('rpRegenerateHint')}</p>
+            {/* 判重退费（2026-10-01）：先把承诺说清，用户才敢反复重抽 */}
+            <p data-testid="rp-regenerate-free-hint" className="mb-3 flex items-start gap-1.5 rounded-xl border border-primary/25 bg-primary-soft/60 px-3 py-2 text-[11.5px] leading-relaxed text-gray-700">
+              <Sparkles className="w-3.5 h-3.5 shrink-0 mt-[1px] text-primary-text" />
+              <span>{t('rpRegenerateFreeHint')}</span>
+            </p>
             {/* 重生成中间某条 = 从这条起重写：后面的剧情会被清掉，**必须提前说清条数**（否则是静默数据丢失） */}
             {regenerateTarget != null && regenerateTarget < messages.length - 1 && (
               <p data-testid="rp-regenerate-truncate" className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11.5px] leading-relaxed text-amber-900">

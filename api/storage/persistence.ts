@@ -72,6 +72,27 @@ export function readJson<T>(file: string, fallback: T, reviver?: (key: string, v
   }
 }
 
+/**
+ * 启动自检（2026-09-28 审查 P1-7）：数据目录必须存在，且必须真的能写入并读回。
+ * 为什么必须 fail fast：sqlite 实现曾把读写异常全部吞掉，而 data/ 又没有任何代码创建——
+ * new Database('data/xiaoyu.sqlite') 抛 SQLITE_CANTOPEN 后，每个读返回 null、每个写被丢弃，
+ * 接口却照样 200。宁可启动失败，也不能「看起来正常地把用户数据全丢掉」。
+ */
+export function assertStorageReady(): { ok: boolean; dir: string; detail: string } {
+  const dir = dataDir();
+  try {
+    persistence.ensureDir(dir);
+    const probe = path.join(dir, '.storage-probe');
+    const payload = String(Date.now());
+    persistence.write(probe, payload);
+    const back = persistence.read(probe);
+    if (back !== payload) return { ok: false, dir, detail: 'probe read-back mismatch' };
+    return { ok: true, dir, detail: providerName };
+  } catch (e) {
+    return { ok: false, dir, detail: (e as Error)?.message || String(e) };
+  }
+}
+
 /** 写 JSON（序列化 + 原子写） */
 export function writeJson(file: string, data: unknown): void {
   persistence.write(file, JSON.stringify(data));

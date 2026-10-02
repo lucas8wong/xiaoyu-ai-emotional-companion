@@ -59,7 +59,7 @@ export interface RecentActivityItem {
 
 export interface LoginRecord {
   at: number;                 // 时间戳（ms）
-  method: 'login' | 'register';
+  method: 'login' | 'register' | 'google';
   ip?: string;
   /** ISO 国家码（cf-ipcountry / x-vercel-ip-country，仅经代理时存在，P1 修复） */
   country?: string;
@@ -93,6 +93,15 @@ export interface UserActivity {
   installCount?: number;
   /** 最近一次安装/下载时间戳（ms） */
   installedAt?: number | null;
+  /**
+   * 复制自己专属邀请链接的次数（2026-09-29 加）。
+   * 为什么值得记：运营要区分「只是看了眼邀请入口」和「真的把链接复制出去了」——
+   * 复制了但没人注册 = 该给话术/激励的人群；一次都没复制 = 根本不知道有邀请这回事。
+   * ⚠️ 这是**行为计数**，与邀请结果（`quotaStore` 的 `inviteCount`：真的拉来几个人）是两个口径，别混。
+   */
+  inviteCopyCount?: number;
+  /** 最近一次复制邀请链接的时间戳（ms） */
+  inviteCopiedAt?: number | null;
 }
 
 const MAX_LOGINS = 20;
@@ -199,8 +208,34 @@ class ActivityStore {
     if (onUserActive) onUserActive(userId);
   }
 
+  /**
+   * 记录一次「复制自己的专属邀请链接」（2026-09-29）。
+   *
+   * 口径说明（为什么与 trackInstall 不同）：
+   *  - **不写 behaviorDaily**：按日事件表是给「区间功能轮次」用的，邀请复制不是功能消耗；
+   *    邀请信息的区间口径走 `referral-events` 台账（运营端「📣 邀请推广」页），这里只记累计。
+   *  - **不动 `lastActiveAt`、不触发 onUserActive**：复制链接不等于用了产品，
+   *    否则「流失/未活跃」分桶会把只复制过链接的人算成活跃用户。
+   *  - 这里是**行为**（复制了几次），邀请**结果**（拉来几个人）在 `quotaStore.inviteCount`。
+   */
+  trackInviteCopy(userId: string, opts: { ip?: string; country?: string } = {}): void {
+    if (!userId) return;
+    const now = Date.now();
+    const cur = this.map.get(userId) || {
+      userId, firstSeenAt: now, lastActiveAt: now, lastFeature: null,
+      chatCount: 0, structureCount: 0, roleplayCount: 0, recentActivity: [],
+      loginCount: 0, lastLoginAt: null, lastLoginMethod: null, logins: [],
+    };
+    cur.inviteCopyCount = (cur.inviteCopyCount || 0) + 1;
+    cur.inviteCopiedAt = now;
+    if (opts.ip) cur.lastIp = opts.ip;
+    if (opts.country) cur.lastCountry = String(opts.country).slice(0, 2).toUpperCase();
+    this.map.set(userId, cur);
+    this.saveToDisk();
+  }
+
   /** 记录一次登录/注册 */
-  trackLogin(userId: string, opts: { method: 'login' | 'register'; ip?: string; country?: string }): void {
+  trackLogin(userId: string, opts: { method: 'login' | 'register' | 'google'; ip?: string; country?: string }): void {
     if (!userId) return;
     const now = Date.now();
     const cur = this.map.get(userId) || {
@@ -248,6 +283,9 @@ class ActivityStore {
     if (!to.lastMode) to.lastMode = null;
     to.installCount = (to.installCount || 0) + (from.installCount || 0);
     if (!to.installedAt && from.installedAt) to.installedAt = from.installedAt;
+    // 邀请复制次数一并并入（游客期复制过链接、注册后应继续算在他头上）；最近一次取两者较新
+    to.inviteCopyCount = (to.inviteCopyCount || 0) + (from.inviteCopyCount || 0);
+    if ((from.inviteCopiedAt || 0) > (to.inviteCopiedAt || 0)) to.inviteCopiedAt = from.inviteCopiedAt;
     to.loginCount += from.loginCount;
     to.firstSeenAt = Math.min(to.firstSeenAt || from.firstSeenAt, from.firstSeenAt);
     to.lastActiveAt = Math.max(to.lastActiveAt || 0, from.lastActiveAt);

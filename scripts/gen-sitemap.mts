@@ -28,6 +28,8 @@ const outFile = path.join(root, 'public', 'sitemap.xml');
 const STATIC_META: Record<string, { lastmod: string; changefreq: string; priority: string }> = {
   '/': { lastmod: '2026-08-30', changefreq: 'weekly', priority: '1.0' },
   '/faq': { lastmod: '2026-08-30', changefreq: 'monthly', priority: '0.8' },
+  // 公开隐私政策页：Google OAuth 同意屏幕要求可公开访问，进 sitemap 只为收录（法律页，权重低）
+  '/privacy': { lastmod: '2026-10-02', changefreq: 'yearly', priority: '0.3' },
 };
 
 interface Entry {

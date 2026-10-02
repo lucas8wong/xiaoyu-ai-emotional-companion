@@ -125,3 +125,38 @@ test('剧情模式：旧记录（无 rpModes）读回时归一化为全 0，不�
   assert.deepStrictEqual(normRoleplayModes({ wenyou: 3 }), { roleplay: 0, wenyou: 3, werewolf: 0 }, '缺键补 0');
   assert.deepStrictEqual(normRoleplayModes({ wenyou: -5, werewolf: 'x' }), { roleplay: 0, wenyou: 0, werewolf: 0 }, '脏值不产生负数/NaN');
 });
+
+/**
+ * 📤 复制邀请链接（2026-09-29）：运营端要能看出「复制过链接」的人——
+ * 只看结果（拉来几个人）分不出「复制了但没人注册」和「压根不知道有这个入口」。
+ */
+test('邀请复制：累计次数 + 最近时间；不影响活跃口径', () => {
+  const uid = 'act-invite-copy';
+  assert.strictEqual(activityStore.get(uid), undefined, '初始无记录');
+  const before = Date.now();
+  activityStore.trackInviteCopy(uid, { ip: '1.2.3.4', country: 'hk' });
+  activityStore.trackInviteCopy(uid);
+  const rec = activityStore.get(uid)!;
+  assert.strictEqual(rec.inviteCopyCount, 2, '复制两次 = 2');
+  assert.ok((rec.inviteCopiedAt || 0) >= before, '记最近一次复制时间');
+  assert.strictEqual(rec.lastIp, '1.2.3.4');
+  assert.strictEqual(rec.lastCountry, 'HK', '国家码大写归一');
+  // 关键口径：复制链接**不算用产品**，否则「流失/未活跃」分桶会把只复制过链接的人算成活跃
+  assert.strictEqual(rec.chatCount, 0);
+  assert.strictEqual(rec.roleplayCount, 0);
+  assert.strictEqual(rec.loginCount, 0);
+  assert.strictEqual(rec.lastFeature, null, '没有功能使用记录');
+});
+
+test('邀请复制：游客期的复制次数并入账号（注册后不清零）', () => {
+  const guest = 'act-invite-guest';
+  const acc = 'act-invite-acc';
+  activityStore.trackInviteCopy(guest);
+  activityStore.trackInviteCopy(guest);
+  activityStore.trackInviteCopy(acc);
+  activityStore.mergeFrom(guest, acc);
+  const rec = activityStore.get(acc)!;
+  assert.strictEqual(rec.inviteCopyCount, 3, '合并 = 2 + 1');
+  assert.ok(rec.inviteCopiedAt, '合并后保留最近复制时间');
+  assert.strictEqual(activityStore.get(guest), undefined, '游客记录已删除');
+});

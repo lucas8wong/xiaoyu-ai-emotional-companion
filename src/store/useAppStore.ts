@@ -14,6 +14,7 @@ import type {
   DetailedAnalysis,
   HealingStory,
   ChatMessage,
+  ChatSource,
   ChatSessionMeta,
   PayTerm,
 } from '../services/api';
@@ -114,6 +115,8 @@ export interface AppActions {
   setChatMessages: (msgs: ChatMessage[]) => void;
   addChatMessage: (msg: ChatMessage) => void;
   updateChatMessage: (id: string, content: string) => void;
+  /** 给某条回复挂上「来源」（2026-09-29）：来源属于**整轮**，所以由调用方决定挂到哪一条气泡上 */
+  setChatMessageSources: (id: string, sources: ChatSource[]) => void;
   setChatSessions: (list: ChatSessionMeta[]) => void;
   resetChat: () => void;
   setStructureCharacterId: (id: string | null) => void;
@@ -237,6 +240,8 @@ export const useAppStore = create<AppState & AppActions>()(storeEnhancer(
     addChatMessage: (msg) => set((st) => ({ chatMessages: [...st.chatMessages, msg] })),
 
     updateChatMessage: (id, content) => set((st) => ({ chatMessages: st.chatMessages.map(x => x.id === id ? { ...x, content } : x) })),
+
+    setChatMessageSources: (id, sources) => set((st) => ({ chatMessages: st.chatMessages.map(x => x.id === id ? { ...x, sources } : x) })),
 
     setChatSessions: (chatSessions) => set({ chatSessions }),
 

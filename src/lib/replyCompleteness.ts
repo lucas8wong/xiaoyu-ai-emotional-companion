@@ -45,6 +45,10 @@ const PAIRS: Array<[string, string]> = [
  * 只剥"尾部"，不影响正文判定（`……好吗？🌱` → `……好吗？`）。
  * 不用 `\p{Emoji_Component}`：它把 0-9 也算进去，会把结尾的数字剥掉。
  */
+// 说明：这条规则担心「字符类里混入了可组合序列」（例如把 emoji 与 ZWJ 分开写会切错字符）。
+// 这里的意图恰恰相反：要的就是**逐码点**匹配尾部装饰（ZWJ U+200D / 变体选择符 / 键帽 U+20E3 / 扩展象形），
+// 而不是匹配整个 emoji 序列，所以按规则作者的本意保留原样，仅关闭这一条并留下理由（2026-09-28 审查 C1）。
+// eslint-disable-next-line no-misleading-character-class -- 有意逐码点匹配尾部装饰，见上方说明
 const TRAILING_DECORATION = /[\s\u3000\u200d\ufe0e\ufe0f\u20e3\p{Extended_Pictographic}]+$/gu;
 
 /** 未闭合的成对标记（用于埋点归因与提示文案；空数组 = 标记都配对） */

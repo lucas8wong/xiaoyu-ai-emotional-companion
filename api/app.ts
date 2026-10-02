@@ -53,6 +53,11 @@ const app: express.Application = express();
 app.disable('x-powered-by');
 // 信任反向代理（Cloudflare/Vercel）：让 req.ip 取真实客户端 IP，
 // 否则访客身份 = hash(deviceId + 代理IP) 会因代理 IP 变化而漂移，导致会话/配额/偏好丢失。
+//
+// ⚠️ 安全边界（2026-09-28 审查 P1-6）：开启 trust proxy 后 req.ip = **最左**的 X-Forwarded-For，
+// 而该值由调用方提供（Cloudflare 对入站 XFF 是「追加」而非改写）→ 可被伪造。
+// 因此**限流、游客身份、防滥用一律用 getClientIp(req)**（优先 cf-connecting-ip，Cloudflare 会覆盖它），
+// 不要再用 req.ip 做安全判定；req.ip 只保留给审计日志等低风险用途。
 app.set('trust proxy', true);
 
 // gzip 压缩静态资源与接口响应（大幅减少首次访问下载量）

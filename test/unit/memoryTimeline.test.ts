@@ -33,7 +33,7 @@ fs.writeFileSync(path.join(dir, 'data', 'long-memory.json'), JSON.stringify([
 ]), 'utf-8');
 
 const { longMemoryStore, isMemoryStale, normalizeDateKey, dateKeyToTs } = await import('../../api/services/longMemory.js');
-const { todayKeyIn, ageLabel, dayDiff, memoryLine, nowParts, normalizeTimezone, periodOf, timeTag, stampIn, clockIn } = await import('../../api/services/timeAnchor.js');
+const { todayKeyIn, ageLabel, dayDiff, memoryLine, nowParts, normalizeTimezone, periodOf, timeTag, stampIn } = await import('../../api/services/timeAnchor.js');
 
 const DAY = 86400000;
 
@@ -140,7 +140,7 @@ test('时间标签：状态/长期/计划/时间不详各有各的说法，且�
   const now = Date.now();
   const today = todayKeyIn('Asia/Shanghai', now);
   const stateLine = memoryLine({ text: '用户在考试', at: now - 3 * DAY, kind: 'state' }, { now, todayKey: today, tz: 'Asia/Shanghai', lang: 'zh' });
-  assert.match(stateLine, /^\- \[状态·3 天前（\d{4}-\d{2}-\d{2}）\] 用户在考试$/, '相对时间 + 具体日期都在');
+  assert.match(stateLine, /^- \[状态·3 天前（\d{4}-\d{2}-\d{2}）\] 用户在考试$/, '相对时间 + 具体日期都在');
   const unknown = memoryLine({ text: '用户养过一只猫', at: now - 300 * DAY, atApprox: true, kind: 'durable' }, { now, todayKey: today, tz: 'Asia/Shanghai', lang: 'zh' });
   assert.match(unknown, /\[长期·时间不详\]/, '时间不详就说不知道，不编日期');
   const planStale = memoryLine({ text: '用户要去芒市', at: dateKeyToTs('2026-01-05'), dateKey: '2026-01-05', kind: 'plan', stale: true }, { now, todayKey: today, tz: 'Asia/Shanghai', lang: 'zh' });
@@ -150,7 +150,7 @@ test('时间标签：状态/长期/计划/时间不详各有各的说法，且�
   assert.match(eventLine, /\[事件·发生在 2026-08-20（\d+ 天前）\]/, '已发生的事不能写成"原定"');
   assert.ok(!eventLine.includes('原定'), '事件不得出现"原定"字样');
   const en = memoryLine({ text: 'user has an exam', at: now - 3 * DAY, kind: 'state' }, { now, todayKey: today, tz: 'Asia/Shanghai', lang: 'en' });
-  assert.match(en, /^\- \[state·3 d ago（\d{4}-\d{2}-\d{2}）\]/, '英文用户同样带时间（不留中文标签）');
+  assert.match(en, /^- \[state·3 d ago（\d{4}-\d{2}-\d{2}）\]/, '英文用户同样带时间（不留中文标签）');
 });
 
 test('时间锚工具：今天口径、相对时间、天数差、时段', () => {
@@ -261,7 +261,7 @@ test('注入 prompt 的记忆条目必须带时间标签（防回归：注入时
   const lines = longMemoryStore.getPromptEntries(uid, 'xiaoyu', today, 16)
     .map(e => memoryLine(e, { now, todayKey: today, tz: 'Asia/Shanghai', lang: 'zh' }));
   assert.ok(lines.length > 0);
-  assert.ok(lines.every(l => /^\- \[[^\]]+\] .+/.test(l)), '每行都是「- [时间标签] 正文」');
+  assert.ok(lines.every(l => /^- \[[^\]]+\] .+/.test(l)), '每行都是「- [时间标签] 正文」');
   assert.match(timeTag({ text: '', at: now, kind: 'durable' } as any, { now, todayKey: today, tz: 'Asia/Shanghai' }), /^\[/);
 });
 

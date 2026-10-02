@@ -5,6 +5,8 @@
 
 import { getLang } from '../i18n';
 import { getAttribution } from '../lib/attribution';
+import { resetPreferencesCache } from '../lib/prefsCache';
+import type { RoleplayMode } from '../lib/roleplayMode';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 // 单次请求超时（ms）：避免请求挂死导致界面无限转圈
@@ -121,6 +123,9 @@ export function setCachedPlan(plan: 'free' | 'plus' | 'pro', unlockUntil: number
 }
 
 export function clearAuth(): void {
+  // 偏好缓存随登录态一起清（2026-09-28 审查 B5）：api ⇄ prefsCache 的静态循环是安全的——
+  // 两边都只在函数体内引用对方（不在模块初始化期调用），所以这里同步调用不会炸。
+  try { resetPreferencesCache(); } catch { /* 忽略 */ }
   try {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
@@ -482,6 +487,27 @@ export interface ChatMessage {
   audio?: string; // 微信式语音气泡：用户消息附带的录音 data URL（可点播；模型靠 content 的理解）
   /** 被引用的消息（引用回复）：本地会话内展示 + 落库（刷新后引用卡还在） */
   replyTo?: ReplyToRef;
+  /**
+   * 这条回复的**来源链接**（2026-09-29）：本轮 `web_search` 命中的结构化结果（服务端收口，最多 5 条）。
+   * 有它才谈得上「用户不必先知道可以要链接」——在这之前前端只收到一个布尔 search 事件，
+   * 出处全凭模型自觉把 URL 写进正文。缺省 undefined = 这轮没搜索（或历史老数据）；
+   * **不要**用 `[]` 回填，那会把「没搜」和「搜了没结果」混成同一件事。
+   */
+  sources?: ChatSource[];
+  /**
+   * **按段**的来源（段下标＝气泡下标；null = 该段没有引用）：这条回复按 \n\n 分段发送时，
+   * 每段各自能挂自己的出处。与 `sources`（整轮）并存 —— 渲染时最后一段会把两者合并。
+   * 拆分口径必须与写入侧一致：split('\n\n') → trim → 丢空段。
+   */
+  sourceSegments?: (ChatSource[] | null)[];
+}
+
+/** 一条来源（标题 + 链接）。界面只显示域名，完整标题走 title / aria-label。 */
+export interface ChatSource {
+  title: string;
+  url: string;
+  /** 展示用域名（发布方）：Google News 这类聚合链接的 url 域名没有信息量（见 api/services/news.ts 的 rssPublisherHost） */
+  host?: string;
 }
 
 /**
@@ -592,7 +618,7 @@ export async function chatSendStream(
    * 服务端只认「它正好是**最后一条**用户消息」的情况（2A），对不上就当普通新消息处理（绝不清历史）。
    */
   editAt?: number
-): Promise<ApiResponse<{ sessionId: string; reply: string; title?: string; hint?: ChatRedirectHint; hintCompact?: boolean }>> {
+): Promise<ApiResponse<{ sessionId: string; reply: string; title?: string; hint?: ChatRedirectHint; hintCompact?: boolean; sources?: ChatSource[]; sourceSegments?: (ChatSource[] | null)[]; revised?: boolean }>> {
   const controller = new AbortController();
   const guard = createIdleGuard(controller, API_TIMEOUT_MS);
   const onExternalAbort = () => controller.abort();
@@ -629,7 +655,7 @@ export async function chatSendStream(
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let buffer = '';
-    let doneData: { sessionId: string; reply: string; title?: string; hint?: ChatRedirectHint; hintCompact?: boolean } | null = null;
+    let doneData: { sessionId: string; reply: string; title?: string; hint?: ChatRedirectHint; hintCompact?: boolean; sources?: ChatSource[]; sourceSegments?: (ChatSource[] | null)[]; revised?: boolean } | null = null;
     let streamError = '';
     let streamCode = '';
 
@@ -788,6 +814,11 @@ export async function getChatCharacters(): Promise<ApiResponse<ChatCharacterMeta
 export interface ChatCharacterGift { type: string; genCredit: number }
 export async function createChatCharacter(data: { name: string; avatar?: string; identity: string; boundaries: string; voice: string; ttsVoice?: string; opening?: string; relation?: ChatRelationKind }): Promise<ApiResponse<ChatCharacterMeta & { gift?: ChatCharacterGift | null }>> {
   return apiRequest('/api/analysis/chat/characters', { method: 'POST', body: JSON.stringify(data) });
+}
+
+/** 狼人杀自建角色内容安全校验（红线⑤）：本地自建/导入的人设也要过服务端同一张过滤词表 */
+export async function checkWolfchaCharacterSafety(fields: string[]): Promise<ApiResponse<{ safe: boolean; code?: string }>> {
+  return apiRequest('/api/wolfcha-compat/custom-character/check', { method: 'POST', body: JSON.stringify({ fields }) });
 }
 
 /** 更新自定义角色（含剧情角色的双态开关 storyMode） */
@@ -995,7 +1026,8 @@ export interface QuotaInfo {
   lifetime?: boolean; // 买断·终身（前端展示「永久会员」）
   chatUsedToday?: number;
   chatLimitPerDay?: number | null; // null = 无限（Pro）
-  pendingReward?: { count: number; reason: string; at: number } | null; // 待通知奖励
+  // 待通知奖励；note = 运营者随奖励写的话（目前仅反馈奖励会带），站内弹窗据它展示原文
+  pendingReward?: { count: number; reason: string; at: number; note?: string } | null;
   trialProActive?: boolean; // 老用户 7 天 Pro 体验中
   trialProUntil?: number | null; // 体验到期时间戳
   genCredit?: number; // 额外 AI 剧本生成额度
@@ -1021,6 +1053,8 @@ export interface QuotaInfo {
    * 登录账号才有值；「补填邀请码」入口据此显示——填过就隐藏，游客为 null 也不显示。
    */
   inviteCode?: string | null;
+  /** Google OAuth Client ID（公开值）。服务端未配置时不返回；前端据此决定是否渲染「用 Google 继续」 */
+  googleClientId?: string;
 }
 
 /**
@@ -1156,6 +1190,33 @@ export async function getQuota(): Promise<ApiResponse<QuotaInfo>> {
  */
 export async function ackReward(): Promise<ApiResponse<{ message: string }>> {
   return apiRequest('/api/payment/reward/ack', { method: 'POST', body: JSON.stringify({}) });
+}
+
+/** 小愈信箱里的一封信（运营者写给当前用户；弹窗只负责叫醒，信负责留存） */
+export interface InboxLetter {
+  id: string;
+  kind: 'reward' | 'system';
+  /** 奖励条数（kind='reward' 时用于文案；0 = 无奖励附言的纯消息） */
+  rewardCount: number;
+  /** 运营者写的原文（可能为空字符串：没附言的信依然留档，便于回看奖励） */
+  body: string;
+  read: boolean;
+  createdAt: number;
+}
+
+/**
+ * 小愈信箱：当前用户的信件（新在前）+ 未读数
+ * 游客同样可用（身份 = 设备+IP 哈希）：运营端的奖励邮件到不了无邮箱的游客，信箱可以。
+ */
+export async function getInbox(): Promise<ApiResponse<{ items: InboxLetter[]; unread: number }>> {
+  return apiRequest('/api/inbox');
+}
+
+/**
+ * 标记信件已读：传 id = 只标这一封；不传 = 全部已读
+ */
+export async function readInbox(id?: string): Promise<ApiResponse<{ unread: number }>> {
+  return apiRequest('/api/inbox/read', { method: 'POST', body: JSON.stringify(id ? { id } : {}) });
 }
 
 /**
@@ -1342,6 +1403,17 @@ export interface RoleplayScenarioInfo {
   ai: { name: string; gender: string; age: string; height: string; looks: string; personality: string; speech: string };
   user: { name: string; gender: string; age: string; height: string; looks: string; personality: string };
   background: string; source: string; sourceUrl?: string; openingScene: string; openingAssistant: string; contentNote?: string; tags: string[]; audience: 'her' | 'him' | 'lgbt';
+  /**
+   * **多角色线专属开场**（可选，2026-10-01 双模式）：两条线允许不同剧情线。
+   * 没写 → 多角色线回落到通用 `openingScene/openingAssistant`。
+   */
+  multiOpeningScene?: string;
+  multiOpeningAssistant?: string;
+  /**
+   * 多角色（群像）剧本的说话人名单（2026-10-01）。服务端已按界面语言本地化。
+   * 缺省/空数组（或 length < 2）= 单角色剧本 → 前端不做任何多角色渲染，行为与改造前逐字一致。
+   */
+  cast?: { id: string; name: string; avatar?: string; lead?: boolean; role?: string; desc?: string }[];
   likes: number; likedByMe: boolean;
   /**
    * 这份剧本当初是不是用「无限制模型」创建的（本人自建剧本才有这个标记）。
@@ -1431,6 +1503,8 @@ export async function searchRoleplayScenarios(q: string, lang: string = 'zh'): P
 }
 
 export interface RoleplayTagGroup { key: string; label: string; tags: string[]; }
+// 双模式（2026-10-01）：模式类型/判据的单一真源在 src/lib/roleplayMode.ts
+export type { RoleplayMode } from '../lib/roleplayMode';
 export interface RoleplayTagData { featured: string[]; groups: RoleplayTagGroup[]; }
 
 /**
@@ -1443,7 +1517,7 @@ export async function roleplayChat(scenarioId: string, messages: RoleplayMessage
   return apiRequest('/api/roleplay/chat', { method: 'POST', body: JSON.stringify({ scenarioId, messages, lang, aiName, userName, userPreference, narrativeStyle, innerMonologueEnabled, thinkingLevel }) });
 }
 /** 剧情对话流式客户端：逐 token 回调 onDelta，最后回 full reply（与聊一聊 chatSendStream 同构） */
-export async function roleplayChatStream(scenarioId: string, messages: RoleplayMessage[], lang: string = 'zh', aiName?: string, userName?: string, userPreference?: string, narrativeStyle?: string, handlers: { onDelta?: (delta: string) => void; onQueue?: (info: { ahead: number; waiting: number; running: number; maxConcurrent: number }) => void; onMeta?: (info: { adult: boolean; model: string; thinking: boolean }) => void; onContinue?: (attempt: number) => void; /** A 方案：服务端判定本次回复复读了历史片段、正在重写一版（重写期间不发 delta，最终由 done.reply 覆盖） */ onRewrite?: () => void; signal?: AbortSignal } = {}, innerMonologueEnabled?: boolean, thinkingLevel?: ThinkingLevel, continueTurn?: boolean): Promise<ApiResponse<{ reply: string; incomplete?: boolean; finishReason?: string; continued?: number }>> {
+export async function roleplayChatStream(scenarioId: string, messages: RoleplayMessage[], lang: string = 'zh', aiName?: string, userName?: string, userPreference?: string, narrativeStyle?: string, handlers: { onDelta?: (delta: string) => void; onQueue?: (info: { ahead: number; waiting: number; running: number; maxConcurrent: number }) => void; onMeta?: (info: { adult: boolean; model: string; thinking: boolean }) => void; onContinue?: (attempt: number) => void; /** A 方案：服务端判定本次回复复读了历史片段、正在重写一版（重写期间不发 delta，最终由 done.reply 覆盖） */ onRewrite?: () => void; signal?: AbortSignal } = {}, innerMonologueEnabled?: boolean, thinkingLevel?: ThinkingLevel, continueTurn?: boolean, replacedReply?: string, /** 本回合演哪条线（solo 缺省 / multi 群像）—— 决定服务端是否注入群像 prompt 块 */ mode: RoleplayMode = 'solo'): Promise<ApiResponse<{ reply: string; incomplete?: boolean; finishReason?: string; continued?: number; free?: boolean; repeated?: boolean; repeatDegree?: number }>> {
   const controller = new AbortController();
   const guard = createIdleGuard(controller, API_TIMEOUT_MS);
   const onExternalAbort = () => controller.abort();
@@ -1456,7 +1530,7 @@ export async function roleplayChatStream(scenarioId: string, messages: RoleplayM
     const response = await fetch(API_BASE_URL + '/api/roleplay/chat?stream=1', {
       method: 'POST',
       headers: buildHeaders(),
-      body: JSON.stringify({ scenarioId, messages, lang, aiName, userName, userPreference, narrativeStyle, innerMonologueEnabled, thinkingLevel, ...(continueTurn ? { continueTurn: true } : {}) }),
+      body: JSON.stringify({ scenarioId, messages, lang, aiName, userName, userPreference, narrativeStyle, innerMonologueEnabled, thinkingLevel, mode, ...(continueTurn ? { continueTurn: true } : {}), ...(replacedReply ? { replacedReply } : {}) }),
       signal: controller.signal,
     });
     if (!response.ok) {
@@ -1479,7 +1553,7 @@ export async function roleplayChatStream(scenarioId: string, messages: RoleplayM
     const decoder = new TextDecoder('utf-8');
     let buffer = '';
     // B 方案：done 里多了 incomplete / finishReason / continued（老服务端不带 → undefined，行为不变）
-    let doneData: { reply: string; incomplete?: boolean; finishReason?: string; continued?: number } | null = null;
+    let doneData: { reply: string; incomplete?: boolean; finishReason?: string; continued?: number; free?: boolean; repeated?: boolean; repeatDegree?: number } | null = null;
     let streamError = '';
     while (true) {
       const { done, value } = await reader.read();
@@ -1520,8 +1594,8 @@ export async function roleplayChatStream(scenarioId: string, messages: RoleplayM
     handlers.signal?.removeEventListener('abort', onExternalAbort);
   }
 }
-/** AI 辅助聊天：为玩家生成 4 条候选「下一句」（非流式；每次生成消耗 1 条聊天额度） */export async function roleplaySuggest(scenarioId: string, messages: RoleplayMessage[], lang: string = 'zh', aiName?: string, userName?: string, userPreference?: string, narrativeStyle?: string): Promise<ApiResponse<{ suggestions: string[] }>> {
-  return apiRequest('/api/roleplay/suggestions', { method: 'POST', body: JSON.stringify({ scenarioId, messages, lang, aiName, userName, userPreference, narrativeStyle }) });
+/** AI 辅助聊天：为玩家生成 4 条候选「下一句」（非流式；重复时不消耗额度） */export async function roleplaySuggest(scenarioId: string, messages: RoleplayMessage[], lang: string = 'zh', aiName?: string, userName?: string, userPreference?: string, narrativeStyle?: string, previousSuggestions?: string[]): Promise<ApiResponse<{ suggestions: string[]; duplicate?: boolean; free?: boolean; repeatDegree?: number }>> {
+  return apiRequest('/api/roleplay/suggestions', { method: 'POST', body: JSON.stringify({ scenarioId, messages, lang, aiName, userName, userPreference, narrativeStyle, ...(previousSuggestions && previousSuggestions.length ? { previousSuggestions } : {}) }) });
 }
 /**
  * 剧情模型配置：判断「无限制模式」开关是否可用（第三方模型已配置且未被运维开关强制切回）。
@@ -1562,16 +1636,20 @@ export async function generateSceneArt(scenarioId: string, theme: string, opts: 
   return { success: false, error: raw?.error, code: raw?.code, degraded: !!raw?.degraded };
 }
 
-export async function getRoleplaySession(scenarioId: string): Promise<ApiResponse<{ messages: RoleplayMessage[] | null; userPreference?: string }>> {  return apiRequest('/api/roleplay/session?scenarioId=' + encodeURIComponent(scenarioId));
+/**
+ * 会话读写一律带 \`mode\`（2026-10-01 双模式）：solo = 单角色线，multi = 多角色线，**各一份存档**。
+ * 缺省 solo —— 与服务端 / 本地键的默认口径一致。
+ */
+export async function getRoleplaySession(scenarioId: string, mode: RoleplayMode = 'solo'): Promise<ApiResponse<{ messages: RoleplayMessage[] | null; userPreference?: string; mode?: RoleplayMode }>> {  return apiRequest('/api/roleplay/session?scenarioId=' + encodeURIComponent(scenarioId) + '&mode=' + encodeURIComponent(mode));
 }
-export async function saveRoleplaySession(scenarioId: string, messages: RoleplayMessage[], userPreference?: string): Promise<ApiResponse<null>> {
-  return apiRequest('/api/roleplay/session', { method: 'POST', body: JSON.stringify({ scenarioId, messages, userPreference }) });
+export async function saveRoleplaySession(scenarioId: string, messages: RoleplayMessage[], userPreference?: string, mode: RoleplayMode = 'solo'): Promise<ApiResponse<null>> {
+  return apiRequest('/api/roleplay/session', { method: 'POST', body: JSON.stringify({ scenarioId, messages, userPreference, mode }) });
 }
-export async function saveRoleplayPreference(scenarioId: string, userPreference: string): Promise<ApiResponse<null>> {
-  return apiRequest('/api/roleplay/session', { method: 'POST', body: JSON.stringify({ scenarioId, userPreference }) });
+export async function saveRoleplayPreference(scenarioId: string, userPreference: string, mode: RoleplayMode = 'solo'): Promise<ApiResponse<null>> {
+  return apiRequest('/api/roleplay/session', { method: 'POST', body: JSON.stringify({ scenarioId, userPreference, mode }) });
 }
-export async function deleteRoleplaySession(scenarioId: string): Promise<ApiResponse<null>> {
-  return apiRequest('/api/roleplay/session?scenarioId=' + encodeURIComponent(scenarioId), { method: 'DELETE' });
+export async function deleteRoleplaySession(scenarioId: string, mode: RoleplayMode = 'solo'): Promise<ApiResponse<null>> {
+  return apiRequest('/api/roleplay/session?scenarioId=' + encodeURIComponent(scenarioId) + '&mode=' + encodeURIComponent(mode), { method: 'DELETE' });
 }
 export async function likeRoleplayScenario(scenarioId: string): Promise<ApiResponse<{ liked: boolean; count: number }>> {
   return apiRequest('/api/roleplay/like', { method: 'POST', body: JSON.stringify({ scenarioId }) });
@@ -2036,6 +2114,20 @@ export async function reportPwaInstall(): Promise<void> {
   } catch { /* 忽略 */ }
 }
 
+/**
+ * 上报一次「复制了我的专属邀请链接」（2026-09-29）。
+ *
+ * 为什么要有：运营端要能区分「压根没复制过链接」和「复制了但没人注册」——前者是不知道有这个入口，
+ * 后者是该给话术/激励的人群。此前只有结果口径（拉来几个人），没有动作口径。
+ * 每个复制入口都调一次（关于页 / 聊一聊 / 邀请弹窗 / 付费弹窗 / 个人资料 / 额度用尽弹窗）；
+ * 失败静默忽略——复制本身已经成功，埋点绝不能反过来打断用户。
+ */
+export async function trackInviteCopy(): Promise<void> {
+  try {
+    await apiRequest('/api/referral/copied', { method: 'POST', body: '{}' });
+  } catch { /* 忽略 */ }
+}
+
 /* ================= 表情包（在线贴纸搜索） ================= */
 
 export interface StickerItem {
@@ -2247,6 +2339,19 @@ export async function register(params: { username?: string; phone?: string; emai
 
 export async function login(account: string, password: string): Promise<ApiResponse<AuthResult>> {
   return apiRequest('/api/auth/login', { method: 'POST', body: JSON.stringify({ account, password }) });
+}
+
+/**
+ * Google 一键登录 / 注册。
+ * credential = Google Identity Services 返回的 ID token（JWT），**服务端验签**后换本站 token；
+ * defaultName = Google 没返回姓名时的兜底昵称（按界面语言传，别让英文用户拿到中文默认名）。
+ * 服务端返回 { token, user, isNew }，isNew 用来区分「登录」与「新注册」（触发注册后提示）。
+ */
+export async function loginWithGoogle(credential: string, defaultName?: string): Promise<ApiResponse<AuthResult & { isNew?: boolean }>> {
+  return apiRequest('/api/auth/google', {
+    method: 'POST',
+    body: JSON.stringify({ credential, defaultName, attr: { ...getAttribution() } }),
+  });
 }
 
 export async function sendEmailCode(email: string, purpose: 'register' | 'reset'): Promise<ApiResponse<{ message: string }>> {

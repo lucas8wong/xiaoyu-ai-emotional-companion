@@ -189,7 +189,8 @@ export const gameSessionTracker: any = (() => {
        * 因此 start 必须返回字符串 id。
        */
       if (key === 'start') return async () => SESSION_ID;
-      if (key === 'getSummary') return () => ({ sessionId: SESSION_ID, status: 'active', ...noopResult() });
+      // noopResult() 已含 sessionId / status，重复声明会被展开覆盖（TS2783），直接返回即可（2026-09-28 C2）。
+      if (key === 'getSummary') return () => noopResult();
       return async () => noopResult();
     },
   });

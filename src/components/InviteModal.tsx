@@ -8,8 +8,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { X, Gift, Copy, Check, UserPlus } from 'lucide-react';
-import { getInviteLink, getPayConfig, getReferralSummary, isLoggedIn, type MyReferralSummary } from '../services/api';
+import { Gift, Copy, Check, UserPlus } from 'lucide-react';
+import { getInviteLink, getPayConfig, getReferralSummary, isLoggedIn, trackInviteCopy, type MyReferralSummary } from '../services/api';
 import { t } from '../i18n';
 import Modal from './ui/Modal';
 
@@ -66,6 +66,8 @@ export default function InviteModal({ open, onClose, onNeedRegister }: InviteMod
   const handleCopy = () => {
     try {
       navigator.clipboard.writeText(getInviteLink());
+      // 埋点：控制台要能看出「复制过邀请链接」的人（失败静默，见 trackInviteCopy）
+      void trackInviteCopy();
       setCopied(true);
       setTimeout(() => setCopied(false), 1600);
     } catch { setCopied(false); }

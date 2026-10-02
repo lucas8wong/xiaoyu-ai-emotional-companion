@@ -166,6 +166,31 @@ test('isSafeHttpUrl：拒绝本地/内网/非 http，放行公开 https', () => 
   assert.equal(news.isSafeHttpUrl('https://www.xiaohongshu.com/explore'), true);
 });
 
+/**
+ * SSRF 回归守卫（2026-09-28 审查 B3）：旧实现是字符串黑名单，下面这些写法**全都漏过**——
+ * 而它们都能解析到本机/内网（本机 3001 就是线上 Express，环回即可读到管理面）。
+ * 注意 Node 的 URL 会把 `::ffff:127.0.0.1` **规范化成 `::ffff:7f00:1`**，
+ * 所以必须按字节判 IPv4-mapped，不能只匹配点分写法（这条是实测踩出来的）。
+ */
+test('isSafeHttpUrl：尾部点 / IPv4-mapped IPv6 / ULA / 链路本地 / CGNAT 一律拒绝（B3 回归守卫）', () => {
+  for (const bad of [
+    'http://localhost./',
+    'http://localhost.:3001/admin',
+    'http://[::ffff:127.0.0.1]/',
+    'http://[::1]/',
+    'http://[fd00::1]/',
+    'http://169.254.169.254/latest/meta-data/',
+    'http://100.64.1.1/',
+    'http://2130706433/',
+    'http://0x7f000001/',
+  ]) {
+    assert.equal(news.isSafeHttpUrl(bad), false, '应拒绝: ' + bad);
+  }
+  for (const good of ['https://example.com/', 'https://myxiaoyu.com/blog']) {
+    assert.equal(news.isSafeHttpUrl(good), true, '应放行: ' + good);
+  }
+});
+
 test('pageToText：去除 script/style/标签并解实体压空白', () => {
   assert.equal(news.pageToText('<div>a&amp;b</div><script>1</script>'), 'a&b');
 });
@@ -181,4 +206,205 @@ test('fetchUrlText 会把中文 URL 路径百分号编码后再请求', async ()
   const out = await news.fetchUrlText('https://zh.wikipedia.org/wiki/芒市');
   assert.match(out, /正文内容/);
   assert.ok(urls.some((u) => u.includes('%E8%8A%92%E5%B8%82')), '应使用百分号编码后的 URL，实际: ' + urls.join(', '));
+});
+/* ───────── 结构化来源（2026-09-29）：给模型文本 + 给界面链接，一次抓取两路产出 ───────── */
+
+test('searchWebDetailed：sources 与 text 同步产出，且 text 与 searchWeb 逐字一致', async () => {
+  delete process.env.TAVILY_API_KEY;
+  const routes = (url: string) => {
+    if (url.includes('zh.wikipedia.org')) {
+      return JSON.stringify({ query: { search: [{ title: '芒市', snippet: '<span>芒市是云南省德宏傣族景颇族自治州的一个县级市。</span>' }] } });
+    }
+    if (url.includes('news.google.com/rss/search')) {
+      return '<rss><channel><item><title>芒市美食 - 云南网</title><link>https://dehong.yunnan.cn/news</link></item></channel></rss>';
+    }
+    if (url.includes('duckduckgo.com')) return DDG_HTML;
+    return null;
+  };
+  mockFetch(routes);
+  const detailed = await news.searchWebDetailed('芒市 美食');
+  mockFetch(routes);
+  const text = await news.searchWeb('芒市 美食');
+  assert.equal(detailed.text, text, 'searchWeb 只是 searchWebDetailed 的一层薄壳，文本必须逐字一致');
+  // 界面要的是「可点的出处」：维基 + 新闻 + 网页三路都该在，且顺序 = 命中顺序
+  assert.deepEqual(detailed.sources.map((s) => s.url), [
+    'https://zh.wikipedia.org/wiki/%E8%8A%92%E5%B8%82',
+    'https://dehong.yunnan.cn/news',
+    'https://example.com/mangshi-food',
+    'https://other.com/foo', // DDG 那段 HTML 里有两条结果
+  ]);
+  assert.ok(detailed.sources.every((s) => s.title && s.url), '每条来源都要有标题和链接');
+});
+
+test('pickSources：同一 URL 只留第一条、过滤非公网/无标题、按上限截断', () => {
+  const groups = [
+    {
+      label: '维基百科',
+      results: [
+        { title: '芒市', snippet: '', url: 'https://example.com/a' },
+        { title: '', snippet: '', url: 'https://example.com/no-title' },        // 无标题 → 丢
+        { title: '内网', snippet: '', url: 'http://127.0.0.1/secret' },          // 非公网 → 丢
+        { title: '伪协议', snippet: '', url: 'javascript:alert(1)' },            // 非 http(s) → 丢
+      ],
+    },
+    {
+      label: '新闻',
+      results: [
+        { title: '重复', snippet: '', url: 'https://example.com/a' },            // 与第一条同 URL → 丢
+        { title: '第二条', snippet: '', url: 'https://example.com/b' },
+        { title: '第三条', snippet: '', url: 'https://example.com/c' },
+      ],
+    },
+  ];
+  assert.deepEqual(news.pickSources(groups).map((s) => s.url), [
+    'https://example.com/a',
+    'https://example.com/b',
+    'https://example.com/c',
+  ]);
+  assert.equal(news.pickSources(groups, 2).length, 2, '上限应生效');
+  assert.equal(news.pickSources([], 5).length, 0);
+});
+test('pickSources：认出发布方时按发布方去重（一排 news.google.com 收敛成几家）', () => {
+  const groups = [{
+    label: '新闻',
+    results: [
+      { title: 'A', snippet: '', url: 'https://news.google.com/rss/articles/1', host: 'finance.sina.com.cn' },
+      { title: 'B', snippet: '', url: 'https://news.google.com/rss/articles/2', host: 'finance.sina.com.cn' }, // 同一家 → 收敛
+      { title: 'C', snippet: '', url: 'https://news.google.com/rss/articles/3', host: 'thepaper.cn' },
+    ],
+  }];
+  const out = news.pickSources(groups);
+  assert.deepEqual(out.map((s) => s.host), ['finance.sina.com.cn', 'thepaper.cn']);
+  assert.equal(out[0].url, 'https://news.google.com/rss/articles/1', '点开仍走原文链接（发布方只用于展示）');
+});
+
+test('RSS 发布方域名：Google News 的跳转链接也能显示「哪家说的」', async () => {
+  delete process.env.TAVILY_API_KEY;
+  mockFetch((url) => {
+    if (url.includes('news.google.com/rss/search')) {
+      return '<rss><channel>'
+        + '<item><title>Tiffany寄错月饼 - finance.sina.com.cn</title><link>https://news.google.com/rss/articles/AAA</link></item>'
+        + '<item><title>店长道歉 - www.thepaper.cn</title><link>https://news.google.com/rss/articles/BBB</link></item>'
+        + '<item><title>没有发布方的标题</title><link>https://news.google.com/rss/articles/CCC</link></item>'
+        + '</channel></rss>';
+    }
+    return null;
+  });
+  const o = await news.searchWebDetailed('月饼');
+  assert.deepEqual(o.sources.map((s) => s.host), ['finance.sina.com.cn', 'thepaper.cn', undefined]);
+  assert.equal(o.sources[0].url, 'https://news.google.com/rss/articles/AAA', '链接仍是原文跳转地址');
+  assert.equal(o.sources[0].title, 'Tiffany寄错月饼', '标题里的发布方后缀仍被剥掉（展示交给 host）');
+});
+/* ───────── 快照来源匹配（2026-09-29）：只认回复**真正引用**到的那几条 ───────── */
+
+test('matchSnapshotSources：引用了标题就给出该条来源，无关回复一条都不给', () => {
+  const items = [
+    { title: '英语才是普通人的终极杠杆', url: 'https://s.weibo.com/weibo?q=%23x%23' },
+    { title: '冷空气要来了', url: 'https://s.weibo.com/weibo?q=%23y%23' },
+    // 快照里的标题已经剥掉了「 - 来源」后缀（发布方另存 host），这里照真实形状写
+    { title: 'Tiffany月饼礼盒寄错', url: 'https://news.google.com/rss/articles/AAA', host: 'finance.sina.com.cn' },
+  ];
+  // ① 原样引用」→ 命中（截图里那条「热搜第一是…」就是这个形态）
+  const quoted = news.matchSnapshotSources('热搜第一是「英语才是普通人的终极杠杆」，这届网友是真敢说', items);
+  assert.deepEqual(quoted.map((s) => s.title), ['英语才是普通人的终极杠杆']);
+  // ② 短标题要求整串：只说「冷空气」不算引用
+  assert.deepEqual(news.matchSnapshotSources('冷空气好像要来了吧', items), []);
+  assert.deepEqual(news.matchSnapshotSources('天气预报说冷空气要来了', items).map((s) => s.title), ['冷空气要来了']);
+  // ③ 长标题的部分命中不算（宁可少给，也不挂错出处）
+  assert.deepEqual(news.matchSnapshotSources('看到一条月饼的新闻', items), []);
+  // ④ 跟新闻毫无关系的回复：一条都不能挂
+  assert.deepEqual(news.matchSnapshotSources('我今天有点累，什么都不想做。', items), []);
+  // ⑤ 命中时连发布方域名一起带上；上限生效
+  const long = news.matchSnapshotSources('英语才是普通人的终极杠杆，冷空气要来了，Tiffany月饼礼盒寄错', items, 1);
+  assert.equal(long.length, 1);
+  const all = news.matchSnapshotSources('英语才是普通人的终极杠杆，冷空气要来了，Tiffany月饼礼盒寄错', items);
+  assert.deepEqual(all.map((s) => s.host), [undefined, undefined, 'finance.sina.com.cn']);
+});
+
+test('matchSnapshotSourcesBySegment：按段落各挂各的（段下标＝气泡下标）', () => {
+  const items = [
+    { title: 'Tiffany月饼', url: 'https://m.weibo.cn/search?containerid=x' },
+    { title: '冷空气要来了', url: 'https://m.weibo.cn/search?containerid=y' },
+  ];
+  const reply = '看了一圈热搜，笑出声\n\nTiffany月饼，又上榜了\n\n对了，冷空气要来了';
+  const segs = news.matchSnapshotSourcesBySegment(reply, items);
+  assert.equal(segs.length, 3, '段数必须与气泡数一致');
+  assert.equal(segs[0], null);
+  assert.deepEqual(segs[1].map((s) => s.title), ['Tiffany月饼']);
+  assert.deepEqual(segs[2].map((s) => s.title), ['冷空气要来了']);
+  // 没引用的段落一律 null（渲染时就不会出现空来源行）
+  assert.deepEqual(news.matchSnapshotSourcesBySegment('我今天有点累\n\n什么都不想做', items), [null, null]);
+});
+
+/* ───────── 搜索来源也按段落归位（2026-09-29 第三轮） ───────── */
+
+test('attributeSourcesBySegment：三条搜索来源各自归到提到它的那段', () => {
+  const sources = [
+    { title: 'Tiffany月饼寄错事件', snippet: '', url: 'https://news.sina.com.cn/a.html', host: 'finance.sina.com.cn' },
+    { title: '京港高铁雄商段开通', snippet: '', url: 'https://news.mydrivers.com/b.html' },
+    { title: '第三家的报道', snippet: '', url: 'https://www.example.com/c.html' },
+  ];
+  const reply = [
+    'Tiffany月饼那件事又反转了。',
+    '中间讲点别的。',
+    '另外京港高铁雄商段昨天开通，最快2小时27分。',
+  ].join('\n\n');
+  const segs = news.attributeSourcesBySegment(reply, sources);
+  assert.equal(segs.length, 3, '段数必须与气泡数一致');
+  assert.deepEqual(segs[0].map((s) => s.url), ['https://news.sina.com.cn/a.html'], '第 1 段只挂自己那条');
+  assert.equal(segs[1], null, '没提到的段落不该有来源');
+  assert.deepEqual(segs[2].map((s) => s.url), ['https://news.mydrivers.com/b.html']);
+  // 没被任何一段提到的来源不进结果（否则又会变成「最后一条挤一排」）
+  assert.ok(!JSON.stringify(segs).includes('example.com/c.html'));
+});
+
+test('attributeSourcesBySegment：域名/URL 出现也算归位；一条都归不上返回 null（调用方退回整轮）', () => {
+  const sources = [{ title: '某条新闻', snippet: '', url: 'https://news.mydrivers.com/x.html' }];
+  const byHost = news.attributeSourcesBySegment('这条是 news.mydrivers.com 报的。\n\n另一段。', sources);
+  assert.deepEqual(byHost[0].map((s) => s.url), ['https://news.mydrivers.com/x.html']);
+  const byUrl = news.attributeSourcesBySegment('链接在这 https://news.mydrivers.com/x.html\n\n另一段。', sources);
+  assert.deepEqual(byUrl[0].map((s) => s.url), ['https://news.mydrivers.com/x.html']);
+  // 一条都归不上 → null（**不是**空数组）：调用方据此退回「整轮挂最后一条」，不丢信息
+  assert.equal(news.attributeSourcesBySegment('今天天气不错，出去走了走。', sources), null);
+  // 非公网链接直接不算来源
+  assert.equal(news.attributeSourcesBySegment('内网 http://127.0.0.1/x', [{ title: 'x', snippet: '', url: 'http://127.0.0.1/x' }]), null);
+});
+
+test('mergeSegmentSources：段下标对齐、同段按 URL 去重、长度取长者且保留 null 占位', () => {
+  const a = [[{ title: 'A', snippet: '', url: 'https://a.com/1' }], null];
+  const b = [null, [{ title: 'B', snippet: '', url: 'https://b.com/2' }], [{ title: 'C', snippet: '', url: 'https://c.com/3' }]];
+  const m = news.mergeSegmentSources(a, b);
+  assert.equal(m.length, 3, '段数取长者，且 null 占位不能压缩（压缩会把来源挪到错误气泡）');
+  assert.deepEqual(m[0].map((s) => s.url), ['https://a.com/1']);
+  assert.deepEqual(m[1].map((s) => s.url), ['https://b.com/2']);
+  assert.deepEqual(m[2].map((s) => s.url), ['https://c.com/3']);
+  const dup = news.mergeSegmentSources(
+    [[{ title: 'A', snippet: '', url: 'https://a.com/1' }]],
+    [[{ title: 'A 的另一家转载', snippet: '', url: 'https://a.com/1' }]],
+  );
+  assert.equal(dup[0].length, 1, '同一条（同 URL）只留一份');
+  assert.equal(news.mergeSegmentSources(null, null), null);
+});
+
+
+test('mapCitesToSegments：标记按偏移落到对应的段落（＝气泡）', () => {
+  const clean = '第一段 。\n\n第二段。\n\n第三段 。';
+  const cites = [{ n: 1, at: 4 }, { n: 3, at: clean.length - 1 }];
+  const map = news.mapCitesToSegments(clean, cites);
+  assert.deepEqual([...map.keys()].sort(), [0, 2], '第 2 段没有标记，不该出现在表里');
+  assert.deepEqual(map.get(0), [1]);
+  assert.deepEqual(map.get(2), [3]);
+  // 空段不占气泡号：连续空行与前端分段器同一口径
+  const map2 = news.mapCitesToSegments('A\n\n\n\nB [[2]]', [{ n: 2, at: 6 }]);
+  assert.deepEqual(map2.get(1), [2], 'B 是第 2 条气泡');
+  assert.equal(news.mapCitesToSegments(clean, []).size, 0);
+});
+
+test('matchSnapshotSources：没有链接/非公网链接的条目不算来源', () => {
+  const items = [
+    { title: '只有标题没有链接', url: '' },
+    { title: '内网条目', url: 'http://127.0.0.1/secret' },
+  ];
+  assert.deepEqual(news.matchSnapshotSources('只有标题没有链接，内网条目', items), []);
+  assert.deepEqual(news.matchSnapshotSources('', items), []);
 });

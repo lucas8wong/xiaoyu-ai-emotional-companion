@@ -18,7 +18,7 @@ import {
   extractMemoryFacts,
   runCharacterGrowthTick
 } from '../services/gemini.js';
-import { quotaStore, isCreditQuotaEnabled, estimateChatCredit, estimateFeatureCredit , actionPricePoints} from '../services/quota.js';
+import { quotaStore, isCreditQuotaEnabled, actionPricePoints} from '../services/quota.js';
 import { resolveUserId, isRecordOwner, getAuthUser } from '../services/session.js';
 import { resolveUserTimezone } from '../services/requestTimezone.js';
 import { visitStore } from '../services/visits.js';
@@ -102,6 +102,49 @@ function lastUserReplyTo(chatMessages: { role: string; replyTo?: { role: 'user' 
     if (chatMessages[i].role === 'user') return chatMessages[i].replyTo;
   }
   return undefined;
+}
+
+/**
+ * 本轮「来源」收口（2026-09-29）：把一次回复里所有 web_search 命中的链接合并成**给界面看的一小组**。
+ *
+ * 为什么要在路由层再收一次口：
+ *   · 一轮里模型最多可以调 2 次工具（见 gemini 的函数调用循环），两次可能命中同一条 → 按 URL 去重；
+ *   · 小愈是陪伴产品、不是新闻聚合 → 最多留 5 条；界面默认只露 3 条域名，其余折进「看全部来源」
+ *     （正文里模型自己也会给出最相关那条，见 gemini 的生活工具提示词）。
+ * 顺序保留命中顺序（=相关性顺序），不额外排序。
+ */
+function collectTurnSources(list: { title: string; url: string; host?: string }[], max = 5): { title: string; url: string; host?: string }[] {
+  const out: { title: string; url: string; host?: string }[] = [];
+  const seen = new Set<string>();
+  for (const s of list) {
+    const title = (s?.title || '').trim();
+    const url = (s?.url || '').trim();
+    if (!title || !url || seen.has(url)) continue;
+    seen.add(url);
+    out.push({ title, url, ...(s.host ? { host: String(s.host).toLowerCase() } : {}) });
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+/**
+ * 「按段的来源」收集器（2026-09-29）：段下标＝**气泡下标**，必须保留 null 占位 ——
+ * 少了占位，后面的来源就会挪到错误的气泡上（把第 3 段的出处挂到第 1 条上）。
+ * 同一段可能被回调多次（工具轮一次、快照引用一次），按 URL 去重后合并。
+ */
+type SegmentedSources = ({ title: string; url: string; host?: string }[] | null)[];
+function collectSourceSegments(acc: SegmentedSources, segs: SegmentedSources): void {
+  for (let i = 0; i < segs.length; i++) {
+    while (acc.length <= i) acc.push(null);
+    const s = segs[i];
+    if (!s || !s.length) continue;
+    const cur = acc[i] || [];
+    for (const item of s) {
+      if (!item?.url || cur.some((x) => x.url === item.url)) continue;
+      cur.push({ title: item.title, url: item.url, ...(item.host ? { host: item.host } : {}) });
+    }
+    acc[i] = cur;
+  }
 }
 
 /**
@@ -557,15 +600,24 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
     const images = collectImages(chatMessages, ctxWindow, img);
     // 请求头 X-Timezone → 用户那边的「今天/现在」（立刻生效，不依赖是否在设置里上报过）
     const reqTz = resolveUserTimezone(req, quotaUserId || undefined);
+    // 本轮来源收集器：web_search 命中什么就留下什么，最后结构化下发 + 随消息落盘（见 collectTurnSources）
+    const turnSources: { title: string; url: string; host?: string }[] = [];
+    // 按段的来源（段下标＝气泡下标）：模型引用「实时资讯速览」里某条时，出处挂到**提到它的那条气泡**上
+    const turnSourceSegments: SegmentedSources = [];
+    let revised = false;
     const reply = await chatReply(history, {
       userId: quotaUserId,
       timezone: reqTz,
       context,
       images,
       replyTo: lastUserReplyTo(chatMessages),
+      onSources: (list) => turnSources.push(...list),
+      onSourceSegments: (segs) => collectSourceSegments(turnSourceSegments, segs),
+      // 输出卫生闸改过正文（剥掉/重写了自言自语）→ 前端要按最终正文重建气泡
+      onRevised: () => { revised = true; },
       thinkingLevel: (thinkingLevel as any),
       toolCtx: buildToolCtx(req),
-      ...(creditToken ? { onUsage: (u: any) => { if (creditToken && quotaUserId) { quotaStore.settleCredit(quotaUserId, creditToken, actionPricePoints('chat')); creditToken = null; } } } : {}),
+      ...(creditToken ? { onUsage: (_u: any) => { if (creditToken && quotaUserId) { quotaStore.settleCredit(quotaUserId, creditToken, actionPricePoints('chat')); creditToken = null; } } } : {}),
     });
     /**
      * 交接信号（2026-09-25）：模型**自己**判定"这次我把 TA 引到剧情 + 无限制模式了"，
@@ -579,7 +631,11 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
     const finalReply = checkAiOutputSafety(replyText).safe ? replyText : pickGuide(pickLang(req), true);
     const attachAdultHint = handoff.handoff || replySuggestsAdultHandoff(finalReply);
 
-    chatMessages.push({ role: 'assistant', content: finalReply, timestamp: new Date() });
+    // 来源随消息落盘（刷新/换设备重进时来源行还在）；没有搜索就**不写这个字段**，
+    // 让「这轮没搜索」与「搜索了但没结果」在数据上仍然分得开
+    const sources = collectTurnSources(turnSources);
+    const sourceSegments = turnSourceSegments.some(Boolean) ? turnSourceSegments : null;
+    chatMessages.push({ role: 'assistant', content: finalReply, timestamp: new Date(), ...(sources.length ? { sources } : {}), ...(sourceSegments ? { sourceSegments } : {}) });
     memoryStorage.updateSession(currentSessionId, { chatMessages, chatTitle, chatUpdatedAt: new Date() });
 
     // 长期记忆：异步从本轮用户消息中提取值得记住的事实（不阻塞回复）
@@ -628,6 +684,9 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
          * 不再重复整张说明卡（hintCompact=true）。用户原话：「要有一个直达的按键而不只是信息说明」。
          */
         ...(attachAdultHint ? { hint: 'adultRoleplay' as const, hintCompact: true } : {}),
+        ...(sources.length ? { sources } : {}),
+        ...(sourceSegments ? { sourceSegments } : {}),
+        ...(revised ? { revised: true } : {}),
         messages: chatMessages.slice(-ctxWindow)
       }
     });
@@ -887,6 +946,11 @@ router.post('/chat/stream', async (req: Request, res: Response): Promise<void> =
     const heartbeat = setInterval(() => { try { res.write(': ping\n\n'); } catch { /* 客户端已断开 */ } }, 12000);
     try {
       const handoffFilter = createChatHandoffFilter();
+      // 本轮来源收集器（同非流式端点）：工具轮命中什么就留下什么
+      const turnSources: { title: string; url: string; host?: string }[] = [];
+      // 按段的来源（段下标＝气泡下标）：见 collectSourceSegments
+      const turnSourceSegments: SegmentedSources = [];
+      let revised = false;
       const reply = await chatReplyStream(history, {
         userId: quotaUserId,
         timezone: reqTz,
@@ -897,6 +961,10 @@ router.post('/chat/stream', async (req: Request, res: Response): Promise<void> =
         // 交接标记可能被切成好几个 delta，所以在**下发前**过一道过滤器（扣住可能是标记开头的尾部）
         onToken: (delta) => { const safe = handoffFilter.feed(delta); if (safe) send({ type: 'delta', content: safe }); },
         onSearch: () => send({ type: 'search' }),
+        onSources: (list) => turnSources.push(...list),
+        onSourceSegments: (segs) => collectSourceSegments(turnSourceSegments, segs),
+        // 输出卫生闸改过正文 → 前端按最终正文重建气泡（流式已经把原文发出去过）
+        onRevised: () => { revised = true; },
         images,
         signal: streamAbort.signal,
         region: reqRegion,
@@ -904,7 +972,7 @@ router.post('/chat/stream', async (req: Request, res: Response): Promise<void> =
         chatInnerMonologueEnabled: reqChatInner,
         thinkingLevel: reqThinking,
         toolCtx: buildToolCtx(req),
-        ...(creditToken ? { onUsage: (u: any) => { if (creditToken && quotaUserId) { quotaStore.settleCredit(quotaUserId, creditToken, actionPricePoints('chat')); creditToken = null; } } } : {}),
+        ...(creditToken ? { onUsage: (_u: any) => { if (creditToken && quotaUserId) { quotaStore.settleCredit(quotaUserId, creditToken, actionPricePoints('chat')); creditToken = null; } } } : {}),
       });
       // 收尾：把过滤器扣住的尾巴吐出去（标记本身仍然剥掉），否则末尾几个字永远到不了前端
       const tailSafe = handoffFilter.flush();
@@ -915,7 +983,11 @@ router.post('/chat/stream', async (req: Request, res: Response): Promise<void> =
       // 输出安全（P1-07）：指令式高危内容替换为危机引导（已流出的 token 无法撤回，属已知取舍；持久化与 done 用引导）
       const finalReply = checkAiOutputSafety(handoff.text).safe ? handoff.text : pickGuide(pickLang(req), true);
 
-      chatMessages.push({ role: 'assistant', content: finalReply, timestamp: new Date() });
+      // 来源随消息落盘（同非流式端点）：刷新/换设备重进时气泡下的来源行还在；
+      // 没有搜索就**不写这个字段**，让「这轮没搜索」与「搜了但没结果」在数据上分得开
+      const sources = collectTurnSources(turnSources);
+      const sourceSegments = turnSourceSegments.some(Boolean) ? turnSourceSegments : null;
+      chatMessages.push({ role: 'assistant', content: finalReply, timestamp: new Date(), ...(sources.length ? { sources } : {}), ...(sourceSegments ? { sourceSegments } : {}) });
       memoryStorage.updateSession(currentSessionId, { chatMessages, chatTitle, chatUpdatedAt: new Date(), characterId: wantedCharId || undefined });
 
       const memUserId = quotaUserId;
@@ -963,6 +1035,13 @@ router.post('/chat/stream', async (req: Request, res: Response): Promise<void> =
 
       send({ type: 'done', data: {
         sessionId: currentSessionId, title: chatTitle, reply: finalReply,
+        // 来源（结构化）：前端把它渲染成气泡下方的「来源」行 —— 用户不必先知道「可以要链接」
+        //  · sources：整轮（web_search 工具命中的）→ 挂在本轮最后一条气泡；
+        //  · sourceSegments：**按段**（段下标＝气泡下标），让「讲这条新闻的那条气泡」自己挂出处
+        ...(sources.length ? { sources } : {}),
+        ...(sourceSegments ? { sourceSegments } : {}),
+        // 输出卫生闸改过正文：前端要用这条最终正文**重建本轮气泡**（流式已把原文发出去过）
+        ...(revised ? { revised: true } : {}),
         // 同上（非流式端点）：模型自己标了交接（或兜底判据命中）→ 给一个直达按键，不重复说明卡
         ...(attachAdultHint ? { hint: 'adultRoleplay' as const, hintCompact: true } : {}),
       } });

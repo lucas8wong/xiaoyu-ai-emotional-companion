@@ -46,6 +46,32 @@ function longestCommonSubstrLen(a: string, b: string): number {
   return best;
 }
 
+/**
+ * 原始字面相似度（0~1）——`isSimilar` 的连续量版本。
+ *
+ * 与布尔版同一套算法（字二元组 Jaccard + 最长公共子串兜底），但不设阈值：
+ * 「重复了多少」是连续量，应由调用方按档位决定何时算重复
+ * （见 `api/services/repeatRefund.ts` 的重复度打分）。两个信号取 max：
+ *   · Jaccard —— 整体词汇重合度；
+ *   · 最长公共子串 / 较短串长度 —— 抓「整段照抄但两端有增删」与短文本整句相同。
+ */
+export function lexicalSimilarity(a: string, b: string): number {
+  const na = normalizeForDedupe(a);
+  const nb = normalizeForDedupe(b);
+  if (!na || !nb) return 0;
+  if (na === nb) return 1;
+  const A = shingles(na, 2);
+  const B = shingles(nb, 2);
+  let jac = 0;
+  if (A.size && B.size) {
+    let inter = 0;
+    for (const x of A) if (B.has(x)) inter++;
+    jac = inter / (A.size + B.size - inter);
+  }
+  const lcs = longestCommonSubstrLen(na, nb) / Math.min(na.length, nb.length);
+  return Math.max(jac, lcs);
+}
+
 /** Jaccard + 最长公共子串兜底；阈值默认 0.4 */
 export function isSimilar(a: string, b: string, threshold = 0.4): boolean {
   const na = normalizeForDedupe(a);

@@ -5,7 +5,6 @@ import {
   detectOocMeta,
   isIdleEnough,
   canShowBridge,
-  buildBridgeDraft,
   readBridgeBudget,
   writeBridgeBudget,
   markBridgeShown,

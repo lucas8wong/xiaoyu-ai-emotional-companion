@@ -145,7 +145,7 @@ test('isCompleteCustomDraft：人设/背景/开场齐全才算完整', () => {
 
 test('roleplayReplyWithEmptyRetry：首轮非空直接返回，不重复调用', async () => {
   let calls = 0;
-  const out = await roleplayReplyWithEmptyRetry(async () => { calls++; return '（他抬眼看向你。）「来了。」'; }, 'zh');
+  const out = await roleplayReplyWithEmptyRetry(async () => { calls++; return '（他抬眼看向你。）「来了。」'; });
   assert.strictEqual(out, '（他抬眼看向你。）「来了。」');
   assert.strictEqual(calls, 1, '首轮非空应只调用一次');
 });
@@ -155,21 +155,19 @@ test('roleplayReplyWithEmptyRetry：首轮为空则重试一次，第二轮非�
   const out = await roleplayReplyWithEmptyRetry(async () => {
     calls++;
     return calls === 1 ? '' : '「我等你好久了。」';
-  }, 'zh');
+  });
   assert.strictEqual(out, '「我等你好久了。」');
   assert.strictEqual(calls, 2, '首轮为空应触发一次重试');
 });
 
-test('roleplayReplyWithEmptyRetry：连续两次为空则回退到兜底句（按语言）', async () => {
-  // zh
-  const zh = await roleplayReplyWithEmptyRetry(async () => '', 'zh');
-  assert.ok(zh.includes('我在听'), 'zh 应回退到中文兜底句');
-  // zh-TW
-  const tw = await roleplayReplyWithEmptyRetry(async () => '', 'zh-TW');
-  assert.ok(tw.includes('我在聽'), 'zh-TW 应回退到繁体兜底句');
-  // en
-  const en = await roleplayReplyWithEmptyRetry(async () => '', 'en');
-  assert.ok(en.includes("I’m listening"), 'en 应回退到英文兜底句');
+test('roleplayReplyWithEmptyRetry：连续两次为空 → 抛错（失败态），绝不替角色编台词（红线⑥）', async () => {
+  // 2026-09-15 事故同形：兜底文案一旦当回复返回，会被显示、落盘、并回灌给模型。
+  // 因此这里必须**失败**，而不是返回任何「角色台词」（2026-09-28 审查 P1-1 修复）。
+  await assert.rejects(
+    () => roleplayReplyWithEmptyRetry(async () => ''),
+    /roleplay_empty_reply/,
+    '连续两次空回复应抛错（失败态），不能返回兜底台词',
+  );
 });
 
 

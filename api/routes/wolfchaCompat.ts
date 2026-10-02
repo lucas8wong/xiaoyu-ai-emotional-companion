@@ -22,6 +22,7 @@
 import { Router, type Request, type Response } from 'express';
 import { safeError } from '../services/safeError.js';
 import { resolveUserId } from '../services/session.js';
+import { checkContentSafety } from '../services/safety.js';
 import { dataFile, readJson, writeJson } from '../storage/persistence.js';
 import {
   WEREWOLF_DAILY_LIMIT,
@@ -150,7 +151,10 @@ function settleGame(userId: string, reason: string): void {
   if (g.token) {
     quotaStore.settleCredit(userId, g.token, charge); // 预扣模式：多退少补（这里只会退差额）
   } else if (g.reserved > 0) {
-    quotaStore.addCreditBonus(userId, refund, 'werewolf-refund'); // 重启兜底：预留令牌已随内存丢失
+    // ⚠️ 用 refundCreditBonus 而**不是** addCreditBonus：这是退款，不是发放。
+    // `addCreditBonus` 会计入「累计获得」，而控制台的「赠送已用 = 累计 − 余额」——
+    // 退款算成发放会让累计虚高、已用虚低（2026-09-29 修，见 quota.ts 两个方法的注释）。
+    quotaStore.refundCreditBonus(userId, refund, 'werewolf-refund'); // 重启兜底：预留令牌已随内存丢失
   } else {
     /**
      * **局后结算模式**（免费档：可用额度不足一局价 → 开局不预扣，余额在局内保持不动）：
@@ -274,8 +278,13 @@ function recordCost(userId: string, u: { prompt_tokens: number; completion_token
  * 与自研引擎同一个换算函数（`estimateCreditFromTokens`），所以两边的「点数」含义一致。
  * 扣不动（余额不足）时不阻断本次调用——对局已在进行，中断体验更差；只记日志，由开局闸门控总量。
  */
-function chargeUsage(userId: string, prompt: number, completion: number): void {
-  if (process.env.WEREWOLF_COUNTERS_DISABLED === '1') return;
+/**
+ * `preToken` = 无对局时由准入闸门预留的点数令牌（见 /chat handler）。
+ * 有令牌就按**真实用量**结算它（多退少补），避免「先预扣一次、再逐次扣一次」的重复计费。
+ * @returns true 表示令牌已被消费（调用方不必再回滚）
+ */
+function chargeUsage(userId: string, prompt: number, completion: number, preToken?: string | null): boolean {
+  if (process.env.WEREWOLF_COUNTERS_DISABLED === '1') return false;
   const credit = Math.max(1, estimateCreditFromTokens(prompt, completion));
   // A′：有在进行的局 → 只记账，**不动余额**（局终/退出时统一结算）
   settleIfIdle(userId);
@@ -284,18 +293,29 @@ function chargeUsage(userId: string, prompt: number, completion: number): void {
     g.used += credit;
     g.lastAt = Date.now();
     persistCharge();
-    return;
+    return false;
   }
-  // 没有开局记录（历史遗留调用/直连 /api/chat）→ 退回逐次扣费，保证不漏收
+  // 无对局：优先结算准入闸门预留的令牌（按真实用量，多退少补）
+  if (preToken) {
+    quotaStore.settleCredit(userId, preToken, credit);
+    return true;
+  }
+  // 没有开局记录且没有令牌（历史遗留调用）→ 退回逐次扣费，保证不漏收
   const r = quotaStore.reserveCredit(userId, 'werewolf', { credit });
   if (r.ok && r.token) quotaStore.settleCredit(userId, r.token, credit);
   else console.warn('[wolfcha-compat] 扣点失败（余额不足？）userId=', userId, 'credit=', credit, r.reason);
+  return false;
 }
 
 const BASE_URL = process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com';
 const MODEL = process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash';
 const MAX_TOKENS = Number(process.env.DEEPSEEK_MAX_TOKENS || 8192);
 const TIMEOUT_MS = Number(process.env.DEEPSEEK_TIMEOUT_MS || 60000);
+/**
+ * 无对局直连 `/api/chat` 的准入下限（单位：点；1 条 = UNIT_CREDIT 点）。
+ * 只负责拦住「余额为 0 也能无限调用」，不承担精确计费（精确计费在 chargeUsage）。
+ */
+const DIRECT_CALL_MIN_CREDIT = Math.max(1, UNIT_CREDIT);
 
 router.post('/chat', async (req: Request, res: Response): Promise<void> => {
   const body = (req.body || {}) as {
@@ -384,6 +404,28 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
   if (!apiKey) {
     res.status(500).json({ success: false, error: 'DEEPSEEK_API_KEY 未配置' });
     return;
+  }
+
+  /**
+   * 准入闸门（2026-09-28 审查 B1）：`/api/chat` 挂在裸 `/api` 上、**无需登录**（游客按设备身份即可），
+   * 而 chargeUsage 的设计是「扣不动也不阻断本次调用」——这对**局内**调用是合理的（开局闸门已按局预扣），
+   * 但对「没有进行中的局」的直连调用就等于：余额为 0 也能无限消耗 DeepSeek（平台白送成本）。
+   * 所以：没有进行中的局时，先按单次最低成本**原子预留**点数；扣不动直接 402，根本不发上游请求。
+   * 令牌交给 chargeUsage 按真实用量结算（多退少补）；任何提前返回/异常都在 finally 里回滚。
+   */
+  let gateToken: string | null = null;
+  if (!chargeState.active[userId] && process.env.WEREWOLF_COUNTERS_DISABLED !== '1') {
+    const pre = quotaStore.reserveCredit(userId, 'werewolf', { credit: DIRECT_CALL_MIN_CREDIT });
+    if (!pre.ok || !pre.token) {
+      res.status(402).json({
+        success: false,
+        error: '点数不足，无法继续本局',
+        code: 'QUOTA_EXCEEDED',
+        data: { quota: quotaStore.getCreditQuota(userId) },
+      });
+      return;
+    }
+    gateToken = pre.token;
   }
 
   const payload: Record<string, unknown> = {
@@ -549,7 +591,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
           u = { prompt_tokens: promptEst, completion_tokens: completionEst };
           console.warn('[wolfcha-compat] 流式响应没有 usage，按估算计费：prompt≈' + promptEst + ' completion≈' + completionEst);
         }
-        if (u) chargeUsage(userId, u.prompt_tokens, u.completion_tokens);
+        if (u && chargeUsage(userId, u.prompt_tokens, u.completion_tokens, gateToken)) gateToken = null;
         recordCost(userId, u); // 运营端 API 成本（此前这条旁路完全不入账）
         werewolfCounters.recordUsage({
           calls: 1,
@@ -570,7 +612,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
     } catch {
       u = null;
     }
-    if (u) chargeUsage(userId, u.prompt_tokens, u.completion_tokens);
+    if (u && chargeUsage(userId, u.prompt_tokens, u.completion_tokens, gateToken)) gateToken = null;
     recordCost(userId, u); // 运营端 API 成本（此前这条旁路完全不入账）
     werewolfCounters.recordUsage({
       calls: 1,
@@ -590,6 +632,12 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
       success: false,
       error: aborted ? '模型响应超时' : safeError('ai', error),
     });
+  } finally {
+    // 准入令牌没被 chargeUsage 消费掉（提前返回 / 上游报错 / 客户端断开）→ 必须回滚，
+    // 否则一次失败调用会把用户额度白扣掉（2026-09-28 审查 B1）。
+    if (gateToken) {
+      try { quotaStore.rollbackCredit(userId, gateToken); } catch { /* 忽略 */ }
+    }
   }
 });
 
@@ -761,6 +809,24 @@ router.post('/credits/consume', (req: Request, res: Response): void => {
     // 上游客户端会读 payload.credits 来刷新顶栏额度显示（单位=次数）
     credits: creditsToUses(userId),
   });
+});
+
+/**
+ * 自建角色内容安全校验（红线⑤，2026-09-28 审查 P1-4）。
+ * wolfcha 的自建角色只存在浏览器 localStorage（不像自建剧本走服务端），但它的人设会被注入
+ * 系统提示词并进入发言路径，所以创建/编辑/批量导入都必须过服务端**同一张**过滤词表。
+ * 命中即拒（CONTENT_REJECTED）；调用方 fail-closed（校验不可达也不放行）。
+ */
+router.post('/wolfcha-compat/custom-character/check', (req: Request, res: Response): void => {
+  const body = (req.body || {}) as { fields?: unknown };
+  const fields = Array.isArray(body.fields) ? body.fields : [];
+  const text = fields.filter((f): f is string => typeof f === 'string' && f.trim().length > 0).join('\n');
+  const check = checkContentSafety(text);
+  if (!check.safe) {
+    res.json({ success: true, data: { safe: false, code: 'CONTENT_REJECTED' } });
+    return;
+  }
+  res.json({ success: true, data: { safe: true } });
 });
 
 export default router;

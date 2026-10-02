@@ -7,6 +7,7 @@
 import type { Request } from 'express';
 import { accountStore } from './accounts.js';
 import { quotaStore } from './quota.js';
+import { getClientIp } from './geo.js';
 
 /**
  * 从请求头解析登录用户
@@ -25,7 +26,8 @@ export function getAuthUser(req: Request) {
 export function resolveUserId(req: Request): string {
   const user = getAuthUser(req);
   if (user) return user.userId;
-  return guestIdOf(String(req.headers['x-device-id'] || ''), req.ip || '');
+  // 游客身份必须用 getClientIp：req.ip 是最左 XFF，可被伪造 → 轮换 XFF 就能刷出全新游客身份与每日额度
+  return guestIdOf(String(req.headers['x-device-id'] || ''), getClientIp(req) || '');
 }
 
 /**
@@ -66,7 +68,7 @@ export function resolveUserIdWithFallback(
   const user = getAuthUserWithFallback(req, fallback?.token);
   if (user) return user.userId;
   const deviceId = String(req.headers['x-device-id'] || '') || String(fallback?.deviceId || '');
-  return guestIdOf(deviceId, req.ip || '');
+  return guestIdOf(deviceId, getClientIp(req) || '');
 }
 
 /**

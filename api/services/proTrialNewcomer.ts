@@ -273,14 +273,15 @@ export async function runNewcomerProTrial(opts: { days?: number; dryRun?: boolea
       quotaStore.grantProTrial(c.userId, days);
       granted += 1;
     } catch (e) {
-      console.warn('[NewcomerTrial] 授权失败:', c.userId, (e as Error)?.message);
+      // 只留 userId 前 8 位、邮件只留首字母+域名（2026-09-29 审查 A4-P3：日志不该留完整 PII）
+      console.warn('[NewcomerTrial] 授权失败:', c.userId.slice(0, 8), (e as Error)?.message);
     }
     // 发信（失败不中断整批）
     const res = await sendCongratsEmail(c.email, c.username, c.language, days);
     if (res.ok) emailed += 1;
     else {
       emailFailed += 1;
-      console.warn('[NewcomerTrial] 邮件发送失败:', c.email, res.detail);
+      console.warn('[NewcomerTrial] 邮件发送失败:', String(c.email).replace(/^(.).*?(@.*)$/, '$1***$2'), res.detail);
     }
     newlyProcessed.add(c.userId);
   }

@@ -22,7 +22,7 @@ import {
   DEFAULT_CUSTOM_CHARACTER_GENDER,
   MAX_CUSTOM_CHARACTERS,
 } from "~/types/custom-character";
-import { getChatCharacters, type ChatCharacterMeta } from "../../services/api";
+import { getChatCharacters, checkWolfchaCharacterSafety, type ChatCharacterMeta } from "../../services/api";
 
 /** 本地临时角色的存储键（小愈侧的「聊一聊」角色不写这里，它们归小愈管理） */
 const STORAGE_KEY = "xiaoyu.wolfcha.custom_characters";
@@ -48,6 +48,18 @@ function writeLocal(list: CustomCharacter[]): void {
   } catch {
     /* 存储不可用时静默降级：本次会话内仍可用 */
   }
+}
+
+/**
+ * 红线⑤（2026-09-28 审查 P1-4）：自建角色（含批量导入）必须过服务端 safety 过滤，命中即拒，绝不落本地。
+ * 校验不可达时也拒绝（fail-closed）——宁可这次建不了，也不放行未经过滤的人设去当系统提示词。
+ */
+async function assertCharacterSafe(fields: Array<string | undefined>): Promise<void> {
+  const texts = fields.filter((f): f is string => typeof f === 'string' && f.trim().length > 0);
+  if (!texts.length) return;
+  const r = await checkWolfchaCharacterSafety(texts);
+  if (!r || !r.success || !r.data) throw new Error('safety_check_unavailable');
+  if (r.data.safe === false) throw new Error('content_rejected');
 }
 
 /** 小愈「聊一聊」角色 → 上游的自定义角色形状 */
@@ -107,6 +119,14 @@ export function useCustomCharacters(user: UserLike) {
 
   const createCharacter = useCallback(
     async (input: CustomCharacterInput): Promise<CustomCharacter | null> => {
+      try {
+        await assertCharacterSafe([input.display_name, input.basic_info, input.style_label]);
+      } catch (e) {
+        setError(e instanceof Error && e.message === 'content_rejected'
+          ? '角色内容不符合社区规范，无法保存 / Character content violates community guidelines'
+          : '内容安全校验失败，请稍后重试 / Safety check failed, please retry');
+        return null;
+      }
       const list = readLocal();
       if (list.length >= MAX_CUSTOM_CHARACTERS) {
         setError(`Maximum ${MAX_CUSTOM_CHARACTERS} custom characters allowed`);
@@ -137,14 +157,22 @@ export function useCustomCharacters(user: UserLike) {
   );
 
   const updateCharacter = useCallback(
-    async (input: CustomCharacterInput & { id: string }): Promise<CustomCharacter | null> => {
-      if (isXiaoyuEntry(input.id)) {
+    async (id: string, input: Partial<CustomCharacterInput>): Promise<CustomCharacter | null> => {
+      try {
+        await assertCharacterSafe([input.display_name, input.basic_info, input.style_label]);
+      } catch (e) {
+        setError(e instanceof Error && e.message === 'content_rejected'
+          ? '角色内容不符合社区规范，无法保存 / Character content violates community guidelines'
+          : '内容安全校验失败，请稍后重试 / Safety check failed, please retry');
+        return null;
+      }
+      if (isXiaoyuEntry(id)) {
         // 来自「聊一聊」的角色在那边管理，这里只读
         setError("来自「聊一聊」的角色请在聊一聊里修改");
         return null;
       }
       const list = readLocal();
-      const idx = list.findIndex((c) => c.id === input.id);
+      const idx = list.findIndex((c) => c.id === id);
       if (idx < 0) return null;
       const merged: CustomCharacter = {
         ...list[idx],

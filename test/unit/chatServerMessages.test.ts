@@ -87,3 +87,67 @@ test('兜底过滤只认整串：台词里出现同款字样不受影响', () =>
   assert.equal(result[0].content, '（我好像没听清，你再说一遍）他往你这边凑了凑。');
   assert.equal(result[1].role, 'user');
 });
+/* ───────── 来源行：挂在**最后一段**（2026-09-29） ───────── */
+
+test('来源挂到最后一段气泡上（分段与不分段同一口径）', () => {
+  const sources = [{ title: '月饼寄错引消费纠纷', url: 'https://news.sina.com.cn/a.html' }];
+  const split = mapServerMessages([
+    { role: 'assistant', content: '第一段。\n\n第二段。', timestamp: 't0', sources },
+  ]);
+  assert.equal(split.length, 2);
+  assert.equal(split[0].sources, undefined, '来源不该挂到中间那段');
+  assert.deepEqual(split[1].sources, sources, '来源应挂在最后一段（与实时路径一致）');
+
+  const single = mapServerMessages([
+    { role: 'assistant', content: '一句话', timestamp: 't1', sources },
+  ]);
+  assert.deepEqual(single[0].sources, sources);
+});
+
+test('没有搜索的回复不写 sources 字段（「没搜」与「搜了没结果」分得开）', () => {
+  const none = mapServerMessages([
+    { role: 'assistant', content: '一段。\n\n二段。', timestamp: 't0' },
+  ]);
+  assert.ok(none.every((m) => m.sources === undefined));
+  const empty = mapServerMessages([
+    { role: 'assistant', content: '一段。', timestamp: 't1', sources: [] },
+  ]);
+  assert.equal(empty[0].sources, undefined, '空数组不应变成 sources: []');
+});
+/* ───────── 按段来源：挂到提到它的那条气泡（2026-09-29） ───────── */
+
+test('按段来源：第 j 段引用谁就挂谁，不是全堆在最后一条', () => {
+  const weibo = [{ title: 'Tiffany月饼', url: 'https://m.weibo.cn/search?containerid=x' }];
+  const r = mapServerMessages([{
+    role: 'assistant',
+    content: '看了一圈热搜，笑出声。\n\nTiffany月饼，又上榜了。\n\n还有个哥们，900家店下单2700次。',
+    timestamp: 't0',
+    sourceSegments: [null, weibo, null],
+  }]);
+  assert.equal(r.length, 3);
+  assert.equal(r[0].sources, undefined, '没引用任何条目的段落不该有来源行');
+  assert.deepEqual(r[1].sources, weibo, '第 2 段引用了 Tiffany 那条 → 来源挂第 2 条气泡');
+  assert.equal(r[2].sources, undefined);
+});
+
+test('按段来源 + 整轮来源：最后一段合并去重，中间段只有自己的', () => {
+  const seg = [{ title: 'Tiffany月饼', url: 'https://m.weibo.cn/search?containerid=x' }];
+  const turn = [{ title: '月饼寄错', url: 'https://news.sina.com.cn/a.html', host: 'finance.sina.com.cn' }];
+  const r = mapServerMessages([{
+    role: 'assistant',
+    content: '第一段。\n\n第二段引用了 Tiffany月饼。',
+    timestamp: 't1',
+    sources: turn,
+    sourceSegments: [null, seg],
+  }]);
+  assert.equal(r[0].sources, undefined, '整轮来源只挂最后一段，前一段不该有');
+  assert.deepEqual(r[1].sources, [...seg, ...turn], '最后一段＝自己的 + 整轮的');
+  const dup = mapServerMessages([{
+    role: 'assistant',
+    content: '第一段。\n\n第二段。',
+    timestamp: 't2',
+    sources: seg,
+    sourceSegments: [null, seg],
+  }]);
+  assert.deepEqual(dup[1].sources, seg, '同一条出现在两边时只留一份');
+});

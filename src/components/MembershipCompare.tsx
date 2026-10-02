@@ -8,6 +8,7 @@ import { Star, Info, Gauge, MessageCircle, BookOpenText, ListChecks, VenetianMas
 import './usage-slider.css';
 import SegmentedControl from './ui/SegmentedControl';
 import PlanCard, { PLAN_THEME, type PlanKey } from './ui/PlanCard';
+import { DiscountBadge, OfferDeadline } from './ui/DiscountBadge';
 import { Banner, IconChip, SectionCard, Well, TONE, type Tone } from './ui/Surface';
 import { t } from '../i18n';
 import { getQuota, type PayConfig, type PayTerm } from '../services/api';
@@ -24,10 +25,6 @@ interface MembershipCompareProps {
   tableOnly?: boolean;
   /** 当前用户档位：在对比表列头标出「目前档位」，让已订阅用户一眼看到自己的位置 */
   currentPlan?: 'free' | 'plus' | 'pro';
-}
-
-function fnum(v?: number): string {
-  return v == null ? '' : (Number.isInteger(v) ? String(v) : v.toFixed(2).replace(/\.?0+$/, ''));
 }
 
 /** 本币主价 + 另两币种折算（2026-09-24：结算币种按地区定，主价只显示本币） */
@@ -389,13 +386,19 @@ export default function MembershipCompare({ onOpenPay, onClose, config, tableOnl
         {cards.map(c => {
           const recommended = c.key === recFinal;
           const isFree = c.key === 'free';
+          // 折扣标注统一走 ui/DiscountBadge（2026-09-29）：填充色块 + 实测达标的 token 配色。
+          // 旧写法是三段各自手写的 10px 小胶囊（琥珀/薄荷），与首页、付费弹窗各一套。
+          // 限时优惠下面再跟一行期限（OfferDeadline）——服务端配了 DISCOUNT_END 才显示。
           const badge = isFree ? null
             : term === 'monthly' && launch
-              ? <span className="inline-block text-[10px] font-semibold text-amber-700 bg-amber-100 rounded-full px-2 py-0.5">{t('membershipLaunchOffer', { pct: discPct })}</span>
+              ? <span className="inline-flex flex-col items-start gap-0.5">
+                  <DiscountBadge tone="offer" size="sm">{t('membershipLaunchOffer', { pct: discPct })}</DiscountBadge>
+                  <OfferDeadline until={config?.offerEndsAt} size="sm" />
+                </span>
               : term === 'yearly'
-                ? <span className="inline-block text-[10px] font-semibold text-primary-text bg-primary-soft rounded-full px-2 py-0.5">{t('memSaveMonths')}</span>
+                ? <DiscountBadge tone="save" size="sm">{t('memSaveMonths')}</DiscountBadge>
                 : term === 'lifetime'
-                  ? <span className="inline-block text-[10px] font-semibold text-primary-text bg-primary-soft rounded-full px-2 py-0.5">{t('memLifetimeBadge')}</span>
+                  ? <DiscountBadge tone="save" size="sm">{t('memLifetimeBadge')}</DiscountBadge>
                   : null;
           return (
             <PlanCard

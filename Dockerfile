@@ -18,7 +18,7 @@ RUN npm ci
 # 源码 + 配置
 COPY . .
 
-# 编译前端（vite build → dist/）
+# 编译前端（build:prod 先过 `npm run check` 类型门禁，再 vite build → dist/）
 RUN npm run build:prod
 
 # 预下载本地 embedding 模型（离线可用，写入缓存目录，不随数据卷/不含敏感信息）

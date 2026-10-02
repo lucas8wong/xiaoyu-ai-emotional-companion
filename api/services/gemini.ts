@@ -10,7 +10,9 @@ import { accountStore } from './accounts.js';
 import { activityStore } from './activity.js';
 import { PERSONA, HUMANIZE_RULES, BRAND_TONE, STORY_STYLE_ABSTRACT, REGION_CARDS, INTENSITY_MAP, REGION_CARDS_EN, INTENSITY_MAP_EN, SAFETY_TONE, DISTRESS_PATTERNS, METHODOLOGY_SELECTOR, INJECTION_BOUNDARY } from './prompts.js';
 import { COMPANION_STANCE, NO_META_NARRATION_RULE } from './companionStance.js';
-import { getNewsSnapshot, searchWeb, fetchUrlText } from './news.js';
+import { getNewsSnapshotDetailed, attributeSourcesBySegment, mapCitesToSegments, matchSnapshotSourcesBySegment, mergeSegmentSources, splitReplySegments, searchWebDetailed, fetchUrlText, isSafeHttpUrl, type SnapshotItem, type WebResult } from './news.js';
+import { extractCitations, createCitationFilter } from './chatSignal.js';
+import { looksLikeMetaLeak, stripLeadingMetaLeak } from './outputHygiene.js';
 import { LIFE_TOOLS, runLifeTool, type ToolCtx } from './lifeTools.js';
 import type { ChatCharacter } from './chatCharacter.js';
 import { storyPromptBlock } from './storyBridge.js';
@@ -1299,7 +1301,7 @@ export async function buildChatPromptParts(
   history: ChatMessageInput[],
   options?: { userId?: string; context?: string; character?: ChatCharacter; growthHints?: { night?: string; milestone?: string; day?: string }; region?: Region; intensity?: Intensity; chatInnerMonologueEnabled?: boolean; replyTo?: ReplyToInput; timezone?: string },
   skipNews = false
-): Promise<{ system: string; user: string }> {
+): Promise<{ system: string; user: string; newsItems: SnapshotItem[] }> {
   const { userId, context, character, growthHints, region, intensity, chatInnerMonologueEnabled, replyTo, timezone } = options || {};
 
   // 自定义角色（非内置小愈）完全替换人设；仍保留聊一聊的陪伴式沟通格式与安全边界
@@ -1335,11 +1337,16 @@ export async function buildChatPromptParts(
   }
 
   const safetyBlock = buildSafetyBlock(userId, lastUser);
-  const newsSnapshot = skipNews ? null : await getNewsSnapshot();
-  const newsBlock = newsSnapshot ? '\n【实时资讯速览】（这是用户提供给你的真实、最近更新的热点与新闻数据，你确实掌握这些信息。当用户问起"今天的新闻/热搜/最近发生了什么"等时事话题时，必须直接基于下面这些内容回答，可以列举具体事件；若用户问的事不在列表里，坦诚说明目前掌握的信息有限。不要说自己"无法获取实时信息/没有联网"。除非用户主动聊到新闻，否则不要主动铺开新闻，也不要打断当前的情绪陪伴。）\n' + newsSnapshot + '\n' : '';
+  // 快照的**文本**照旧注入 system（只有标题），**条目**（含各自的链接）单独带回调用方：
+  // 以前这里只取文本，等于把每条新闻的出处当场丢掉 —— 「今天有什么新闻？」这种直接从快照回答的回合
+  // 根本没调 web_search，于是界面一条来源都给不出（2026-09-29 用户实测反馈）。
+  const news = skipNews ? { text: '', items: [] as SnapshotItem[] } : await getNewsSnapshotDetailed();
+  const newsSnapshot = news.text || null;
+  const newsItems = news.items;
+  const newsBlock = newsSnapshot ? '\n【实时资讯速览】（这是用户提供给你的真实、最近更新的热点与新闻数据，你确实掌握这些信息。当用户问起"今天的新闻/热搜/最近发生了什么"等时事话题时，必须直接基于下面这些内容回答，可以列举具体事件；若用户问的事不在列表里，坦诚说明目前掌握的信息有限。不要说自己"无法获取实时信息/没有联网"。除非用户主动聊到新闻，否则不要主动铺开新闻，也不要打断当前的情绪陪伴。**引用规则（必须遵守）**：上面每条都带编号 [1] [2] …，凡是你转述了其中某一条，就在**那句话的末尾**写上它的编号标记（形如 [[3]]）。系统据此把该条的出处显示在**那条消息**下面——**没有标记就没有出处**。⚠️ 这条规则**只针对上面这个列表**：用 web_search 搜到的结果**不编号**，直接把链接附在那句话后面即可。标记用户看不到，**不要在正文里解释或讨论这条约定**，也不要凭印象写网址。）\n' + newsSnapshot + '\n' : '';
   const growthHintBlock = buildGrowthHintBlock(growthHints);
   const chatInnerBlock = buildChatInnerMonologueBlock(userId, chatInnerMonologueEnabled);
-  const lifeToolsBlock = '\n\n【生活工具】你内置了查询真实天气与路线导航的工具：当用户问「今天天气/下雨吗/要不要带伞/明天冷不冷/怎么去XX/从A到B多远多久」时，应调用对应工具（get_weather / get_directions），拿到结果后用自然、简短的方式告诉用户；路线类可把工具返回的「打开高德/Google 导航」链接原样给出。不要用 web_search 硬搜天气或路线，也不要凭感觉编造实时天气/路线。当用户问某地的美食/餐厅/旅游攻略/口碑，或其它需要联网查阅的实时/本地信息时（除天气、路线、地理编码外），可用 web_search 把返回的关键事实与链接转述给用户（可注明大致来源），不要编造。当用户直接发来一个链接（如小红书/抖音/大众点评链接）并想看里面的内容时，用 read_url 读取正文后再回答。';
+  const lifeToolsBlock = '\n\n【生活工具】你内置了查询真实天气与路线导航的工具：当用户问「今天天气/下雨吗/要不要带伞/明天冷不冷/怎么去XX/从A到B多远多久」时，应调用对应工具（get_weather / get_directions），拿到结果后用自然、简短的方式告诉用户；路线类可把工具返回的「打开高德/Google 导航」链接原样给出。不要用 web_search 硬搜天气或路线，也不要凭感觉编造实时天气/路线。当用户问某地的美食/餐厅/旅游攻略/口碑，或其它需要联网查阅的实时/本地信息时（除天气、路线、地理编码外），可用 web_search 把返回的关键事实转述给用户，不要编造。**讲到来源就要给得出链接**：凡是你转述了搜索到的具体新闻/事件/热点/榜单/店铺，就把工具结果里对应的那条链接**原样**附在那句话后面（挑最相关的 1–2 条就够，不要堆一排）；**没附链接就别转述那一条**（意译一遍却给不出出处的信息，对用户是负担）；链接只能来自工具返回结果，**不许自己编或改写网址**。用户要链接而你没在手边时，用 web_search 查一次再给。系统会在气泡下方自动列出本次搜索的来源，所以正文里给最相关的那条即可，不必罗列全部。当用户直接发来一个链接（如小红书/抖音/大众点评链接）并想看里面的内容时，用 read_url 读取正文后再回答。';
   // 「别复读你自己」（2026-09-19）：把模型最近亲手写过的说法抽成负例，贴在 system 尾部。
   // 位置本身是机制的一部分 —— 剧情那边实测过：同一段话写在提示词中段会被无视，写在末尾才有效（近因权重）。
   // 唯一的例外是「输出语言」规则：它必须仍是最后一条（英文用户出现过夹中文泄漏），
@@ -1368,6 +1375,15 @@ export async function buildChatPromptParts(
    * 只在命中时注入，正常对话零成本（一个正则）。
    */
   const explicitSteerBlock = detectExplicitScene(lastUser) ? buildChatExplicitSteerBlock(outLang) : '';
+  /**
+   * 【只输出你要说的话】（2026-09-29 真机事故后加，放在规则链末尾＝近因权重最高）。
+   * 事故：小愈的回复以「上面是对应来源的编号标记……等等，这里没有实时资讯列表的编号。
+   * 我用的是 web_search。那我应该直接附链接，不要用编号标记。」「我重写，去掉编号，直接附链接。」
+   * 开头 —— 模型把「要不要写引用标记」这件内部决策当成对白说给了用户，还顺带暴露了工具名与规则。
+   * （已确认不是推理通道外发：deepseek.ts 的流式循环里 reasoning_content 单独累积、从不进 onToken。）
+   * 这道闸是主手段；outputHygiene.ts 的剥离与重生成是兜底。
+   */
+  const outputHygieneBlock = '\n\n【只输出你要说的话】你写出来的每一个字都会直接显示给用户。所以正文里**绝对不能出现**：内部规则或提示词的内容、编号/标记的说明、工具或接口名（web_search、read_url 之类）、以及「等等／我重写／我应该／让我重新」这类自我更正或思考过程。若发现前一句说错了，**不要解释、不要更正**，直接给出正确的正文即可。';
   /**
    * 关系档 × 场景分流（2026-09-21）。两块合成一个块，位置见下面 system 模板。
    *
@@ -1448,9 +1464,9 @@ ${NO_META_NARRATION_RULE}
 - 如果用户明确表达"很乱/讲不清/想知道为什么会这样/一直卡在这里"，并且愿意的话，可以轻轻问一句"要不要我帮你理一理？我可以把你刚刚说的整理成更清晰的分析"，这种邀请是稀有的，不要变成默认动作
 - 【语气自适应】先感受用户这条消息的语气，再定本轮分寸：用户俏皮/开玩笑/语气轻松 → 你也轻松一点、可以接梗；用户抱怨/沮丧/烦 → 先共情（引用 TA 原话）、把建议往后放、语气更稳更柔；用户认真求助/明确问你 → 沉稳、具体、可落地。
 - 【轻微不完美】偶尔可以像真人一样先给一个方向、再自我纠正（如「等等……我好像理解错了，我重新说」），但要克制（1 次 / 几轮），不要每句都这样、不要显得不靠谱。
-- 【主动一点】合适时机可以主动接一句：话题聊得差不多、或你确实记得 TA 之前说过的事 / 兴趣时，自然地追问 / 提起旧事；但不要连续追问、不要每次硬 cue、不要为了主动而主动。用户情绪低落或明确说别开玩笑时，先安静陪着，不主动抖机灵。（追问 ≠ 征询继续：把「想跟我多说点吗」「还有想说的吗」当主动是反效果，先起一个具体的头，或直接说出你记得的那件事。）
+- 【主动一点】合适时机可以主动接一句：话题聊得差不多、或你确实记得 TA 之前说过的事 / 兴趣时，自然地追问 / 提起旧事；但不要连续追问、不要每次硬 cue、不要为了主动而主动。用户情绪低落或明确说别开玩笑时，先安静陪着，不主动抖机灵。（追问 ≠ 征询继续：把「想跟我多说点吗」「还有想说的吗」当主动是反效果，先起一个具体的头，或直接说出你记得的那件事。**提起旧事是接话，不是抓现行**：不许用「你还想装没追？」「别装了」这种口气把你记得的事变成质问或揭穿，那是替 TA 认定，见关系块的三条禁令。）
 - 【emoji 分寸】平时以文字为主；氛围轻松、用户自己用了 emoji、或情绪起伏大时，可以自然回一个；不要每句都加，情绪低落时不强加。
-${chatInnerBlock}${context ? `\n【已有背景】\n${context}\n` : ''}${newsBlock}${recallBlock}${lifeToolsBlock}${slopBlock}${firstTurnBlock}${relationBlock}${stateBlock}${lengthTargetBlock}${adultRedirectBlock}${antiRepeatBlock}${explicitSteerBlock}
+${chatInnerBlock}${context ? `\n【已有背景】\n${context}\n` : ''}${newsBlock}${recallBlock}${lifeToolsBlock}${slopBlock}${firstTurnBlock}${relationBlock}${stateBlock}${lengthTargetBlock}${adultRedirectBlock}${antiRepeatBlock}${explicitSteerBlock}${outputHygieneBlock}
 
 ${INJECTION_BOUNDARY}
 
@@ -1463,7 +1479,8 @@ ${historyText || '（这是对话的开始）'}
 ${replyTo ? buildReplyToBlock(replyTo, assistantName) : ''}【用户最新消息】
 ${lastUser}
 [/用户消息]`;
-  return { system, user };
+  // newsItems 交回调用方：回复生成后按**实际引用**挑出处（见 matchSnapshotSources），界面才不至于空手
+  return { system, user, newsItems };
 }
 
 /** web_search 工具 schema：模型自主决定是否需要实时搜索 */
@@ -1509,11 +1526,95 @@ function resolveThinkingLevel(userId?: string, override?: ThinkingLevel): Thinki
 }
 
 /**
+ * 来源归属总出口（2026-09-29 第三轮）：**两路来源都按段落归位**，一条来源只挂在提到它的那条气泡下面。
+ *
+ *   · `toolSources`  = web_search 的命中（原先整组挂在最后一条气泡上 → 用户实测反馈「最后一条挤着一排」）；
+ *   · `snapshotItems` = 「实时资讯速览」里被这段引用到的条目（「今天有什么新闻？」这类回合根本不调搜索）。
+ *
+ * 两条通道各自按段归属（都返回「段下标＝气泡下标」的数组，null = 该段没有），合并去重后交给前端。
+ * 若**一条都归不上**（模型只做了概括、没有可对应的引用），退回整轮的 onSources（挂最后一条）——
+ * 宁可位置不精确，也不让来源整批消失。
+ */
+/**
+ * 输出卫生闸（2026-09-29 真机事故后加）：剥掉开头的自言自语；剥不掉时追加一句纠正**重生成一次**。
+ *
+ * 返回 `revised`＝正文被改过。⚠️ 流式路径下这很关键：改过意味着**已经发出去的内容不是最终正文**，
+ * 前端必须用 done 里的最终正文重建本轮气泡（否则用户看到的就是那段自言自语）。
+ */
+async function applyOutputHygiene(
+  text: string,
+  regenerate: (nudge: string) => Promise<string>,
+): Promise<{ text: string; revised: boolean }> {
+  const stripped = stripLeadingMetaLeak(text);
+  let out = stripped.text;
+  let revised = stripped.changed;
+  if (looksLikeMetaLeak(out)) {
+    try {
+      const retry = await regenerate(
+        '⚠️ 你上一条把**内部思考**写进了回复（提到了规则/编号/工具名，或写了「我重写」这类自我更正），用户看不懂。' +
+        '请重写：**只输出你要对 ta 说的正文**，不要任何解释、规则说明或自我对话。',
+      );
+      const t = retry ? stripLeadingMetaLeak(retry).text : '';
+      if (t.trim() && !looksLikeMetaLeak(t)) { out = t; revised = true; }
+    } catch (e) {
+      console.warn('[chat] 自言自语重写失败:', (e as Error)?.message);
+    }
+  }
+  return { text: out, revised };
+}
+
+/**
+ * 把模型**显式声明**的引用标记（`[[3]]`）变成「段 → 来源」（2026-09-29 第四轮）。
+ * 编号 = 速览条目的下标 + 1（见 buildSnapshot 的编号），所以这里直接按下标取回该条的链接。
+ * 一条都没声明 → 返回 null，交给文字匹配兜底。
+ */
+function buildCitedSegments(reply: string, items: SnapshotItem[], cites: { n: number; at: number }[]): (WebResult[] | null)[] | null {
+  if (!cites?.length || !items?.length) return null;
+  const bySeg = mapCitesToSegments(reply, cites);
+  if (!bySeg.size) return null;
+  const segCount = splitReplySegments(reply).length;
+  const out: (WebResult[] | null)[] = new Array(segCount).fill(null);
+  for (const [seg, nums] of bySeg) {
+    if (seg < 0 || seg >= segCount) continue;
+    const list: WebResult[] = [];
+    for (const n of nums) {
+      const it = items[n - 1];
+      if (!it?.title || !it?.url || !isSafeHttpUrl(it.url)) continue;
+      if (list.some((x) => x.url === it.url)) continue;
+      list.push({ title: it.title, snippet: '', url: it.url, ...(it.host ? { host: it.host } : {}) });
+    }
+    if (list.length) out[seg] = list;
+  }
+  return out.some(Boolean) ? out : null;
+}
+
+function emitSourcesBySegment(
+  reply: string,
+  snapshotItems: SnapshotItem[],
+  toolSources: WebResult[],
+  cites: { n: number; at: number }[],
+  onSourceSegments?: (segments: (WebResult[] | null)[]) => void,
+  onSources?: (sources: WebResult[]) => void,
+): void {
+  // ① **模型显式声明的引用最权威**（意译也不影响归属）
+  const declared = buildCitedSegments(reply, snapshotItems, cites);
+  // ② 兜底：文字匹配（搜索命中附了链接 / 速览条目被原样提到）
+  const fromSearch = attributeSourcesBySegment(reply, toolSources);
+  const fromSnapshot = matchSnapshotSourcesBySegment(reply, snapshotItems);
+  const merged = mergeSegmentSources(mergeSegmentSources(declared, fromSearch), fromSnapshot);
+  if (merged && merged.some(Boolean)) {
+    onSourceSegments?.(merged);
+    return;
+  }
+  if (toolSources.length) onSources?.(toolSources);
+}
+
+/**
  * 把模型请求的工具调用结果追加到 messages：
  * 按工具名分发（web_search / get_weather / get_directions / geocode），
  * 并引导模型直接回答，避免反复调用工具。toolCtx 供生活工具选数据源与默认位置。
  */
-async function appendToolResults(messages: any[], toolCalls: any[], reasoningContent?: string, toolCtx?: ToolCtx): Promise<void> {
+async function appendToolResults(messages: any[], toolCalls: any[], reasoningContent?: string, toolCtx?: ToolCtx, onSources?: (sources: WebResult[]) => void): Promise<void> {
   messages.push({ role: 'model', toolCalls, parts: [], reasoningContent });
   for (const tc of toolCalls || []) {
     const name = tc?.function?.name || '';
@@ -1527,7 +1628,11 @@ async function appendToolResults(messages: any[], toolCalls: any[], reasoningCon
         site = String(a?.site || '');
         count = Number(a?.count) || 0;
       } catch { /* 忽略 */ }
-      result = query ? await searchWeb(String(query).slice(0, 100), { site, limit: count || 5 }) : '';
+      // 一次抓取，两路产出：`text` 照旧喂模型，`sources`（结构化）上交给调用方转下发前端
+      // （2026-09-29：以前这里只取文本，界面因此永远拿不到来源，只能等用户开口问）。
+      const outcome = query ? await searchWebDetailed(String(query).slice(0, 100), { site, limit: count || 5 }) : null;
+      if (outcome?.sources?.length) onSources?.(outcome.sources);
+      result = outcome?.text || '';
       result = result || '未搜索到相关内容，请如实告诉用户目前查不到。';
     } else if (name === 'read_url') {
       let url = '';
@@ -1547,7 +1652,7 @@ async function appendToolResults(messages: any[], toolCalls: any[], reasoningCon
 
 export async function chatReply(
   history: ChatMessageInput[],
-  options?: { userId?: string; context?: string; character?: ChatCharacter; images?: string[]; onSearch?: () => void; growthHints?: { night?: string; milestone?: string; day?: string }; region?: Region; intensity?: Intensity; chatInnerMonologueEnabled?: boolean; thinkingLevel?: ThinkingLevel; toolCtx?: ToolCtx; onUsage?: (usage: any) => void; replyTo?: ReplyToInput; timezone?: string }
+  options?: { userId?: string; context?: string; character?: ChatCharacter; images?: string[]; onSearch?: () => void; onSources?: (sources: WebResult[]) => void; onSourceSegments?: (segments: (WebResult[] | null)[]) => void; onRevised?: () => void; growthHints?: { night?: string; milestone?: string; day?: string }; region?: Region; intensity?: Intensity; chatInnerMonologueEnabled?: boolean; thinkingLevel?: ThinkingLevel; toolCtx?: ToolCtx; onUsage?: (usage: any) => void; replyTo?: ReplyToInput; timezone?: string }
 ): Promise<string> {
   const client = await initializeGenAIClient();
   if (!client) {
@@ -1558,7 +1663,10 @@ export async function chatReply(
   let totalUsage: any = null;
   const collectUsage = (u: any) => { totalUsage = mergeUsage(totalUsage, u); };
   const hasImages = images.length > 0;
-  const { system, user } = await buildChatPromptParts(history, options);
+  const { system, user, newsItems } = await buildChatPromptParts(history, options);
+  // 本轮搜索命中先本地攒着：回复生成后要按段落归位（见 emitSourcesBySegment），而不是边收边整组交出去
+  const toolSources: WebResult[] = [];
+  const collectToolSources = (list: WebResult[]) => { for (const s of list) if (s?.url && !toolSources.some((x) => x.url === s.url)) toolSources.push(s); };
   console.log('🚀 [chatReply] 发送对话请求到 DeepSeek' + (hasImages ? '（含 ' + images.length + ' 张图片）' : ''));
   const sysMsg = { role: 'system' as const, parts: [{ text: system }] };
   const userParts = hasImages ? [{ text: user }, ...images.map(img => ({ image: img }))] : [{ text: user }];
@@ -1584,7 +1692,7 @@ export async function chatReply(
       result = await client.models.generateContent(req);
       if (result.toolCalls && result.toolCalls.length && round < 2) {
         onSearch?.(); // 通知前端显示「正在搜索」
-        await appendToolResults(messages, result.toolCalls, result.reasoningContent, options?.toolCtx);
+        await appendToolResults(messages, result.toolCalls, result.reasoningContent, options?.toolCtx, collectToolSources);
         continue;
       }
       break;
@@ -1633,6 +1741,23 @@ export async function chatReply(
   }
   // 资金/额度层结算：把本次用户触发的所有调用（含工具轮、兜底、英文重生成）的真实 usage 一并回传
   if (options?.onUsage && totalUsage) options.onUsage(totalUsage);
+  // 输出卫生（先做：它可能整段丢掉，标记与偏移都必须基于**处理后的正文**再算）
+  const hygienic = await applyOutputHygiene(out, async (nudge) => {
+    const re = await client.models.generateContent({
+      model, userId: options?.userId,
+      contents: [...messages, { role: 'user' as const, parts: [{ text: nudge }] }],
+      thinkingLevel: baseReq.thinkingLevel, onUsage: collectUsage, feature: 'chat',
+    });
+    return re?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  });
+  out = hygienic.text;
+  if (hygienic.revised) options?.onRevised?.();
+  // 来源引用标记（[[n]]）：**剥掉再落盘/下发**（红线 6：内部标记不是小愈说过的话），
+  // 同时留下编号 —— 它是来源归属最权威的依据（模型意译也照样对得上）。
+  const cited = extractCitations(out);
+  out = cited.text;
+  if (!out.trim()) throw new Error('AI 返回空回复（EMPTY_REPLY）'); // 只剩标记/只剩自言自语 ＝ 等于没说话
+  emitSourcesBySegment(out, newsItems, toolSources, cited.cites, options?.onSourceSegments, options?.onSources);
   console.log(`✅ [chatReply] 回复长度: ${out.length} · 字体=${targetLang}`);
   return out;
 }
@@ -1642,7 +1767,7 @@ export async function chatReply(
  */
 export async function chatReplyStream(
   history: ChatMessageInput[],
-  options?: { userId?: string; context?: string; character?: ChatCharacter; onToken?: (delta: string) => void; onSearch?: () => void; images?: string[]; growthHints?: { night?: string; milestone?: string; day?: string }; signal?: AbortSignal; region?: Region; intensity?: Intensity; chatInnerMonologueEnabled?: boolean; thinkingLevel?: ThinkingLevel; toolCtx?: ToolCtx; onUsage?: (usage: any) => void; replyTo?: ReplyToInput; timezone?: string }
+  options?: { userId?: string; context?: string; character?: ChatCharacter; onToken?: (delta: string) => void; onSearch?: () => void; onSources?: (sources: WebResult[]) => void; onSourceSegments?: (segments: (WebResult[] | null)[]) => void; onRevised?: () => void; images?: string[]; growthHints?: { night?: string; milestone?: string; day?: string }; signal?: AbortSignal; region?: Region; intensity?: Intensity; chatInnerMonologueEnabled?: boolean; thinkingLevel?: ThinkingLevel; toolCtx?: ToolCtx; onUsage?: (usage: any) => void; replyTo?: ReplyToInput; timezone?: string }
 ): Promise<string> {
   const client = await initializeGenAIClient();
   if (!client) {
@@ -1654,8 +1779,19 @@ export async function chatReplyStream(
   const collectUsage = (u: any) => { totalUsage = mergeUsage(totalUsage, u); };
   const hasImages = images.length > 0;
   const targetLang = chatOutputLang(history, options?.userId);
-  const emit = (delta: string) => onToken?.(normalizeScriptText(delta, targetLang));
-  const { system, user } = await buildChatPromptParts(history, options);
+  /**
+   * 流式下发（外面套一层「来源引用标记」过滤器）：
+   * 标记可能被切成多个 delta，所以过滤器会扣住「可能是 [[ 开头」的尾巴，
+   * 完整标记出现时剥掉再下发 —— 用户**全程看不到** [[3]] 这种东西（红线 6：标记不落盘、不下发）。
+   */
+  const citeFilter = createCitationFilter();
+  const emit = (delta: string) => {
+    const safe = citeFilter.feed(delta);
+    if (safe) onToken?.(normalizeScriptText(safe, targetLang));
+  };
+  const { system, user, newsItems } = await buildChatPromptParts(history, options);
+  const toolSources: WebResult[] = [];
+  const collectToolSources = (list: WebResult[]) => { for (const s of list) if (s?.url && !toolSources.some((x) => x.url === s.url)) toolSources.push(s); };
   const sysMsg = { role: 'system' as const, parts: [{ text: system }] };
   const userParts = hasImages ? [{ text: user }, ...images.map(img => ({ image: img }))] : [{ text: user }];
   const userMsg = { role: 'user' as const, parts: userParts };
@@ -1678,7 +1814,7 @@ export async function chatReplyStream(
       result = await client.models.generateContentStream(req, emit, signal);
       if (result.toolCalls && result.toolCalls.length && round < 2) {
         onSearch?.(); // 通知前端显示「正在搜索」
-        await appendToolResults(messages, result.toolCalls, result.reasoningContent, options?.toolCtx);
+        await appendToolResults(messages, result.toolCalls, result.reasoningContent, options?.toolCtx, collectToolSources);
         continue;
       }
       break;
@@ -1703,10 +1839,28 @@ export async function chatReplyStream(
     }
   }
   if (options?.onUsage && totalUsage) options.onUsage(totalUsage);
-  console.log(`✅ [chatReplyStream] 回复长度: ${text.length} · 字体=${targetLang}`);
+  // 流结束：把过滤器扣住的尾巴吐出去（标记本身仍然剥掉），否则末尾几个字永远到不了前端
+  const citeTail = citeFilter.flush();
+  if (citeTail) onToken?.(normalizeScriptText(citeTail, targetLang));
+  // 输出卫生（先做：可能整段丢掉，标记与段落偏移都必须基于**处理后的正文**再算）
+  const hygienic = await applyOutputHygiene(text, async (nudge) => {
+    const re = await client.models.generateContent({
+      model, userId: options?.userId,
+      contents: [...messages, { role: 'user' as const, parts: [{ text: nudge }] }],
+      thinkingLevel: baseReq.thinkingLevel, onUsage: collectUsage, feature: 'chat',
+    });
+    return re?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  });
+  // ⚠️ 流式已经把原文发出去过：改过就必须让前端用最终正文重建气泡（见 onRevised）
+  if (hygienic.revised) options?.onRevised?.();
+  // 引用标记：从最终正文里剥掉（用户看不到、也绝不落盘），编号留给来源归属
+  const cited = extractCitations(hygienic.text);
+  const citedText = cited.text;
+  console.log(`✅ [chatReplyStream] 回复长度: ${citedText.length} · 字体=${targetLang}`);
   // 同 chatReply：空回复绝不伪造台词（红线 6），抛错交给路由下发失败态
-  if (!text.trim()) throw new Error('AI 返回空回复（EMPTY_REPLY）');
-  return normalizeScriptText(text.trim(), targetLang);
+  if (!citedText.trim()) throw new Error('AI 返回空回复（EMPTY_REPLY）');
+  emitSourcesBySegment(citedText, newsItems, toolSources, cited.cites, options?.onSourceSegments, options?.onSources);
+  return normalizeScriptText(citedText.trim(), targetLang);
 }
 /**
  * Instagram 文案草稿生成：根据主题/发布类型用 AI 撰写英文文案（用于 @xiaoyu.care 账号）

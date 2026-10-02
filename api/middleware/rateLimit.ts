@@ -4,6 +4,7 @@
  * 注意：本实现为进程内内存计数，重启即清零；多实例部署时应改用 Redis 等共享存储。
  */
 import type { Request, Response, NextFunction } from 'express';
+import { getClientIp } from '../services/geo.js';
 
 interface Bucket {
   count: number;
@@ -32,7 +33,8 @@ export interface RateLimitOptions {
 export function rateLimit(opts: RateLimitOptions) {
   const { windowMs, max, key, message = '请求过于频繁，请稍后再试' } = opts;
   return (req: Request, res: Response, next: NextFunction): void => {
-    const client = key ? key(req) : (req.ip || 'unknown');
+    // 用 getClientIp 而非 req.ip：后者是最左 XFF，可被调用方伪造（2026-09-28 审查 P1-6）
+    const client = key ? key(req) : (getClientIp(req) || 'unknown');
     const bucketKey = `${req.method}:${req.path}:${client}`;
     const now = Date.now();
 

@@ -68,7 +68,12 @@ export class StreamingSpeechParser {
 
   private receiveValue(value: string): void {
     // 对象必须等到闭合后再确认 role，避免 content 在 role:user 前面时泄露提示词。
-    const object = this.frames.findLast((frame) => frame.type === "object");
+    // 不用 Array.prototype.findLast（ES2023）：本项目 lib 为 ES2020，iOS Safari < 15.4 上会直接抛错；
+    // 手写从尾向前的查找即可（2026-09-28 C2）。
+    let object: Frame | undefined;
+    for (let i = this.frames.length - 1; i >= 0; i -= 1) {
+      if (this.frames[i].type === "object") { object = this.frames[i]; break; }
+    }
     if (object) { object.pending.push(value); return; }
     for (const segment of this.decodePublicValue(value)) {
       const index = this.segments.length;

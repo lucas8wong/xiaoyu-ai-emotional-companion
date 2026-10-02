@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { X, History, Loader2, Heart, BookOpen, ChevronLeft } from 'lucide-react';
+import { History, Loader2, Heart, BookOpen, ChevronLeft } from 'lucide-react';
 import { getHistory, type HistoryRecord } from '../services/api';
 import { t } from '../i18n';
 import Modal from './ui/Modal';

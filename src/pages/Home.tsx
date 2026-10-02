@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useMemo, useCallback, lazy, Suspense } from 'react';
-import { Heart, History, ArrowLeft, User as UserIcon, AlertCircle, LogOut, MessageSquareHeart, MessageCircleHeart, Compass, Crown, CalendarDays, Settings2, Drama, Info, SlidersHorizontal, Megaphone, ChevronDown, ChevronUp, X, Palette, Gift } from 'lucide-react';
+import { Heart, History, ArrowLeft, User as UserIcon, AlertCircle, LogOut, MessageSquareHeart, MessageCircleHeart, Compass, Crown, CalendarDays, Settings2, Drama, Info, SlidersHorizontal, Megaphone, ChevronDown, ChevronUp, X, Palette, Gift, Mail } from 'lucide-react';
 import { SkinModeIcon, SkinPlanIcon, SkinFeedbackIcon } from '../components/SkinIcon';
 import { useAppStore } from '../store/useAppStore';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -17,7 +17,7 @@ const JourneyModal = lazy(() => import('../components/JourneyModal'));
 const AuthModal = lazy(() => import('../components/AuthModal'));
 const ProfileModal = lazy(() => import('../components/ProfileModal'));
 const InviteModal = lazy(() => import('../components/InviteModal'));
-import WelcomeGuide, { markGuideSeen } from '../components/WelcomeGuide';
+const InboxModal = lazy(() => import('../components/InboxModal'));
 const ChatPage = lazy(() => import('../components/ChatPage'));
 const MembershipModal = lazy(() => import('../components/MembershipModal'));
 const MoodCheckinModal = lazy(() => import('../components/MoodCheckinModal'));
@@ -53,6 +53,7 @@ import { useSkin } from '../components/SkinProvider';
 import { t, getLang } from '../i18n';
 import { companionShortName } from '../lib/companionName';
 import { mainPrice } from '../lib/payPrice';
+import { DiscountBadge, StrikePrice, OfferDeadline } from '../components/ui/DiscountBadge';
 
 function StepLoading() {
   return (
@@ -154,8 +155,12 @@ export default function Home() {
   const [stripeSuccess, setStripeSuccess] = useState(false);
   /** Stripe 结账页点「返回」回到本站：付费弹窗要原样重开，并给一句「已取消」的说明 */
   const [payCanceled, setPayCanceled] = useState(false);
-  // 待通知奖励（系统发 credit 后，用户下次登录/刷新时恭喜提示）
-  const [rewardNotice, setRewardNotice] = useState<number | null>(null);
+  // 待通知奖励（系统发 credit 后，用户下次登录/刷新时恭喜提示）。
+  // note = 运营者随奖励写给用户的话（目前仅反馈奖励会带）：横幅据此显示回复摘要，
+  // 完整内容在「小愈信箱」里（ack 只清横幅，信不会跟着消失）。
+  const [rewardNotice, setRewardNotice] = useState<{ count: number; note?: string } | null>(null);
+  // 小愈信箱弹窗（入口：「我的」里的信箱卡片；奖励横幅带 note 时也有「查看」直达）
+  const [inboxOpen, setInboxOpen] = useState(false);
   const [membershipOpen, setMembershipOpen] = useState(false);
 
   const [, setLangTick] = useState(0); // 顶栏语言切换后强制重渲染全部文案（值本身不被读取，仅作触发）
@@ -269,8 +274,6 @@ export default function Home() {
     void flushAdultPending('email-campaign');
   }, [authUser]);
 
-  // 首屏欢迎引导：注册成功后触发（新用户），老用户/游客不强制
-  const [guideOpen, setGuideOpen] = useState(false);
   // —— 首次进入 · 主页功能引导气泡（coach-mark；排队于注册/新手导览/UI 导览之后）——
   const [homeCoachOpen, setHomeCoachOpen] = useState<boolean>(() => {
     try { return localStorage.getItem('cure_home_coach_seen') !== '1'; } catch { return false; }
@@ -401,6 +404,7 @@ export default function Home() {
         import('../components/AboutPage'),
         import('../components/MoodCheckinModal'),
         import('../components/ProfileModal'),
+        import('../components/InboxModal'),
         import('../components/PreferencesModal'),
         import('../components/AppearanceModal'),
         import('../components/HistoryModal'),
@@ -422,7 +426,6 @@ export default function Home() {
   useEffect(() => {
     if (authUser) return;
     if (getToken()) return; // 存在登录会话（token）即便本地用户缓存暂缺也视为已登录，不再自动弹注册，避免闪现/误弹
-    if (guideOpen) return;
     let prompted = false;
     try {
       prompted = localStorage.getItem('cure_reg_prompted') === '1' || localStorage.getItem('cure_guest_prompted') === '1';
@@ -441,9 +444,9 @@ export default function Home() {
       setAuthOpen(true);
     }, 600);
     return () => clearTimeout(timer);
-  }, [guideOpen, authUser]);
+  }, [authUser]);
 
-  // 新用户界面导览：游客首次进入 / 新注册用户（WelcomeGuide 之后）各展示一次
+  // 新用户界面导览：游客首次进入 / 新注册用户各展示一次（注册后直接进主页，不再有前置引导弹窗）
   const [uiTourOpen, setUiTourOpen] = useState(false);
   const [uiTourFullOpen, setUiTourFullOpen] = useState(false); // 点「查看导览」才打开完整弹窗（提示条不挡首屏）
   useEffect(() => {
@@ -451,7 +454,6 @@ export default function Home() {
     try {
       if (localStorage.getItem('cure_ui_tour_seen') === '1') return;
     } catch { return; }
-    if (guideOpen) return;  // 等 WelcomeGuide 关掉再展示
     if (authOpen) return;   // 等注册/登录弹窗关掉
     const timer = setTimeout(() => {
       // 付费弹窗开着（如 Stripe 取消返回后自动重开）→ 导览条让位，别压住用户正在做的事
@@ -459,7 +461,7 @@ export default function Home() {
       setUiTourOpen(true);
     }, 800);
     return () => clearTimeout(timer);
-  }, [showApp, guideOpen, authOpen, uiTourOpen]);
+  }, [showApp, authOpen, uiTourOpen]);
 
   // 邮件深链：邮件 "Open Xiaoyu" 按钮带 verify/email/code，自动打开弹窗并预填
   useEffect(() => {
@@ -550,15 +552,22 @@ export default function Home() {
         setCachedPlan(plan, q.unlockUntil); // 缓存身份：下次进入秒开 Pro/Plus 卡片
         // 系统奖励待通知：弹恭喜提示（登录后或刷新时）
         if (q.pendingReward && q.pendingReward.count > 0) {
-          setRewardNotice(q.pendingReward.count);
+          setRewardNotice({ count: q.pendingReward.count, note: q.pendingReward.note });
         }
       }
     });
   }, [authUser, payOpen]);
 
-  // 展示奖励恭喜提示：5 秒后自动消失，并通知后端已读
+  /**
+   * 展示奖励恭喜提示：5 秒后自动消失，并通知后端已读。
+   *
+   * ⚠️ 带 note（运营者写了回复）时**不自动消失**：这段回复的完整内容在「小愈信箱」里，
+   * 横幅是用户此刻唯一能点进信箱的线索，5 秒后自己消失等于把线索也吞了。
+   * 用户关掉或点「查看」时才 ack（信仍在信箱，不受影响）。
+   */
   useEffect(() => {
     if (rewardNotice == null) return;
+    if (rewardNotice.note) return;
     const timer = setTimeout(() => {
       ackReward().finally(() => setRewardNotice(null));
     }, 5000);
@@ -793,14 +802,12 @@ export default function Home() {
     try { window.dispatchEvent(new CustomEvent('privacy-agreed')); } catch { /* 忽略 */ }
   };
 
-  // 注册成功：本次由注册而来 → 弹精简引导（介绍功能）；登录/游客不弹
+  // 注册成功：直接进主页（2026-10-02 起新用户引导整体下线，注册后不再弹「你想从哪一种感觉开始」）
   const handleRegistered = () => {
     try { localStorage.setItem('cure_reg_prompted', '1'); } catch { /* 忽略 */ }
     // 注册成功即视为同意隐私：写入标记 + 通知 App 关闭底部横幅
     try { localStorage.setItem('cure_privacy_agreed', '1'); } catch { /* 忽略 */ }
     try { window.dispatchEvent(new CustomEvent('privacy-agreed')); } catch { /* 忽略 */ }
-    setGuideOpen(true);
-    markGuideSeen(); // 引导已看过，防止下次刷新再弹
   };
 
   const handleLogout = async () => {
@@ -935,7 +942,7 @@ export default function Home() {
           层级必须**高于模态层**：AuthModal/InstallAppDialog/PrivacyModal/InviteModal 分别是 70/70/80/90，
           与它同层或更高（实测新访客会自动弹注册框，且在 DOM 里更靠后 → 同层时把闸门整个盖住，
           用户根本看不到年龄确认，闸门形同不存在）。取 95：高于全部模态层，仍低于应用级浮层
-          （AppSplash 100 / LangSwitch 120 / WelcomeGuide 998）——那些是加载与引导，本就该在最上面。 */}
+          （AppSplash 100 / LangSwitch 120）——那些是加载与引导，本就该在最上面。 */}
       {adultGateOpen && (
         <div className="fixed inset-0 z-[95] bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5">
@@ -991,7 +998,7 @@ export default function Home() {
         />
       )}
       {moodOpen && <MoodCheckinModal open onClose={() => { setMoodOpen(false); refreshMoodEligible(); }} />}
-      {prefsOpen && <PreferencesModal open onClose={() => { setPrefsOpen(false); setPrefsFocusPush(false); }} onFeedback={() => { setPrefsOpen(false); setPrefsFocusPush(false); setFeedbackOpen(true); }} onRequestMembership={() => setMembershipOpen(true)} focusProactivePush={prefsFocusPush} />}
+      {prefsOpen && <PreferencesModal open onClose={() => { setPrefsOpen(false); setPrefsFocusPush(false); }} onFeedback={() => { setPrefsOpen(false); setPrefsFocusPush(false); setFeedbackOpen(true); }} onRequestMembership={() => setMembershipOpen(true)} focusProactivePush={prefsFocusPush} pwaInstall={{ installed: install.installed, mode: install.mode, promptInstall: install.promptInstall }} />}
       {skinOpen && <AppearanceModal open onClose={() => setSkinOpen(false)} />}
       {startOpen && (
         <StartModal
@@ -1018,6 +1025,7 @@ export default function Home() {
           registerProPromoActive={quota?.registerProPromoActive ?? false}
           registerProDays={quota?.registerProDays ?? 0}
           registeredDailyTiao={quotaTierTiao(quota, payCfg)?.d}
+          googleClientId={quota?.googleClientId}
         />
       )}
       {profileOpen && (
@@ -1029,8 +1037,16 @@ export default function Home() {
           onOpenMembership={() => { setProfileOpen(false); setMembershipOpen(true); }}
           // 「我的 → 邀请好友」里的「查看我的邀请记录」：关掉我的，打开邀请弹窗（明细在那边）
           onOpenInvite={() => { setProfileOpen(false); setInviteOpen(true); }}
+          // 「我的 → 小愈信箱」：同样钻取式——关掉我的，打开信箱（避免弹窗套弹窗的层级/滚动问题）
+          onOpenInbox={() => { setProfileOpen(false); setInboxOpen(true); }}
           onNeedLogin={() => { setProfileOpen(false); openAuth('login'); }}
           onRenamed={(u) => setAuthUser(u)}
+        />
+      )}
+      {inboxOpen && (
+        <InboxModal
+          open
+          onClose={() => setInboxOpen(false)}
         />
       )}
       {membershipOpen && (
@@ -1057,26 +1073,6 @@ export default function Home() {
           onClose={() => setQuotaPromptOpen(false)}
           onOpenFeedback={() => { setQuotaPromptOpen(false); setFeedbackOpen(true); }}
           onOpenMembership={() => { setQuotaPromptOpen(false); setMembershipOpen(true); }}
-        />
-      )}
-      {guideOpen && (
-        <WelcomeGuide
-          onFeedback={() => setFeedbackOpen(true)}
-          onClose={(entry) => {
-            setGuideOpen(false);
-            if (entry === 'chat') {
-              handleStartChat();
-            } else if (entry === 'structure') {
-              handleStartJourney();
-            } else if (entry === 'roleplay') {
-              setRoleplayOpen(true);
-            } else if (entry) {
-              // 旧版情绪入口值兜底：进理一理
-              setEmotionInput(entry);
-              setShowApp(true);
-              window.scrollTo(0, 0);
-            }
-          }}
         />
       )}
       {uiTourFullOpen && (
@@ -1425,7 +1421,7 @@ export default function Home() {
   return (
     <>
     {/* 付费弹窗开着时（含 Stripe 取消返回后自动重开）不让引导气泡浮在上面：用户在办事，别插话 */}
-    {homeCoachOpen && !payOpen && !authOpen && !guideOpen && !uiTourFullOpen && (!!authUser || !!getToken() || homeRegProceeded) && (
+    {homeCoachOpen && !payOpen && !authOpen && !uiTourFullOpen && (!!authUser || !!getToken() || homeRegProceeded) && (
       <FeatureCoachmarks steps={homeCoachSteps} onDone={finishHomeCoach} />
     )}
     <div className="min-h-screen bg-brand">
@@ -1466,13 +1462,38 @@ export default function Home() {
       {rewardNotice != null && (
         <div className="bg-amber-500 text-white">
           <div className="container mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
-            <p className="text-[13px] sm:text-sm font-medium">{t('rewardNotice', { n: rewardNotice })}</p>
-            <button
-              onClick={() => { ackReward().finally(() => setRewardNotice(null)); }}
-              className="text-white/80 hover:text-white text-lg leading-none"
-            >
-              ✕
-            </button>
+            <div className="min-w-0 flex items-center gap-2">
+              {rewardNotice.note ? <Mail className="w-4 h-4 shrink-0" aria-hidden /> : <Gift className="w-4 h-4 shrink-0" aria-hidden />}
+              <div className="min-w-0">
+                <p className="text-[13px] sm:text-sm font-semibold">
+                  {rewardNotice.note ? t('rewardNoticeWithNote') : t('rewardNotice', { n: rewardNotice.count })}
+                </p>
+                {/* 回复摘要：**字符级截断**，不用 line-clamp（Chrome 153 实测会露出下一行字头，见 ChatPage 同款注释）；
+                    全文在「小愈信箱」里，点「查看」直达 */}
+                {rewardNotice.note && (
+                  <p className="text-[12px] text-white/90 leading-snug mt-0.5">
+                    {rewardNotice.note.length > 56 ? rewardNotice.note.slice(0, 56) + '…' : rewardNotice.note}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {rewardNotice.note && (
+                <button
+                  onClick={() => { ackReward().finally(() => setRewardNotice(null)); setInboxOpen(true); }}
+                  className="text-[12px] font-semibold bg-white/20 hover:bg-white/30 rounded-full px-3 py-1 transition-colors"
+                >
+                  {t('inboxOpenLetter')}
+                </button>
+              )}
+              <button
+                onClick={() => { ackReward().finally(() => setRewardNotice(null)); }}
+                aria-label={t('authClose')}
+                className="text-white/80 hover:text-white text-lg leading-none p-1 -m-1"
+              >
+                ✕
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1888,11 +1909,16 @@ export default function Home() {
                     </div>
                   )}
                   {c.orig && (
-                    <p className="hidden sm:block text-[11px] text-ink-soft line-through mt-0.5">{c.orig}</p>
+                    <p className="hidden sm:block mt-0.5"><StrikePrice>{c.orig}</StrikePrice></p>
                   )}
+                  {/* 折扣标注（2026-09-29）：与付费弹窗/会员卡同一组件；手机三列格子窄，故不带图标、用 sm 号，
+                      但仍然是填充色块（旧写法是 10px 琥珀小胶囊文字，实测对比度不达标）。
+                      期限一行（OfferDeadline）在手机三列里放不下（实测 390px 会撑出 4px 横向溢出），
+                      与划线原价同样处理：**只在 ≥sm 显示**；手机上「限时特惠 -50%」徽章仍在。 */}
                   {launch && c.orig && (
-                    <span className="inline-block mt-1 text-[10px] font-semibold text-amber-800 bg-amber-100 rounded-full px-1.5 py-0.5">
-                      {t('membershipLaunchOffer', { pct })}
+                    <span className="mt-1 inline-flex flex-col items-center sm:items-start gap-0.5">
+                      <DiscountBadge tone="offer" size="sm" icon={false}>{t('membershipLaunchOffer', { pct })}</DiscountBadge>
+                      <OfferDeadline until={payCfg?.offerEndsAt} size="sm" className="hidden sm:inline-flex" />
                     </span>
                   )}
                 </button>

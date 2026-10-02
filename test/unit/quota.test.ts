@@ -328,6 +328,66 @@ test('统一点数：持久赠送先于每日上限消耗，回滚恢复', () =>
   assert.strictEqual(quotaStore.getCreditQuota(uid).bonus, 10, '回滚应恢复 bonus');
 });
 
+/**
+ * 赠送余额的「累计获得 / 已用」（2026-09-29 用户提问：「赠送余额为什么没用已用的记录？」）。
+ * `creditBonus` 是**余额**（扣减直接做减法），账本原先既不存累计获得也不存累计已用 ⇒ 运营端算不出「用了多少」。
+ * 现在两条**发放**路径都累加 `creditGrantedTotal`，退款/结算补收**不算**发放（算了「已用」就会虚低）。
+ */
+test('统一点数：赠送「累计获得 / 已用」= 累计 − 余额；退款不计入累计', () => {
+  const prev = process.env.CREDIT_QUOTA_ENABLED;
+  process.env.CREDIT_QUOTA_ENABLED = '1';
+  try {
+    const uid = registerFree('granted');
+    const unit = quotaStore.getQuota(uid).unitCredit;
+    const rec = quotaStore.getRecord(uid)!;
+    rec.creditBonus = 0;
+    rec.creditGrantedTotal = 0; // 清掉注册礼，从零开始量这 23 条
+    // 两条发放路径都必须记：addCreditBonus（直接给点数）+ addChatBonus（条 → 点数）
+    quotaStore.addCreditBonus(uid, 3 * unit, 'feedback');
+    quotaStore.addChatBonus(uid, 20, 'register');
+    let qd = quotaStore.describeQuota(uid);
+    assert.strictEqual(qd.credit.bonusTiao, 23, '余额 = 3 + 20 条');
+    assert.strictEqual(qd.credit.bonusGrantedTiao, 23, '累计获得 = 3 + 20 条（两条发放路径都要记）');
+    assert.strictEqual(qd.credit.bonusUsedTiao, 0, '没消耗 → 已用 0');
+    assert.strictEqual(qd.credit.grantSince, '2026-09-29', '口径起点要能下发给前端（老记录标注用）');
+    // 用掉 4 条：赠送先扣 → 余额 19、已用 4
+    const r = quotaStore.reserveCredit(uid, 'chat', { credit: 4 * unit });
+    assert.strictEqual(r.ok, true);
+    qd = quotaStore.describeQuota(uid);
+    assert.strictEqual(qd.credit.bonusTiao, 19);
+    assert.strictEqual(qd.credit.bonusUsedTiao, 4, '已用 = 累计获得 − 当前余额');
+    // 失败回滚：钱退回来了，但「累计获得」绝不能涨（否则已用虚低）
+    quotaStore.rollbackCredit(uid, r.token!);
+    qd = quotaStore.describeQuota(uid);
+    assert.strictEqual(qd.credit.bonusGrantedTiao, 23, '退款/结算补收不得计入累计获得');
+    assert.strictEqual(qd.credit.bonusUsedTiao, 0, '回滚后已用回到 0');
+    // 老记录（字段缺失）：已用算不出来 → null（前端显示「—」），**不能用 0 冒充**
+    const legacyUid = registerFree('granted-legacy');
+    quotaStore.getQuota(legacyUid); // 先 ensure（配额记录是懒建的，否则 getRecord 是 undefined）
+    const legacyRec = quotaStore.getRecord(legacyUid)!;
+    delete legacyRec.creditGrantedTotal;
+    legacyRec.creditBonus = 5 * unit;
+    const lqd = quotaStore.describeQuota(legacyUid);
+    assert.strictEqual(lqd.credit.bonusGrantedTiao, null, '老记录无累计 → null');
+    assert.strictEqual(lqd.credit.bonusUsedTiao, null, '老记录算不出已用 → null（显示「—」，不显示 0）');
+    // 余额高于累计（人工调账/历史迁移）时「已用」下限为 0，不出现负数
+    const oddUid = registerFree('granted-odd');
+    quotaStore.getQuota(oddUid); // 同上：先 ensure
+    const oddRec = quotaStore.getRecord(oddUid)!;
+    oddRec.creditGrantedTotal = 0;
+    oddRec.creditBonus = 7 * unit;
+    assert.strictEqual(quotaStore.describeQuota(oddUid).credit.bonusUsedTiao, 0, '余额 > 累计时已用按 0 兜底');
+    // 退款走 refundCreditBonus（狼人杀重启兜底那条路）：钱回来了，但累计**不能**涨
+    quotaStore.refundCreditBonus(oddUid, 2 * unit, 'werewolf-refund');
+    assert.strictEqual(quotaStore.describeQuota(oddUid).credit.bonusGrantedTiao, 0, '退款不得计入累计获得');
+    assert.strictEqual(quotaStore.describeQuota(oddUid).credit.bonusTiao, 9, '退款只回余额');
+    assert.strictEqual(quotaStore.getQuota(oddUid).pendingReward, null, '退款不是奖励，不该给用户弹「恭喜获得额度」');
+  } finally {
+    if (prev === undefined) delete process.env.CREDIT_QUOTA_ENABLED;
+    else process.env.CREDIT_QUOTA_ENABLED = prev;
+  }
+});
+
 test('estimateChatCredit：返回正 credit 与 token 结构', () => {
   const est = estimateChatCredit({ historyText: '你好呀，今天心情怎么样？', thinkingLevel: 'high' });
   assert.ok(est.credit > 0, 'credit 应为正整数');

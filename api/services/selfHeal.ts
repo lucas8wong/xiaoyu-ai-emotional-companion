@@ -253,7 +253,7 @@ export const selfHealStore = new SelfHealStore();
 
 // ── 检测器（每个都返回「发现的问题 + 能怎么修 + 修完怎么复查」）────────────────────
 
-function scanSession(rec: RoleplaySessionRecord, now: number, user?: string): HealFinding[] {
+function scanSession(rec: RoleplaySessionRecord, now: number): HealFinding[] {
   const out: HealFinding[] = [];
   const msgs = Array.isArray(rec.messages) ? rec.messages : [];
   if (msgs.length === 0) return out;
