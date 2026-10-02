@@ -87,7 +87,7 @@
       },
       "gameBlocked": {
         "title": "额度不够开一局",
-        "guest": "开一局至少要 {need} 条可用额度（一局约用 {cost} 条），你还有 {remain} 条。已为你打开注册 —— 注册后每天有额度，还能领注册礼。",
+        "guest": "开一局至少要 {need} 条可用额度（一局约用 {cost} 条），你还有 {remain} 条。已为你打开注册，注册后每天有额度，还能领注册礼。",
         "member": "开一局至少要 {need} 条可用额度（一局约用 {cost} 条），你还有 {remain} 条。明早自动恢复，也可以现在获取更多额度或升级会员。"
       },
       "startFail": {
@@ -841,7 +841,7 @@
     "hunterShoot": "{hunterSeat}号猎人开枪带走了 {targetSeat}号 {targetName}",
     "whiteWolfKingBoom": "{seat}号白狼王自爆，带走了 {targetSeat}号 {targetName}",
     "whiteWolfKingBoomNoTarget": "{seat}号白狼王自爆，没有带走任何人",
-    "idiotRevealed": "{seat}号 {name} 翻牌 —— 白痴，免疫放逐！此后失去投票权。",
+    "idiotRevealed": "{seat}号 {name} 翻牌，白痴，免疫放逐！此后失去投票权。",
     "badgeTransferStart": "{seat}号 {name} 是警长，请选择移交警徽的对象或撕毁警徽",
     "badgeTransferred": "警徽移交给 {toSeat}号 {toName}",
     "badgeTorn": "{seat}号 {name} 选择撕毁警徽",

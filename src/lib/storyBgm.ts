@@ -83,7 +83,7 @@ const SCENARIO_TRACK_OVERRIDE: Record<string, string> = {
   'jiangyubai-wenruanruan': 'B4-S5-3-summer-flute-bossa',
 };
 
-// —— 标签 → 音景（与素材阶段 classify.mjs 一致，含少量人工覆盖）——
+// 【标签 → 音景（与素材阶段 classify.mjs 一致，含少量人工覆盖）】
 // 导出供 storyVoice（剧情配音音色）复用同一套标签分组，避免两处各维护一份标签表
 export const ANCIENT = ['古代架空', '宫廷', '世家', '和亲', '替嫁', '帝王', '首辅', '君臣', '废后', '暴君', '才子', '世家世子', '草原王子', '病弱公主', '古筝', '留洋'];
 export const SCHOOL = ['校园', '私立美高', '纯情学妹', '大金毛', '坏狗', '粘人学长', '橄榄球队长', '穷男友'];

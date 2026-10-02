@@ -1,7 +1,7 @@
 /**
- * useVirtualKeyboardInset —— 用 VirtualKeyboard API 取「软键盘高度」（CSS px）。
+ * useVirtualKeyboardInset，用 VirtualKeyboard API 取「软键盘高度」（CSS px）。
  *
- * 背景：Instagram 的 Android 内嵌浏览器（Chromium WebView）键盘是**纯覆盖层**——实测键盘弹起前后
+ * 背景：Instagram 的 Android 内嵌浏览器（Chromium WebView）键盘是**纯覆盖层**，实测键盘弹起前后
  * `window.innerHeight`、`visualViewport.height/offsetTop`、`window.scrollY`、输入框 `getBoundingClientRect()`
  * **全部不变**，网页拿不到任何视口信号，因此无法用视口差值推算键盘高度。
  *

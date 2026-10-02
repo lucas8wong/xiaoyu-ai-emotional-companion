@@ -16,8 +16,8 @@
     4 女生 · 关系语气（试探 / 掌控 / 求饶 / 挑衅）
 
   两个已修掉的坑（都踩过）：
-    · 请求体必须转 UTF-8 字节 —— 否则 PS 5.1 按 GBK 编码中文，服务端报 Content-Length 不符
-    · 响应必须显式按 UTF-8 解码 —— Invoke-RestMethod 不认 charset=utf-8，会把中文解成乱码
+    · 请求体必须转 UTF-8 字节，否则 PS 5.1 按 GBK 编码中文，服务端报 Content-Length 不符
+    · 响应必须显式按 UTF-8 解码，Invoke-RestMethod 不认 charset=utf-8，会把中文解成乱码
 #>
 [CmdletBinding()]
 param(

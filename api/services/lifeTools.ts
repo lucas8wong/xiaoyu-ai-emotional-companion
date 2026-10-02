@@ -1,5 +1,5 @@
 /**
- * 生活能力工具（天气 / 地名地理编码 / 地图导航）—— 供「聊一聊」DeepSeek function-calling 调用。
+ * 生活能力工具（天气 / 地名地理编码 / 地图导航），供「聊一聊」DeepSeek function-calling 调用。
  *
  * 设计原则：
  * - 默认走「免费、无 API key」数据源，保证零配置可用：

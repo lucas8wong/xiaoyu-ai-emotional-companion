@@ -31,14 +31,14 @@ export interface RoleplayMessage {
    * `tails[vi]` 为 null/缺省 =「这一版的后续就活在主线里」（只可能是当前选中的那一版）。
    *
    * ⚠️ 尾巴里的消息**不参与模型上下文**（`toRequestMessages()` 只带 role/content），
-   * 它只是给用户留的「回看/切回」入口 —— 别在任何地方把 tails 当成正式历史读。
+   * 它只是给用户留的「回看/切回」入口，别在任何地方把 tails 当成正式历史读。
    */
   tails?: (RoleplayMessage[] | null)[];
   /**
    * 这条 **assistant 回复**是不是由「无限制模式（成人模型）」生成的。仅 assistant 有。
    *
    * 怎么来的：生成路径在 SSE 里下发 `{type:'meta', model, adult}`，前端保存会话时随消息回传（方案 A2）。
-   * 性质：**客户端自述**——管理端监控够用，但**不适合当法律取证**。
+   * 性质：**客户端自述**，管理端监控够用，但**不适合当法律取证**。
    * 未记录（老数据 / 走 DeepSeek）= `undefined`；不要用 `false` 冒充「确定没用过」。
    */
   viaUnlimited?: boolean;
@@ -48,12 +48,12 @@ export interface RoleplayMessage {
    * 生成这条回复时用户选的**叙事模式**（classic 经典 / immersive 沉浸）。仅 assistant 有。
    *
    * 为什么必须存：叙事模式一直只存在浏览器 `localStorage`（`rp_narrative_style`），
-   * 服务端与落盘数据里**完全没有**这个维度 —— 于是「经典档与沉浸档的收尾习惯是不是不一样」
+   * 服务端与落盘数据里**完全没有**这个维度，于是「经典档与沉浸档的收尾习惯是不是不一样」
    * 这类问题在真实数据上根本没法回答（2026-09-18 用户口径「要考虑用户使用的叙事模式」）。
    * 补上之后，只读扫描脚本（`scripts/rp-ending-scan.mts`）就能按模式分档统计。
    *
    * 口径同 `viaUnlimited`：**客户端自述**、只为度量与审计，缺省 = 老数据未记录
-   * （老数据一律空着，**不要**用默认真值 `immersive` 回填——那会把「不知道」伪造成「快照值」）。
+   * （老数据一律空着，**不要**用默认真值 `immersive` 回填，那会把「不知道」伪造成「快照值」）。
    */
   style?: 'classic' | 'immersive';
   /**
@@ -73,7 +73,7 @@ export interface RoleplayMessage {
  *   multi = 多角色线（cast 同场，逐角色气泡）
  *
  * 一部剧本对**每个用户最多两条记录**（solo + multi），消息/偏好/重新开始互相独立
- * —— 这就是「每部剧本最多一个多角色 + 一个单角色存档」。
+ * 这就是「每部剧本最多一个多角色 + 一个单角色存档」。
  */
 import { type RoleplayMode, DEFAULT_ROLEPLAY_MODE } from '../../src/lib/roleplayMode.js';
 export type { RoleplayMode };
@@ -93,7 +93,7 @@ export interface RoleplaySessionRecord {
   /**
    * 保存那一刻解析到的**剧名快照**（自建剧本尤其重要）。
    *
-   * 为什么存：自建剧本可以被创作者删除，剧本没了标题也就解析不到了——
+   * 为什么存：自建剧本可以被创作者删除，剧本没了标题也就解析不到了
    * 「与你的旅程 / 运营控制台」就会退化成 `custom_xxx` 内部 id 或「自定义剧情」占位。
    * 有了快照，玩家当初看到并记下的那个剧名一直留在这条会话上（读取时仍优先取实时标题，
    * 快照只在解析不到时兜底，所以创作者改名不会让历史显示旧名）。
@@ -118,7 +118,7 @@ const MAX_VERSIONS = 5;
  * 会话主键：`userId::scenarioId::mode`。
  *
  * ⚠️ 2026-10-01 之前是 `userId::scenarioId`（每剧本一份）。加 mode 后同一剧本最多两条记录；
- * **老数据不批量重写**——loadFromDisk 读到没有 `mode` 的记录时按 `solo` 重新键入内存，
+ * **老数据不批量重写**，loadFromDisk 读到没有 `mode` 的记录时按 `solo` 重新键入内存，
  * 下一次 saveToDisk() 自然写成新格式。这样迁移是幂等的，也不需要停机改文件。
  */
 const keyOf = (userId: string, scenarioId: string, mode: RoleplayMode = DEFAULT_ROLEPLAY_MODE) =>
@@ -133,11 +133,11 @@ const keyOf = (userId: string, scenarioId: string, mode: RoleplayMode = DEFAULT_
  */
 function projectMessage(m: RoleplayMessage, ts: number): RoleplayMessage {
   const out: RoleplayMessage = { role: m.role, content: m.content.slice(0, MAX_CONTENT), timestamp: ts };
-  // 成人模式审计标记（方案 A2）：只认 assistant，且只采信 boolean —— 传 'true' / 1 之类一律忽略。
+  // 成人模式审计标记（方案 A2）：只认 assistant，且只采信 boolean，传 'true' / 1 之类一律忽略。
   if (m.role === 'assistant') {
     if (typeof m.viaUnlimited === 'boolean') out.viaUnlimited = m.viaUnlimited;
     if (typeof m.model === 'string' && m.model) out.model = m.model.slice(0, 80);
-    // 叙事模式（2026-09-18）：只认这两个取值 —— 传别的（含旧客户端没传）一律不落字段，
+    // 叙事模式（2026-09-18）：只认这两个取值，传别的（含旧客户端没传）一律不落字段，
     // 宁可空着（=不知道），也不要写一个猜出来的模式进去污染分档统计。
     if (m.style === 'classic' || m.style === 'immersive') out.style = m.style;
     // 「这条没写完」的标记（B 方案）：只认 boolean，缺省不带该字段 = 老数据/未知
@@ -148,7 +148,7 @@ function projectMessage(m: RoleplayMessage, ts: number): RoleplayMessage {
   /**
    * 用户消息的「编辑重发」分支（2026-09）：与 assistant 版本同一套归一化口径
    *（只认字符串版本、裁剪到上限、`content` 必须等于 `versions[vi]`），
-   * 尾巴剪成 role/content 并限量 —— 服务端**必须**在这里显式搬过去，
+   * 尾巴剪成 role/content 并限量，服务端**必须**在这里显式搬过去，
    * 否则前端编辑过的分支会被静默丢掉（本文件顶部那条「新字段必须显式搬」的告警）。
    */
   if (m.role === 'user') Object.assign(out, normalizeUserBranches(m, MAX_CONTENT));
@@ -234,7 +234,7 @@ class RoleplaySessionStore {
   /**
    * 取某个剧本的会话记录。
    *   · 传了 mode → **精确**取那一档（单角色 / 多角色各一份存档）；
-   *   · 不传 → 取两档里 `updatedAt` **更晚**的那份 —— 老调用方（与你的旅程 / 跨模式桥 / 自愈）
+   *   · 不传 → 取两档里 `updatedAt` **更晚**的那份，老调用方（与你的旅程 / 跨模式桥 / 自愈）
    *     关心的都是「用户最近在演哪条线」，给最近的那份才符合直觉。
    */
   private pickRecord(userId: string, scenarioId: string, mode?: RoleplayMode): RoleplaySessionRecord | undefined {
@@ -281,7 +281,7 @@ class RoleplaySessionStore {
       .filter((m: RoleplayMessage) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
       // 🚨 服务端最后一道护栏（2026-09-15 线上事故）：前端「失败兜底 / 系统提示」文案曾被当成角色台词落盘，
       // 于是它既显示成「角色说的话」，又回灌给模型当上下文，还永久留在历史里（生产库当时已留 3 处）。
-      // 前端已不再产生这种消息；这里再挡一层——任何客户端（含未更新的旧版本）写进来都会被丢弃。
+      // 前端已不再产生这种消息；这里再挡一层，任何客户端（含未更新的旧版本）写进来都会被丢弃。
       // 判定只针对 assistant、只做整串精确匹配；user 的消息一律不动。
       .filter((m: RoleplayMessage) => !(m.role === 'assistant' && isFallbackBubble(m.content)));
     if (all.length === 0) return { saved: false };
@@ -329,7 +329,7 @@ class RoleplaySessionStore {
    * 与 `save()` 有**三处刻意不同**（写清楚，别被后人「顺手统一」掉）：
    *   1. **不过 `dropsSavedReply` 护栏**：那道护栏拦的是「客户端推上来的截断态」；自愈是服务端**主动修数据**，
    *      修完由调用方**复查**（复查不通过会记成 failed），不是"信任客户端"。
-   *   2. **不过失败兜底文案过滤器**：`save()` 会把 `isFallbackBubble` 的 assistant 消息直接丢掉 —— 那样
+   *   2. **不过失败兜底文案过滤器**：`save()` 会把 `isFallbackBubble` 的 assistant 消息直接丢掉，那样
    *      自愈就**先看不见**了；这里原样保留，由检测器**显式决定**（删除类默认只报告、不动手，见 selfHeal）。
    *   3. **只改 patch 点名的字段**（messages / scenarioTitle），其余原样沿用；`updatedAt` 照旧单调递增。
    *
@@ -398,7 +398,7 @@ class RoleplaySessionStore {
   /** 该用户玩过的剧情（按场景去重，含最后游玩时间与剧名快照；供「与你的旅程」剧情足迹） */
   listByUser(userId: string): { scenarioId: string; updatedAt: number; scenarioTitle?: string; mode: RoleplayMode }[] {
     /**
-     * 双模式之后同一剧本最多两条记录，而本方法的契约是「**按场景去重**的足迹」——
+     * 双模式之后同一剧本最多两条记录，而本方法的契约是「**按场景去重**的足迹」
      * 所以这里显式保留**每条线里 updatedAt 更晚**的那份，并带上 mode 供调用方标注
      *（否则「与你的旅程」里同一部剧会出现两次）。
      */

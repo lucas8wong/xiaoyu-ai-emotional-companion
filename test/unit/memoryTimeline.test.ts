@@ -5,10 +5,10 @@
  *  1. **存储迁移**：旧的裸字符串记忆（facts: string[]）→ 带时间轴的 entries，
  *     正文一字不改、条目一条不删、迁移幂等，且时间缺失明确标「时间不详」（不编造时间）；
  *  2. **过期语义**：计划那天过去 / 状态超期 / 时间不详的旧状态 → 不再进"最近窗口"（不主动提），
- *     但**仍然存在**（可被语义召回、用户仍能看见）——对应「降权 + 不主动提」的取舍；
+ *     但**仍然存在**（可被语义召回、用户仍能看见），对应「降权 + 不主动提」的取舍；
  *  3. **取代关系**：新信息推翻旧记忆时旧条目标「已被更新」，不再当作现在，但保留可回溯；
  *  4. **时间标签渲染**：注入 prompt 的每条记忆都带自己的时间（含绝对日期），
- *     并把「现在」作为时间锚一起给模型 —— 这是「不再把几个月前当成今天」的机制本身。
+ *     并把「现在」作为时间锚一起给模型，这是「不再把几个月前当成今天」的机制本身。
  */
 import { test } from 'node:test';
 import assert from 'node:assert';
@@ -18,7 +18,7 @@ import { setupTempCwd } from './setup.js';
 
 const dir = setupTempCwd();
 
-// 先落一份「旧格式」数据，再 import store —— 验证加载时的迁移（真实线上就是这个路径）
+// 先落一份「旧格式」数据，再 import store，验证加载时的迁移（真实线上就是这个路径）
 const legacyUpdatedAt = Date.now() - 20 * 86400000; // 20 天前最后写入
 fs.mkdirSync(path.join(dir, 'data'), { recursive: true });
 fs.writeFileSync(path.join(dir, 'data', 'long-memory.json'), JSON.stringify([

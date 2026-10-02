@@ -150,7 +150,7 @@ async function main(): Promise<void> {
         waitFor: 'h1',
         // 首页有隐私同意门：快照上下文标记「已同意」，让爬虫直接看到品牌正文。
         // 同时标记「已弹过注册弹窗」，否则全新上下文会触发 Home 的 600ms 自动注册弹窗，
-        // 把 AuthModal 烙进静态 HTML——已登录用户拿到后会先看到弹窗、水合后才消失（闪现）。
+        // 把 AuthModal 烙进静态 HTML：已登录用户拿到后会先看到弹窗、水合后才消失（闪现）。
         setup: () =>
           page.evaluateOnNewDocument(() => {
             try { localStorage.setItem('cure_privacy_agreed', '1'); } catch { /* 忽略 */ }
@@ -162,7 +162,7 @@ async function main(): Promise<void> {
       // 公开隐私政策页：给 Google OAuth 同意屏幕一个可访问的静态 URL，同时利于爬虫抓取
       { path: '/privacy', out: path.join(dist, 'privacy', 'index.html'), waitFor: 'h1' },
       // SEO/GEO 落地内容页（公开）：路由与输出路径全部由 src/seo 注册表派生
-      // —— 新增一个内容页只需在 src/seo/*.ts 加一条数据，本脚本无需改动
+      // 新增一个内容页只需在 src/seo/*.ts 加一条数据，本脚本无需改动
       ...SEO_PAGES.map((p) => {
         const urlPath = seoPagePath(p); // '/what-is-ai-companion' | '/zh/ai-roleplay'
         return {

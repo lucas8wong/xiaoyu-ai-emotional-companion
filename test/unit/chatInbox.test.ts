@@ -2,9 +2,9 @@
  * 微信式消息列表（方案 A2）：未读口径 + App 内主动消息落库
  *
  * 两件事分开测：
- *  1) `countUnread` —— 未读**只算角色说过的话**、且**老会话（无 chatLastReadAt）视为已读**
+ *  1) `countUnread`：未读**只算角色说过的话**、且**老会话（无 chatLastReadAt）视为已读**
  *     （否则上线当天所有历史回复都会变成红点）；
- *  2) `appendInAppMessage` —— 角色主动说的一句要落进**它自己的会话**、并且**变成未读**，
+ *  2) `appendInAppMessage`：角色主动说的一句要落进**它自己的会话**、并且**变成未读**，
  *     同时不能把该会话的历史一起变成未读。
  */
 import { test } from 'node:test';

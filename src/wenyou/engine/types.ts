@@ -43,7 +43,7 @@ export interface TurnResult {
   memoryAdd?: string[]
   // AI 对「玩家离既定目标有多近」的估计（0~100）；仅在玩家设了目标时返回
   goalProgress?: number
-  // 本回合首次登场（或需补充设定）的具名人物 —— 由 state.applyCast 并入 GameState.cast
+  // 本回合首次登场（或需补充设定）的具名人物，由 state.applyCast 并入 GameState.cast
   cast?: CastDraft[]
 }
 
@@ -100,7 +100,7 @@ export interface GameState {
   goalProgress?: number
   // 印记：隐藏的具名状态（身份/机缘/因果种子），门控事件、结局、属性封顶
   flags?: string[]
-  // 本局首个极端命运瞬间（windfall/disaster）——一旦发生即定格、不被后续极端事件覆盖，供命运卡分享引用
+  // 本局首个极端命运瞬间（windfall/disaster）：一旦发生即定格、不被后续极端事件覆盖，供命运卡分享引用
   fateHighlight?: { text: string; kind: 'windfall' | 'disaster'; turn: number }
   ended?: Ending
 }

@@ -41,7 +41,7 @@ const WATCH = [
   '.env',
 ].map((p) => path.join(PROJECT_ROOT, p));
 
-// —— 渲染模式：由子进程执行 ——
+// 【渲染模式：由子进程执行】
 if (ONCE) {
   process.chdir(PROJECT_ROOT);
   const { setupTempCwd } = await import('../test/unit/setup.js');
@@ -74,7 +74,7 @@ if (ONCE) {
   process.exit(0);
 }
 
-// —— 监控模式 ——
+// 【监控模式】
 function render(): string {
   return execFileSync(process.execPath, [path.join(PROJECT_ROOT, 'node_modules', 'tsx', 'dist', 'cli.mjs'), SELF, '--once', `--adult=${ADULT ? 'on' : 'off'}`, `--langs=${LANGS.join(',')}`], {
     cwd: PROJECT_ROOT,
@@ -84,7 +84,7 @@ function render(): string {
   });
 }
 
-/** 只保留发生变化的行——每次保存都全量刷 3 万字符没法看 */
+/** 只保留发生变化的行，每次保存都全量刷 3 万字符没法看 */
 function changedLines(prev: string, next: string): string[] {
   const a = prev.split('\n'), b = next.split('\n');
   const setB = new Set(b);
@@ -124,7 +124,7 @@ function refresh(reason: string) {
     console.log(`\n【${stamp} 检测到改动 · ${reason}】`);
     if (lens) console.log('   ' + lens.trim());
     if (!diff.length) {
-      console.log('   （提示词内容无变化——改动可能在注释或未影响提示词的代码里）');
+      console.log('   （提示词内容无变化，改动可能在注释或未影响提示词的代码里）');
     } else {
       console.log(`   变化行 ${diff.length} 条：`);
       for (const d of diff.slice(0, 60)) console.log('   ' + d);

@@ -6,7 +6,7 @@
  * 重构说明（2026-09-17）：这个文件原本是上游 wolfcha 的 631 行版本，里面混着**小愈用不到**的
  * 一整套东西：Supabase 登录态、TokenPay 代付、WatchaPay 余额、兑换码（`/api/credits/redeem`）、
  * 邀请码（`/api/credits/referral`）、每日奖励（`/api/credits/daily-bonus`）、新春活动额度
- * （`/api/credits/spring-login-bonus`）、游客迁移（`/api/guest/migrate`）——这些端点在 `api/` 里
+ * （`/api/credits/spring-login-bonus`）、游客迁移（`/api/guest/migrate`），这些端点在 `api/` 里
  * **一个都不存在**（只有 `/api/credits/balance` 与 `/api/credits/consume` 是真的）。
  *
  * 现在只保留小愈真正需要的一条链：**读余额 → 开局扣费（带跨刷新幂等）→ 对局结束清除幂等键**。
@@ -84,13 +84,13 @@ export function useCredits() {
   const user = session?.user ?? null;
   const [credits, setCredits] = useState<number | null>(null);
   /**
-   * 一局价（条）——由 `/api/credits/balance` 下发（服务端 `CREDIT_PER_GAME_ESTIMATE`）。
+   * 一局价（条），由 `/api/credits/balance` 下发（服务端 `CREDIT_PER_GAME_ESTIMATE`）。
    * 2026-09-17 A′ 计费模型要求「开局前告知本局约消耗多少」，所以这里必须拿到真实数值，
    * **不能在前端写死 40**（改价目表时前后端会不一致）。
    */
   const [gameEstimate, setGameEstimate] = useState<number | null>(null);
   /**
-   * 开局**准入下限**（条）——由 `/api/credits/balance` 下发（服务端 `MIN_START_CREDIT / UNIT_CREDIT`）。
+   * 开局**准入下限**（条），由 `/api/credits/balance` 下发（服务端 `MIN_START_CREDIT / UNIT_CREDIT`）。
    * 2026-09-27：欢迎页据此**提前**判断「这局开不了」（游客 5 条 < 准入 20 条），直接走统一额度门控，
    * 而不是先发一个注定 402 的请求再弹通用失败提示。拿不到（老服务端）时为 null → 退回旧行为。
    */

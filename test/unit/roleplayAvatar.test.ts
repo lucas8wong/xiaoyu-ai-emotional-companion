@@ -17,7 +17,7 @@ const IMG_DIR = path.resolve(__dirname, '../../public/img/roleplay');
 const AVATAR_RE = /^\/img\/roleplay\/[A-Za-z0-9-]+\.(jpg|jpeg|png|webp)(\?v=[a-f0-9]{8})?$/;
 const fileHash = (id: string) => createHash('md5').update(readFileSync(path.join(IMG_DIR, id + '.jpg'))).digest('hex').slice(0, 8);
 
-test('角色扮演：剧本 avatar 派生正确——有头像文件→?v=内容hash；暂无头像→回退裸站内路径', () => {
+test('角色扮演：剧本 avatar 派生正确，有头像文件→?v=内容hash；暂无头像→回退裸站内路径', () => {
   const flat = listScenarios('zh');
   assert.strictEqual(flat.length, SCENARIOS.length, 'listScenarios 数量应与 SCENARIOS 一致');
   for (const s of SCENARIOS) {

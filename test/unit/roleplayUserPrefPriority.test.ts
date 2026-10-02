@@ -5,7 +5,7 @@
  *
  * 背景（这次不是拍脑袋改提示词，是真有取证）：偏好块原本拼在【写作与交互要求】之后，
  * 也就是 200 条写作规则的**中段**；而 system 最末尾的【回合纪律 · 最高优先级】写着
- * 「与上文任何条款冲突时以本节为准」—— 偏好正好落在它的「上文」里。位置＝权重，等于被压住。
+ * 「与上文任何条款冲突时以本节为准」，偏好正好落在它的「上文」里。位置＝权重，等于被压住。
  * CHANGELOG 2026-09-17 #3 的记录：用户在偏好框里亲手写「不要再发这个气息了」，
  * 模型在随后 12:36 / 12:37 两轮**又各发一次**。
  *
@@ -33,7 +33,7 @@ test('偏好块：三语齐全，标题都是「最高优先级」，并显式�
   const en = rp.composeRoleplaySystem({ sys: 'S', lang: 'en', style: 'immersive', adult: false, taskInstr: 'T', userPreference: 'I like a gentle TA.' });
 
   assert.ok(zh.includes('【剧情偏好 · 最高优先级】'), 'zh 缺偏好块标题');
-  assert.ok(zh.includes('一律以用户偏好为准'), 'zh 缺优先级声明 —— 压不住上文那 200 条规则');
+  assert.ok(zh.includes('一律以用户偏好为准'), 'zh 缺优先级声明，压不住上文那 200 条规则');
   assert.ok(tw.includes('【劇情偏好 · 最高優先級】'), 'zh-TW 未转繁体：' + tw.slice(-200));
   assert.ok(en.includes('【Story preferences \u00b7 HIGHEST PRIORITY】') && en.includes('the player\u2019s preferences win'), 'en 缺优先级声明');
 });
@@ -66,11 +66,11 @@ test('位置＝权重：有偏好时偏好块在 system 最末尾，且只注入
     sys: '【人设】前缀', lang: 'zh', style: 'immersive', adult: true, taskInstr: '【任务指令】继续剧情',
     userPreference: PREF_PLAIN,
   });
-  assert.ok(composed.endsWith(PREF_PLAIN), '偏好原文不在最末尾 —— 位置错了就压不住上文，等于回到「配了没生效」');
+  assert.ok(composed.endsWith(PREF_PLAIN), '偏好原文不在最末尾，位置错了就压不住上文，等于回到「配了没生效」');
   const header = '【剧情偏好 · 最高优先级】';
   assert.strictEqual(composed.indexOf(header), composed.lastIndexOf(header), '偏好块被重复注入');
   assert.ok(composed.indexOf('【任务指令】') < composed.indexOf(header), '偏好块必须在任务指令之后');
-  assert.ok(composed.indexOf('【成人模式') < composed.indexOf(header), '偏好块必须在成人块之后 —— 用户偏好要压得住「角色更主动」这类条款');
+  assert.ok(composed.indexOf('【成人模式') < composed.indexOf(header), '偏好块必须在成人块之后，用户偏好要压得住「角色更主动」这类条款');
   assert.ok(composed.indexOf(discipline) < composed.indexOf(header), '偏好块必须在回合纪律之后');
   assert.ok(!composed.endsWith(discipline), '有偏好时纪律块不该还是最后一段');
 
@@ -114,7 +114,7 @@ test('buildSystemPrompt 不再把偏好塞回中段（旧契约回归会静默�
     const prompt = rp.buildSystemPrompt(scenario, 'zh', undefined, undefined, PREF, 'immersive', false);
     assert.ok(!prompt.includes('【剧情偏好'), '偏好块又出现在 buildSystemPrompt 里了');
     assert.ok(!prompt.includes('不要再发这个气息了'), '偏好原文又出现在中段了');
-    assert.ok(warns.some((w) => w.includes('buildSystemPrompt')), '传了非空偏好却没告警 —— 静默忽略最难排查');
+    assert.ok(warns.some((w) => w.includes('buildSystemPrompt')), '传了非空偏好却没告警，静默忽略最难排查');
   } finally {
     console.warn = origWarn;
   }
@@ -126,7 +126,7 @@ test('buildSystemPrompt 不再把偏好塞回中段（旧契约回归会静默�
 test('禁忌清单：从偏好里摘出「不要／别再」条款，放在偏好块最末', () => {
   const composed = rp.composeRoleplaySystem({ sys: 'S', lang: 'zh', style: 'immersive', adult: false, taskInstr: 'T', userPreference: PREF });
   const avoidAt = composed.indexOf('【必须避免】');
-  assert.ok(avoidAt > 0, '没摘出禁忌清单 —— 「不要再发这个气息了」这类要求最容易漏');
+  assert.ok(avoidAt > 0, '没摘出禁忌清单，「不要再发这个气息了」这类要求最容易漏');
   assert.ok(composed.includes('不要再发这个气息了'), '真实案例那条禁忌没进清单');
   // 注意用 lastIndexOf：这条禁忌在偏好原文里也出现一次，indexOf 会命中原文那一处
   assert.ok(composed.lastIndexOf('不要再发这个气息了') > avoidAt, '禁忌条目应在标题之后');

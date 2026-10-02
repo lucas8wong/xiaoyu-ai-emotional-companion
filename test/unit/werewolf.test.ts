@@ -121,7 +121,7 @@ function autoPlay(state: WerewolfState, maxSteps = 4000): number {
         }
         case 'witch': {
           const b = witchBriefing(state, a.seat);
-          // 能救就救，救不了就明确「不用药」——不表态会卡死
+          // 能救就救，救不了就明确「不用药」，不表态会卡死
           const r = b.canHeal ? applyWitchAction(state, a.seat, { heal: true }) : skipWitch(state, a.seat);
           assert.ok(r.ok, `witch 失败：${r.reason}`);
           break;
@@ -556,7 +556,7 @@ test('投票：多数票放逐，且不能投自己', () => {
   assert.ok(state.events.some((e) => e.t === 'exile' && e.seat === 2));
   assert.ok(state.events.some((e) => e.t === 'vote-result' && e.target === 2 && e.count === 3));
   assert.ok(!state.events.some((e) => e.t === 'vote-tie'), '有唯一最高票就不该判平票');
-  // 注意：不在这里断言 state.exiledSeat —— 未分胜负时会进入下一轮，beginNight 会重置它
+  // 注意：不在这里断言 state.exiledSeat，未分胜负时会进入下一轮，beginNight 会重置它
 });
 
 test('投票：不能投已出局的人，也不能由出局者投票', () => {
@@ -752,7 +752,7 @@ test('复盘卡不能变成提前开天眼：局中途（村民视角）算不�
   forceRoles(state, { 1: 'villager', 2: 'werewolf', 3: 'werewolf', 4: 'seer', 5: 'witch', 6: 'hunter', 7: 'villager', 8: 'villager', 9: 'villager' });
   const mid = viewFor(state, 1, { spectatorReveal: false });
   assert.strictEqual(mid.myCamp, 'village');
-  assert.strictEqual(buildReplay(mid).liars.length, 0, '局中不该算出狼人——否则复盘卡就是作弊器');
+  assert.strictEqual(buildReplay(mid).liars.length, 0, '局中不该算出狼人，否则复盘卡就是作弊器');
 });
 
 test('复盘卡：被票出局时能列出是谁投的', () => {
@@ -761,7 +761,7 @@ test('复盘卡：被票出局时能列出是谁投的', () => {
   state.phase = 'day-vote';
   state.votes = {};
   // 2、3、4 投 1 号（我）把我票出去；5、6 互投；我自己弃票
-  // 注意：少任何一张票引擎都不会结算（全员表态才算投完）——第一版测试就是漏了我自己这张票
+  // 注意：少任何一张票引擎都不会结算（全员表态才算投完），第一版测试就是漏了我自己这张票
   assert.ok(applyVote(state, 2, 1).ok);
   assert.ok(applyVote(state, 3, 1).ok);
   assert.ok(applyVote(state, 4, 1).ok);

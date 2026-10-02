@@ -2,13 +2,13 @@
  * 「用 Google 继续」按钮（Google Identity Services / GIS）。
  *
  * 三条硬约束：
- *  1. **必须用官方按钮**（google.accounts.id.renderButton）——Google 品牌规范不允许自己画一个
+ *  1. **必须用官方按钮**（google.accounts.id.renderButton），Google 品牌规范不允许自己画一个
  *     「G」图标 + 自造文案，也不允许改动按钮外观；
  *  2. 脚本**只注入一次**（模块级 Promise 缓存），多个 tab 反复挂载不会重复插 script；
  *  3. clientId 为空 / 脚本加载失败 → **渲染 null**。线上没配好时宁可没有按钮，
  *     也不要出现一个点了弹报错的按钮。
  *
- * 拿到的是 ID token（credential，JWT），原样交给服务端验签 —— 浏览器侧不做任何信任判断。
+ * 拿到的是 ID token（credential，JWT），原样交给服务端验签，浏览器侧不做任何信任判断。
  */
 
 import { useEffect, useRef, useState } from 'react';

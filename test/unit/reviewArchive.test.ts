@@ -68,7 +68,7 @@ test('★ 增量并档：档案只增不减（「后一次生成把记录挤掉�
   const again = mergeArchive(first.items, [items[0]], { now: 2000 });
   assert.equal(again.added, 0);
   assert.equal(again.refreshed, 1);
-  assert.equal(again.items.length, 2, '没进本次候选的那条必须还在——这就是「不再漏记录」');
+  assert.equal(again.items.length, 2, '没进本次候选的那条必须还在，这就是「不再漏记录」');
   // 老条目的「首次入档」时间不能被刷新冲掉；被刷新的那条要如实更新 refreshedAt
   const untouched = again.items.find((it) => it.sampleKey !== items[0].sampleKey)!;
   assert.equal(untouched.archivedAt, 1000);

@@ -8,7 +8,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 fs.mkdirSync(OUT, { recursive: true });
 
 // 模拟聊一聊流式回复（SSE）：一次返回全部 delta，前端 runReveal 按打字机节奏逐字揭示，
-// 因此会在数秒内持续触发自动滚动 —— 用于验证「流式中用户上滑不会被拽回」。
+// 因此会在数秒内持续触发自动滚动，用于验证「流式中用户上滑不会被拽回」。
 const paras = [];
 for (let i = 1; i <= 12; i++) {
   paras.push(`第${i}段。这是一段为了验证流式滚动而拉得足够长的内容，让消息区明显溢出，${i}号段落在这里。`);

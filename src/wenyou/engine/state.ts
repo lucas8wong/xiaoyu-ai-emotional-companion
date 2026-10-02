@@ -10,10 +10,10 @@ function hasDeathClause(c: Condition, deathBelow: Map<string, number>): boolean 
   )
 }
 
-// 局内状态里开局身份的规范字符串（name——prompt）：initState 写入与分享链反查开局下标两端共用，
+// 局内状态里开局身份的规范字符串（name：prompt）：initState 写入与分享链反查开局下标两端共用，
 // 单一来源避免格式漂移（曾因两处各拼一份，改分隔符会让挑战链静默丢 ?o=）。
 export function openingLabel(o: Opening): string {
-  return `${o.name}——${o.prompt}`
+  return `${o.name}：${o.prompt}`
 }
 
 export function initState(
@@ -87,7 +87,7 @@ export function applyMemory(memory: string[] | undefined, add: string[] | undefi
 }
 
 // 目标进度：本回合给了有效值就取（clamp 0~100、取整），否则沿用上一回合。
-// 做「棘轮」平滑——上升随剧情自由，回落每回合最多 GOAL_MAX_DROP 一小步：
+// 做「棘轮」平滑，上升随剧情自由，回落每回合最多 GOAL_MAX_DROP 一小步：
 // AI 每回合主观重估 goalProgress 常大幅乱跳/倒退，直接展示会让进度条闪回；
 // 缓降后，据此派生的定性阶段稳步前进、不闪退，仍能反映持续受挫（多回合渐降）。
 const GOAL_MAX_DROP = 6
@@ -166,7 +166,7 @@ export function checkEnding(
   if (dead.length > 0) {
     // 死亡级结局：条件含「某致死属性 <= 其死线」子句者（hp<=40 这类高于死线的重伤不算）。
     // 先按 salience 取最具体（带语境的死法如 `hp<=0 & has(据点)` 胜过裸 `hp<=0`），
-    // 再在「同等具体（互不蕴含）的并列死法」里**随机取一**——使数值相同也可能饿死/渴死/病死/中毒死，
+    // 再在「同等具体（互不蕴含）的并列死法」里**随机取一**，使数值相同也可能饿死/渴死/病死/中毒死，
     // 死得不同（仅传入 rng 时随机，否则取首个保持确定，便于测试/AI 复现）。
     const deathEndings = sc.endings
       .map((e) => ({ e, cond: parseCondition(e.condition) }))
@@ -188,7 +188,7 @@ export function checkEnding(
     }
     return { tone: '死亡', reason: `${dead[0].name}耗尽` }
   }
-  // 非死亡：在所有满足条件的结局中取「最具体」者——不被任何更严格（严格蕴含）的满足结局压制者；
+  // 非死亡：在所有满足条件的结局中取「最具体」者，不被任何更严格（严格蕴含）的满足结局压制者；
   // 各自独立（互不蕴含）时按数组顺序取靠前。于是更具体的结局永不被过宽的结局遮蔽，数组顺序仅作并列次序。
   const satisfied = sc.endings
     .map((e) => ({ e, cond: parseCondition(e.condition) }))
@@ -209,7 +209,7 @@ export function checkEnding(
 
 // 图鉴/成就口径：剧本「可真正触达」的结局基调全集。
 // 通用「死亡」是 checkEnding 在某致死属性归零、却没有作者写的死亡级结局时的兜底基调；
-// 仅当确有某致死属性缺少 简单 `key<=阈值`（阈值<=deathBelow）结局时它才会被触发——此时才计入。
+// 仅当确有某致死属性缺少 简单 `key<=阈值`（阈值<=deathBelow）结局时它才会被触发，此时才计入。
 // 否则它是一个永不触发的幽灵槽：会让「集齐全部结局」成就与图鉴永远差一格、不可达。
 // 判定口径与上方 checkEnding 死亡分支严格一致（仅 kind==='cmp' 的 <= 简单条件算作死亡级结局）。
 export function reachableEndingTones(sc: Scenario): string[] {
@@ -231,18 +231,18 @@ export function reachableEndingTones(sc: Scenario): string[] {
 const FORTUNE_CHANCE = 0.10
 // 转折提示文案池:多样化,避免反复看到同一句而失了「无常」的彩头感
 const FORTUNE_GOOD = [
-  '命运无常 · 时来运转——这一步竟比预想的更顺。',
-  '命运无常 · 无心插柳——你竟讨得了意料之外的彩头。',
-  '命运无常 · 天公作美——局面比你盘算的还顺了几分。',
-  '命运无常 · 福至心灵——阴差阳错间，反倒成了好事。',
-  '命运无常 · 柳暗花明——本以为要糟，偏偏绝处生花。',
+  '命运无常 · 时来运转，这一步竟比预想的更顺。',
+  '命运无常 · 无心插柳，你竟讨得了意料之外的彩头。',
+  '命运无常 · 天公作美，局面比你盘算的还顺了几分。',
+  '命运无常 · 福至心灵，阴差阳错间，反倒成了好事。',
+  '命运无常 · 柳暗花明，本以为要糟，偏偏绝处生花。',
 ]
 const FORTUNE_BAD = [
-  '命运无常 · 世事难料——事情没全照你盘算的来。',
-  '命运无常 · 人算天算——半路杀出了意料之外的波折。',
-  '命运无常 · 造化弄人——你算到了开头，没算到这结尾。',
-  '命运无常 · 节外生枝——偏偏在这一步上出了岔子。',
-  '命运无常 · 阴差阳错——一步之差，到底走了样。',
+  '命运无常 · 世事难料，事情没全照你盘算的来。',
+  '命运无常 · 人算天算，半路杀出了意料之外的波折。',
+  '命运无常 · 造化弄人，你算到了开头，没算到这结尾。',
+  '命运无常 · 节外生枝，偏偏在这一步上出了岔子。',
+  '命运无常 · 阴差阳错，一步之差，到底走了样。',
 ]
 export function rollFortune(
   effects: Record<string, number>,
@@ -267,18 +267,18 @@ export function rollFortune(
 // 不是数值微调，而是一段生动文案 + 大幅后果；命中记入 GameState.fateHighlight 供命运卡引用。
 const EXTREME_CHANCE = 0.018
 const EXTREME_WINDFALL = [
-  '天降横财——一笔泼天的造化兜头砸来，半生奔忙忽成笑谈。',
-  '时来天地皆同力——莫名的际遇接踵而至，你竟一步登天。',
-  '绝处逢生——本已万念俱灰，命运却在此刻陡然翻盘。',
-  '贵人天降——一位素不相识者倾力相助，局面豁然开朗。',
-  '福星高照——这一程顺得不可思议，连你自己都不敢信。',
+  '天降横财：一笔泼天的造化兜头砸来，半生奔忙忽成笑谈。',
+  '时来天地皆同力：莫名的际遇接踵而至，你竟一步登天。',
+  '绝处逢生：本已万念俱灰，命运却在此刻陡然翻盘。',
+  '贵人天降：一位素不相识者倾力相助，局面豁然开朗。',
+  '福星高照：这一程顺得不可思议，连你自己都不敢信。',
 ]
 const EXTREME_DISASTER = [
-  '飞来横祸——一场无妄之灾兜头罩下，多年经营毁于一旦。',
-  '运去英雄不自由——天意忽然翻脸，你被推入万劫深渊。',
-  '祸不单行——厄运接二连三，竟没给你半分喘息。',
-  '小人暗算——你算尽了天下，独独没算到背后这一刀。',
-  '天降大难——一夕之间，你从云端跌落泥淖。',
+  '飞来横祸：一场无妄之灾兜头罩下，多年经营毁于一旦。',
+  '运去英雄不自由：天意忽然翻脸，你被推入万劫深渊。',
+  '祸不单行：厄运接二连三，竟没给你半分喘息。',
+  '小人暗算：你算尽了天下，独独没算到背后这一刀。',
+  '天降大难：一夕之间，你从云端跌落泥淖。',
 ]
 
 export interface ExtremeFate {
@@ -346,7 +346,7 @@ export function applyChoice(
   if (!choice) throw new Error(`选项不存在: ${choiceIdx}`)
   const flags0 = st.flags ?? []
 
-  // 有 outcomes 则掷骰取一分支（命运无常跳过——outcomes 自带变数）；极端命运是「天意」、对两路都掷
+  // 有 outcomes 则掷骰取一分支（命运无常跳过，outcomes 自带变数）；极端命运是「天意」、对两路都掷
   const picked = rng ? rollOutcome(choice, rng) : (choice.outcomes?.[0] ?? null)
   let baseEffects: Record<string, number>
   let twist: string | undefined
@@ -365,7 +365,7 @@ export function applyChoice(
     reaction = picked.reaction ?? reaction
     if (picked.itemsGained) itemsGained = picked.itemsGained
     if (picked.itemsLost) itemsLost = picked.itemsLost
-    // 极端命运独立于 outcomes：选了 outcomes 分支也可被横祸/横财命中——否则 outcomes 化的剧本永不触发命运卡高光
+    // 极端命运独立于 outcomes：选了 outcomes 分支也可被横祸/横财命中，否则 outcomes 化的剧本永不触发命运卡高光
     if (rng) {
       const extreme = rollExtremeFate(sc, rng, st.history.length)
       if (extreme) {

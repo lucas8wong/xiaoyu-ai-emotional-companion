@@ -19,13 +19,13 @@ const TRIAL = 'peixiuyuan-linwantang';
 test('scenarioCast：名单只长在登记过的剧本上，表外剧本为空（行为不变）', () => {
   const zh = rp.scenarioCast(TRIAL, 'zh');
   assert.ok(Array.isArray(zh) && zh.length >= 2, '试水剧本应有 >= 2 位可开口角色');
-  // 2026-10-01：加入「姐姐（逃婚的林家长女）」—— 逃婚本身就是前提，双模式后她必须在 cast 里
+  // 2026-10-01：加入「姐姐（逃婚的林家长女）」，逃婚本身就是前提，双模式后她必须在 cast 里
   assert.deepStrictEqual(zh.map((m: any) => m.name), ['裴修远', '林晚菱', '李嬷嬷', '翠屏']);
   assert.strictEqual(zh.filter((m: any) => m.lead).length, 1, '有且只有一个主角色');
   assert.strictEqual(zh.find((m: any) => m.lead).id, 'peixiuyuan');
 
   // 详情页「角色介绍」要用的身份 + 一句话介绍（2026-10-01）：每位都要有，三语齐全。
-  // 按 id 取（而不是下标）—— cast 是会变的，下标断言一改人就错位。
+  // 按 id 取（而不是下标），cast 是会变的，下标断言一改人就错位。
   const byId = (list: any[]) => Object.fromEntries(list.map((m: any) => [m.id, m]));
   const zhById = byId(zh);
   assert.ok(zh.every((m: any) => m.role && m.desc), '每位角色都要有身份与介绍');
@@ -56,7 +56,7 @@ test('scenarioCast：名单只长在登记过的剧本上，表外剧本为空�
     assert.strictEqual(list.filter((m: any) => m.lead).length, 1, id + ' 有且只有一个主角色');
     // 每位都要有身份与介绍（详情页「同场角色」直接渲染这两项）
     assert.ok(list.every((m: any) => m.role && m.desc), id + ' 每位角色都要有身份与介绍');
-    // 配角头像（lead 走剧本头像，由 flatScenario 补）—— 每位新角色都必须配图，不能留首字色块
+    // 配角头像（lead 走剧本头像，由 flatScenario 补），每位新角色都必须配图，不能留首字色块
     const subs = list.filter((m: any) => !m.lead);
     assert.ok(subs.every((m: any) => typeof m.avatar === 'string' && m.avatar.includes('/img/roleplay/')), id + ' 每位配角都要登记头像');
   }
@@ -86,7 +86,7 @@ test('剧本接口：cast 随 listScenarios / getScenarioInfo 一起下发，且
   const other = rp.getScenarioInfo('lutingyuan-shenyan', 'zh');
   assert.ok(other.cast.length >= 3, '新增剧本的 cast 必须随接口下发');
   assert.ok(other.cast.filter((m: any) => !m.lead).every((m: any) => /\?v=[0-9a-f]{8}$/.test(String(m.avatar))), '配角头像一律带内容版本号');
-  // 表外剧本仍是空数组（不是 undefined，也无可渲染名单）—— 用一个确定没登记的官方剧本。
+  // 表外剧本仍是空数组（不是 undefined，也无可渲染名单），用一个确定没登记的官方剧本。
   // ⚠️ 2026-10-01：第三条批落地后，**只有《沦为玩物的亡国公主》刻意保持 solo-only**（提案判定：
   // 强 1v1 + 题材敏感，做群像反而削弱设定与合规），所以这里的「表外样本」就是它。
   // 将来若给它补 cast（或另补一部同题材群像剧本），必须同时改这一行，别让它变成假绿。

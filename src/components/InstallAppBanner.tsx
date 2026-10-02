@@ -32,7 +32,7 @@ export default function InstallAppBanner({
 
   return (
     <div className="pointer-events-none w-full flex justify-center sm:w-auto sm:justify-end">
-      {/* 桌面视口（sm 起）收成 22rem 窄卡，由 Home 的浮层容器靠右下角摆放——
+      {/* 桌面视口（sm 起）收成 22rem 窄卡，由 Home 的浮层容器靠右下角摆放
           通栏的 max-w-md 会直接压在首屏 hero 正文上（2026-09-21 走查 F7，1264×749 实拍）。 */}
       <div className="pointer-events-auto relative max-w-md w-full sm:w-[22rem] card-white-toast rounded-2xl border border-clay-border shadow-lg px-3.5 py-3">
         {/* ✕ 从首行挪到卡片右上角（绝对定位）：首行不再被它和按钮一起挤掉宽度，

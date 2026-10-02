@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* —— 自托管字体（本地 woff2，避免外部 fonts.googleapis 阻塞首屏） —— */
+/* 【自托管字体（本地 woff2，避免外部 fonts.googleapis 阻塞首屏）】 */
 @font-face {
   font-family: 'Nunito Sans';
   font-style: normal;
@@ -19,7 +19,7 @@
 }
 
 :root {
-  /* —— 混合主题 Token：Claymorphism × Organic Biophilic × Vibrant Block —— */
+  /* 【混合主题 Token：Claymorphism × Organic Biophilic × Vibrant Block】 */
   --color-primary: #1FA46B;
   --color-primary-rgb: 31 164 107;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
   --color-primary-strong: #178353;
@@ -49,7 +49,7 @@
   --color-ring: #1FA46B;
   --color-ring-rgb: 31 164 107;   /* 由上一行 hex 派生：Tailwind 的 /透明度 需要 RGB 三通道（改色时两行必须同步） */
 
-  /* —— 皮肤变量（默认=原版，healing/zen 在下方按 <html data-skin> 覆盖） —— */
+  /* 【皮肤变量（默认=原版，healing/zen 在下方按 <html data-skin> 覆盖）】 */
   --skin-bg-image: none;
   --skin-hero-image: none;
   /* 氛围背景浅色罩：alpha=深浅（0=背景图明显/深，1=全浅/背景几乎不可见）；color=罩的 RGB */
@@ -57,7 +57,7 @@
   --skin-bg-wash-color: 244 241 252;
   --skin-display-font: "Varela Round", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
 
-  /* —— 白板（白色卡片）背景透明度：0=全透，1=不透；默认=中度透明(0.8)，在「界面外观」可调 —— */
+  /* 【白板（白色卡片）背景透明度：0=全透，1=不透；默认=中度透明(0.8)，在「界面外观」可调】 */
   --card-bg-alpha: 0.8;
 
   font-family: "Nunito Sans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", Helvetica, Arial, sans-serif;
@@ -70,7 +70,7 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* —— 界面皮肤（用户可选外观）：通过 <html data-skin> 切换 —— */
+/* 【界面皮肤（用户可选外观）：通过 <html data-skin> 切换】 */
 /* 小愈治愈系：奶油底 + 薄荷绿 + 琥珀，晨光电影感插画 */
 :root[data-skin="healing"] {
   --color-primary: #1FA46B;
@@ -224,7 +224,7 @@ body {
   color: var(--color-fg);
 }
 
-/* —— 全局：消除 iOS Safari 的「聚焦小字号输入框自动放大页面」（auto-zoom）——
+/* 【全局：消除 iOS Safari 的「聚焦小字号输入框自动放大页面」（auto-zoom）】
    在 iOS Safari 上，聚焦 font-size < 16px 的 input/textarea 会触发页面自动缩放，
    导致整页被放大/平移、输入框跳出可视区、页面可上下左右拖动、键盘弹起时露出空白背景。
    这里在 iOS/WebKit 下把输入控件字号统一提到 ≥16px 来规避（仅 iOS 生效，不影响其它平台）。
@@ -236,7 +236,7 @@ body {
 }
 
 /* 触屏命中区扩展：只扩垂直方向（left/right 保持 0），因为同一行相邻控件的间隙通常只有 6–8px，
-   水平一扩就会让两个命中区叠在一起 —— better-accessibility 明确规定不许重叠。
+   水平一扩就会让两个命中区叠在一起，better-accessibility 明确规定不许重叠。
    可见尺寸完全不变，只让手指更好按。 */
 .tap-y { position: relative; }
 .tap-y::after {
@@ -273,7 +273,7 @@ h1, h2 {
 button, [role="button"], a { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
 
-/* —— 剧情场景氛围（S4 伪动效）：只用 CSS 光效 + 少量粒子，零算力、零额外请求 ——
+/* 【剧情场景氛围（S4 伪动效）：只用 CSS 光效 + 少量粒子，零算力、零额外请求】
    粒子上限 24（见 src/lib/storyFx.ts 的 FX_BUDGET）；reduced-motion 由上面的全局规则兜底，
    组件层还会在 reduced-motion / 极低端机时**直接不渲染**（连 DOM 都不建）。 */
 .rp-fx-layer { position: absolute; inset: 0; pointer-events: none; }
@@ -320,14 +320,14 @@ button:disabled { cursor: not-allowed; }
     background-color: rgba(255, 255, 255, var(--card-bg-alpha, 0.38));
   }
   /* 浮层提示卡（首页底部的「保存/安装到桌面」提示、今日打卡提示这类**临时浮层**）：
-     给**可读性下限 0.9** —— 它们压在 hero 插画/渐变上，带 11px 小字与按钮，不能跟着内容卡一起透。
+     给**可读性下限 0.9**，它们压在 hero 插画/渐变上，带 11px 小字与按钮，不能跟着内容卡一起透。
      为什么必须有下限（2026-09-27 用户反馈「保存到手机桌面的提示背景太透了」）：
      新用户走 DEFAULT_CARD_BG_ALPHA = 0.38（见 src/lib/skin.ts）。在 390×844 上实测（脚本
      temp/verify-install-banner/measure.mjs：把卡隐藏、截下它背后那 358×160 的真实像素再合成）：
        标题  #1F2937：0.38 → 最暗处 2.5:1 / 平均 6.5:1   |  0.9 → 11.7:1 / 11.7:1
        说明字 #667085：0.38 → 最暗处 1.2:1 / 平均 2.2:1   |  0.9 → 4.0:1 / 4.4:1（白底满不透也只有 4.97）
      下限 0.9 不是为了「好看」，是让这张卡在任何 hero 底下都不再是一层纱；滑块**往上（更不透）仍有效**，
-     往下不再更透——浮层是"看一眼做决定的提示"，不是可翻阅的内容卡，可读性优先。
+     往下不再更透，浮层是"看一眼做决定的提示"，不是可翻阅的内容卡，可读性优先。
      ⚠️ 说明字（11px #667085）要真正到 AA 4.5:1 需要下限 ≈0.96（或把字色换深），本轮只动背景、未动字色。 */
   .card-white-toast {
     background-color: rgba(255, 255, 255, clamp(0.9, var(--card-bg-alpha, 0.38), 1));
@@ -343,7 +343,7 @@ button:disabled { cursor: not-allowed; }
     background-color: rgba(255, 255, 255, clamp(0.48, var(--card-bg-alpha, 0.38), 1));
   }
   /* ⚠️ Tailwind 层级顺序的坑（2026-09-15 用户实测踩到）：
-     `card-white`（components 层）**会被同一元素上的 `bg-*`（utilities 层）覆盖** ——
+     `card-white`（components 层）**会被同一元素上的 `bg-*`（utilities 层）覆盖**
      曾因此让首页「聊一聊」卡写成 `card-white … bg-primary-lighter`，结果渲染成**实心浅绿、完全不透**，
      而旁边同样 `card-white`、只是没有 `bg-*` 的卡片却是透的（用户看到"一个透一个不透"）。
      → 要让一张卡既有配色又有透明度，配色请走 `background-image`（叠层），**不要用 `bg-*`**，
@@ -352,7 +352,7 @@ button:disabled { cursor: not-allowed; }
   /* 顶栏/模式行/输入栏这类 **chrome**：给「卡片不透明度」加**下限 0.6**。
      为什么必须有下限（2026-09-15 实测）：场景图铺满整屏后，chrome 背后变成深色夜景，
      滑块拉到 0.35 时模式行那行 11px 说明文字对比度只有 3.0:1、拉到 0 时 1.2:1（AA 要求 4.5）；
-     而渐变白纱救不了——到那行小字的位置已经衰减到接近 0。
+     而渐变白纱救不了，到那行小字的位置已经衰减到接近 0。
      下限 0.6 实测：深色夜景上小字 ≈5:1 ✅（气泡仍可全透，不受此限）。 */
   .chrome-white {
     background-color: rgba(255, 255, 255, max(0.6, var(--card-bg-alpha, 0.38)));
@@ -418,10 +418,10 @@ button:disabled { cursor: not-allowed; }
      它需要自己的 @keyframes 与 reduced-motion 兜底，放在 @layer 里会被 Tailwind 的按需裁剪碰到，
      而且那套「负延迟 + 基准相」的写法本身就是一份需要就地解释的工艺，见文件末尾「正在输入指示器」。 */
 
-  /* —— 会员弹窗「用量推荐器」的滑块（2026-09-17 视觉重做）——
+  /* 【会员弹窗「用量推荐器」的滑块（2026-09-17 视觉重做）】
      为什么不用 accent-color 一行搞定：accent-color 只能染一条纯色，画不出「品牌色渐变填充 +
      白珠描边环 + 按下回弹」；而这里是整张卡的主交互（4 条），值得单独一层工艺。
-     **仍然保留原生 <input type="range">** —— 键盘/读屏/触屏惯性全部白拿，只重画轨道与拨钮，
+     **仍然保留原生 <input type="range">**，键盘/读屏/触屏惯性全部白拿，只重画轨道与拨钮，
      无障碍零回退（对比度、焦点环都留）。
      皮肤感知：空轨 = color-mix(品牌色 × 卡片面)、填充 = --color-primary → --color-primary-strong、
      珠子 = --color-surface 白 + 品牌色描边 → zen/candy/star 换肤自动跟随，不硬编码灰绿。
@@ -429,7 +429,7 @@ button:disabled { cursor: not-allowed; }
      ① 填充比例由 JS 写进自定义属性 --usage-fill（0–100%）：伪元素能继承自定义属性，
         所以不必为了进度条再包一层 DOM；Firefox 用原生 ::-moz-range-progress，无需该变量。
      ② 轨道高度 = 输入框高度（24px）= **触屏命中区**；可见那 8px 亮条靠 background-size 压出来
-        —— input 上不能挂 ::after 扩热区（表单控件不生成伪元素），只能靠自身高度给。 */
+，input 上不能挂 ::after 扩热区（表单控件不生成伪元素），只能靠自身高度给。 */
   .usage-slider {
     -webkit-appearance: none;
     appearance: none;
@@ -492,7 +492,7 @@ button:disabled { cursor: not-allowed; }
     border: 3px solid var(--color-primary-strong);
     box-shadow: 0 1px 3px rgba(36, 59, 46, 0.28);
   }
-  /* 焦点：**不摘全局 :focus-visible 的 outline**（键盘可见性优先，绝不静默无焦点——
+  /* 焦点：**不摘全局 :focus-visible 的 outline**（键盘可见性优先，绝不静默无焦点
      万一某个浏览器不认下面这两条伪元素规则，仍然看得见焦点）；珠子光环只是强化。 */
   .usage-slider:focus-visible::-webkit-slider-thumb {
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-ring) 38%, transparent);
@@ -507,7 +507,7 @@ button:disabled { cursor: not-allowed; }
   .usage-slider:active::-webkit-slider-thumb { transform: scale(1.12); }
   .usage-slider:active::-moz-range-thumb { transform: scale(1.12); }
 
-  /* —— 剧情文本「内容类型」三档（配合 src/lib/roleplayText.ts + RoleplayRichText.tsx）——
+  /* 【剧情文本「内容类型」三档（配合 src/lib/roleplayText.ts + RoleplayRichText.tsx）】
      ① 对白 = 「说出来的话」= **唯一带容器的一档**：独占一行 → 台词卡（墨色 12% 底 + 品牌色 60% 左竖线），
         夹在句中 → 只留引号着色 + 500 字重（不铺底，否则一句话被切成色块，反而更难读）；
      ② 旁白/动作/环境 = 基准层：素面朝天（与对白同墨色，靠"没有装饰"做底）；
@@ -521,11 +521,11 @@ button:disabled { cursor: not-allowed; }
      - 全部走皮肤 token，默认/healing/zen/star/candy 自动跟随，禁止硬编码灰绿。
      底色为什么用**墨色 12%** 而不是品牌色（两轮实操结论，别改回去）：
      - 品牌色底在 zen（暖米纸）上发冷发脏、在 candy（粉紫底）上与背景同色系而"融掉"
-       —— 本轮第一版 A 案试过"品牌色 7%"，candy 皮肤下目视即糊（对照图 options-candy.png 前后可比）；
+，本轮第一版 A 案试过"品牌色 7%"，candy 皮肤下目视即糊（对照图 options-candy.png 前后可比）；
      - 浓度停在 12%：底色越浓、同色系字/底对比度越低（墨色 15% 实测 candy 掉到 5.18:1，12% 回到 5.41:1）。
      对白**不整段上品牌色文字**（也评估过）：zen 皮肤的 `--color-primary-text`(#2F463B) 与
      `--color-fg`(#2E2B25) 几乎同色 → 那个方案在 zen 下是静默 no-op，且会让颜色成为唯一强通道。
-     对比度（**实测，不是估算**）：气泡是半透明白卡、底色是 color-mix，最终落地色"算不出来"只能量 ——
+     对比度（**实测，不是估算**）：气泡是半透明白卡、底色是 color-mix，最终落地色"算不出来"只能量
      用无头 Chrome 逐皮肤取真实像素按 WCAG 公式算（`temp/rp-contrast.mjs`、
      `temp/shot-rp-highlight-options.mjs`、`temp/verify-rp-highlight-real.mjs`）。 */
   .rp-dialogue {
@@ -542,11 +542,11 @@ button:disabled { cursor: not-allowed; }
     padding: 0.2em 0.5em 0.2em 0.55em;
   }
   /* 夹在句中的对白 → **同一套高亮的行内版**（2026-09-19 用户口径「经典叙事的对话高亮应该跟沉浸叙事一样」）。
-     为什么原来它是"无容器"：经典档的模型习惯把台词写进长段叙述中间 —— 实测全站真实回复里，
+     为什么原来它是"无容器"：经典档的模型习惯把台词写进长段叙述中间，实测全站真实回复里，
      经典档 221 个对白片段只有 52 个独占一行（对白字数里只有 **10.5%** 被高亮），沉浸档是 48.1%。
      于是"台词有没有被框起来"取决于**模型的排版习惯**，而不是"这是不是台词"：同一部戏切到经典档，
      用户看到的台词就退回裸文本了。
-     改法：把块级那套通道（墨色底 + 品牌色左竖线 + 圆角）**原样搬到行内版**，用 `inline-block` 承载 ——
+     改法：把块级那套通道（墨色底 + 品牌色左竖线 + 圆角）**原样搬到行内版**，用 `inline-block` 承载
      竖线/圆角不会随折行碎成一堆小竖条（`box-decoration-break: clone` 会每行画一条，反而更乱）。
      底色比块级淡一档（8% vs 12%）：行内底色紧贴正文，太浓会压住旁白、把一段话切成一堆色块。
      红线不变：颜色仍**不是唯一通道**（底色 + 竖线 + 字重 + 引号着色四条并行）。 */
@@ -580,9 +580,9 @@ button:disabled { cursor: not-allowed; }
   }
 }
 
-/* —— 引用跳转高亮：点引用块跳回被引用的那条消息时，目标气泡闪一圈品牌色描边
+/* 引用跳转高亮：点引用块跳回被引用的那条消息时，目标气泡闪一圈品牌色描边
    （Telegram「focuses on the exact location in the original message」的同类交互）。
-   两条纪律：① 静态线索不依赖动效 —— 环本身就是 cue，不靠动画表达状态；
+   两条纪律：① 静态线索不依赖动效，环本身就是 cue，不靠动画表达状态；
    ② `prefers-reduced-motion` 下不播动画，但**保留静态环**（文件顶部那条全局 0.01ms 规则会掐掉动画，
       所以这里必须单独兜一个静态 box-shadow，否则减弱动效用户什么都看不到）。 */
 @keyframes msg-flash-ring {
@@ -600,11 +600,11 @@ button:disabled { cursor: not-allowed; }
   }
 }
 
-/* —— 「正在输入」指示器（2026-09-19 重做：三点缩放 → 三条薄荷呼吸条）——
+/* 【「正在输入」指示器（2026-09-19 重做：三点缩放 → 三条薄荷呼吸条）】
    两个调用方共用：聊一聊 `src/components/ChatPage.tsx:2448`、剧情 `src/components/RoleplayPage.tsx:3582`。
 
    🔴 为什么要重做（用户实测「只有第一个点在放大，另外两个完全不在动」的根因）：
-   段落之间那条「正在输入」气泡**只活 420ms** —— `ChatPage` 里 `setTyping(true)` → `await sleep(PARA_PAUSE_MS=420)`
+   段落之间那条「正在输入」气泡**只活 420ms**，`ChatPage` 里 `setTyping(true)` → `await sleep(PARA_PAUSE_MS=420)`
    → 下一段开出气泡时 `setTyping(false)`（`src/components/ChatPage.tsx:1071 / :1073 / :1049`）。
    也就是说它**每次出现都是一次全新挂载，CSS 动画从 0 重来**。旧实现是「圆点缩放 1.2s + **正**延迟 0.15s / 0.3s」：
      · 第 1 个点（延迟 0）：420ms 窗口里全程在动；
@@ -618,14 +618,14 @@ button:disabled { cursor: not-allowed; }
         为什么是这三个数：要让波峰**从左往右**依次扫过，第 i 条必须比前一条晚 T/3 出现 ⇒ 延迟 = i·T/3 - T（取同相位的负值）。
         写反符号（0 / -0.3 / -0.6）会得到「中间→左→右」的来回跳，不是行进波。
      ② 周期收到 **0.9s**（原 1.2s）：短寿命窗口里也能走完半个波形。
-     ③ **基准相本身就是波形**：`nth-child` 给三条不同高矮 + 明暗递进 —— 动画被系统掐掉
+     ③ **基准相本身就是波形**：`nth-child` 给三条不同高矮 + 明暗递进，动画被系统掐掉
         （`prefers-reduced-motion` 的全局 `animation-duration:.01ms / iteration-count:1`）或被冻在任何一帧时，
         看到的是「三条渐高的薄荷条」，而不是三条一模一样的实心方块。静止也像在输入。
      ④ 只动 `transform: scaleY()` 与 `opacity`：三条 3×10px 元素全部交给合成器，不触发重排/重绘
         （不碰 width / height / box-shadow）；取色走 `--color-primary-*-rgb` 通道变量 ⇒ healing/zen/star/candy 换肤自动跟随。 */
 /* 波形形状：**全程都在变**，不留「死区」。
    首版写成 `0%/35%/70%/100%` 时，70%→100% 段几乎不动（.5→.4），实测让第 2 条在 420ms 闪现窗口里
-   只有 1.65px 的行程 —— 观感上仍像「没怎么动」。现在改成连续起落的 4 段对称波（3.5px ↔ 10px，行程 6.5px），
+   只有 1.65px 的行程，观感上仍像「没怎么动」。现在改成连续起落的 4 段对称波（3.5px ↔ 10px，行程 6.5px），
    三条以 1/3 周期错开 ⇒ 任何时刻都有一条在峰、另两条在明确的上升/下降途中。 */
 @keyframes typing-wave {
   0%   { transform: scaleY(0.35); opacity: 0.45; }
@@ -634,7 +634,7 @@ button:disabled { cursor: not-allowed; }
   75%  { transform: scaleY(0.65); opacity: 0.68; }
   100% { transform: scaleY(0.35); opacity: 0.45; }
 }
-/* 减弱动效版：**不位移的明暗呼吸**（只把高度在 0.8↔1 之间轻轻带一下，行程 2px 级）——
+/* 减弱动效版：**不位移的明暗呼吸**（只把高度在 0.8↔1 之间轻轻带一下，行程 2px 级）
    用户实测「完全静止」的教训：指示器在任何环境下都不该一动不动；`prefers-reduced-motion` 下
    要减的是**大幅位移**（前庭敏感），而不是把「正在输入」这个功能性反馈一起掐掉。
    周期与延迟都沿用 0.9s 那套，所以两版之间切换不会跳相位。 */

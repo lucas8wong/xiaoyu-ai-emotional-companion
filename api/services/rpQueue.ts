@@ -1,10 +1,10 @@
 /**
- * 剧情链路「上游并发闸门」—— 第三方托管专用
+ * 剧情链路「上游并发闸门」，第三方托管专用
  *
  * 为什么需要：
  *   Featherless 的 $25 档以「并发单元」计价，而模型的 concurrency_cost 会吃掉单元
  *   （27B 稠密 = cost 2 → 4 个单元里实际只有约 2 路并发）。并发打满时上游返回 429，
- *   而剧情回复走的是流式路径，**流式按设计不重试**（避免 token 重复下发）——
+ *   而剧情回复走的是流式路径，**流式按设计不重试**（避免 token 重复下发）
  *   结果是用户直接看到失败，而不是慢一点。
  *
  * 做法：在本地排队，保证「同时对上游的在途请求数」不超过上限；超出的请求在队列里等，
@@ -97,7 +97,7 @@ function acquire(onWait?: (info: QueueWaitInfo) => void): Promise<void> {
  * 在并发闸门内执行一次上游调用。
  * 无论成功/失败都会释放名额（用 finally，避免异常导致名额泄漏把链路彻底卡死）。
  *
- * @param onWait 需要排队时回调一次，带上「前面还有几个 / 队列多长」——供前端显示排队状态
+ * @param onWait 需要排队时回调一次，带上「前面还有几个 / 队列多长」，供前端显示排队状态
  */
 export async function withUpstreamSlot<T>(fn: () => Promise<T>, onWait?: (info: QueueWaitInfo) => void): Promise<T> {
   await acquire(onWait);
@@ -141,7 +141,7 @@ export function __resetQueueForTest(): void {
   stats.total = 0; stats.queued = 0; stats.timedOut = 0; stats.maxQueueDepth = 0; stats.maxWaitMs = 0;
 }
 
-/** 上游是否「并发已满 / 限流」——用于决定要不要重试 */
+/** 上游是否「并发已满 / 限流」，用于决定要不要重试 */
 export function isUpstreamBusyError(err: unknown): boolean {
   const msg = String((err as any)?.message || err || '');
   const status = Number((err as any)?.status || (err as any)?.statusCode || 0);

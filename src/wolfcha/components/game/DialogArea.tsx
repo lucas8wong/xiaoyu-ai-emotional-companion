@@ -402,7 +402,7 @@ export function DialogArea({
   const lastPortraitPlayerRef = useRef<Player | null>(null);
   const voiceRecorderRef = useRef<VoiceRecorderHandle | null>(null);
 
-  // 人类玩家「这轮发过言但还没点结束发言」——实测用户会以为卡住了（发言发出去后对局没反应），
+  // 人类玩家「这轮发过言但还没点结束发言」，实测用户会以为卡住了（发言发出去后对局没反应），
   // 所以要点亮「结束发言」并给一句提示。切阶段/换发言人时清零。
   const [hasSentThisTurn, setHasSentThisTurn] = useState(false);
 
@@ -1022,7 +1022,7 @@ export function DialogArea({
    *  - 移动端：渲染成一条**独立于可滚动面板**的确认条 `.wc-selection-confirm`（在玩家条正上方）。
    *
    * 为什么必须拆出来：面板所在的 `.wc-dialog-bottom` 在窄屏是**可滚动容器**，
-   * 一旦上方还有长内容（狼人协作面板 / 投票票型列表），这条确认行就会被滚出可视区 ——
+   * 一旦上方还有长内容（狼人协作面板 / 投票票型列表），这条确认行就会被滚出可视区
    * 用户反馈「选择击杀的小卡片还要往下滑动才看到确认击杀，手机上很难滑动」。
    * 确认按钮是**主操作**，不该依赖滚动（移动端面板里那条由 CSS 在 ≤767.98px 隐藏）。
    */

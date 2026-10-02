@@ -154,7 +154,7 @@ export function buildCongratsEmail(lang: EmailLang, username: string, days: numb
   const zhSubject = `🎁 你的 ${days} 天 Pro 体验已开通`;
   const zhBody = `
     <p style="margin:0 0 12px;font-size:15px;color:#243B2E;line-height:1.7">${zhName}<br/>
-      小愈为你准备了一份新人礼物——你已免费开通 <b style="color:#1FA46B">${days} 天 Pro 体验</b> 🎁。</p>
+      小愈为你准备了一份新人礼物，你已免费开通 <b style="color:#1FA46B">${days} 天 Pro 体验</b> 🎁。</p>
     <p style="margin:0 0 12px;font-size:14px;color:#243B2E;line-height:1.7">体验期间，你可以无限畅聊、享受更长的上下文，还能畅玩角色扮演与 AI 文游。</p>
     <p style="margin:0;font-size:14px;color:#243B2E;line-height:1.7">无需任何操作，打开 Xiaoyu 就能马上开始。很高兴你在这里。💛</p>`;
   const zhCta = '进入 Xiaoyu →';

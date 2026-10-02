@@ -1,5 +1,5 @@
 /**
- * 生成 public/sitemap.xml —— 由 `src/seo` 注册表派生，**不再手工维护**
+ * 生成 public/sitemap.xml，由 `src/seo` 注册表派生，**不再手工维护**
  *
  * 背景：过去 sitemap 是手写的，新增内容页容易忘记加进去（收录发现慢半拍）。
  * 现在 sitemap 由注册表 + 固定公开页生成，`test/unit/seoPages.test.ts` 会断言

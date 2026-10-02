@@ -8,7 +8,7 @@
  *
  * 三层解析（与文游同构，便于维护者对照）：
  *   ① 专属图 `{scenarioId}-{theme}.webp`（将来按剧本单独出，未命中即跳过）
- *   ② 主题池图 `{worldview}-{theme}.webp`（**共享**，跨剧本复用 —— 本轮生成的就是这一层）
+ *   ② 主题池图 `{worldview}-{theme}.webp`（**共享**，跨剧本复用，本轮生成的就是这一层）
  *   ③ 剧本封面/头像兜底
  *
  * 本文件是**纯函数**（无 DOM/无请求），便于单测；配图文件的生成见 `scripts/generate_scene_art.py`。
@@ -22,7 +22,7 @@ export interface SceneTheme {
   label: string;
   /** 命中关键词（先重后轻，按数组顺序匹配） */
   keywords: RegExp;
-  /** 出图用的"白名单视觉要素"（**只写环境/道具/光线，不写人** —— 见方案 §4.4 红线） */
+  /** 出图用的"白名单视觉要素"（**只写环境/道具/光线，不写人**，见方案 §4.4 红线） */
   scene: string;
   /**
    * **户外版**同一幕的要素（2026-09-15 新增）。
@@ -41,7 +41,7 @@ export const SCENE_THEMES: SceneTheme[] = [
   // ⚠️ **数组顺序 = 匹配优先级**。两条踩过的纪律（都是回归测试抓出来的）：
   //   ① 具体场所/天气 > 情绪词 > 氛围词：`alone` 先匹配"走廊"会把"医院走廊"判成独处；
   //      `intimate` 先匹配"别走"会把「雨下大了，先别走」判成亲密而不是雨。
-  //   ② 天气（rain）要比时段（night）早 —— "雨夜"应出雨景。
+  //   ② 天气（rain）要比时段（night）早，"雨夜"应出雨景。
   // 最终顺序：危机 → 争执 → 场所(职场/医院) → 天气(雨) → 情绪幕 → 氛围幕(独处/夜色) → 日常
   { id: 'crisis', label: '危机', keywords: /危险|追捕|追兵|逃|绑架|威胁|受伤|流血|急救|失控|崩溃|昏倒|抢|报警|险/, scene: 'a dark apartment corridor at night, one flickering light, an overturned chair', outdoorCue: 'one flickering light overhead, long hard shadows' },
   { id: 'conflict', label: '争执', keywords: /争吵|吵|质问|冷声|摔|发火|怒|争执|吼|拍桌|误会|翻脸|对峙|不满/, scene: 'a living room in hard side light, a tilted chair, scattered papers', outdoorCue: 'scattered belongings on the ground, a knocked-over chair' },
@@ -57,7 +57,7 @@ export const SCENE_THEMES: SceneTheme[] = [
   { id: 'memory', label: '回忆', keywords: /回忆|想起|从前|小时候|当年|旧|曾经|照片|日记|记得那|那些年|旧事/, scene: 'a desk with faded photographs, old letters, dusty warm light', outdoorCue: 'faded prints and folded parchment on a weathered bench' },
   { id: 'promise', label: '承诺', keywords: /承诺|答应|戒指|结婚|余生|永远|约定|誓言|未来|一直陪着|不离/, scene: 'a small velvet box on a bedside table by candlelight, golden glow', outdoorCue: 'a small velvet box catching the light, warm golden glow' },
   { id: 'alone', label: '独处', keywords: /一个人|独自|空荡|孤单|走廊|天台|空房|没人|寂寞|无所事事|发呆/, scene: 'an empty apartment at night, a single lamp, long shadows, curtains half drawn', outdoorCue: 'empty ground, one lamp, long shadows' },
-  // 注意口径：不写"城市天际线/远处楼宇"这类对象——实测它们会带出**楼顶招牌字母**（抽检两次命中"有文字"），
+  // 注意口径：不写"城市天际线/远处楼宇"这类对象，实测它们会带出**楼顶招牌字母**（抽检两次命中"有文字"），
   // 改用"半掩窗帘 + 虚焦窗景"表达"夜"，从源头去掉会违规的对象类，而不是靠换 seed 抽奖。
   { id: 'night', label: '夜色', keywords: /夜|凌晨|深夜|霓虹|灯火|街灯|车流|月光|月亮|入夜|天黑了/, scene: 'a quiet bedroom at night, sheer curtains, soft lamplight, out-of-focus window', outdoorCue: 'deep night, pools of soft lamplight, out-of-focus distant lights' },
   { id: 'daily', label: '日常', keywords: /早餐|厨房|咖啡|上班|下班|加班|沙发|客厅|买菜|外卖|电视|猫|做饭|热水|房间/, scene: 'a lived-in kitchen in morning light, steam from a cup', outdoorCue: 'morning light, a steaming cup left on a step' },
@@ -68,7 +68,7 @@ export const DEFAULT_THEME = 'daily';
 
 /**
  * 「关键时刻」主题：情绪/剧情张力最高的几幕。
- * 只有这些幕才值得**自动**生成专属画面（其余幕用共享图库即可）——
+ * 只有这些幕才值得**自动**生成专属画面（其余幕用共享图库即可）
  * 这是单卡保护与"物有所值"的双重考虑：自动出图要花 GPU 与额度。
  */
 export const KEY_MOMENT_THEMES = ['crisis', 'intimate', 'promise', 'reconcile', 'parting'] as const;
@@ -105,7 +105,7 @@ export interface SceneWorldview {
   tags: string[];
   /** 出图用的场景基调（同样是白名单要素：建筑/材质/时代，不写人） */
   setting: string;
-  /** 户外版基调（户外剧本用它，避免"室内墙纸/瓷砖"把街景拽回屋里）—— 2026-09-15 新增 */
+  /** 户外版基调（户外剧本用它，避免"室内墙纸/瓷砖"把街景拽回屋里），2026-09-15 新增 */
   settingOutdoor?: string;
 }
 
@@ -116,7 +116,7 @@ export const SCENE_WORLDVIEWS: SceneWorldview[] = [
   //    与"地点=办案室"拼在一起 → 模型取"公寓+纱帘"那一半，把刑警剧本画成了暖阳居家书房（用户实测反馈）。
   { id: 'republic', label: '民国洋房', setting: '1930s republican-era interior, wooden floor, lace curtains, brass details', settingOutdoor: '1930s republican-era street, wooden facades, worn paving, dusty light', tags: ['留洋'] },
   // ⚠️ 2026-09-14 云化实测修正：原文是 `... metal window frames, neon glow`，
-  //    而 **`neon` 会稳定带出霓虹招牌上的字母**——SDXL 画不出字所以蒙混过关，
+  //    而 **`neon` 会稳定带出霓虹招牌上的字母**，SDXL 画不出字所以蒙混过关，
   //    换成云模型（万相）后 8/8 张被红线抽检拒（"霓虹招牌 'NICGHIT CLUB'"）。
   //    港风的气质靠"瓷砖墙 + 铁窗框 + 百叶窗漏进来的街灯"表达，**不靠霓虹**。
   { id: 'hk', label: '港风', setting: '1990s Hong Kong interior, tiled walls, metal window frames, street light through blinds', settingOutdoor: '1990s Hong Kong street, tiled facades, metal window frames, warm street light', tags: ['港圈年上', '粤语情话'] },
@@ -246,7 +246,7 @@ export function ownThemePrompt(
   const own = clampSceneWords(deTextTriggers(spec?.scene), 18);
   if (outdoor) {
     // 🔴 户外剧本（30 部里 10 部）：**剧本自己的空间打头**（它才是权威地点），这一幕改用 `outdoorCue`
-    //    （不绑室内），世界观基调也换 `settingOutdoor` —— 三条一起消除"卧室 + 街景 + 户外 + 港风室内墙纸"
+    //    （不绑室内），世界观基调也换 `settingOutdoor`，三条一起消除"卧室 + 街景 + 户外 + 港风室内墙纸"
     //    的四重矛盾（用户实测反馈"背景图效果不是很好"的根因）。见 `SceneTheme.outdoorCue` 注释。
     return [own, t?.outdoorCue || deTextTriggers(t?.scene), mood, where, deTextTriggers(w.settingOutdoor || '')]
       .filter(Boolean).join(', ');
@@ -267,7 +267,7 @@ export const SCENE_NEGATIVE_PROMPT = [
   //    点名**模糊也不许**、以及店面类载体：
   'blurred letters', 'illegible text', 'faint lettering', 'awning lettering', 'shopfront lettering',
   'storefront signboard', 'shop window lettering', 'facade signage', 'window sticker', 'address plate',
-  // ⚠️ 2026-09-15 追加：**车牌**——实测 `guyushen-songzhi-intimate` 被判"车牌上隐约可见字母数字"。
+  // ⚠️ 2026-09-15 追加：**车牌**，实测 `guyushen-songzhi-intimate` 被判"车牌上隐约可见字母数字"。
   //    车是剧情必需的（"那辆熟悉的车停在路边"），所以只能禁掉车牌本身（它天生带字符）。
   'license plate', 'number plate', 'car plate', 'registration plate', 'plate with letters', 'plate with numbers',
   'blood', 'corpse', 'weapon', 'gun', 'knife',
@@ -280,7 +280,7 @@ export const SCENE_NEGATIVE_PROMPT = [
  * 为什么需要这一层（而不是只靠负向词）：项目自己的两条实测教训
  * （见文件上方主题表注释与 `scripts/export-scene-config.mts` 的 `SCENE_SPEC_OVERRIDES`）
  * 都指向同一个结论：**要从源头去掉会违规的对象类，而不是靠换 seed 抽奖**。
- * 负向词是"求它别画"，这里是"根本没给它可画的字"——两道一起上。
+ * 负向词是"求它别画"，这里是"根本没给它可画的字"，两道一起上。
  *
  * ⚠️ 只改**视觉对象**，不改语气/冷暖/地点（否则画面会跑偏）。
  */
@@ -307,7 +307,7 @@ export const SCENE_TEXT_TRIGGERS: Array<[RegExp, string]> = [
   //    实测原文："夜晚街边窗台上摊开的**旧书与报纸**"、"茶几上放着蜡烛和**翻开杂志**"、
   //    "地面散落着**带文字的文件纸张**"、"一叠**印有文字的纸张**"、"桌上摊开**一本有文字的书**"。
   //    ⚠️ 替换词本身**不能含触发词**（曾把 books 换成 "closed plain book" → 门禁自己锁死自己）
-  //    —— 有单测 `替换词自身不含触发词` 守着这条。
+  //    有单测 `替换词自身不含触发词` 守着这条。
   [/\bold letters?\b/gi, 'blank folded parchment'],
   [/\bletters?\b/gi, 'blank parchment'],
   [/\bnewspapers?\b/gi, 'folded blank parchment'],
@@ -368,7 +368,7 @@ export function scenePrompt(worldviewId: string, themeId: string): string {
   const t = SCENE_THEMES.find(x => x.id === themeId);
   const mood = moodOf({ theme: themeId });
   // 三层都过 deTextTriggers：主题要素 / 世界观基调（世界观是"文字污染"的主要入口，
-  // 例如港风原来的 `neon glow`）——见 SCENE_TEXT_TRIGGERS 上方说明。
+  // 例如港风原来的 `neon glow`），见 SCENE_TEXT_TRIGGERS 上方说明。
   return [deTextTriggers(t?.scene), SCENE_MOOD_PHRASE[mood], 'interior scene', deTextTriggers(w.setting)].filter(Boolean).join(', ');
 }
 
@@ -391,11 +391,11 @@ export interface ScenePlace {
 
 export const SCENE_PLACES: ScenePlace[] = [
   // ⚠️ 只放**真·办案**标签：最初把"掌控欲/强制/双重身份/猫鼠游戏"也算进来，
-  //    结果古风剧本被分到"办案室"（还带白板）——那些是**语气标签不是地点标签**，已剔除。
+  //    结果古风剧本被分到"办案室"（还带白板），那些是**语气标签不是地点标签**，已剔除。
   // ⚠️ 二次复盘：'a dim case room with files and a desk lamp' 这种**模糊概念**SDXL-Turbo 画不出来
   //    （实测画成"暖黄夕照的样板间书房"）。改为**具体物件 + 明确的夜/百叶窗/卷宗**。
   //    实测三轮后取此版：冷白荧光灯 + 百叶窗 + 满架卷宗/文件堆（feel 由"暖"变"中性"）。
-  //    已知限度：**机构性道具（证据板/警徽）4 步 turbo 画不出来**——试过 "corkboard + red string"，
+  //    已知限度：**机构性道具（证据板/警徽）4 步 turbo 画不出来**，试过 "corkboard + red string"，
   //    反而被理解成"地上的红电线"更差。要更强的场景语义需要换模型（见 CHANGELOG 的后续建议）。
   { id: 'police', label: '办案室', tags: ['刑警', '法医', '办案', '侦探'], scene: 'a dim police office at night, an evidence board pinned with photos, stacks of case files, filing cabinets, a desk lamp, blinds drawn' },
   { id: 'hospital', label: '医院', tags: ['温柔女医生', '医患', '病房', '产后抑郁', '狂躁症'], scene: 'a hospital room with pale light, a neat bed and a tall window' },
@@ -429,7 +429,7 @@ export function placeOf(s: { tags?: string[] } | null | undefined): string {
   return place;
 }
 
-/** 主场景图路径（每部内置剧本一张，离线跑批生成） —— 见上方 `masterSceneUrl`（带版本号） */
+/** 主场景图路径（每部内置剧本一张，离线跑批生成），见上方 `masterSceneUrl`（带版本号） */
 
 /** 主场景图 prompt（同样：约束 → 具体地点 → 冷暖/光线 → 世界观风格） */
 export function masterScenePrompt(worldviewId: string, placeId: string): string {

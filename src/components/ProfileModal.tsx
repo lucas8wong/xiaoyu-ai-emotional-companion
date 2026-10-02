@@ -30,7 +30,7 @@ interface ProfileModalProps {
 
 export default function ProfileModal({ open, onClose, onLogout, onOpenMembership, onOpenInvite, onOpenInbox, onNeedLogin, onRenamed }: ProfileModalProps) {
   const [quota, setQuota] = useState<QuotaInfo | null>(null);
-  // 邀请记录摘要（谁能看到自己的邀请战绩——用户反馈「找不到」后的入口）：与邀请弹窗同一份口径
+  // 邀请记录摘要（谁能看到自己的邀请战绩，用户反馈「找不到」后的入口）：与邀请弹窗同一份口径
   const [referral, setReferral] = useState<MyReferralSummary | null>(null);
   // 邀请/注册奖励配置（默认=当前后端默认值；配置接口返回后用真实数值）
   const [bonuses, setBonuses] = useState<{ register: number; invite: number; inviteMax: number }>({ register: 20, invite: 50, inviteMax: 20 });
@@ -131,7 +131,7 @@ export default function ProfileModal({ open, onClose, onLogout, onOpenMembership
   const handleDelete = async () => {
     /**
      * 注销确认词必须覆盖**界面会提示的每一种写法**（2026-09-28 审查 B4）：
-     * zh-TW 的指引与报错都在让用户输入「刪除」，而这里只认「删除」/「delete」——
+     * zh-TW 的指引与报错都在让用户输入「刪除」，而这里只认「删除」/「delete」
      * 结果繁体用户永远注销不了账号（用户权利/合规被卡死，还陷入「输入了却说不对」的死循环）。
      */
     const ACCEPTED_DELETE_WORDS = ['删除', '刪除', 'delete'];
@@ -222,7 +222,7 @@ export default function ProfileModal({ open, onClose, onLogout, onOpenMembership
             )}
           </div>
           {/* 额度（信息展示，弱化）：统一口径下单位是「条」且**按天重置**（游客 5 条/天、注册 20 条/天）；
-              旧口径才显示理一理池的「次」——别在点数制下继续印旧池数字 */}
+              旧口径才显示理一理池的「次」，别在点数制下继续印旧池数字 */}
           <p className="text-xs text-ink-soft mt-2">
             {quota?.creditEnabled
               ? (quotaIsUnlimited(quota) ? t('chatQuotaPro') : t('chatQuotaCredit', { n: quotaChatRemain(quota) }))
@@ -323,7 +323,7 @@ export default function ProfileModal({ open, onClose, onLogout, onOpenMembership
           )}
           {/*
             补填邀请码（注册时没填的用户）：
-            · 只在「登录 + 还没填过」时出现——填过就换成一行「已使用 xxx」，游客不显示（填了也不算，不给假入口）。
+            · 只在「登录 + 还没填过」时出现，填过就换成一行「已使用 xxx」，游客不显示（填了也不算，不给假入口）。
             · 交互与注册弹窗同款（折叠 → 输入 → 领取），文案复用 inviteCodeToggle / inviteCodeLabel / inviteCodePh。
           */}
           {user && (quota?.inviteCode || inviteApplied) && (

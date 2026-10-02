@@ -44,7 +44,7 @@ export interface StoryAmbience {
   toggle: () => void;
   volume: number;
   setVolume: (v: number) => void;
-  /** 当前循环环境音 id（未开启/未激活时为 null）——用于面板展示与测试断言 */
+  /** 当前循环环境音 id（未开启/未激活时为 null），用于面板展示与测试断言 */
   currentLoop: string | null;
   /** 最近一次触发的一次性音效 id（便于观测/测试） */
   lastOneShot: string | null;

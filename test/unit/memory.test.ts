@@ -110,7 +110,7 @@ test('最后活跃超过 7 天仍过期清理（P1-05）', () => {
   assert.strictEqual(memoryStorage.getSession(sid), undefined, '过期会话应被删除');
 });
 
-// —— 留存期分层（2026-09-11 起）：登录账号 30 天 / 游客（设备身份）7 天 ——
+// 【留存期分层（2026-09-11 起）：登录账号 30 天 / 游客（设备身份）7 天】
 const { accountStore } = await import('../../api/services/accounts.js');
 
 /** 造一个「最后活跃 N 天前」的会话（userId 由调用方指定） */

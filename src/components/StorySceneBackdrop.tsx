@@ -46,7 +46,7 @@ export function clearSceneBoot(): void {
  * 🔴 2026-09-15 修复"刚进去先闪一下皮肤再跳到背景图"（用户反馈）：
  * 冷启动实测（`temp/trace-flash-cold.mjs`，关缓存）暴露**两个独立原因**，合计背景层不可见 **762ms**：
  *   ① t≈0–350ms  React 还没挂载 → 什么都没有（露皮肤）
- *   ② t≈350ms    先渲染的是**共享主题池图**（`hk-daily.webp`）——因为 `masterUrl`/`ownUrl` 还没从接口回来
+ *   ② t≈350ms    先渲染的是**共享主题池图**（`hk-daily.webp`），因为 `masterUrl`/`ownUrl` 还没从接口回来
  *   ③ t≈401–763ms 旧图 **opacity 1.00 → 0.00**，而新图还没到 → **中间完全没有背景**（闪现主因）
  * 对应修法：
  *   · ③ → **交叉淡入**：旧图**保持 opacity 1 不动**，新图叠在它上面从 0 淡到 1，淡完再移除旧层。
@@ -92,7 +92,7 @@ export interface StorySceneBackdropProps {
   /**
    * 背景虚化半径（px，0 = 不虚化）。
    * 2026-09-15 用户要求「剧情浏览首页可以虚化这里的背景，然后继续增加白板的透明度也能保证字被看清」：
-   * 虚化去掉高频细节后，正文压在低透明度卡片上也能读 —— **高频细节才是"糊字"的主因**。
+   * 虚化去掉高频细节后，正文压在低透明度卡片上也能读，**高频细节才是"糊字"的主因**。
    * 实现：容器加 `filter: blur()` + 轻微 `scale()`（否则滤镜会让四边出现发虚的边缘）。
    */
   blur?: number;
@@ -113,7 +113,7 @@ export default function StorySceneBackdrop({ scenario, theme, overrideUrl, maste
   const layer = overrideUrl ? 'own-theme' : res.layer;
 
   const memoKey = scenario ? `${scenario.id}|${theme || ''}` : '';
-  /** 首帧兜底取 URL：先精确命中"同一部剧同一幕"，没命中就退到**同一部剧最近看过的那张**——
+  /** 首帧兜底取 URL：先精确命中"同一部剧同一幕"，没命中就退到**同一部剧最近看过的那张**
    *  首次挂载时"当前幕"还没算出来（key 里 theme 为空），不这样兜就会先闪一张共享主题池图。 */
   const memoUrlFor = (key: string): string => {
     if (key && urlMemo.get(key)) return urlMemo.get(key) as string;
@@ -201,7 +201,7 @@ export default function StorySceneBackdrop({ scenario, theme, overrideUrl, maste
             竖版 0.75 的图在 `object-cover` 下只能看到 **70%–89%**（手机 ~84%、矮屏 78%、桌面 71%）。
           · 曾试过 `object-contain` + 模糊垫底（整张可见），**用户偏好满屏铺底的观感**，已回退。
           · 若以后想再讨论"看到整张图"，先看 `temp/verify-scene-art/` 里那批对照截图，
-            而不是直接改 CSS —— 这是**审美取舍**，不是 bug。
+            而不是直接改 CSS，这是**审美取舍**，不是 bug。
         Ken Burns 保持 1.00→1.03（原 1.08 会多吃 14% 构图）。
       */}
       {/* 旧图（下层）：**保持 opacity 1 不动**，等新图淡入盖住它之后再移除 */}

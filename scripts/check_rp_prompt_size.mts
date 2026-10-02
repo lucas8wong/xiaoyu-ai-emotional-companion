@@ -2,12 +2,12 @@
  * 剧情扮演 system prompt 体积体检（含构成拆解）
  *
  * 用途：
- *  1. 换第三方 / 自托管模型前，先确认「协议开销」有多大——上下文窗口装不下会出现
+ *  1. 换第三方 / 自托管模型前，先确认「协议开销」有多大，上下文窗口装不下会出现
  *     人设丢失 / 回复莫名截断 / 上游 400。
  *  2. 判断「压 prompt」到底能省多少、该压哪一块：把 system 拆成
- *       · 内容块（角色卡 + 背景 + 开场）—— 剧本本体，不能压
- *       · 规则块（写作要求 + 禁令 + 语言指令 + 用户偏好 + 尾句）—— 历史累积，可压
- *       · 边界句 / 任务指令 —— 短，基本不必动
+ *       · 内容块（角色卡 + 背景 + 开场），剧本本体，不能压
+ *       · 规则块（写作要求 + 禁令 + 语言指令 + 用户偏好 + 尾句），历史累积，可压
+ *       · 边界句 / 任务指令，短，基本不必动
  *
  * 用法：npx tsx scripts/check_rp_prompt_size.mts
  *
@@ -88,7 +88,7 @@ for (const lang of ['zh', 'en'] as const) {
   console.log('注：以上不含 history 与 longMemory 注入。');
 }
 
-// —— 全剧本范围：内置剧本之间差异大（背景/人设长短不一），只看一个剧本会失真 ——
+// 【全剧本范围：内置剧本之间差异大（背景/人设长短不一），只看一个剧本会失真】
 for (const lang of ['zh', 'en'] as const) {
   const list = raws.filter((r) => (lang === 'en' ? r.en : r.zh));
   if (!list.length) continue;
@@ -99,7 +99,7 @@ for (const lang of ['zh', 'en'] as const) {
   );
 }
 
-// —— 自建剧本最坏情况：draft 提示词允许 aiPersona 与 background 各写到 2000 字 ——
+// 【自建剧本最坏情况：draft 提示词允许 aiPersona 与 background 各写到 2000 字】
 const worst = '你'.repeat(4000);
 console.log(
   `\n[自建剧本最坏情况] aiPersona 2000 字 + background 2000 字 ≈ ${tok(worst)} token 内容块；` +

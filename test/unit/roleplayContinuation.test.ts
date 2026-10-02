@@ -1,5 +1,5 @@
 /**
- * C 方案（自动续写）的循环逻辑单测 —— `roleplayReplyWithContinuation`。
+ * C 方案（自动续写）的循环逻辑单测，`roleplayReplyWithContinuation`。
  *
  * 不打桩模型，直接注入 `generate`：这样才能精确控制"第一轮半截、第二轮补完、第三轮原样重抄"
  * 这类真实模型很难稳定复现的行为。真实链路（SSE + 路由 + 上游）的验证在
@@ -12,7 +12,7 @@ import { setupTempCwd } from './setup.js';
 setupTempCwd();
 const { roleplayReplyWithContinuation } = await import('../../api/services/roleplay.js');
 
-// ⚠️ 夹具要写成"标记都配对、只有最后那个 （ 悬空"的样子——这才是真实断点的长相：
+// ⚠️ 夹具要写成"标记都配对、只有最后那个 （ 悬空"的样子，这才是真实断点的长相：
 //    真实那条（用户 98e677f1 的第 139 条）里，前面的 （他低笑一声…） 是闭合的，只有最后「（他并未退」悬空。
 //    第一版夹具我把开头的 （ 漏了闭合 → 判定永远 unclosed，续写也补不回来（错在夹具，不在判据）。
 const HALF = '（他低笑一声，把杯子放下。）\n\n「来，张嘴。daddy 帮你看着镜子……乖，慢慢刷。」\n\n（他并未退';
@@ -123,7 +123,7 @@ test('默认上限＝2（2026-09-18 用户拍板 C：续一次仍半截时再自
   const saved = process.env.RP_CONTINUE_MAX;
   try {
     delete process.env.RP_CONTINUE_MAX;
-    assert.strictEqual(roleplayContinueMax(), 2, '默认必须是 2 —— 当天 5 次 PARTIAL_UNCLOSED 就是"只补一次"兜不住');
+    assert.strictEqual(roleplayContinueMax(), 2, '默认必须是 2，当天 5 次 PARTIAL_UNCLOSED 就是"只补一次"兜不住');
     process.env.RP_CONTINUE_MAX = '1';
     assert.strictEqual(roleplayContinueMax(), 1, 'env 仍可覆盖（回滚到旧行为只要一行）');
     process.env.RP_CONTINUE_MAX = '0';
@@ -170,7 +170,7 @@ test('空回复不触发续写（空回复走既有的空回复重试，不归�
 
 /**
  * 重讲闸（2026-09-19）：用户 cf8077d3（林清缇）真实落盘的"同一拍讲两遍"就是这条路径出来的
- * ——续写回来的那一段从更早的地方重铺一遍，接缝处措辞微变（overlapTrim 剪不掉），
+ *。续写回来的那一段从更早的地方重铺一遍，接缝处措辞微变（overlapTrim 剪不掉），
  * 拼接后正文里出现两块同一拍的内容（实测逐字重复 98–141 字）。取证 `temp/rp-rep-cf8077d3/`。
  */
 test('续写在重讲同一拍（整块重抄已写正文）→ 丢弃该段并停手，正文保持原样', async () => {
@@ -205,7 +205,7 @@ test('触发闸：中段落单的开启符（模型拿开引号当闭引号）�
 
 /**
  * 手动「继续生成」必须**一次点到底**（2026-09-19 用户实测反馈）：
- * 「第一次被截断我点了继续生成，但又被截断了，第二次继续生成才完整」——
+ * 「第一次被截断我点了继续生成，但又被截断了，第二次继续生成才完整」
  * 自动路径的触发闸对 `mid_sentence + stop` 不续写（治整段复读的成果），结果把「点一次接到底」这个既有承诺打断了。
  * 语义边界：只有用户自己点的那一次放宽这一档；自动续写仍从严。
  */
@@ -217,7 +217,7 @@ test('手动续写（manualContinue）：停在半句时点一次就接到底，
   const out = await roleplayReplyWithContinuation(async (cont) => {
     calls.push(cont?.partial);
     if (!cont) return { text: HALF_NO_PUNCT, finishReason: 'stop' };
-    // 第一次续写仍停在半句（该链路的收尾习惯），第二次才收尾 —— 点在用户的那一次应当自动补第二次
+    // 第一次续写仍停在半句（该链路的收尾习惯），第二次才收尾，点在用户的那一次应当自动补第二次
     return calls.length === 2
       ? { text: '把呼吸放得更缓，指尖停在她的发梢上', finishReason: 'stop' }
       : { text: '，垂着眼没有再看她。', finishReason: 'stop' };

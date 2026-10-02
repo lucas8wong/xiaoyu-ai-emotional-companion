@@ -209,7 +209,7 @@ class WerewolfCounterStore {
   /**
    * 测试 / 核实脚本可在调用前设 `WEREWOLF_COUNTERS_DISABLED=1`，
    * 避免把测试与打桩运行的数据算进运营口径（每轮复核都应得到同一份真实数字）。
-   * 刻意在**调用时**读 env，而不是模块加载时——脚本没法在 import 之后改一个已固化的常量。
+   * 刻意在**调用时**读 env，而不是模块加载时，脚本没法在 import 之后改一个已固化的常量。
    */
   private disabled(): boolean {
     return process.env.WEREWOLF_COUNTERS_DISABLED === '1';
@@ -437,7 +437,7 @@ function textOf(result: { candidates?: Array<{ content?: { parts?: Array<{ text?
 
 /**
  * ⚠️ 这里曾经有一组「兜底发言」常量，用来在模型失败时替角色说一句无关痛痒的话。
- * **已删除**：依据项目红线（见 `src/lib/fallbackBubbles.ts`），失败绝不能伪装成角色台词——
+ * **已删除**：依据项目红线（见 `src/lib/fallbackBubbles.ts`），失败绝不能伪装成角色台词
  * 它会显示成「这个角色说过的话」、落盘、并回灌给其他玩家当上下文。
  * 现在统一走 `applyFailedTurn()`：只记「这一轮没能开口」，不编任何台词。
  */
@@ -478,7 +478,7 @@ async function runAiActor(state: WerewolfState, seat: number, action: PendingAct
 }
 
 /**
- * 把模型输出落成合法动作。**任何异常都退化为合法动作**——宁可用兜底发言，也不能卡死一局。
+ * 把模型输出落成合法动作。**任何异常都退化为合法动作**，宁可用兜底发言，也不能卡死一局。
  */
 export function applyAiDecision(
   state: WerewolfState,
@@ -650,7 +650,7 @@ async function driveInner(
     state.pendingSeat = undefined;
     state.pendingAction = undefined;
 
-    // 单请求调用量上限：一次 HTTP 请求不要连续跑掉一整局——Cloudflare 边缘约 100s 无数据即回 524，
+    // 单请求调用量上限：一次 HTTP 请求不要连续跑掉一整局，Cloudflare 边缘约 100s 无数据即回 524，
     // 这个坑项目历史上踩过（见 2026-09-11 的 AI 文游 524 根治）。超限就先返回，
     // 由客户端再发一次 `POST /:id/advance` 接着推（P1 再换 SSE 进度流）。
     if (maxCalls && ctx.usage.calls - startCalls >= maxCalls) return;
@@ -682,7 +682,7 @@ async function driveInner(
 }
 
 /**
- * 对外入口：包在 `driveInner` 外面只做一件事——**把本次请求的用量与兜底次数计入累计计数**。
+ * 对外入口：包在 `driveInner` 外面只做一件事，**把本次请求的用量与兜底次数计入累计计数**。
  * 放在这里而不是三个调用点，是为了让「一次请求记一次」只有一个实现，避免漏记或重复记。
  */
 export async function drive(

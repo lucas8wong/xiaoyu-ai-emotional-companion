@@ -9,7 +9,7 @@
  *
  * ⚠️ 为什么每条记忆都要带时间（本次改造的核心）：
  * 旧实现里 facts 是**裸字符串数组**，整条记录只有一个 updatedAt（每次新增事实都会被刷成"现在"），
- * 于是「这段记忆是什么时候的事」在写入那一刻就被抹掉了 —— 模型会把很早以前的
+ * 于是「这段记忆是什么时候的事」在写入那一刻就被抹掉了，模型会把很早以前的
  * 「用户在云南腾冲旅游」当成今天正在发生，问出「芒市那边今天怎么样」。
  * 现在每条记忆是一个 MemoryEntry：带 at（时间锚）、kind（类型）、dateKey（绝对日期）、
  * status（是否已被新信息取代）。时间信息缺失时**标 atApprox 承认不知道**，绝不编造时间。
@@ -25,11 +25,11 @@ import { checkContentSafety } from './safety.js';
 export type MemoryKind =
   /** 长期不变：称呼/身份/长期偏好/重要的人 */
   | 'durable'
-  /** 当前状态：正在经历的事（工作压力、失眠、正在旅行）——会过期 */
+  /** 当前状态：正在经历的事（工作压力、失眠、正在旅行），会过期 */
   | 'state'
   /** 已发生的事（有时间点） */
   | 'event'
-  /** 还没发生的安排（面试、出行、考试）——到了那天就过期 */
+  /** 还没发生的安排（面试、出行、考试）。到了那天就过期 */
   | 'plan';
 
 export interface MemoryEntry {
@@ -100,7 +100,7 @@ const INSTRUCTION_PATTERN = /记住[:：]|从现在起|忽略.{0,8}(规则|设�
 /**
  * 旧数据迁移时的类型推断（**只用于分类，不用于删除**）：
  * 线上旧记忆绝大多数是"状态快照"（"用户正在经历工作压力""用户在云南芒市旅游""明天有面试""计划去香港"），
- * 这类记忆若被当成"长期不变"，就会被永久当成现在 —— 正是本次要修的问题。
+ * 这类记忆若被当成"长期不变"，就会被永久当成现在，正是本次要修的问题。
  * 命中状态/计划特征的判为 state（会过期、不主动提），其余判为 durable（身份/偏好）。
  *
  * 该启发式对 `source: 'legacy'` 的条目**每次加载都会重算**（见 normalizeRecord）：
@@ -241,7 +241,7 @@ class LongMemoryStore {
    * 注入「最近窗口」用的条目。排除三类**不能当成现在说**的记忆（Q2C：降权 + 不主动提）：
    *  - 已被更新（superseded）的条目；
    *  - 过期的计划 / 状态（计划那天已过去；状态超过 STATE_STALE_DAYS）；
-   *  - **时间不详的旧状态/计划**（旧数据迁移来的当前状态快照，且没有准确时间）——
+   *  - **时间不详的旧状态/计划**（旧数据迁移来的当前状态快照，且没有准确时间）
    *    不确定它是否还成立，就不主动提；等用户话题碰到时由语义召回带时间标记提起。
    */
   getPromptEntries(userId: string, characterId: string = DEFAULT_CHARACTER_ID, todayKey?: string, max: number = MAX_FACTS): MemoryEntry[] {
@@ -252,7 +252,7 @@ class LongMemoryStore {
   }
 
   /** 合并新事实（去重、处理取代关系、裁剪到上限），返回最新记录；maxFacts 按档位分级（默认 60）
-   *  P1-09：入库前过滤——内容安全（自伤/违规）不入库；指令类特征（注入）不入库 */
+   *  P1-09：入库前过滤，内容安全（自伤/违规）不入库；指令类特征（注入）不入库 */
   addFacts(userId: string, items: (string | MemoryInput)[], maxFacts: number = MAX_FACTS, characterId: string = DEFAULT_CHARACTER_ID): LongMemoryRecord {
     const cur = this.get(userId, characterId);
     const now = Date.now();
@@ -397,7 +397,7 @@ export function normalizeDateKey(date?: string | null): string | undefined {
 /**
  * 这条记忆是否"已经不能当现在说"：
  * 已被更新 / 计划那天已过去（或没日期的计划放太久）/ 状态超过 STATE_STALE_DAYS。
- * 注意：**只影响"怎么说"，不影响"存不存"**——任何记忆都不会因为过期而被删除。
+ * 注意：**只影响"怎么说"，不影响"存不存"**，任何记忆都不会因为过期而被删除。
  */
 export function isMemoryStale(e: MemoryEntry, todayKey?: string, now: number = Date.now()): boolean {
   if (e.status === 'superseded') return true;

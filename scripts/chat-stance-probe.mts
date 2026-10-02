@@ -1,5 +1,5 @@
 /**
- * 陪伴倾向改制探针（2026-09-23）—— 固定探针 × 双臂对照（真实模型）
+ * 陪伴倾向改制探针（2026-09-23），固定探针 × 双臂对照（真实模型）
  *
  * ## 为什么写它
  * 用户投诉「选了『接住我』，就偶尔会看到小愈说什么『行，我接住了』，这太容易让人出戏了」。
@@ -7,15 +7,15 @@
  * 只能拿真模型的输出来量，不能靠提示词里写了什么来宣称。
  *
  * ## 双臂设计（同一段历史、同一用户，只有 system 有差异）
- *   · new    —— 当前生产 prompt（`COMPANION_STANCE` + `NO_META_NARRATION_RULE`）
- *   · legacy —— **近似复现改制前**：把判断块换回旧的 `hug` 档位卡（**插在同一个位置**：
+ *   · new，当前生产 prompt（`COMPANION_STANCE` + `NO_META_NARRATION_RULE`）
+ *   · legacy，**近似复现改制前**：把判断块换回旧的 `hug` 档位卡（**插在同一个位置**：
  *               `HUMANIZE_RULES` 之后，与旧代码 `modeExtra` 的位置一致），并去掉新的禁令规则。
  *   为什么说"近似"：旧卡还有 ally/clarify/light/objective 四张，探针只跑 `hug` 一张
- *   —— 用户报的那句正是 hug 卡（卡名就是「接住我」）；只跑它能把变量压到最小。
+ *   用户报的那句正是 hug 卡（卡名就是「接住我」）；只跑它能把变量压到最小。
  *
  * ## 判据（两档，别只看字面）
  *   · **字面族**（`META_FAMILY`）：把自己的动作当结果宣告 / 报菜单。`我接住了` 这类**描述性**读数，
- *     只能证明"那一句还在不在"，不能代表整体人机感 —— 与 `chat-voice-scan.mts` 的口径一致。
+ *     只能证明"那一句还在不在"，不能代表整体人机感，与 `chat-voice-scan.mts` 的口径一致。
  *   · **结构代理**（字数、条目数）：改制的风险是把小愈压成"更短更空"。所以同时看字数中位数，
  *     一旦明显变短就说明改伤了（旧的「出口太窄 → 涌向模板」教训）。
  *
@@ -54,7 +54,7 @@ const LEGACY_HUG_CARD = '【当前陪伴方式：接住我】这轮陪聊，小�
 
 /**
  * 固定探针：覆盖五种倾向各自最容易被触发的处境。
- * 全部单轮（首轮口径）——首轮没有负例块，正是这类模板最容易冒出来的地方（「我在呢」那次实测首轮 41.9%）。
+ * 全部单轮（首轮口径），首轮没有负例块，正是这类模板最容易冒出来的地方（「我在呢」那次实测首轮 41.9%）。
  */
 const PROBES: { key: string; text: string; want: string }[] = [
   { key: '自责', text: '我搞砸了今天的汇报，好丢脸', want: '温柔接住' },
@@ -75,7 +75,7 @@ const client = createDeepSeekClient();
 async function buildArmSystem(arm: Arm, probe: string): Promise<{ system: string; user: string }> {
   const { system, user } = await gem.buildChatPromptParts([{ role: 'user', content: probe }], { userId: 'probe-stance-' + arm }, true);
   if (arm === 'new') return { system, user };
-  // legacy：换回旧卡（同位置）+ 去掉新禁令 —— 其余一模一样，差异只剩这两处
+  // legacy：换回旧卡（同位置）+ 去掉新禁令，其余一模一样，差异只剩这两处
   const legacy = system
     .replace('\n\n' + COMPANION_STANCE, '\n\n' + LEGACY_HUG_CARD)
     .replace(NO_META_NARRATION_RULE, '');
@@ -129,7 +129,7 @@ for (const arm of ARMS) {
   }
 }
 
-// ———————————————— 汇总 ————————————————
+// 【汇总】
 const median = (a: number[]): number => (a.length ? [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)] : 0);
 console.log('\n=== 汇总（字面判据是描述性的；结构代理才是决策指标）===');
 for (const arm of ARMS) {
@@ -144,7 +144,7 @@ for (const arm of ARMS) {
 if (all.some((r) => r.error)) {
   console.log('\n⚠️ 有调用失败：先看是不是 DEEPSEEK_API_KEY 没配或网络问题，别把失败当"没命中"。');
 }
-console.log('\n注意：样本 6 条 × 每臂 —— 结论只能是**方向性**的（命中 0 不等于永不出现）。' +
+console.log('\n注意：样本 6 条 × 每臂，结论只能是**方向性**的（命中 0 不等于永不出现）。' +
   '真实用户的长期读数请用 `scripts/chat-voice-scan.mts --probe=<正则>`（按上线日期切前后窗口）。');
 
 const outPath = path.resolve(PROJECT_ROOT, OUT);

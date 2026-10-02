@@ -65,7 +65,7 @@ export function validateSaveGame(data: unknown): SaveGame | null {
     if (d.v !== SAVE_VERSION) return null
     scenarioSchema.parse(d.scenario)
     if (!d.state || typeof d.state !== 'object' || !Array.isArray(d.state.history)) return null
-    // attributes 必须是普通对象（非 null / 数组）——否则 Play 里 state.attributes[key] 在 null 上属性访问会抛错崩溃(白屏)。
+    // attributes 必须是普通对象（非 null / 数组），否则 Play 里 state.attributes[key] 在 null 上属性访问会抛错崩溃(白屏)。
     // 注：此处不校验键是否齐全或值为数字（缺键 / 非数值只会渲染成 NaN，不会崩溃）
     const attrs = d.state.attributes
     if (!attrs || typeof attrs !== 'object' || Array.isArray(attrs)) return null
@@ -101,7 +101,7 @@ function readAIConfigStore(): AIConfigStore {
         presets: obj.presets as Record<string, AIConfig>,
       }
     }
-    // 旧格式：扁平 AIConfig —— 以其 presetId/provider 为键迁移为单预设 map
+    // 旧格式：扁平 AIConfig，以其 presetId/provider 为键迁移为单预设 map
     if (typeof obj.provider === 'string') {
       const c = obj as unknown as AIConfig
       const id = c.presetId || c.provider
@@ -114,13 +114,13 @@ function readAIConfigStore(): AIConfigStore {
 }
 
 /**
- * 一份配置算不算「配好了」——落盘与读取共用同一条判据，两处分开写必然漂。
+ * 一份配置算不算「配好了」，落盘与读取共用同一条判据，两处分开写必然漂。
  *
  * ⚠ key 不是人人都要：自建网关与局域网里的本地推理（LM Studio / Ollama /
  * llama.cpp / LiteLLM）没有 key 这个概念，它们的【地址】才是凭据。判据取自目录
  * 的 keyOptional，不在这里按 id 列名单。
  *
- * 漏掉这条的后果是静默的：界面允许不填 key 就开局，配置却一次都存不下来 ——
+ * 漏掉这条的后果是静默的：界面允许不填 key 就开局，配置却一次都存不下来
  * saveConfig 走 else 分支把它删掉，刷新后归零，而全程没有任何报错。
  */
 export function isComplete(c: AIConfig | undefined): c is AIConfig {
@@ -142,7 +142,7 @@ export function loadPresetConfig(presetId: string): AIConfig | undefined {
 
 // 保存某服务商配置并置为当前活跃（配置一经修改即调用，不必等到开局）。按 presetId（无则 provider）归档。
 // 仅落盘「完整可用」的配置（判据见 isComplete）：空 / 仅默认的不存，并清掉该服务商
-// 可能残留的空条目、不改动当前活跃项——避免只是切过去看一眼就留下噪声条目。
+// 可能残留的空条目、不改动当前活跃项，避免只是切过去看一眼就留下噪声条目。
 export function saveConfig(c: AIConfig): void {
   const store = readAIConfigStore()
   const id = c.presetId || c.provider
@@ -473,7 +473,7 @@ function rawSlots(): unknown[] {
 /**
  * 自动回看的容量控制（纯函数，便于单测）：
  * 1) 同一剧本的自动回看超过 perScenarioMax 时，只保留最新若干条；
- * 2) 全部条目（含旧手动存档）超过 totalMax 时，继续淘汰最旧的自动回看——
+ * 2) 全部条目（含旧手动存档）超过 totalMax 时，继续淘汰最旧的自动回看
  *    旧手动存档永不因自动回看而被挤掉。输入乱序也安全，返回按 savedAt 降序。
  */
 export function evictAutoSlots(

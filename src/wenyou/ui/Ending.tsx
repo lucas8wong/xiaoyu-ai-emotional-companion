@@ -108,7 +108,7 @@ export function EndingScreen({
       const isDeath = scenario.attributes.some(
         (a) => a.deathBelow !== undefined && state.attributes[a.key] <= a.deathBelow,
       )
-      // 记录前后各取一次已解锁成就，差集即本局新达成——揭晓页上钤印告知
+      // 记录前后各取一次已解锁成就，差集即本局新达成，揭晓页上钤印告知
       const before = unlockedAchievements()
       recordEnding(scenario.id, state.ended.tone, {
         rating: grade.rating,
@@ -175,7 +175,7 @@ export function EndingScreen({
 
   const art = endingImage(scenario.id, ending.tone)
 
-  // 揭晓前先以一张「命运之卡」呈现，轻触翻开方见此生结局——仪式感与绚丽收束
+  // 揭晓前先以一张「命运之卡」呈现，轻触翻开方见此生结局，仪式感与绚丽收束
   if (!revealed) {
     return (
       <div className="ending-gate" onClick={() => setRevealed(true)}>
@@ -289,7 +289,7 @@ export function EndingScreen({
         </p>
       )}
       {/* 跨模式桥（B 方案 · 结局位）：结局刚揭晓、情绪最高的一刻给一句「如果是你的人生」。
-          放在「分享卡折叠」之前——这是全页情绪最高、最该被看到的位置。
+          放在「分享卡折叠」之前：这是全页情绪最高、最该被看到的位置。
           频次与剧情侧三条桥共用同一预算；文案只在 UI 层，不写进任何消息集合（红线 6）。 */}
       {bridgeOpen && (
         <div className="ending-actions" data-testid="wy-bridge-ending">

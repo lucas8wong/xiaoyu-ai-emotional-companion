@@ -1,7 +1,7 @@
 /**
  * 统一四套皮肤（healing/zen/star/candy）「Xiaoyu 字标」的实际渲染大小：
  * 把所有 wordmark.webp 归一化到 1024×512 透明画布，且字标(含叶子/装饰)高度恒为画布高度的
- * R=0.5 —— 使 AboutPage 以固定 h-20/h-24 渲染时各皮肤字标高度一致。
+ * R=0.5，使 AboutPage 以固定 h-20/h-24 渲染时各皮肤字标高度一致。
  * 用法：npx tsx scripts/normalize-wordmark.mts
  */
 import path from 'node:path';

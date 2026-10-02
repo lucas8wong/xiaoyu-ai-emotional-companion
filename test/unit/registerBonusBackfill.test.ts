@@ -127,7 +127,7 @@ test('buildBackfillEmail：三语都要说清「漏发 + 已补上」，且守�
   assert.match(en.subject, /20 free chats added/);
   assert.match(en.html, /missed/);
   assert.match(en.html, /Enter Xiaoyu/);
-  // 品牌红线：陪伴非治疗 —— 不出现治疗/诊断/治愈承诺
+  // 品牌红线：陪伴非治疗，不出现治疗/诊断/治愈承诺
   assert.doesNotMatch(zh.html, /治疗|诊断|治愈/);
   assert.doesNotMatch(tw.html, /治療|診斷|治癒/);
   assert.doesNotMatch(en.html, /diagnos|treat|cure/i);

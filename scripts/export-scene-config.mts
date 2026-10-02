@@ -32,15 +32,15 @@ fs.mkdirSync(path.dirname(out), { recursive: true });
 /**
  * 主场景图（A 方案）的**场景来源**（2026-09-14 用户反馈后修正）：
  *   ① **依据剧本叙事文本推导的场景规格**（`scripts/scene-story-specs.json`，由 derive_scene_specs.mts 生成，
- *      已过"无人物/无文字/无血腥"红线校验）——**首选**，因为画面就该来自剧本自己的故事与场景；
- *   ② 标签规则（地点 × 世界观）——仅当没有可用规格时兜底。
+ *      已过"无人物/无文字/无血腥"红线校验），**首选**，因为画面就该来自剧本自己的故事与场景；
+ *   ② 标签规则（地点 × 世界观），仅当没有可用规格时兜底。
  * ⚠️ 只给**内置剧本**出图（自建剧本的文案是用户内容，不进任何模型/提示词）。
  */
 /**
  * 人工覆盖（**视觉复检发现的具体偏差**，2026-09-14）：
  * 以"依据剧本推导的场景"为基准，补上**剧本里有、但模型没画出来**的关键器物/风格。
  * 只改 `scene`（画面描述）；剧本依据 `basis` 保持原样，便于人工审阅谁改了什么。
- * 为什么需要：4 步 turbo 对"特定建筑/器物类型"的理解有限——"病房"会画成卧室、"中式宫廊"会画成西式柱廊，
+ * 为什么需要：4 步 turbo 对"特定建筑/器物类型"的理解有限："病房"会画成卧室、"中式宫廊"会画成西式柱廊，
  * 把**具体器物**写进 prompt 才能纠回来（这也是本轮实测出来的规律）。
  */
 const SCENE_SPEC_OVERRIDES: Record<string, string> = {
@@ -55,7 +55,7 @@ const SCENE_SPEC_OVERRIDES: Record<string, string> = {
   'lutingyuan-shenyan': 'wet asphalt road at dusk, plain yellow tape strips strung between poles, shallow puddles reflecting grey sky, muddy ground, scattered wet leaves, faint mist',
   'luwang-guxiaoman': 'rain-soaked city street at night, blurred warm and cold light reflections, mirrored puddles along the kerb, one lone street lamp, dark distant buildings, drizzle',
   // 🔴 红线修订（2026-09-15 全库复核）：`neon-lit nightclub facade` **稳定带出店铺招牌文字**
-  //    —— 该剧本 5/17 张被判"招牌上带有模糊文字"。夜生活街景天然吸引招牌，所以**改源头数据**：
+  //    该剧本 5/17 张被判"招牌上带有模糊文字"。夜生活街景天然吸引招牌，所以**改源头数据**：
   //    换成"瓷砖墙上一个朴素亮着灯的门口"，保住剧情要的"她迈出门口、车停在路边"的空间感，
   //    但不再给模型任何可画的字。（与上面两条同一套做法：改数据 > 堆替换规则）
   'guyushen-songzhi': 'narrow city street at 3am, a plain lit doorway in a tiled wall, wet asphalt, parked black sedan, one warm street lamp, faint haze, cool blue shadows',
@@ -75,7 +75,7 @@ const builtins = listScenarios('zh').map((s) => {
   const spec = specs.get(s.id);
   const useSpec = !!spec && spec.valid && !!spec.scene;
   const override = SCENE_SPEC_OVERRIDES[s.id];
-  // 这部剧本「自己的空间」（画面描述已含人工覆盖修正）——主场景图与「每剧本每幕专属图」共用同一份
+  // 这部剧本「自己的空间」（画面描述已含人工覆盖修正），主场景图与「每剧本每幕专属图」共用同一份
   const storySpec = useSpec
     ? { scene: override || spec!.scene, mood: spec!.mood, indoor: spec!.indoor, place: spec!.place }
     : null;
@@ -92,7 +92,7 @@ const builtins = listScenarios('zh').map((s) => {
       ? storyScenePrompt(storySpec)
       : masterScenePrompt(wv, place),
     // 兜底 prompt：依据剧本推导的场景若反复带出文字（实测 `chenboyuan-qingxing` 的街景+车总被画出招牌），
-    // 退到**标签规则**那一版（地点×世界观，表述更朴素）——与专属图的 `theme-fallback` 同一套思路。
+    // 退到**标签规则**那一版（地点×世界观，表述更朴素），与专属图的 `theme-fallback` 同一套思路。
     safePrompt: masterScenePrompt(wv, place),
     negative: useSpec
       ? negativePromptFor({ scene: spec!.scene, mood: spec!.mood, indoor: spec!.indoor })
@@ -129,7 +129,7 @@ const config = {
       file: `${b.scenarioId}-${t.id}.webp`,
       prompt: ownThemePrompt(b.storySpec, b.worldview, t.id),
       // 兜底 prompt：万一"剧本自己的空间"里仍有会带出文字的对象类（实测霓虹招牌最顽固），
-      // 抽检连续不合格时退到**纯主题**这一层——主题表按设计不含招牌/霓虹（见 storyScene.ts 的
+      // 抽检连续不合格时退到**纯主题**这一层，主题表按设计不含招牌/霓虹（见 storyScene.ts 的
       // "夜" 口径注释：用"半掩窗帘 + 虚焦窗景"表达夜，而不是靠城市天际线）。
       safePrompt: scenePrompt(b.worldview, t.id),
       negative: negativePromptFor(b.storySpec),

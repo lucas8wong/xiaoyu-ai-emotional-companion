@@ -5,7 +5,7 @@
  * `border-primary/30`、`bg-primary-lighter/60` 这类类会被**静默丢弃**（构建产物里根本不存在），
  * 全仓曾因此有 ~117 处描边/底色凭空消失（用户反馈的「引用块看不清」就是这个坑）。
  * 改用 `rgb(var(--color-x-rgb) / <alpha-value>)` 后，hex 变量与 RGB 通道**必须成对同改**，
- * 否则换皮肤时会出现「底色还是旧皮肤」的错配——而且不会有任何报错。
+ * 否则换皮肤时会出现「底色还是旧皮肤」的错配，而且不会有任何报错。
  *
  * 本测试守三条不变量：
  *  ① 每个 `--color-x: #hex` 在**同一个块里**有一条数值一致的 `--color-x-rgb: R G B`；
@@ -67,7 +67,7 @@ for (const [file, minPairs] of [['src/index.css', 60], ['src/werewolf/theme.css'
       }
     }
     // 下限只是防「整块被删空」；真正的判据是上面逐对的一致性（index.css 5 个块共 66 对；
-    // werewolf 主题 13 对——它有意不覆盖 --color-primary-text，沿用 :root 的那对）
+    // werewolf 主题 13 对，它有意不覆盖 --color-primary-text，沿用 :root 的那对）
     assert.ok(pairs >= minPairs, `${file} 至少应有 ${minPairs} 对颜色 token，实际 ${pairs}`);
   });
 }

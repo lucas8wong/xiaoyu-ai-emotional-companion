@@ -30,7 +30,7 @@ import { chatCharacterStore, XIAOYU_CHARACTER, type ChatCharacter, type StoryMod
 import { isRelationKind } from '../services/chatRelation.js';
 import { chatCharacterGrowthStore } from '../services/chatCharacterGrowth.js';
 // 会话状态层（B 档，2026-09-21）：每轮回复后更新「此刻在做什么 / 心情 / 未消的账 / 你们之间的梗」
-// —— 纯规则、**零额外模型调用**（chatState.updateChatState 是纯函数），所以不需要像 ensureDailyLife 那样预热
+// 纯规则、**零额外模型调用**（chatState.updateChatState 是纯函数），所以不需要像 ensureDailyLife 那样预热
 import { updateChatState } from '../services/chatState.js';
 import { storyArchiveStore } from '../services/storyArchive.js';
 import { importStoryCharacter, syncStoryCharacter, getStoryView, resolveScenarioBrief, StoryBridgeError } from '../services/storyBridge.js';
@@ -128,7 +128,7 @@ function collectTurnSources(list: { title: string; url: string; host?: string }[
 }
 
 /**
- * 「按段的来源」收集器（2026-09-29）：段下标＝**气泡下标**，必须保留 null 占位 ——
+ * 「按段的来源」收集器（2026-09-29）：段下标＝**气泡下标**，必须保留 null 占位
  * 少了占位，后面的来源就会挪到错误的气泡上（把第 3 段的出处挂到第 1 条上）。
  * 同一段可能被回调多次（工具轮一次、快照引用一次），按 URL 去重后合并。
  */
@@ -365,7 +365,7 @@ router.post('/analyze', async (req: Request, res: Response): Promise<void> => {
 
 /**
  * 重试去重（2026-09-15）：客户端「重试上一回合」会把**同一条**用户消息再发一次
- * （前端不再重复插气泡，服务端也不该把这句话写进会话第二遍——否则 AI 上下文与
+ * （前端不再重复插气泡，服务端也不该把这句话写进会话第二遍，否则 AI 上下文与
  * 运营端记录里会出现两遍同一句话）。
  * 判定条件刻意收窄：仅当**客户端显式声明 retry** 且会话最后一条就是这条**还没被回复**的用户消息时复用。
  */
@@ -379,7 +379,7 @@ function isRetryOfPendingTurn(msgs: Array<{ role: string; content?: string; imag
  *
  * 判据刻意收窄（宁可不动手，也绝不乱截历史）：
  *   1) 客户端显式带了 `editAt`（毫秒时间戳），且它正好等于历史里**最后一条用户消息**的时间戳
- *      —— 与前端同一口径（2A：只有最后一条能改）。时间戳而非下标/id：id 是前端加载时现生成的
+ *      与前端同一口径（2A：只有最后一条能改）。时间戳而非下标/id：id 是前端加载时现生成的
  *      （刷新即变），下标会被存储层 MAX_CHAT_MSGS 截断错位；
  *   2) 命中后把这条**及其之后**的消息整段去掉（那条之后本来就只有它的回复）。
  * 对不上 → 返回 -1，调用方按普通新消息处理。
@@ -388,7 +388,7 @@ function isRetryOfPendingTurn(msgs: Array<{ role: string; content?: string; imag
  * 那超出本轮范围（口径见 `src/lib/rpVersions.ts` 顶部 1B + 2A）。
  *
  * ⚠️ 这是**原地截断**（`length =` 而非返回新数组）：调用方随后立刻把改写后的消息 push 进去，
- * 并在同一个请求里生成回复 —— 全流程原子，不会留下"历史被砍了一半又没接上"的中间态。
+ * 并在同一个请求里生成回复，全流程原子，不会留下"历史被砍了一半又没接上"的中间态。
  */
 function rewindForEdit(msgs: ChatMessage[], editAt: number | null): number {
   if (!editAt) return -1;
@@ -511,7 +511,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
       }
     }
     const quotaCost = img ? CHAT_IMAGE_COST : 1;
-    // —— 统一点数（credit）：开启后按预计 token 折算预扣，真实 usage 结算校正（渐进式，默认关）——
+    // 【统一点数（credit）：开启后按预计 token 折算预扣，真实 usage 结算校正（渐进式，默认关）】
     if (isCreditQuotaEnabled()) {
       const creditQuota = quotaStore.getCreditQuota(quotaUserId);
       const est = { credit: actionPricePoints('chat') }; // 整数价目表：一条 = 1 条（含图不再加价）
@@ -654,7 +654,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
       }).catch(() => { /* 忽略 */ });
       /**
        * 会话状态层（B 档，2026-09-21）：把这一轮沉淀成"我此刻的状态"（scene/mood/grudge/joke）。
-       * 纯规则、零额外调用、同步落盘 —— 本轮回复已经结束，所以状态**下一轮立刻生效**，
+       * 纯规则、零额外调用、同步落盘，本轮回复已经结束，所以状态**下一轮立刻生效**，
        * 不像 `ensureDailyLife` 那样需要预热。失败只影响"连续性"，不影响对话，故静默。
        */
       try {
@@ -832,7 +832,7 @@ router.post('/chat/stream', async (req: Request, res: Response): Promise<void> =
       }
     }
     const quotaCost = img ? CHAT_IMAGE_COST : 1;
-    // —— 统一点数（credit）：开启后按预计 token 折算预扣，真实 usage 结算校正（渐进式，默认关）——
+    // 【统一点数（credit）：开启后按预计 token 折算预扣，真实 usage 结算校正（渐进式，默认关）】
     if (isCreditQuotaEnabled()) {
       const creditQuota = quotaStore.getCreditQuota(quotaUserId);
       const est = { credit: actionPricePoints('chat') }; // 整数价目表：一条 = 1 条（含图不再加价）
@@ -884,7 +884,7 @@ router.post('/chat/stream', async (req: Request, res: Response): Promise<void> =
     }
 
     const chatMessages = session.chatMessages || [];
-    // 编辑重发（2026-09）：与 /chat 同一份判据 —— 命中的话历史已回到那条之前，改写后的内容照样要写进去。
+    // 编辑重发（2026-09）：与 /chat 同一份判据，命中的话历史已回到那条之前，改写后的内容照样要写进去。
     const editedIdx = rewindForEdit(chatMessages, editAt);
     if (editedIdx >= 0) {
       console.log('[chat/stream] 编辑重发：历史截到第 ' + editedIdx + ' 条之前 · session=' + currentSessionId.slice(0, 8));
@@ -1000,7 +1000,7 @@ router.post('/chat/stream', async (req: Request, res: Response): Promise<void> =
         /**
          * 小愈/角色自己的「今天的小事」：**异步预热**（每个用户×角色每天最多 1 次小调用）。
          * 为什么不在对话链路上 await：那会给当天第一条消息平白加几秒延迟；
-         * 代价是本条消息里还没有它、**从下一条起可用** —— 如实记录在 CHANGELOG，不假装即时。
+         * 代价是本条消息里还没有它、**从下一条起可用**，如实记录在 CHANGELOG，不假装即时。
          */
         ensureDailyLife(memUserId, memCharId, memCharName, {
           dateKey: todayKeyIn(reqTz || ''),
@@ -1009,7 +1009,7 @@ router.post('/chat/stream', async (req: Request, res: Response): Promise<void> =
           lang: chatOutputLang(history, memUserId) === 'en' ? 'en' : 'zh',
         }).catch(() => { /* 生成失败不影响流程（服务内部已退化到静态兜底池） */ });
         /**
-         * 会话状态层（B 档，2026-09-21）：同非流式端点 —— 纯规则、零额外调用、同步落盘，
+         * 会话状态层（B 档，2026-09-21）：同非流式端点：纯规则、零额外调用、同步落盘，
          * 本轮回复已结束 ⇒ 下一轮立刻带着"我手上正在做的事 / 我的心情 / 我们没算完的账 / 我们之间的梗"说话。
          */
         try {
@@ -1035,7 +1035,7 @@ router.post('/chat/stream', async (req: Request, res: Response): Promise<void> =
 
       send({ type: 'done', data: {
         sessionId: currentSessionId, title: chatTitle, reply: finalReply,
-        // 来源（结构化）：前端把它渲染成气泡下方的「来源」行 —— 用户不必先知道「可以要链接」
+        // 来源（结构化）：前端把它渲染成气泡下方的「来源」行，用户不必先知道「可以要链接」
         //  · sources：整轮（web_search 工具命中的）→ 挂在本轮最后一条气泡；
         //  · sourceSegments：**按段**（段下标＝气泡下标），让「讲这条新闻的那条气泡」自己挂出处
         ...(sources.length ? { sources } : {}),
@@ -1359,7 +1359,7 @@ router.post('/story', async (req: Request, res: Response): Promise<void> => {
       };
     }
 
-    // 生成疗愈故事（语言跟随：传用户最近的输入——问答答案优先，否则原始情绪输入）
+    // 生成疗愈故事（语言跟随：传用户最近的输入，问答答案优先，否则原始情绪输入）
     const answersText = (session.questions || []).filter(q => q.answer).map(q => q.answer).join('\n');
     // 统一点数：生成故事也计费（此前免费，属成本泄漏）；失败回滚
     if (isCreditQuotaEnabled() && session.userId) {
@@ -1533,7 +1533,7 @@ router.get('/chats', async (req: Request, res: Response): Promise<void> => {
 });
 
 /**
- * 微信式消息列表（方案 A2）：**一个角色一行** —— 最后一条、时间、未读数（跨该角色的多条会话求和）。
+ * 微信式消息列表（方案 A2）：**一个角色一行**：最后一条、时间、未读数（跨该角色的多条会话求和）。
  * GET /api/analysis/chat/inbox
  *
  * 为什么单独一条接口而不是塞进 GET /chats：列表要按「角色」聚合（一个角色可能有多条会话，
@@ -1661,7 +1661,7 @@ router.get('/chats/:sessionId', async (req: Request, res: Response): Promise<voi
     }));
     // ⚠️ 这里**刻意不**把未读清掉（2026-09-20 端到端实测抓到的坑）：
     // 聊一聊挂载时就会 GET 最近一条会话（把消息先铺在界面后面），若 GET 顺手标已读，
-    // 未读角标会在用户看到列表**之前**就被抹掉 —— 角标等于白做。
+    // 未读角标会在用户看到列表**之前**就被抹掉，角标等于白做。
     // 已读改由客户端在「用户真的进了/正在看这个窗口」时调 POST /chat/read。
     res.json({
       success: true,
@@ -1842,7 +1842,7 @@ router.get('/session/:sessionId', async (req: Request, res: Response): Promise<v
   }
 });
 
-// —— 自定义角色头像：允许站内图片路径或压缩后的 data:image 小图 ——
+// 【自定义角色头像：允许站内图片路径或压缩后的 data:image 小图】
 const MAX_AVATAR = 300000;
 const AVATAR_DATA_RE = /^data:image\/(jpeg|png|webp|gif);base64,[A-Za-z0-9+/=]+$/;
 const AVATAR_PATH_RE = /^\/img\/[A-Za-z0-9-]+\.(jpg|jpeg|png|webp)$/;
@@ -1930,7 +1930,7 @@ router.post('/chat/characters', (req: Request, res: Response): void => {
  * 做三件事（一次请求内）：① 物化角色（幂等：同一剧本重复调用 = 刷新）② 提炼共同经历摘要写进记忆
  * ③ 把剧情切块存进 storyArchive（供话题碰得到时按需召回）。
  *
- * ⚠️ 红线 5（自建剧本内容安全）：导入前先对**源头剧本文本**再过一次过滤 —— 剧本创建时已经审过一次，
+ * ⚠️ 红线 5（自建剧本内容安全）：导入前先对**源头剧本文本**再过一次过滤，剧本创建时已经审过一次，
  * 这里复检的理由是「剧本可能被作者改过」「导入是另一条进入业务数据的路径」，两条路都要有闸门。
  */
 router.post('/chat/characters/import-story', async (req: Request, res: Response): Promise<void> => {
@@ -2048,7 +2048,7 @@ router.patch('/chat/characters/:id', (req: Request, res: Response): void => {
   for (const k of ['name', 'avatar', 'identity', 'boundaries', 'voice', 'ttsVoice', 'opening'] as const) {
     if (req.body?.[k] !== undefined) updates[k] = clean(req.body[k]);
   }
-  // 双态开关（剧情角色专用；入戏 / 出戏）—— 只认这两个取值，其它一律忽略
+  // 双态开关（剧情角色专用；入戏 / 出戏），只认这两个取值，其它一律忽略
   const rawMode = clean(req.body?.storyMode);
   if (rawMode === 'in' || rawMode === 'out') updates.storyMode = rawMode;
   // 关系档（每角色一档）：同样只认四档白名单；非法值/未传 = 不改

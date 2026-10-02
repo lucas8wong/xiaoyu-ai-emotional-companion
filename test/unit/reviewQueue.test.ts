@@ -2,7 +2,7 @@
  * 审阅队列构建器单测。
  *
  * 本模块零 I/O，所以这里**全部是编造的假数据**，不读 data/（AGENTS.md 红线 3）。
- * 重点不在「功能对不对」，而在**产出物里绝对没有身份**——这是这次改动的全部意义。
+ * 重点不在「功能对不对」，而在**产出物里绝对没有身份**，这是这次改动的全部意义。
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -118,7 +118,7 @@ test('★ 基础设置快照：白名单外的一律进不来（含以剧本 id 
     chatSessions: [chatSession()],
     roleplayRecords: [roleplayRecord()],
     idFactory: seqIds(),
-    // 故意多塞：userId / 剧本表 / 自由文本 / 超长值 / 错类型 —— 一个都不该出现在产出物里
+    // 故意多塞：userId / 剧本表 / 自由文本 / 超长值 / 错类型，一个都不该出现在产出物里
     getUserSettings: () => ({
       mode: 'hug',
       thinkingLevel: 'max',
@@ -160,7 +160,7 @@ test('★ sampleKey（v3）：跨重建稳定、**续写不换键**（已读才�
   assert.match(a.items[0].sampleKey, /^sk_[0-9a-f]{16}$/);
   assert.equal(a.items[0].keyVersion, SAMPLE_KEY_VERSION, 'v3 口径：指纹锚「类型 + 首条时刻 + 前两条用户发言」');
   assert.equal(a.items[0].sampleKey, b.items[0].sampleKey, '重建后同一段对话要保持同一个键');
-  // 代号必须每次随机（随机 = 不可反推），而指纹必须稳定——两者的区别正是已读追踪能成立的原因
+  // 代号必须每次随机（随机 = 不可反推），而指纹必须稳定，两者的区别正是已读追踪能成立的原因
   const d1 = buildReviewQueue({ chatSessions: [chatSession()] });
   const d2 = buildReviewQueue({ chatSessions: [chatSession()] });
   assert.notEqual(d1.items[0].reviewId, d2.items[0].reviewId, '代号每次随机才是去标识化的前提');
@@ -168,7 +168,7 @@ test('★ sampleKey（v3）：跨重建稳定、**续写不换键**（已读才�
 
   /**
    * v2 的关键修复：同一段对话**续写**（尾部多了消息）之后身份不变。
-   * 老口径（v1 把尾条也算进指纹）下这里会换新键 —— 于是用户又聊两句之后，
+   * 老口径（v1 把尾条也算进指纹）下这里会换新键，于是用户又聊两句之后，
    * 他之前标的「已读」会莫名其妙回到未读，增量档案也会把同一段对话记成两条。
    */
   const grown = buildReviewQueue({

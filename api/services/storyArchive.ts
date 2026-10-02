@@ -2,13 +2,13 @@
  * 剧情档案（聊一聊 · 剧情角色的「原文/细节」语料）
  *
  * 为什么单独立一个 store，而不是塞进 `longMemory`：
- * `longMemoryStore.addFacts` 有两条**硬约束**（`longMemory.ts:262,254`）——单条 text ≤ 80 字、每维度上限 60 条，
+ * `longMemoryStore.addFacts` 有两条**硬约束**（`longMemory.ts:262,254`）：单条 text ≤ 80 字、每维度上限 60 条，
  * 而且它同时是「注入最近窗口」的来源。把剧情原文/细节塞进去会两头坏：既被静默截断，
  * 又把真实用户记忆挤出窗口。所以记忆分层：
  *   - **摘要**（≤80 字/条，带日期）→ `longMemory`（进最近窗口，随时在场）
  *   - **细节**（场面/台词，≤400 字/块）→ 本 store（只在话题碰得到时由语义召回取 top-K）
  *
- * 归属维度与 `longMemory`/`growth` 一致：`(userId, characterId)` —— characterId 就是聊一聊角色 id，
+ * 归属维度与 `longMemory`/`growth` 一致：`(userId, characterId)`，characterId 就是聊一聊角色 id，
  * 因此**每个剧情角色各自一份档案**，互不串味。
  *
  * 数据持久化到 data/story-archives.json，进程重启不丢失。
@@ -92,7 +92,7 @@ class StoryArchiveStore {
   }
 
   /**
-   * 追加式写入（增量同步用）。按 `(from,to)` 去重 —— 同一段剧情被同步两次不会产生两块重复档案。
+   * 追加式写入（增量同步用）。按 `(from,to)` 去重，同一段剧情被同步两次不会产生两块重复档案。
    * 返回**实际新增**的块。
    */
   appendBlocks(userId: string, characterId: string, scenarioId: string, blocks: StoryBlock[]): StoryBlock[] {

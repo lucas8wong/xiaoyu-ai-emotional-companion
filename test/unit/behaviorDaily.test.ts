@@ -131,7 +131,7 @@ test('埋点接入：游客并入账号同步合并行为日志，注销清理�
   assert.strictEqual(behaviorDailyStore.getUserRange(acc, today, today), null, '注销应清空行为日志');
 });
 
-// —— 剧情演绎三模式：roleplay 桶恒为**合计**，wenyou/werewolf 是模式桶 ——
+// 【剧情演绎三模式：roleplay 桶恒为**合计**，wenyou/werewolf 是模式桶】
 
 test('剧情模式：文游/狼人杀事件同时累加 roleplay 合计（三者之和 ≡ 合计，老区间不断层）', () => {
   const today = todayKey();

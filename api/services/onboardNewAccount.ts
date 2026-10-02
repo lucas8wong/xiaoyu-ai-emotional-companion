@@ -1,10 +1,10 @@
 /**
- * 新账号落地（signup onboarding）—— **邮箱注册与 Google 建号两条入口共用同一实现**。
+ * 新账号落地（signup onboarding），**邮箱注册与 Google 建号两条入口共用同一实现**。
  *
  * 为什么单独抽出来（2026-10）：
  * 注册路径原本散着 7 段收尾动作（注册奖励 / 新人 Pro / 节日礼 / 设备记录 / 游客数据合并 /
  * 行为追踪 / 来源归因）。加 Google 一键登录时若复制一份，日后任何一场活动都只会发一半用户
- * ——「改了注册忘了改 Google」是注定会发生的事故。所以两条入口都调这里的函数。
+ *。「改了注册忘了改 Google」是注定会发生的事故。所以两条入口都调这里的函数。
  *
  * 未纳入本模块：预设邀请码 / 邀请链接（ref）奖励仍在 routes/auth.ts 的邮箱注册里
  * （那套带「设备·IP 不同」反套利判定，且与注册表单字段耦合）。**Google 建号暂不支持邀请码**，
@@ -68,7 +68,7 @@ export async function grantSignupRewards(userId: string): Promise<void> {
  * 把「这台设备上的游客」并入新账号，并补上设备/IP 记录、行为追踪与来源归因。
  *
  * ⚠️ 只在**建号那一刻**调用（注册 / Google 首次建号）。
- * 老账号的普通登录走 routes/auth.ts 里那条更轻的路径——那里绝不能调本函数，
+ * 老账号的普通登录走 routes/auth.ts 里那条更轻的路径，那里绝不能调本函数，
  * 否则每次登录都会写一次「来源归因」的注册事件。
  */
 export async function bindGuestAndTrack(req: Request, userId: string, method: SignupMethod): Promise<void> {
@@ -106,7 +106,7 @@ export async function bindGuestAndTrack(req: Request, userId: string, method: Si
   } catch { /* 追踪失败不影响主流程 */ }
 
   // 来源归因（identify/merge）：把该匿名设备上的 first-touch 落到这个账号上，
-  // 否则「注册用户全都像凭空出现」——后续才能回答「哪个渠道带来注册/付费」。
+  // 否则「注册用户全都像凭空出现」，后续才能回答「哪个渠道带来注册/付费」。
   // 只存渠道维度，不存 IP/邮箱；客户端带来的 first 优先（它在落地那一刻就记下了）。
   try {
     const deviceId = String(req.headers['x-device-id'] || '');

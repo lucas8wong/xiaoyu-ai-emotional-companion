@@ -5,11 +5,11 @@
  *
  * 本文件做四件事：
  *  1) **物化**：把「一个剧本 + 用户在里面的剧情会话」变成一条 `ChatCharacter`（origin='story'），
- *     幂等键 = `(userId, scenarioId)` —— 重复导入只更新，绝不产生第二个「沈重」。
+ *     幂等键 = `(userId, scenarioId)`，重复导入只更新，绝不产生第二个「沈重」。
  *  2) **摘要**：一次性提炼 `StoryDigest`（共同经历 / 未完成的线 / 口吻特征）→ 写进 longMemory（≤80 字/条、带日期）
  *     + growth.relationship（关系底色）。
  *  3) **细节**：把会话按每 12 条抽成 `StoryBlock`（≤400 字，保关键台词）写进 storyArchive，
- *     由 `memoryRecall` 按话题**按需召回** —— 原文**绝不**进聊一聊的常规上下文。
+ *     由 `memoryRecall` 按话题**按需召回**，原文**绝不**进聊一聊的常规上下文。
  *  4) **增量**：按 `story.syncedMsgCount` 游标只提炼新增段落。
  *
  * 红线（与本文件每个决定有关，改动前先读）：
@@ -245,7 +245,7 @@ export function mergeDigest(prior: StoryDigest | undefined, incoming: Partial<St
     if (events.some((x) => x.text === text || x.text.includes(text) || text.includes(x.text))) continue;
     /**
      * 「开场：…」「目前停在：…」是规则降级摘要里的**进度标记**：每次同步都会生成一对新的，
-     * 内容只差后面的引文 —— 不按前缀替换的话，同步两次就会在「TA 记得的事」里出现两对
+     * 内容只差后面的引文，不按前缀替换的话，同步两次就会在「TA 记得的事」里出现两对
      * 「你们的剧情从…开始 / 剧情进行到…」（端到端实测的截图里亲眼看到过）。
      */
     const pk = progressKeyOf(text);
@@ -288,7 +288,7 @@ export function composeStoryBoundaries(name: string): string {
   return [
     `${name}会按剧情里的性格、立场与关系回应（包括强势、占有欲、嘴硬、别扭等设定），这份设定照演。`,
     '但那条线一直在：不鼓励、也不美化现实里的控制、跟踪、威胁或伤害行为；不评判、不贴标签、不说「你应该」；不制造依赖。',
-    '剧情里的设定不等于现实里的建议 —— 如果用户把戏里的关系当成现实的标准，温柔地把戏和现实分开说。',
+    '剧情里的设定不等于现实里的建议，如果用户把戏里的关系当成现实的标准，温柔地把戏和现实分开说。',
   ].join('');
 }
 
@@ -326,7 +326,7 @@ export function uniqueStoryName(userId: string, name: string, title: string, exc
  * 注入 prompt 的「剧情出身」块（双态，互斥）。
  *
  * ⚠️ 只带**摘要 + 未完成的线**，不带剧情原文：原文由 `memoryRecall` 按话题召回（top-2 块）。
- * 另外这里刻意**不**注入陪伴方式（Q4=A）——它是「小愈怎么陪你」的用户级偏好，
+ * 另外这里刻意**不**注入陪伴方式（Q4=A），它是「小愈怎么陪你」的用户级偏好，
  * 套到剧本人设上会立刻把角色说成"小愈味"。
  */
 export function storyPromptBlock(c: ChatCharacter): string {
@@ -336,12 +336,12 @@ export function storyPromptBlock(c: ChatCharacter): string {
   const mode: StoryMode = c.storyMode === 'out' ? 'out' : 'in';
   const you = st.userName || '你';
   const head = mode === 'in'
-    ? `【你们的来历 · 入戏】你和对方不是网友初识：你们在剧情《${st.scenarioTitle}》里有一段真实经历 —— 你在剧里是「${you}」，你就是「${c.name}」。现在你们换到了聊天窗口：**这是聊天，不是叙事现场**——像平时发消息那样说短句，不写旁白、不描写对方的动作与心理、不推进剧情场景；但称呼、关系、说话的立场都按剧里来。`
+    ? `【你们的来历 · 入戏】你和对方不是网友初识：你们在剧情《${st.scenarioTitle}》里有一段真实经历，你在剧里是「${you}」，你就是「${c.name}」。现在你们换到了聊天窗口：**这是聊天，不是叙事现场**：像平时发消息那样说短句，不写旁白、不描写对方的动作与心理、不推进剧情场景；但称呼、关系、说话的立场都按剧里来。`
     : `【你们的来历 · 出戏】你们在剧情《${st.scenarioTitle}》里一起演过一段故事（你在剧里是「${c.name}」，对方是「${you}」）。现在你清楚那是**一段你们一起演的故事**，坐在你对面的是现实里真实的人：可以自然提「我们那出戏里…」，但不要把剧情当成现实里真的发生过的事，也不要继续用戏里的身份要求对方。仍然是短消息、不写旁白。`;
   const parts = [head];
   if (d?.summary) parts.push(`【那段故事（摘要）】${d.summary}`);
   if (d?.keyEvents?.length) parts.push(`【你记得的事】\n- ${d.keyEvents.slice(-12).map((e) => e.text + (e.date ? `（${e.date}）` : '')).join('\n- ')}`);
-  if (d?.openThreads?.length) parts.push(`【你们还没说完的事 —— 对方主动提起时顺势接住，别一上来就追着问】\n- ${d.openThreads.join('\n- ')}`);
+  if (d?.openThreads?.length) parts.push(`【你们还没说完的事，对方主动提起时顺势接住，别一上来就追着问】\n- ${d.openThreads.join('\n- ')}`);
   parts.push('（这段来历是你的底色，不是话术：不要主动罗列"我记得我们…"，也不要每轮都提剧情。对方聊现实生活时，就好好陪现实里的这件事。）');
   return '\n\n' + parts.join('\n\n');
 }
@@ -471,7 +471,7 @@ function langOf(userId: string): 'zh' | 'en' {
  * 且天然复用未读体系（角标 1 → 点进去 → 看到 TA 的第一句）。
  *
  * 红线 6 自检：写进去的是**角色自己的开场白**（`opening` 由剧本人设/未完成的线生成，角色口吻），
- * 不是系统提示、不是兜底文案 —— 与 reengage 的 App 内主动消息同一性质。
+ * 不是系统提示、不是兜底文案，与 reengage 的 App 内主动消息同一性质。
  */
 function seedGreetingSession(userId: string, character: ChatCharacter): boolean {
   try {
@@ -503,7 +503,7 @@ function seedGreetingSession(userId: string, character: ChatCharacter): boolean 
 
 /**
  * 把一段剧情导入成聊一聊角色（幂等）。
- * 失败只抛 StoryBridgeError（NO_STORY / SCENARIO_NOT_FOUND），其余一律降级继续 —— 导入不该因为模型问题失败。
+ * 失败只抛 StoryBridgeError（NO_STORY / SCENARIO_NOT_FOUND），其余一律降级继续，导入不该因为模型问题失败。
  */
 export async function importStoryCharacter(opts: ImportStoryOptions): Promise<ImportStoryResult> {
   const { userId, scenarioId } = opts;
@@ -533,7 +533,7 @@ export async function importStoryCharacter(opts: ImportStoryOptions): Promise<Im
   /**
    * 重复导入时**不覆盖用户手改过的人设**（2026-09-20 复核补）。
    *
-   * 判据：拿 `story.persona`（上次由系统写入的那份）逐字段比对 —— 当前值 == 上次系统写的那份
+   * 判据：拿 `story.persona`（上次由系统写入的那份）逐字段比对，当前值 == 上次系统写的那份
    * ⇒ 用户没动过，可以随剧本刷新；当前值 ≠ 它（且不是空）⇒ 用户改过，**保留用户的**。
    * 没有快照的老数据（本修复之前导入的）按"系统写的"处理，照旧刷新。
    */
@@ -608,7 +608,7 @@ export function seedStoryMemory(
   title: string,
   name: string,
 ): number {
-  // 1) 场面块（细节层，供语义按需召回）—— 覆盖式写：每次导入都用最新会话重算
+  // 1) 场面块（细节层，供语义按需召回），覆盖式写：每次导入都用最新会话重算
   const blocks = splitStoryBlocks(messages, name).map((b, i) => ({ id: `sb_${b.at.toString(36)}_${i.toString(36)}`, ...b }));
   storyArchiveStore.replaceBlocks(userId, characterId, scenarioId, blocks);
 

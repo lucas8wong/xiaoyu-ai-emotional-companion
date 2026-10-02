@@ -9,7 +9,7 @@ import type { ReactNode } from 'react';
 
 export type Tone = 'mint' | 'amber' | 'sand' | 'plain';
 
-/* —— 配色表：单一口径（以后要调「琥珀档位感」只改这里） —— */
+/* 【配色表：单一口径（以后要调「琥珀档位感」只改这里）】 */
 export const TONE = {
   mint: { chip: 'bg-primary-lighter text-primary-text', soft: 'bg-primary-soft text-primary-text', banner: 'border-primary/30 bg-primary-lighter text-primary-text', icon: 'text-primary' },
   amber: { chip: 'bg-amber-100/80 text-amber-700', soft: 'bg-amber-100 text-amber-700', banner: 'border-amber-200 bg-amber-50/70 text-amber-800', icon: 'text-amber-500' },

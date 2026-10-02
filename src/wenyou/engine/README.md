@@ -11,7 +11,7 @@
   绝不 import 任何具体剧本数据或剧本 id。改动靠 grep 守住：
   `engine/` 内不应出现 `xian` / `sanguo` 等剧本 id 字面量。
 - 「成就内容」由游戏经 `computeAchievements({ achConfig })` 注入（见 `achievements.ts` 的
-  `ScenarioAchConfig`）。缺省 `achConfig` 时只生成通用阶梯成就，不生成任何剧本专属成就——
+  `ScenarioAchConfig`）。缺省 `achConfig` 时只生成通用阶梯成就，不生成任何剧本专属成就
   这正是引擎对未知剧本零耦合的体现，有测试兜底（`achievements.test.ts`）。
 
 ## 通用核心（可复制）

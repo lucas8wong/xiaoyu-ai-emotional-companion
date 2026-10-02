@@ -257,7 +257,7 @@ export const SKINS: SkinMeta[] = [
 
 /**
  * 默认皮肤（2026-09-18 由「小愈治愈系」改为「棉花糖」）。
- * 用户口径：「新用户以及游客的默认皮肤都改成棉花糖」——
+ * 用户口径：「新用户以及游客的默认皮肤都改成棉花糖」
  * 所以这里是**没有存档时**的取值；登录用户存在 localStorage 的选择一律尊重（见 getStoredSkin）。
  */
 export const DEFAULT_SKIN: SkinId = 'candy';
@@ -294,7 +294,7 @@ function writeCookie(name: string, value: string): void {
   try { document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`; } catch { /* 忽略 */ }
 }
 
-/* —— 动态皮肤（管理员生成，运行时从 public/skins/manifest.json 加载，免改源码） —— */
+/* 【动态皮肤（管理员生成，运行时从 public/skins/manifest.json 加载，免改源码）】 */
 let dynamicSkins: SkinMeta[] = [];
 
 export function setDynamicSkins(list: SkinMeta[]): void {
@@ -305,8 +305,8 @@ export function getDynamicSkins(): SkinMeta[] {
   return dynamicSkins;
 }
 
-/* —— 动态皮肤清单缓存（localStorage）：把运行时 manifest 缓存下来，下次加载在首帧前同步恢复，
-     避免首帧 skinById 对动态皮肤（如 candy）落回默认皮肤、闪现错误 hero —— */
+/* 动态皮肤清单缓存（localStorage）：把运行时 manifest 缓存下来，下次加载在首帧前同步恢复，
+     避免首帧 skinById 对动态皮肤（如 candy）落回默认皮肤、闪现错误 hero*/
 const DYNAMIC_SKINS_CACHE_KEY = 'cure_dynamic_skins_cache';
 
 function readDynamicSkinsCache(): SkinMeta[] {
@@ -374,7 +374,7 @@ export function getStoredSkin(): SkinId {
     }
   }
   // 老游客的一次性迁移：存档里那份 `healing` 多半不是自己选的（是当年默认皮肤自动写进去的）。
-  // 只对**未登录**设备生效——登录用户可能是真选过「小愈治愈系」，一律尊重其选择。
+  // 只对**未登录**设备生效，登录用户可能是真选过「小愈治愈系」，一律尊重其选择。
   if (id === LEGACY_DEFAULT_SKIN && !hasLoginToken() && !readDefaultMigrated()) {
     try { localStorage.setItem(DEFAULT_MIGRATED_KEY, '1'); } catch { /* 忽略 */ }
     id = DEFAULT_SKIN;
@@ -382,7 +382,7 @@ export function getStoredSkin(): SkinId {
   return id || DEFAULT_SKIN;
 }
 
-/** 该设备是否已登录（有 token）——只读 `cure_app_token`，不 import services/api，避免循环依赖 */
+/** 该设备是否已登录（有 token），只读 `cure_app_token`，不 import services/api，避免循环依赖 */
 function hasLoginToken(): boolean {
   try { return !!localStorage.getItem('cure_app_token'); } catch { return false; }
 }
@@ -393,7 +393,7 @@ function readDefaultMigrated(): boolean {
 /**
  * 该皮肤在 `public/skins/<id>/` 下**有没有自己的图标与 manifest 资源**。
  *
- * 为什么需要这个判断（2026-09-17 实机核对到的既有 bug）：`default` 皮肤是「纯品牌底」——
+ * 为什么需要这个判断（2026-09-17 实机核对到的既有 bug）：`default` 皮肤是「纯品牌底」
  * `SKINS` 里它的所有资源字段都是空串，`public/skins/` 下也**没有 default 目录**；
  * 而 `applySkin()` 以前一律把 favicon / 主屏图标 / manifest 改写成 `/skins/<id>/...`：
  *   - `/skins/default/app-icon-32.png` → 404（标签页图标空掉）
@@ -444,13 +444,13 @@ export function applySkin(id: SkinId): void {
   if (themeMeta) themeMeta.setAttribute('content', primary || DEFAULT_THEME_COLOR);
 }
 
-/* —— 白板卡片背景透明度（界面外观可调，默认=中度透明 0.8） —— */
+/* 【白板卡片背景透明度（界面外观可调，默认=中度透明 0.8）】 */
 export type CardBgAlpha = number;
 
 /**
  * 默认「卡片不透明度」= **38%**（2026-09-15 用户要求"所有用户默认都设置成 38%"；原为 80%）。
  * ⚠️ 只改这个常量**不够**：`applyCardBgAlpha` 在挂载时会把当前值写进 localStorage，
- * 所以老用户（从没拖过滑块）的存档里早就是旧的 0.8 —— 必须靠下面的版本号做一次迁移。
+ * 所以老用户（从没拖过滑块）的存档里早就是旧的 0.8，必须靠下面的版本号做一次迁移。
  */
 export const DEFAULT_CARD_BG_ALPHA: CardBgAlpha = 0.38;
 
@@ -466,7 +466,7 @@ export function getStoredCardBgAlpha(): CardBgAlpha {
   try {
     const rawStr = localStorage.getItem(CARD_ALPHA_KEY);
     const ver = Number(localStorage.getItem(CARD_ALPHA_VERSION_KEY) || '0');
-    // 注意：空串必须当“没存档”处理 —— Number('') === 0，否则会被当成合法值 → 卡片全透明
+    // 注意：空串必须当“没存档”处理，Number('') === 0，否则会被当成合法值 → 卡片全透明
     const raw = rawStr == null || rawStr.trim() === '' ? null : Number(rawStr);
     const valid = raw != null && Number.isFinite(raw) && raw >= 0 && raw <= 1;
     if (ver < CARD_ALPHA_VERSION) {
@@ -488,13 +488,13 @@ export function applyCardBgAlpha(alpha: CardBgAlpha): void {
   document.documentElement.style.setProperty('--card-bg-alpha', String(alpha));
 }
 
-/* —— 氛围背景深浅（界面外观可调，对每套皮肤分别记忆）：0=背景图明显(深)，1=全浅(背景几乎不可见)；默认：星空=0.72(需罩)，其它=0 —— */
+/* 【氛围背景深浅（界面外观可调，对每套皮肤分别记忆）：0=背景图明显(深)，1=全浅(背景几乎不可见)；默认：星空=0.72(需罩)，其它=0】 */
 export type BgWash = number;
 
 const bgWashKey = (id: SkinId) => `cure_skin_bg_wash_${id}`;
 
 export function defaultBgWash(id: SkinId): BgWash {
-  // ⚠️ 这两档必须与 index.html 首屏内联脚本里的 `washes` 表**逐字一致**——
+  // ⚠️ 这两档必须与 index.html 首屏内联脚本里的 `washes` 表**逐字一致**
   // 不一致的后果是首帧用脚本的值、React 挂载后跳到这里的值（背景光晕闪一下）。
   // 2026-09-18 顺手修：原来 candy 缺这一档（脚本 0.32 / 这里 0），
   // 当时 candy 不是默认皮肤所以少有人看到；现在它是新用户默认皮肤，必须对齐。

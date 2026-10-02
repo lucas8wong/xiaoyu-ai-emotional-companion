@@ -32,7 +32,7 @@ interface SkinMetaFile {
   [k: string]: unknown;
 }
 
-/* —— 颜色工具 —— */
+/* 【颜色工具】 */
 
 function hexToRgb(hex: string): [number, number, number] {
   let h = hex.replace('#', '').trim();
@@ -76,7 +76,7 @@ function sanitizePalette(palette: unknown): string[] {
 
 /**
  * 同一个颜色出两行：`--color-x`（hex，给 CSS/内联样式直接用）+ `--color-x-rgb`（RGB 三通道，给 Tailwind 的
- * `/透明度` 修饰符用——裸 `var()` 解析不出颜色，`bg-primary/10` 这类类会被 Tailwind 静默丢弃，
+ * `/透明度` 修饰符用，裸 `var()` 解析不出颜色，`bg-primary/10` 这类类会被 Tailwind 静默丢弃，
  * 详见 tailwind.config.js 顶部注释）。两行必须同源同改，`test/unit/themeTokens.test.ts` 守着这条不变量。
  */
 function tokenPair(name: string, hex: string): string[] {
@@ -137,7 +137,7 @@ function buildGeneratedSkinsTs(entries: SkinMetaFile[]): string {
   return `import type { SkinMeta } from './skin';
 
 /**
- * 管理员生成的皮肤（静态化）清单 —— 由皮肤生成器 / scripts/staticize-skins.mts 写入。
+ * 管理员生成的皮肤（静态化）清单，由皮肤生成器 / scripts/staticize-skins.mts 写入。
  * 生成后需重新构建前端（npm run build:prod），皮肤即作为静态资源随包发布、首帧即命中。
  * 手写/品牌皮肤（default/healing/zen/star/candy）不在此列。
  */

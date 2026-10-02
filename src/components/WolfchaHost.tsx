@@ -17,7 +17,7 @@ export default function WolfchaHost({ onBack }: { onBack?: () => void }) {
   return (
     <div className="ww-scope fixed inset-0 z-40 bg-black h-[100dvh] w-full overflow-hidden">
       {/* 返回浮层：pointer-events 只落在按钮上，其余区域交给牌桌 */}
-      {/* ⚠️ 层级必须高于子应用：它在 DOM 里排在我之后，两者都定位时它压住我——
+      {/* ⚠️ 层级必须高于子应用：它在 DOM 里排在我之后，两者都定位时它压住我
           实测桌面端对局内返回按钮被它的顶栏盖住、用户退不出去。
           另外按钮给**实底**，不依赖底层是深色还是浅色主题（桌面端是浅色羊皮纸）。 */}
       {/* safe-area：PWA/全面屏下别把「返回」压在状态栏/灵动岛下面 */}

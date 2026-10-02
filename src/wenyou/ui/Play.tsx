@@ -48,7 +48,7 @@ export function Play({
   onQuit: () => void
 }) {
   const { scenario, state, pendingTurn, pendingAction } = session
-  // 真机 iOS 键盘：对局页是「全屏 + 底部自定义行动输入」——聚焦会被键盘盖住，需锁滚动并随可视视口收缩。
+  // 真机 iOS 键盘：对局页是「全屏 + 底部自定义行动输入」，聚焦会被键盘盖住，需锁滚动并随可视视口收缩。
   const { height: vvHeight } = useVisualViewport()
   useIosKeyboardLock(true)
   // 回合来源：本地事件池或 AI 在线生成。Play 只依赖来源的能力声明（流式 / 自由行动 / 随机），
@@ -89,7 +89,7 @@ export function Play({
   const [castFocus, setCastFocus] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   // 沉浸：地址栏 + 底部导航栏在手机上吃掉近 1/5 的屏，而对局页是定高布局（不滚动），
-  // 那两条栏永远不会自动收起。做成显式开关而非自动进入——阅读类页面强行全屏会夺走
+  // 那两条栏永远不会自动收起。做成显式开关而非自动进入，阅读类页面强行全屏会夺走
   // 返回/地址栏，读者点选项点得又频繁，误触代价太大。
   const [fullscreen, setFullscreen] = useState(false)
   useEffect(() => {
@@ -110,7 +110,7 @@ export function Play({
   const abortRef = useRef<AbortController | null>(null)
   // 本回合正文是否已通过流式过程展示过：是则不再走打字机动画（仅存档恢复时用打字机）
   const streamedRef = useRef(false)
-  // 已经「露过面」的那一回合正文：与 streamedRef 的区别是**不随结算复位**——
+  // 已经「露过面」的那一回合正文：与 streamedRef 的区别是**不随结算复位**
   // 玩家填完自定义行动确认发送后，pendingTurn 仍是那一幕场景，若此时重新挂打字机，
   // 上一幕故事会被从头再打一遍（观感＝故事被重新加载）。按对象身份比对，切换回合自然失效。
   const revealedTurnRef = useRef<unknown>(null)
@@ -147,7 +147,7 @@ export function Play({
     .map((a) => ({ key: a.key, name: a.name, v: deltas[a.key] }))
   const flags = state.flags ?? []
 
-  // —— 人物志（AI 登记的具名人物）：正文内联可点 + 人物志面板，两条入口共用同一张人物卡 ——
+  // 【人物志（AI 登记的具名人物）：正文内联可点 + 人物志面板，两条入口共用同一张人物卡】
   // 展示用名册 = 已入册的 + 本回合 pendingTurn 刚登记的：新名字必须在玩家还没落子时就能点，
   // 否则「突然出现的人名」要等玩家先选一个选项才能看身份（与需求不符）。
   // 落盘仍由引擎单点写入（applyChoice / resolveCustomAction），这里只是同一套合并规则（applyCast）的只读投影。
@@ -158,7 +158,7 @@ export function Play({
   const castNames = useMemo(() => viewCast.map((c) => c.name), [viewCast])
   const focusMember = castFocus ? viewCast.find((c) => c.name === castFocus) : undefined
   // 本回合正文是否已经露过面：流式已推 / 打字机已写完 / 之前已展示过且这一回合没换。
-  // 用它决定「直接显示」还是「走打字机」——结算在途期间必须仍是 true，否则上一幕会被重打一遍。
+  // 用它决定「直接显示」还是「走打字机」，结算在途期间必须仍是 true，否则上一幕会被重打一遍。
   const proseRevealed =
     streamedRef.current || proseDone || (!!pendingTurn && revealedTurnRef.current === pendingTurn)
   // 把正文按人名切成片段：命中的渲染成可点人名（只认名册，避免把属性名/称谓误标）
@@ -418,7 +418,7 @@ export function Play({
   // 分享当下：打开预览弹窗，所见即所得地复制/保存/分享此刻的命运卡
   const [showShare, setShowShare] = useState(false)
 
-  // 顶部 HUD 是绝对定位浮层，卷文面板（.vn-panel）也是绝对定位贴底——两者不在同一条流里，
+  // 顶部 HUD 是绝对定位浮层，卷文面板（.vn-panel）也是绝对定位贴底，两者不在同一条流里，
   // 面板让出的顶部空间原先是写死的（窄屏只让 80px），而 HUD 高度会随「标题换行 / 语言 / 字号」变化。
   // 一旦 HUD 高于让位空间，面板里的命数（属性栏）与额度就会钻到标题底下互相重叠（2026-09-28 用户反馈）。
   // 这里实测 HUD 高度、写成 CSS 变量 --vn-hud-h，由 .vn-panel 的高度公式据此让位：语言、字号、
@@ -682,7 +682,7 @@ export function Play({
               <p className="intro">{scenario.intro}</p>
             )}
             {/* 卷文正文：流式段与落定段**共用同一个 <p>**。此前它们是两个不同的 JSX 分支，
-                回合落定时 React 会卸载旧段、重建新段（并把所有人名的样式重刷一遍）——
+                回合落定时 React 会卸载旧段、重建新段（并把所有人名的样式重刷一遍）
                 观感就是「每出一段新故事又刷新一次」。共用之后只改内容、不换节点。 */}
             {loading && streamText ? (
               <p className="narrative">
@@ -833,7 +833,7 @@ export function Play({
           <div className="modal play-upsell" onClick={(e) => e.stopPropagation()}>
             <h3>{wyT('Pro 会员专属')}</h3>
             <p className="play-upsell-desc">
-              {wyT('「AI 托管」是 Pro 会员专属功能——开启后 AI 会替你的角色自动抉择、自动演进，无需手动操作。升级 Pro 即可使用。')}
+              {wyT('「AI 托管」是 Pro 会员专属功能：开启后 AI 会替你的角色自动抉择、自动演进，无需手动操作。升级 Pro 即可使用。')}
             </p>
             <div className="play-upsell-actions">
               <button

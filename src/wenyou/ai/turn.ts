@@ -19,7 +19,7 @@ const choicesField = z.array(choiceSchema).min(2).max(6)
 const itemsField = z.array(z.string().min(1)).optional()
 // 自定义行动的属性结算：可缺省
 const actionEffectsField = z.record(z.string(), z.number()).optional()
-// AI 托管推荐：该角色最可能选的选项下标。非必要提示字段——模型若把它写成字符串/小数等
+// AI 托管推荐：该角色最可能选的选项下标。非必要提示字段，模型若把它写成字符串/小数等
 // 非法值，不应拖垮整回合解析，故用 .catch 兜底为 undefined（该回合托管退化为随机选择）。
 const recommendField = z.number().int().optional().catch(undefined)
 // 记忆补充：关键事实列表。非必要提示字段，模型若给非法值不应拖垮整回合解析，故 .catch 兜底。
@@ -27,7 +27,7 @@ const memoryAddField = z.array(z.string().min(1)).optional().catch(undefined)
 // 目标进度 0~100：非必要提示字段，非法值兜底为 undefined，clamp 交由 state 处理。
 const goalProgressField = z.number().optional().catch(undefined)
 // 人物志登记（本回合首次登场的具名人物）：name/role 必填，relation/brief 可选。
-// 逐条校验、**丢弃非法单条**而不是整段作废——模型偶尔多给一个没名字/没身份的条目，
+// 逐条校验、**丢弃非法单条**而不是整段作废，模型偶尔多给一个没名字/没身份的条目，
 // 不该连带把这一回合的其他新人物一起丢掉（也不该让本回合解析失败）。
 const castMemberSchema = z.object({
   name: z.string().trim().min(2).max(12),
@@ -79,7 +79,7 @@ export function parseTurnResult(text: string): TurnResult {
   const { value, start } = extractJsonWithStart(text)
   const full = turnResultSchema.safeParse(value)
   if (full.success) {
-    // 模型把选项清单当正文塞进 narrative 时，剥离后会变空——与两段式路径一致地抛错触发重试，
+    // 模型把选项清单当正文塞进 narrative 时，剥离后会变空，与两段式路径一致地抛错触发重试，
     // 而非静默返回空正文（会渲染空白并写入存档/留影）
     const narrative = stripChoiceList(full.data.narrative)
     if (!narrative) throw new Error('剧情正文为空')

@@ -1,5 +1,5 @@
 /**
- * SEO/GEO 落地内容页 —— 类型与纯函数工具（**纯数据模块，不含 React**）
+ * SEO/GEO 落地内容页，类型与纯函数工具（**纯数据模块，不含 React**）
  *
  * 为什么要单独拆出这一层：
  *  - `scripts/prerender.mts` 需要在 Node 侧 import 页面清单来生成预渲染路由，

@@ -10,7 +10,7 @@
  *   npx tsx scripts/generate_cast_avatars.mts --provider sidecar --only <key> --only <key> ...
  *   npx tsx scripts/generate_cast_avatars.mts --provider sidecar --variants 3 --outdir temp/xxx
  *
- * 风格：**分两组锚点**（按剧本题材选，不写死一套）——
+ * 风格：**分两组锚点**（按剧本题材选，不写死一套）
  *   ancient = 中国古风（红帷幔/格窗/暖烛光），modern = 现代都市·校园·刑侦（虚化实景 + 电影感打光）。
  *   两组都保持「半写实插画/漫画感 + 干净线稿」，与现有 30 张主角头像同一族。
  *
@@ -61,7 +61,7 @@ interface Row { key: string; file: string; style: StyleKey; promptEn: string; pr
 
 /** 白名单：新增配角就在这里加一行（key/file 用 `<scenarioId>-<castId>`） */
 const ROWS: Row[] = [
-  // ——— 1 他等了我十五年（现代·港圈年上）———
+  // 【1 他等了我十五年（现代·港圈年上）】
   { key: 'guyushen-songzhi-chenbo', file: 'guyushen-songzhi-chenbo.jpg', style: 'modern',
     promptEn: 'elderly Chinese chauffeur, late sixties, short grey hair, weathered kind face, dark driver suit and peaked cap, standing beside a black car at night',
     promptZh: '六十多岁的中国老司机，花白短发，饱经风霜的温和面孔，深色司机制服与制帽，夜里站在黑色轿车旁' },
@@ -74,7 +74,7 @@ const ROWS: Row[] = [
   { key: 'peixiuyuan-linwantang-linwanling', file: 'peixiuyuan-linwantang-linwanling.jpg', style: 'ancient',
     promptEn: 'young Chinese noblewoman, nineteen, elegant updo with a jade hairpin, dark red and pale gold Ming dynasty hanfu with crossed collar, composed resolute gaze, front view, bust portrait, red silk curtain background',
     promptZh: '十九岁的中国名门闺秀，优雅盘发插玉簪，深红配浅金的明代交领汉服，沉静而决绝的目光，正面，半身肖像，红色帷幔背景' },
-  // ——— 3 贵族高中的坏狗（现代·私立高中）———
+  // 【3 贵族高中的坏狗（现代·私立高中）】
   { key: 'luyan-sunian-zhousong', file: 'luyan-sunian-zhousong.jpg', style: 'modern',
     promptEn: 'Chinese high school boy, seventeen, short messy brown hair, sporty school jacket, wide teasing grin, school gym in background',
     promptZh: '十七岁中国高中男生，乱蓬蓬的棕短发，运动款校服外套，咧嘴逗趣的笑，背景是学校体育馆' },
@@ -84,7 +84,7 @@ const ROWS: Row[] = [
   { key: 'luyan-sunian-bailu', file: 'luyan-sunian-bailu.jpg', style: 'modern',
     promptEn: 'Chinese high school girl, seventeen, neat long black hair, thin glasses, school uniform with a press badge, calm confident',
     promptZh: '十七岁中国高中女生，整齐黑长发，细框眼镜，校服上别着校刊记者证，冷静自信' },
-  // ——— 4 草原上的和亲公主（古代·草原）———
+  // 【4 草原上的和亲公主（古代·草原）】
   { key: 'tuobaye-shenlianxing-bayin', file: 'tuobaye-shenlianxing-bayin.jpg', style: 'ancient',
     promptEn: 'old steppe healer man, sixties, deeply wrinkled face, grey braid, fur-trimmed robe, leather medicine pouch',
     promptZh: '六十多岁的草原老医官，满面深皱纹，灰白辫发，镶毛皮长袍，皮制药囊' },
@@ -94,7 +94,7 @@ const ROWS: Row[] = [
   { key: 'tuobaye-shenlianxing-yugu', file: 'tuobaye-shenlianxing-yugu.jpg', style: 'ancient',
     promptEn: 'middle-aged Chinese matron, fifties, plain hanfu, hair in a tight bun, worried protective expression',
     promptZh: '五十多岁的中国妇人，素色汉服，头发梳紧成髻，担忧而护主的神情' },
-  // ——— 5 黏人的毕业学长（现代·校园）———
+  // 【5 黏人的毕业学长（现代·校园）】
   { key: 'jiangyubai-wenruanruan-chenxu', file: 'jiangyubai-wenruanruan-chenxu.jpg', style: 'modern',
     promptEn: 'young Chinese man, mid twenties, round glasses, grey hoodie, cheerful grin, startup office with monitors',
     promptZh: '二十多岁的中国年轻男人，圆框眼镜，灰色卫衣，开朗的笑，创业办公室里显示器成排' },
@@ -104,7 +104,7 @@ const ROWS: Row[] = [
   { key: 'jiangyubai-wenruanruan-nianji', file: 'jiangyubai-wenruanruan-nianji.jpg', style: 'modern',
     promptEn: 'middle-aged Chinese male teacher, fifties, square glasses, stern face, shirt and tie, school office',
     promptZh: '五十多岁的中国男教师，方框眼镜，神情严厉，衬衫领带，学校办公室' },
-  // ——— 6 疯批总裁的白月光（现代·都市）———
+  // 【6 疯批总裁的白月光（现代·都市）】
   { key: 'luwang-guxiaoman-zhouyan', file: 'luwang-guxiaoman-zhouyan.jpg', style: 'modern',
     promptEn: 'young Chinese male secretary, thirties, slim build, black suit, expressionless, glass-walled office at night',
     promptZh: '三十岁出头的中国男秘书，瘦削，黑西装，面无表情，夜里玻璃幕墙办公室' },
@@ -114,7 +114,7 @@ const ROWS: Row[] = [
   { key: 'luwang-guxiaoman-luchen', file: 'luwang-guxiaoman-luchen.jpg', style: 'modern',
     promptEn: 'mature Chinese businessman, fifties, silver temples, expensive grey suit, cold smile, old family mansion',
     promptZh: '五十多岁的成熟中国商人，鬓角银白，昂贵灰西装，冷笑，老宅厅堂' },
-  // ——— 7 高冷女总裁的落魄助理（现代·职场）———
+  // 【7 高冷女总裁的落魄助理（现代·职场）】
   { key: 'shenqingyi-luchi-gumingchuan', file: 'shenqingyi-luchi-gumingchuan.jpg', style: 'modern',
     promptEn: 'Chinese corporate vice president, forties, side-parted hair, grey suit, calculating look, boardroom',
     promptZh: '四十多岁的中国企业副总，侧分头发，灰西装，算计的眼神，会议室' },
@@ -124,7 +124,7 @@ const ROWS: Row[] = [
   { key: 'shenqingyi-luchi-qianjingli', file: 'shenqingyi-luchi-qianjingli.jpg', style: 'modern',
     promptEn: 'Chinese middle-aged man, forties, cheap wrinkled suit, sweaty forehead, nervous yet aggressive, office lobby',
     promptZh: '四十多岁的中国中年男人，皱巴巴的廉价西装，额头冒汗，又急又凶，公司大堂' },
-  // ——— 8 温柔女医生（现代·医院）———
+  // 【8 温柔女医生（现代·医院）】
   { key: 'linjianwei-chenyi-wangjie', file: 'linjianwei-chenyi-wangjie.jpg', style: 'modern',
     promptEn: 'Chinese head nurse, mid forties, short hair, blue scrubs, capable kind face, hospital corridor',
     promptZh: '四十多岁的中国护士长，短发，蓝色洗手服，干练而和善的面孔，医院走廊' },
@@ -134,7 +134,7 @@ const ROWS: Row[] = [
   { key: 'linjianwei-chenyi-xiaoyu', file: 'linjianwei-chenyi-xiaoyu.jpg', style: 'modern',
     promptEn: 'Chinese teenage boy patient, sixteen, hospital gown, pale and bored, sitting up in a ward bed',
     promptZh: '十六岁的中国少年病人，病号服，脸色偏白有点无聊，坐在病床上' },
-  // ——— 9 傲娇大小姐（现代·豪门）———
+  // 【9 傲娇大小姐（现代·豪门）】
   { key: 'guwanqing-heyu-laozhou', file: 'guwanqing-heyu-laozhou.jpg', style: 'modern',
     promptEn: 'elderly Chinese butler, sixties, neat grey hair, black tailcoat and white gloves, dignified, grand hallway',
     promptZh: '六十多岁的中国老管家，整齐灰发，黑燕尾服与白手套，庄重，宅邸长廊' },
@@ -144,7 +144,7 @@ const ROWS: Row[] = [
   { key: 'guwanqing-heyu-awu', file: 'guwanqing-heyu-awu.jpg', style: 'modern',
     promptEn: 'Chinese male bodyguard, thirties, buzz cut, black suit, earpiece, serious, luxury car park',
     promptZh: '三十多岁的中国男保镖，寸头，黑西装，耳麦，严肃，豪车停车场' },
-  // ——— 10 冷峻刑警的年下法医（现代·刑侦）———
+  // 【10 冷峻刑警的年下法医（现代·刑侦）】
   { key: 'lutingyuan-shenyan-laoxing', file: 'lutingyuan-shenyan-laoxing.jpg', style: 'modern',
     promptEn: 'Chinese male detective, mid forties, stubble, worn leather jacket, tired sharp eyes, police station',
     promptZh: '四十多岁的中国男刑警，胡茬，旧皮夹克，疲惫而锐利的眼睛，警局' },

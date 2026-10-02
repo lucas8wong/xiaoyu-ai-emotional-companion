@@ -59,7 +59,7 @@ export function GenerateModal({
     }
   }
 
-  // 生成中（busy）禁用 Esc 关闭，与点击遮罩一致——后端单次生成不可中断，避免误触白等
+  // 生成中（busy）禁用 Esc 关闭，与点击遮罩一致，后端单次生成不可中断，避免误触白等
   const ref = useModalA11y<HTMLDivElement>(onClose, !busy)
 
   return (

@@ -6,7 +6,7 @@
    否则 /tts 会因 reference 找不到而 400 → 逐级回退 CosyVoice（未部署）→ msedge（音色不同）。
 
 🔴 为什么脚本里要"测基频 + 重试"（2026-09-15 用户反馈"语音性别应与主角性别一致"）：
-   文本音色设计对**性别**的遵循度很不可靠 —— 实测 8 个参考里有 5 个音区是反的：
+   文本音色设计对**性别**的遵循度很不可靠，实测 8 个参考里有 5 个音区是反的：
    `steady-m`/`deep-m`（**30 部剧本里 23 部在用**）实际落在 ~232/235Hz 的**女声区**，
    而 `bright-f`/`cool-f` 反而是 ~128/136Hz 的**男声区**。
    所以现在**生成后立刻测 F0，落在目标音区才收**，不合格就换一句参考文本重生成（换文本 = 换 seed）。
@@ -33,7 +33,7 @@ REF_TEXTS = [
 ]
 
 # 音色参考的**强化设计串**（只用于生成参考音频；线上 storyVoice.ts 的 design 不参与剧情配音，
-# 因为剧情走克隆路径 —— 所以这里可以放心加 masculine / feminine / deep pitch 这类词）
+# 因为剧情走克隆路径，所以这里可以放心加 masculine / feminine / deep pitch 这类词）
 PRESETS = [
     ("gentle-f",   "female",  170, "young adult female voice, feminine, soft and gentle tone, clear and natural"),
     ("warm-f",     "female",  170, "young adult female voice, feminine, warm and clear tone"),
@@ -94,7 +94,7 @@ TARGET_F0 = {"male": 125.0, "female": 195.0, "neutral": 0.0}
 
 def pitch_fix(raw: bytes, kind: str, f0: float) -> tuple[bytes, float]:
     """兜底：用 ffmpeg rubberband **保共振峰**变调，把参考拉进目标音区。
-    为什么需要（2026-09-15）：换文本（换 seed）试完仍可能不合格 ——
+    为什么需要（2026-09-15）：换文本（换 seed）试完仍可能不合格
     文本音色设计对性别本来就不可靠，这是最后一道保障。变调过的参考只用来定音色，
     音高对了、共振峰保留，克隆出来的性别也就对了。"""
     import subprocess, tempfile

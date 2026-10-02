@@ -31,7 +31,7 @@
  *   RP_ZH_EXTRA_BODY / RP_EN_EXTRA_BODY            可选，JSON 对象，合并进请求体。
  *                                                  第三方托管专有能力的逃生口，典型用途：
  *                                                  {"chat_template_kwargs":{"enable_thinking":false}}
- *                                                  —— Qwen3.5 系默认开思考，不关会白烧几百到上千
+ *                                                  Qwen3.5 系默认开思考，不关会白烧几百到上千
  *                                                  输出 token（实测同一句问候：338 → 3 token）。
  *
  * ⛔ 成人档**禁止思考模式**（2026-09-25 产品决定，本文件强制执行）
@@ -88,7 +88,7 @@ export interface RoleplayClientChoice {
 }
 
 /**
- * 显式 provider 开关 —— 用于**一键切回 DeepSeek**，无需删改已配好的 RP_* 配置。
+ * 显式 provider 开关，用于**一键切回 DeepSeek**，无需删改已配好的 RP_* 配置。
  *
  *   RP_PROVIDER=deepseek      两个分支（zh + en）都强制回 DeepSeek ← 线上止血用这一行
  *   RP_ZH_PROVIDER=deepseek   只把中文分支切回
@@ -145,7 +145,7 @@ function readBranch(prefix: 'RP_ZH' | 'RP_EN' | 'RP_AUX'): CompatConfig | null {
 
 /**
  * 托管专有扩展字段（JSON 字符串，如 {"chat_template_kwargs":{"enable_thinking":false}}）。
- * 解析失败只告警并忽略——绝不让一个配错的字符串把剧情链路整条打挂。
+ * 解析失败只告警并忽略，绝不让一个配错的字符串把剧情链路整条打挂。
  */
 function readExtraBody(prefix: 'RP_ZH' | 'RP_EN' | 'RP_AUX'): Record<string, unknown> | undefined {
   const raw = (process.env[prefix + '_EXTRA_BODY'] || '').trim();
@@ -174,14 +174,14 @@ function deepseekChoice(reason: RoleplayProviderReason): RoleplayClientChoice {
   };
 }
 
-// —— 成人档禁止思考模式（2026-09-25 产品决定）———————————————————————————
+// 【成人档禁止思考模式（2026-09-25 产品决定）】
 
 /**
  * 把 `chat_template_kwargs.enable_thinking` **强制写成 false**。
  *
  * 为什么要有这道不变量（而不是「靠 .env 别配错」）：
  *   成人档思考模式已按实验结论**移除**（文件头写了四条实测证据：单轮中位 423s、半数回合 22 字残句、
- *   生产超时下 3/4 被掐断、主终点 p=1.000 无差异）。一个只存在于 `.env` 的"关"是脆的——
+ *   生产超时下 3/4 被掐断、主终点 p=1.000 无差异）。一个只存在于 `.env` 的"关"是脆的
  *   任何人复制粘贴一段托管配置（Qwen3.5 系默认**开**思考）就会把它打开，而我们不会收到任何报警，
  *   只会看到"最近剧情怎么这么慢/这么短"。所以这里把「成人档不思考」写成代码里的不变量，
  *   并由 test/unit/roleplayModel.test.ts 的守卫用例钉死。
@@ -199,7 +199,7 @@ function enforceNoThinking(cfg: CompatConfig): CompatConfig {
 }
 
 /**
- * 按剧情语言取 client —— 剧情链路唯一入口。
+ * 按剧情语言取 client，剧情链路唯一入口。
  * en → 英文分支；zh / zh-TW（含未知值）→ 中文分支。
  *
  * 判定顺序（上层优先）：
@@ -248,7 +248,7 @@ export function roleplayClientFor(
  * 把 client 的两次调用包进「本地并发闸门 + 忙时重试」。
  *
  * 只包第三方分支（DeepSeek 官方没有这种账号级并发上限，不需要排队）。
- * 流式那路额外做了一件事：记录是否已经吐过 token —— 吐过就绝不重试，否则会重复下发。
+ * 流式那路额外做了一件事：记录是否已经吐过 token，吐过就绝不重试，否则会重复下发。
  */
 function withUpstreamGate(client: any, onQueue?: (info: QueueWaitInfo) => void): any {
   if (!client?.models) return client;
@@ -270,7 +270,7 @@ function withUpstreamGate(client: any, onQueue?: (info: QueueWaitInfo) => void):
 }
 
 /**
- * **辅助调用**（玩家候选建议 / 剧本生成与改写）的 client —— 与剧情回复**分开选型**。
+ * **辅助调用**（玩家候选建议 / 剧本生成与改写）的 client，与剧情回复**分开选型**。
  *
  * 为什么必须分开：这些调用不生成成段剧情，但同样按「模型单价」从账号并发池里扣费。
  * 实测（Featherless）：账号共 4 单元、27B 模型每请求扣 2 单元 →

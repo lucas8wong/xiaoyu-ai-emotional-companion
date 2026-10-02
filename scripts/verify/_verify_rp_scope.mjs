@@ -44,7 +44,7 @@ async function clickText(page, text, timeout = 30000) {
 }
 
 /**
- * 点「任意含该文本的元素」——剧本卡片通常是 div + onClick，不是 <button>。
+ * 点「任意含该文本的元素」，剧本卡片通常是 div + onClick，不是 <button>。
  * 做法：找到最内层含文本的元素，再向上找第一个可点击祖先。
  */
 async function clickAnyText(page, text, timeout = 30000) {

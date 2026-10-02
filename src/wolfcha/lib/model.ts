@@ -1,5 +1,5 @@
 /**
- * 小愈 · AI 狼人杀 —— 模型口径（唯一出口）
+ * 小愈 · AI 狼人杀，模型口径（唯一出口）
  *
  * 重构背景（2026-09-17）：上游 wolfcha 把这套放在 `lib/api-keys.ts` 里，客户端要管
  * **三套 provider**（Zenmux / 百炼 Dashscope / TokenDance）、**用户自带 API Key**、

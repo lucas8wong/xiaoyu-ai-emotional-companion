@@ -8,21 +8,21 @@
  *
  * ── 设计红线（与 AGENTS.md 一致，改这里之前先读一遍）─────────────────────────────
  *   1. **绝不生成内容、绝不替角色编台词**：只做「可判定」的修复（补标记 / 补时间戳 / 版本自洽 / 回填剧名快照）。
- *      丢掉的回复**修不回来就是修不回来**——那样的问题只做「用户可自助续接 + 如实报告」。
+ *      丢掉的回复**修不回来就是修不回来**，那样的问题只做「用户可自助续接 + 如实报告」。
  *   2. **绝不改 user 消息**；内容删除类（历史里的失败兜底文案）**默认只报告不执行**（需 `SELF_HEAL_DELETE=1`）。
  *   3. 任何写入前**先备份原文**到 `temp/self-heal-backup/`，单次修复有上限，模式可一键切换/关闭。
  *   4. 记录写进**自己的** kv（`data/self-heal.json`），**绝不写进业务 messages**（红线 6：提示/报告不是角色台词）。
  *   5. **测试设备不计**（device id 以 `test-` 开头）：自测/验证脚本不污染运营卡。
- *   6. **不做生成型修复**：不会为了"看起来接上了"去调模型补一句话 —— 那等于把 AI 文本塞进用户历史。
+ *   6. **不做生成型修复**：不会为了"看起来接上了"去调模型补一句话，那等于把 AI 文本塞进用户历史。
  *
  * ── 模式（`SELF_HEAL`）─────────────────────────────────────────────────────────
  *   - `apply`（默认）：扫描 + **执行白名单里的安全修复**（改前备份、改后复查）；
- *   - `dry`：只扫描、只记录（状态标 `observed`），一行数据都不动 —— 想先观察几天用这个；
+ *   - `dry`：只扫描、只记录（状态标 `observed`），一行数据都不动，想先观察几天用这个；
  *   - `off`：完全不跑（定时器不起、接口返回 mode=off）。
  *
  * ── 与「AI 失败卡」的分工 ──────────────────────────────────────────────────────
- *   上面那张卡回答「今天 AI 没接上几次、用户看到了什么」——**匿名、聚合**；
- *   本引擎回答「哪个用户的那条会话坏了、我修了没有、现在什么状态」——**具体、可复查**。
+ *   上面那张卡回答「今天 AI 没接上几次、用户看到了什么」：**匿名、聚合**；
+ *   本引擎回答「哪个用户的那条会话坏了、我修了没有、现在什么状态」：**具体、可复查**。
  */
 
 import fs from 'node:fs';
@@ -52,7 +52,7 @@ export type HealKind =
   | 'TITLE_SNAPSHOT_MISSING';  // 会话缺剧名快照
 
 export interface HealRecord {
-  /** 稳定 id：`kind|userId|scenarioId|sig` 的短哈希 —— 同一问题重复发现只更新同一条，不刷屏 */
+  /** 稳定 id：`kind|userId|scenarioId|sig` 的短哈希，同一问题重复发现只更新同一条，不刷屏 */
   id: string;
   kind: HealKind;
   status: HealStatus;
@@ -72,7 +72,7 @@ export interface HealRecord {
   /** 怎么解决（做了什么） */
   action: string;
   /**
-   * 现状（一句话）——**只写描述，不要自带状态标签**。
+   * 现状（一句话），**只写描述，不要自带状态标签**。
    * 为什么：状态由卡片按 `status` 渲染成「✅ 已修复 / ⚠️ 待人工 …」，若 `now` 里再带一遍，
    * 卡片上就会出现「现状：✅ 已缓解 ✅ 已缓解：…」这种重复（2026-09-18 第一版真机截图抓到）。
    */
@@ -105,7 +105,7 @@ export interface HealRunSummary {
 
 /**
  * ⚠️ `cause` / `action` / `now` 是**纯文本报告字段**（会被原样渲染进运营卡）：
- *    不要写 Markdown 标记（`**加粗**`、`#`、`[]()`）——2026-09-18 真机实拍就抓到过
+ *    不要写 Markdown 标记（`**加粗**`、`#`、`[]()`），2026-09-18 真机实拍就抓到过
  *    「**user 消息一律不动**」两个星号直接显示给管理员看。要强调就用「」或直接说清楚。
  */
 interface HealFinding {
@@ -151,7 +151,7 @@ function staleMs(): number {
   return (Number.isFinite(n) && n >= 0 ? n : 10) * 60 * 1000;
 }
 
-/** 测试设备（device id 前缀）——与 isTestRequest 同口径，自测不留痕 */
+/** 测试设备（device id 前缀），与 isTestRequest 同口径，自测不留痕 */
 const isTestDevice = (userId: string): boolean => /^test-/i.test(String(userId || ''));
 
 const shortHash = (s: string): string => {
@@ -339,7 +339,7 @@ function scanSession(rec: RoleplaySessionRecord, now: number): HealFinding[] {
       kind: 'FALLBACK_IN_HISTORY',
       sig: 'fb' + msgs.length + ':' + fallbacks,
       cause: `历史里留着 ${fallbacks} 条「失败兜底 / 系统提示」文案被当成角色台词（2026-09-15 事故残留）→ 它会被回灌给模型当上下文`,
-      action: `删掉这 ${fallbacks} 条（只删整串精确匹配的系统文案，user 消息一律不动）—— 内容删除类默认只报告，需 SELF_HEAL_DELETE=1 才执行`,
+      action: `删掉这 ${fallbacks} 条（只删整串精确匹配的系统文案，user 消息一律不动），内容删除类默认只报告，需 SELF_HEAL_DELETE=1 才执行`,
       now: '默认不动数据；打开 SELF_HEAL_DELETE=1 后本引擎会自动清',
       repair: { messages: msgs.filter((m) => !(m.role === 'assistant' && isFallbackBubble(m.content))) },
       destructive: true,
@@ -399,7 +399,7 @@ function backupBeforeWrite(records: RoleplaySessionRecord[], at: number): string
 /**
  * 跑一次巡检。`apply=false` 时只观察记录（dry）。
  *
- * 顺序要点：**先扫完、再决定写谁、最后统一备份一次** —— 这样一次巡检只落一个备份文件，
+ * 顺序要点：**先扫完、再决定写谁、最后统一备份一次**，这样一次巡检只落一个备份文件，
  * 且"备份失败"时直接放弃写入（宁可这次不修，也不做没有回滚点的修改）。
  */
 export async function runSelfHealCycle(opts: { apply?: boolean; now?: number } = {}): Promise<HealRunSummary> {

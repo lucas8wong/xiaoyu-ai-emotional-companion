@@ -3,7 +3,7 @@ import { builtinScenarios } from '../scenarios'
 import { djb2 } from './djb2'
 
 // 结局配图解析：按「剧本 id + 稳定配图 id」定位 assets/endings/{id}-{art}.webp。
-// 用 Vite glob 动态收集已有图片，图片存在即用、缺图回退到剧本封面——随放随生效。
+// 用 Vite glob 动态收集已有图片，图片存在即用、缺图回退到剧本封面，随放随生效。
 const art = import.meta.glob('../assets/endings/*.webp', {
   eager: true,
   import: 'default',

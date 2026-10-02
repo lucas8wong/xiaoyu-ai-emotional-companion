@@ -1,5 +1,5 @@
 /* 两个大 CJK 字体（正文霞鹜文楷 1351 KB、标题 ZCOOL 小薇 984 KB）已切成 unicode-range
-   分片，@font-face 由 scripts/slice-fonts.py 生成在 fonts.css 里——浏览器只下渲染到的
+   分片，@font-face 由 scripts/slice-fonts.py 生成在 fonts.css 里，浏览器只下渲染到的
    那几片。必须放在最前：CSS 的 @import 只能出现在其它规则之前。
    （马善政 9 KB、Cinzel 26 KB 本就极小，切了只剩开销，仍是整体一片，见文件下方。） */
 @import './fonts.css';
@@ -65,7 +65,7 @@ html[lang="zh-Hant"] .wy-root {
 .wy-root {
   margin: 0;
   /* 始终撑满视口：body 的星云渐变(background-attachment: fixed)只绘制在 body 盒内，
-     内容偏短时 body 矮于视口，底部会露出 html 的纯色 ink-9 形成色差断层 —— 撑满即消除 */
+     内容偏短时 body 矮于视口，底部会露出 html 的纯色 ink-9 形成色差断层，撑满即消除 */
   min-height: 100vh;
   min-height: 100dvh;
   /* 装饰罗盘/印玺在窄屏会略超出内容盒，禁止由此产生横向滚动（否则右缘露出无渐变的暗条，固定按钮也被顶出可视区） */
@@ -240,7 +240,7 @@ html[lang="zh-Hant"] .wy-root {
   to { opacity: 1; transform: none; }
 }
 
-/* 页面容器入场只渐变透明，不做位移变换——transform 一旦非 none 会让其成为
+/* 页面容器入场只渐变透明，不做位移变换，transform 一旦非 none 会让其成为
    position:fixed 子元素的包含块，导致弹层相对整页而非视口定位（错位/遮罩盖整页） */
 @keyframes wy-fadeIn {
   from { opacity: 0; }
@@ -560,7 +560,7 @@ html[lang="zh-Hant"] .wy-root {
   animation: wy-fadeUp 0.6s ease-out backwards;
 }
 /* 封面图铺满卡片，上覆墨色渐变保证文字可读。
-   是 <img loading="lazy"> 而非背景图（见 Home.tsx）——object-fit 复刻原来的 background-size: cover */
+   是 <img loading="lazy"> 而非背景图（见 Home.tsx），object-fit 复刻原来的 background-size: cover */
 .wy-root .card-cover {
   position: absolute;
   inset: 0;
@@ -880,7 +880,7 @@ html[lang="zh-Hant"] .wy-root {
   text-shadow: 0 0 12px rgba(201, 80, 58, 0.3);
   transition: color 0.2s, text-shadow 0.2s, border-color 0.2s;
 }
-/* 点到未解锁项：封印泛朱砂微光作答——「仍封印着」，而非毫无反应 */
+/* 点到未解锁项：封印泛朱砂微光作答，「仍封印着」，而非毫无反应 */
 .wy-root .gal-tile.locked:active { border-color: rgba(201, 80, 58, 0.5); }
 .wy-root .gal-tile.locked:active .gal-tile-seal-mark {
   color: rgba(224, 112, 78, 0.9);
@@ -1020,7 +1020,7 @@ html[lang="zh-Hant"] .wy-root {
 .wy-root .play-upsell-ghost:hover { color: var(--paper); border-color: var(--line-strong); }
 .wy-root .play-menu-sep { height: 1px; margin: 4px 8px; background: linear-gradient(90deg, transparent, var(--line), transparent); }
 .wy-root .play-menu-fontrow { display: flex; align-items: center; gap: 8px; padding: 6px 12px; }
-/* 四个档位换行时，「字号」二字会被挤成竖排——钉死不折行 */
+/* 四个档位换行时，「字号」二字会被挤成竖排，钉死不折行 */
 .wy-root .play-menu-fontlabel { font-size: 0.82rem; color: var(--muted); letter-spacing: 0.1em; white-space: nowrap; flex: 0 0 auto; }
 .wy-root .auto-hint {
   color: var(--gold); font-size: 0.85rem; font-style: italic; margin: 0 0 4px;
@@ -1120,7 +1120,7 @@ html[lang="zh-Hant"] .wy-root {
 .wy-root .proxy-block .hint { margin-bottom: 8px; }
 /* 开关：与另外两个项目同一控件语义（它们用组件库的 Switch，这里没有组件库，
    用一个原生 checkbox 画出来）。裸 checkbox 在这套鎏金界面里是唯一一个方框，
-   突兀且不像"开关"——而这一栏决定的是 key 要不要经过别人的机器，值得看清楚。 */
+   突兀且不像"开关"，而这一栏决定的是 key 要不要经过别人的机器，值得看清楚。 */
 .wy-root .inline-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--muted); cursor: pointer; }
 .wy-root .inline-toggle input {
   appearance: none; -webkit-appearance: none;
@@ -1292,7 +1292,7 @@ html[lang="zh-Hant"] .wy-root {
 }
 .wy-root .memory-list li::before { content: '·'; position: absolute; left: 4px; color: var(--cinnabar); }
 
-/* 命数刚变过：数字本身亮一下就复原。不外挂浮标——属性行会换行，浮标会压到上一行 */
+/* 命数刚变过：数字本身亮一下就复原。不外挂浮标，属性行会换行，浮标会压到上一行 */
 .wy-root .vn-vital-val.bump-up { animation: wy-bumpUp 1.8s ease-out both; }
 .wy-root .vn-vital-val.bump-down { animation: wy-bumpDown 1.8s ease-out both; }
 @keyframes wy-bumpUp {
@@ -1392,7 +1392,7 @@ html[lang="zh-Hant"] .wy-root {
 }
 .wy-root .choice:hover .choice-text { color: var(--gold-bright); }
 /* 数值影响：只在落子之后随承接段一并揭晓。这是整局唯一报数的地方，
-   所以要比周围的敛色文字更立得住——别再耳语化 */
+   所以要比周围的敛色文字更立得住，别再耳语化 */
 .wy-root .recap-fx { display: flex; gap: 12px; flex-wrap: wrap; margin: 4px 0 0; }
 .wy-root .fx {
   display: inline-flex; align-items: baseline; gap: 3px;
@@ -1650,7 +1650,7 @@ html[lang="zh-Hant"] .wy-root {
 
 /* 正文里的人名：淡金底纹 + 金色虚线底边，一眼看出可点，又不打断阅读。
    关键：**不占横向任何尺寸**（padding/字号/字距全部不动），所以标出人名不会把整行挤得重新折行
-   —— 那正是用户看到的「每出一段新故事，整段又被刷新一遍」。 */
+，那正是用户看到的「每出一段新故事，整段又被刷新一遍」。 */
 .wy-root .narrative .cast-name {
   display: inline; padding: 0; margin: 0;
   font: inherit; letter-spacing: inherit; line-height: inherit;
@@ -1970,7 +1970,7 @@ html[lang="zh-Hant"] .wy-root {
 /* 立目标的朱砂签：选中的目标更像「立誓」 */
 .wy-root .ambition-chip.selected { box-shadow: 0 0 0 1px rgba(203, 168, 90, 0.4) inset, 0 0 14px rgba(203, 168, 90, 0.12); }
 
-/* 「开始这段人生」：仪式级金印 CTA —— 辉光 + 按压回弹 */
+/* 「开始这段人生」：仪式级金印 CTA，辉光 + 按压回弹 */
 .wy-root .start-btn {
   letter-spacing: 0.28em; text-indent: 0.28em; border-radius: 6px;
   box-shadow: 0 0 22px rgba(203, 168, 90, 0.26), 0 6px 18px rgba(0, 0, 0, 0.42);
@@ -2166,7 +2166,7 @@ html[lang="zh-Hant"] .wy-root {
   font-family: var(--font-display); font-size: 0.94rem; letter-spacing: 0.12em;
   color: var(--gold-bright); text-shadow: 0 0 12px rgba(203, 168, 90, 0.25);
 }
-/* 关键节点就地轻标记：题签上缀「命运抉择」鎏金眉标即可，替代原每 4 回合的弹卡（不再加面板辉光——它会沿浮层透明上沿浮出一道金线） */
+/* 关键节点就地轻标记：题签上缀「命运抉择」鎏金眉标即可，替代原每 4 回合的弹卡（不再加面板辉光，它会沿浮层透明上沿浮出一道金线） */
 .wy-root .vn-keymark {
   font-family: var(--font-display);
   font-size: 0.72rem; letter-spacing: 0.28em; text-indent: 0.28em;
@@ -2236,7 +2236,7 @@ html[lang="zh-Hant"] .wy-root {
 /* 窄屏：卷文更高、HUD 收紧 */
 @media (max-width: 560px) {
   /* margin-inline auto：left/right 同为 0 且限宽时水平居中（否则贴左，右缘留空条） */
-  /* 卷文更高：手机端不再只有下半边——面板上沿只让出标题 HUD（返回图标+剧本名），
+  /* 卷文更高：手机端不再只有下半边，面板上沿只让出标题 HUD（返回图标+剧本名），
      属性栏/额度行都在面板内（不再悬浮在画面上），不存在被面板上沿盖住的问题；
      高度封顶改为「让开实测 HUD 高度」，见下方 height 一行 */
   .wy-root .vn-panel {
@@ -2261,7 +2261,7 @@ html[lang="zh-Hant"] .wy-root {
   .wy-root .vn-title { font-size: 0.98rem; }
 }
 
-/* 横屏矮视口（手机横持）：上述窄屏规则不命中（宽>560），走的是桌面 86vh——
+/* 横屏矮视口（手机横持）：上述窄屏规则不命中（宽>560），走的是桌面 86vh
    在 380px 高的屏上卷文会盖掉几乎整幅画。收紧 HUD 与卷文各处纵向内距，限高让画面露出 */
 @media (orientation: landscape) and (max-height: 520px) {
   .wy-root .vn-hud { padding-top: 8px; gap: 5px; }
@@ -2308,7 +2308,7 @@ html[lang="zh-Hant"] .wy-root {
 
 /* ── 减少动态效果（系统偏好）：星穹止转、辉光敛息，仪式让位于安定 ──
    一律压到 0.01ms 而非 none：入场动画瞬间到位、信息不丢；
-   命数变色（bump）例外——它靠动画回落到常色，直接压缩会让「刚变过」的提示一闪即逝 */
+   命数变色（bump）例外，它靠动画回落到常色，直接压缩会让「刚变过」的提示一闪即逝 */
 @media (prefers-reduced-motion: reduce) {
   .wy-root *, .wy-root *::before, .wy-root *::after {
     animation-duration: 0.01ms !important;
@@ -2319,7 +2319,7 @@ html[lang="zh-Hant"] .wy-root {
   .wy-root .vn-vital-val.bump-up { animation: wy-bumpUp 1.8s ease-out both !important; }
   .wy-root .vn-vital-val.bump-down { animation: wy-bumpDown 1.8s ease-out both !important; }
   /* 罗盘缓旋豁免：60~90s 一圈近乎静止，非致不适的剧烈运动，且为首页身份所系。
-     注意 RDP/远程桌面会话会让系统报告 reduce——若一刀切，远程用户首页即成死图。
+     注意 RDP/远程桌面会话会让系统报告 reduce，若一刀切，远程用户首页即成死图。
      时长与上方罗盘一节保持一致，改动时两处同步 */
   .wy-root .home-banner .ticks { animation: wy-spin 60s linear infinite !important; }
   .wy-root .home-banner .ticks.fine { animation: wy-spinRev 90s linear infinite !important; }
@@ -2346,7 +2346,7 @@ html[lang="zh-Hant"] .wy-root {
 @keyframes wy-badgeGlow {
   to { filter: drop-shadow(0 0 60px rgba(236, 210, 143, 0.75)); }
 }
-/* —— AI 生成剧本 —— */
+/* 【AI 生成剧本】 */
 .wy-root .gen-card { border-style: dashed; border-color: var(--cinnabar); }
 .wy-root .gen-card:hover { border-color: var(--cinnabar-bright); }
 .wy-root .gen-card .scenario-emoji { color: var(--cinnabar-bright); }
@@ -2364,7 +2364,7 @@ html[lang="zh-Hant"] .wy-root {
   animation: wy-fadeUp 0.2s ease-out both;
 }
 /* 仅定尺寸与内距；背景/圆角/辉光/标题描金由上方「弹窗 = 器物」块统一负责，
-   此处不得再写视觉属性——同名选择器后到者会把器物感整块覆盖掉（曾实际发生） */
+   此处不得再写视觉属性，同名选择器后到者会把器物感整块覆盖掉（曾实际发生） */
 .wy-root .modal {
   width: 100%;
   max-width: 520px;

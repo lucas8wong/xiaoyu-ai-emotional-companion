@@ -34,7 +34,7 @@ REFERENCE_WAV = os.environ.get("VOXCPM_REFERENCE_WAV", "D:/deepseek_harness/角�
 REFERENCE_TEXT = os.environ.get("VOXCPM_REFERENCE_TEXT", "希望你以后能够做的比我还好呦。").strip()
 # 🎙️ 音色参考库（方案②"自举参考音频"，2026-09-15）：
 #   每个预设一个参考音频 `third_party/voice-refs/{name}.wav`，**并配一份同名 .txt 文字稿**。
-#   ⚠️ 文字稿必须与音频内容一致 —— 实测不一致时（用写死的全局 REFERENCE_TEXT 配新音频）
+#   ⚠️ 文字稿必须与音频内容一致，实测不一致时（用写死的全局 REFERENCE_TEXT 配新音频）
 #   模型会输出被截断的垃圾（51 字的一句话只出 0.80 秒）。
 #   请求里传 `reference: "<name>"`（**只接受参考库里的名字**，不接受任意路径）即走克隆。
 REFERENCE_DIR = os.environ.get("VOXCPM_REFERENCE_DIR", "D:/deepseek_harness/角色扮演-情绪/third_party/voice-refs").strip()

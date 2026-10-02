@@ -6,13 +6,13 @@
  * 而不是被重抽掉的旧版、也不是重抽前的残留。所以这里把规则收敛成一组纯函数：
  *
  *   1. 一条消息的 `content` **永远等于** `versions[vi]`（`activeContent()` 是唯一读法）；
- *   2. 发请求前用 `toRequestMessages()` 重新取一次 `content` —— 上下文＝所见，杜绝脏版本回灌；
+ *   2. 发请求前用 `toRequestMessages()` 重新取一次 `content`，上下文＝所见，杜绝脏版本回灌；
  *   3. `switchVersionIn()` 只改这一条（**不动**后面的对话），切版本纯粹是「看另一版 / 接着那一版写」；
  *   4. `startRegenerate()` / `finishRegenerate()` 负责重抽：从这条起重写（其后对话由调用方确认后清掉），
  *      新回复追加为最新一版，旧版全部保留。
  *
  * 放在 `src/lib/` 而不是组件里：可以被单测直接钉住（`test/unit/rpVersions.test.ts`），
- * 不依赖 DOM/React —— 这类「上下文取哪一版」的规则一旦错了，用户看到的是「AI 接着被我删掉的那版往下说」，
+ * 不依赖 DOM/React，这类「上下文取哪一版」的规则一旦错了，用户看到的是「AI 接着被我删掉的那版往下说」，
  * 属于必须用断言钉死的缺陷。
  *
  * ── 2026-09 追加：**用户消息的「编辑重发」**（下方独立一节，方案 1B + 2A）──
@@ -48,7 +48,7 @@ export function activeContent(m: RoleplayMessage): string {
 /**
  * 第 i 条能不能重新生成？
  * 必须①是 AI 回复，且②**前面紧跟着一条用户消息**（剧本开场白之前没有用户消息，
- * 后端 `/chat` 也要求历史以 user 结尾 —— 开场白是剧本设定、不是 AI 生成的，不给重生成）。
+ * 后端 `/chat` 也要求历史以 user 结尾：开场白是剧本设定、不是 AI 生成的，不给重生成）。
  */
 export function canRegenerateAt(messages: RoleplayMessage[], i: number): boolean {
   if (!Array.isArray(messages) || i <= 0 || i >= messages.length) return false;
@@ -90,7 +90,7 @@ export function switchVersionIn(messages: RoleplayMessage[], i: number, dir: -1 
 
 /**
  * 请求上下文：每条只带 `role`/`content`，且 `content` 取**当前选中版本**。
- * 为什么必须过这一道：上下文一致性是「每条都能重生成 + 可切版本」的正确性关键 ——
+ * 为什么必须过这一道：上下文一致性是「每条都能重生成 + 可切版本」的正确性关键
  * 只要有一处把旧版当台词发出去，模型就会接着一段用户已经看不到的剧情往下写。
  */
 export function toRequestMessages(messages: RoleplayMessage[]): RoleplayMessage[] {
@@ -103,15 +103,15 @@ export function toRequestMessages(messages: RoleplayMessage[]): RoleplayMessage[
  * 需求原话：「用户发送一句话以后还可以修改这句话再发送」。
  *
  * 拍板口径（**不要被后人顺手放宽**）：
- *   · 1B —— 改写后旧的那一支**不丢**：旧正文 + 它的那条回复一起冻结保留，用户可在 ◀ n/m ▶ 切回；
- *   · 2A —— **只有「最后一条用户消息」可编辑**。直接推论：一个分支的尾巴最多 1 条回复，
- *           所以这里是「两态分支」，不是对话树 —— 不要为了「也能改历史」把它扩大成树。
- *   · 3A —— 聊一聊与剧情模式都要有（聊一聊那份在服务端按 timestamp 截断，见 api/routes/analysis.ts）。
+ *   · 1B，改写后旧的那一支**不丢**：旧正文 + 它的那条回复一起冻结保留，用户可在 ◀ n/m ▶ 切回；
+ *   · 2A，**只有「最后一条用户消息」可编辑**。直接推论：一个分支的尾巴最多 1 条回复，
+ *           所以这里是「两态分支」，不是对话树，不要为了「也能改历史」把它扩大成树。
+ *   · 3A，聊一聊与剧情模式都要有（聊一聊那份在服务端按 timestamp 截断，见 api/routes/analysis.ts）。
  *
  * 三条不变量（错了就会出「AI 接着一段用户已经看不到的剧情往下写」这类硬伤）：
  *   1. `content === versions[vi]`（沿用 activeContent 这一条唯一读法）；
  *   2. `tails[vi]` 与主线是**互斥**的：某个版本的后续要么冻结在 tails 里、要么（只有当前版）在主线里；
- *   3. 版本/尾巴不参与模型上下文 —— `toRequestMessages()` 只带 role/content，尾巴是嵌套字段，天然不会漏出去。
+ *   3. 版本/尾巴不参与模型上下文，`toRequestMessages()` 只带 role/content，尾巴是嵌套字段，天然不会漏出去。
  * ==================================================================== */
 
 /** 用户消息最多保留的版本数（= 改写次数上限 + 1）：超出时丢最旧，**当前版永远保留** */
@@ -153,7 +153,7 @@ export function canSwitchUserBranchAt(messages: RoleplayMessage[], i: number): b
 
 /**
  * 这条用户消息每个版本对应的**冻结尾巴**（长度与 versions 对齐；null = 该版本的后续活在主线里）。
- * 结构不合法的一律当 null —— 宁可少一个可切的分支，也不要拿一段脏数据当上下文。
+ * 结构不合法的一律当 null，宁可少一个可切的分支，也不要拿一段脏数据当上下文。
  */
 export function userTailsOf(m: RoleplayMessage): (RoleplayMessage[] | null)[] {
   const raw = Array.isArray(m?.tails) ? m.tails : [];
@@ -165,7 +165,7 @@ export function userTailsOf(m: RoleplayMessage): (RoleplayMessage[] | null)[] {
   });
 }
 
-/** 尾巴的防御性清洗（只认 role/content、限长限量）—— 前后端共用同一份 */
+/** 尾巴的防御性清洗（只认 role/content、限长限量），前后端共用同一份 */
 function tailMessages(list: unknown[]): RoleplayMessage[] {
   return list
     .filter((x): x is RoleplayMessage => !!x && typeof x === 'object'
@@ -181,7 +181,7 @@ function tailMessages(list: unknown[]): RoleplayMessage[] {
  * 做了三件事：
  *   ① 旧正文留成上一个版本（`versions` 末尾追加新正文，`vi` 指向新正文）；
  *   ② 旧版本那条回复**冻结进 tails**（所以界面上可以再切回去，旧剧情不丢）；
- *   ③ 主线截到这条为止 —— 调用方拿它去跑 `runTurn`，新回复回来后就落在主线里。
+ *   ③ 主线截到这条为止，调用方拿它去跑 `runTurn`，新回复回来后就落在主线里。
  *
  * ⚠️ 调用方必须：把返回的历史只用于**请求与流式展示**，并在失败/取消/额度不足时**整份回滚**到编辑前的快照；
  *    这个「以 user 结尾的中间态」不许落盘（护栏 `dropsSavedReply` + 前端跳过，见 RoleplayPage.saveSession）。
@@ -203,7 +203,7 @@ export function startEditResend(messages: RoleplayMessage[], i: number, text: st
 /**
  * 切换第 i 条用户消息的分支（dir = -1 上一版 / +1 下一版）。
  *
- * 与 `switchVersionIn()`（只改这一条、不动后面的对话）的关键差别：这里要**换整条尾巴** ——
+ * 与 `switchVersionIn()`（只改这一条、不动后面的对话）的关键差别：这里要**换整条尾巴**
  * 把当前主线里的后续冻结进 `tails[cur]`，再把目标版本的尾巴放回主线。两边都不丢。
  * 不重新生成、不改历史长度上限、不消耗额度（纯本地切换）。
  */

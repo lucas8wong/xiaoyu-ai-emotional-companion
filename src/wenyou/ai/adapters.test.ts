@@ -116,7 +116,7 @@ describe('chatAnthropic', () => {
   })
 
   // 「选了关」不等于「真关了」：关不掉思考的型号（官方逐模型表标 Always on）
-  // 照样思考，而思考 token 计入 max_tokens —— 按不思考的额度发会被截断。
+  // 照样思考，而思考 token 计入 max_tokens，按不思考的额度发会被截断。
   it('关不掉思考的型号即使选了关，也要按开思考的额度留 max_tokens', async () => {
     sse([anthropicChunk('ok')])
     await chatAnthropic(
@@ -193,7 +193,7 @@ describe('CORS 中转', () => {
     expect(calls[0]).toBe('https://proxy.example/https://api.deepseek.com/chat/completions')
   })
 
-  it('中转地址的尾斜杠会被去掉 —— proxy.com//https://… 会被 worker 判成畸形目标', async () => {
+  it('中转地址的尾斜杠会被去掉，proxy.com//https://… 会被 worker 判成畸形目标', async () => {
     const calls = capture()
     await chatOpenAI(
       { provider: 'openai', apiKey: 'k', model: 'm', baseURL: 'https://api.deepseek.com', proxy: 'https://proxy.example///' },
@@ -202,7 +202,7 @@ describe('CORS 中转', () => {
     expect(calls[0]).toBe('https://proxy.example/https://api.deepseek.com/chat/completions')
   })
 
-  it('地址漏写 https:// 就拒发 —— 否则 Key 与 prompt 会被 POST 到本站', async () => {
+  it('地址漏写 https:// 就拒发，否则 Key 与 prompt 会被 POST 到本站', async () => {
     const calls = capture()
     const e = await chatOpenAI(
       { provider: 'openai', apiKey: 'k', model: 'm', baseURL: 'https://api.deepseek.com', proxy: 'cors.example.dev' },
@@ -244,7 +244,7 @@ describe('空闲超时', () => {
   const run = () =>
     chatOpenAI({ provider: 'openai', apiKey: 'k', model: 'm' }, [{ role: 'user', content: 'hi' }])
 
-  it('首字节前给足 3 分钟 —— 思考模型想一两分钟是正常的', async () => {
+  it('首字节前给足 3 分钟，思考模型想一两分钟是正常的', async () => {
     const { push } = stalling()
     const p = run().catch((e: Error) => e)
     await vi.advanceTimersByTimeAsync(120_000) // 两分钟没吐字：不该报错
@@ -256,7 +256,7 @@ describe('空闲超时', () => {
     expect(await Promise.race([p, Promise.resolve('still-running')])).toBe('still-running')
   })
 
-  it('首字节迟迟不来则抛错 —— 而不是让进度条永远转', async () => {
+  it('首字节迟迟不来则抛错，而不是让进度条永远转', async () => {
     stalling()
     const p = run().catch((e: Error) => e)
     await vi.advanceTimersByTimeAsync(180_001)
@@ -265,14 +265,14 @@ describe('空闲超时', () => {
     expect((e as AIError).message).toMatch(/连接卡住/)
   })
 
-  it('卡住抛的错要能被自动重试认出来 —— status 为 0 即「值得重试」', async () => {
+  it('卡住抛的错要能被自动重试认出来，status 为 0 即「值得重试」', async () => {
     stalling()
     const p = run().catch((e: Error) => e)
     await vi.advanceTimersByTimeAsync(180_001)
     expect((await p as AIError).status).toBe(0)
   })
 
-  it('首字内容的预算只有一份 —— 响应头拖到最后一刻，不会再送一个 3 分钟', async () => {
+  it('首字内容的预算只有一份，响应头拖到最后一刻，不会再送一个 3 分钟', async () => {
     // fetch 在 170 秒才给出响应头，之后一直不出内容：该在 180 秒线上抛，而不是 350 秒
     let release!: () => void
     const gate = new Promise<void>((r) => { release = r })
@@ -284,10 +284,10 @@ describe('空闲超时', () => {
     await vi.advanceTimersByTimeAsync(0)
     await vi.advanceTimersByTimeAsync(10_001)
     const e = await p
-    expect(e, '预算被重新发了一份 —— 用户要多转 3 分钟').toBeInstanceOf(AIError)
+    expect(e, '预算被重新发了一份，用户要多转 3 分钟').toBeInstanceOf(AIError)
   })
 
-  it('心跳与空 delta 不算「开始出字」—— 否则高档思考会在 60 秒被误杀', async () => {
+  it('心跳与空 delta 不算「开始出字」，否则高档思考会在 60 秒被误杀', async () => {
     const { push } = stalling()
     const p = run().catch((e: Error) => e)
     push(': ping\n\n') // SSE 注释行
@@ -296,7 +296,7 @@ describe('空闲超时', () => {
     expect(await Promise.race([p, Promise.resolve('still-running')])).toBe('still-running')
   })
 
-  it('卡住时把原来那条流掐断 —— 不掐的话它继续生成继续计费，而重试已开了第二条', async () => {
+  it('卡住时把原来那条流掐断，不掐的话它继续生成继续计费，而重试已开了第二条', async () => {
     let cancelled = false
     const body = new ReadableStream<Uint8Array>({ start() {}, cancel() { cancelled = true } })
     vi.stubGlobal('fetch', vi.fn(async () => new Response(body, { status: 200 })))

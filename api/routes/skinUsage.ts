@@ -25,7 +25,7 @@ router.post('/', (req: Request, res: Response): void => {
   }
 
   const deviceId = String(req.headers['x-device-id'] || '');
-  // 只有「测试/开发」设备不计（运营自查 IP 不再跳过皮肤——再跳会把管理员自己登录后的皮肤也漏掉，
+  // 只有「测试/开发」设备不计（运营自查 IP 不再跳过皮肤，再跳会把管理员自己登录后的皮肤也漏掉，
   // 导致「我明明切了星空，但我账号的皮肤仍是旧值」）。皮肤按身份记录，不影响统计口径。
   if (isTestRequest(req.ip, deviceId)) {
     res.json({ success: true, recorded: false });

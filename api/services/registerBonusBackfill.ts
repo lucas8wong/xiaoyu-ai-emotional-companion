@@ -1,5 +1,5 @@
 /**
- * 补发「注册即送对话额度」——限时活动窗口**漏发**的一次性补齐（2026-09-25）。
+ * 补发「注册即送对话额度」，限时活动窗口**漏发**的一次性补齐（2026-09-25）。
  *
  * 背景：注册奖励是限时活动（CHAT_BONUS_START=2026-08-22 / CHAT_BONUS_END=2026-09-06）。
  * 活动结束后注册的用户拿不到这 20 条，而站点文案（About / 游客额度条）一直承诺「注册立得 20 条」，
@@ -11,7 +11,7 @@
  * - 幂等：apply 后把处理过的 userId 写进 data/register-bonus-backfill.json，重跑自动跳过（force 可强制）；
  * - 邮件按用户 IP/地区语言（简中 / 繁中 / English），文案遵守品牌口径（gentle healing，无医疗承诺）。
  *
- * ⚠️ 漏发窗口的截止时间是**常量**，不读 .env —— 因为活动马上会重新开启（清掉 CHAT_BONUS_END），
+ * ⚠️ 漏发窗口的截止时间是**常量**，不读 .env，因为活动马上会重新开启（清掉 CHAT_BONUS_END），
  *    若届时按 env 现算，cutoff 会变成 0、把所有老账号都算成候选（会造成大面积错误补发）。
  */
 
@@ -158,7 +158,7 @@ export function buildBackfillEmail(lang: EmailLang, username: string, count: num
   const zhSubject = `🎁 补上你的注册见面礼：${count} 条对话额度已到账`;
   const zhBody = `
     <p style="margin:0 0 12px;font-size:15px;color:#243B2E;line-height:1.7">${zhName}<br/>
-      抱歉——你注册时本该收到的见面礼，因为我们的活动配置疏漏，当时<b>没有送到你的账号</b>。</p>
+      抱歉。你注册时本该收到的见面礼，因为我们的活动配置疏漏，当时<b>没有送到你的账号</b>。</p>
     <p style="margin:0 0 12px;font-size:14px;color:#243B2E;line-height:1.7">现在补上了：<b style="color:#1FA46B">${count} 条对话额度</b>已存入你的账号，聊一聊与角色扮演都能用。</p>
     <p style="margin:0;font-size:14px;color:#243B2E;line-height:1.7">无需任何操作，打开 Xiaoyu 就能用。很高兴你在这里。💛</p>`;
   const zhHtml = brandShell(zhBody, '进入 Xiaoyu →', '你的每一种情绪，都值得被理解。', 'gentle healing, for every feeling');
@@ -170,7 +170,7 @@ export function buildBackfillEmail(lang: EmailLang, username: string, count: num
 /**
  * 发送单人「漏发补上」邮件（失败仅返回结果，不抛出，避免单点失败中断整批）。
  *
- * ⚠️ 通道选择（2026-09-25 实测教训）：优先走**群发通道（Gmail，约 500/天）**，不占用 Resend 事务额度——
+ * ⚠️ 通道选择（2026-09-25 实测教训）：优先走**群发通道（Gmail，约 500/天）**，不占用 Resend 事务额度
  * 首次 apply 时我们用了 critical 直发主通道，93 封把 Resend 当日额度吃到接近上限，最后 2 封被
  * 「monthly quota」拒绝（那本是留给验证码的额度）。群发通道没配时才回退主通道。
  */
@@ -323,7 +323,7 @@ export interface EmailRetryReport {
 export async function runRegisterBonusEmailRetry(opts: {
   via?: 'default' | 'campaign';
   throttleMs?: number;
-  /** 显式指定要重发的邮箱（缺省用 marker.failed）——用于 marker 里没记到的偶发失败 */
+  /** 显式指定要重发的邮箱（缺省用 marker.failed），用于 marker 里没记到的偶发失败 */
   emails?: string[];
 } = {}): Promise<EmailRetryReport> {
   const via = opts.via ?? 'campaign';

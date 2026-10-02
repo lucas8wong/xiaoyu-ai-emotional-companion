@@ -39,7 +39,7 @@ Use `better-sqlite3` (**synchronous**) to implement a `PersistenceProvider`: all
 
 ```
 阶段1（已完成）: 本地/单机 24/7（Docker + data 持久盘 + Cloudflare 边缘）
-阶段1.5（可选，先做）: persistence 换成 SQLite(better-sqlite3) Provider —— 单一文件、更稳、好备份
+阶段1.5（可选，先做）: persistence 换成 SQLite(better-sqlite3) Provider：单一文件、更稳、好备份
 阶段2（最终）: persistence + 所有 store 同步化改造为 Postgres（多实例/自动扩容）
 ```
 
@@ -133,15 +133,15 @@ Postgres 客户端（`pg`）是**异步**的；如果把 `persistence.read/write
 
 ## 2. 两条路
 
-### 路径 A（推荐先行）：SQLite —— 同步、单文件、不破坏接口
+### 路径 A（推荐先行）：SQLite：同步、单文件、不破坏接口
 用 `better-sqlite3`（**同步**）实现一个 `PersistenceProvider`：所有逻辑文件（`xxx.json`）映射到同一张 `kv(key, value)` 表，`read=SELECT`，`write=UPSERT`。
 
 > ✅ **已实现并启用（2026-08-29）**：`api/storage/sqliteProvider.ts` + `PERSISTENCE_PROVIDER=sqlite`（默认仍 `file`）；`scripts/migrate-json-to-sqlite.mts` 已把 `data/*.json` 迁到 `data/xiaoyu.sqlite` 并已切换。回退=改回 `PERSISTENCE_PROVIDER=file` 重启（注意会丢切换后的增量）。
 - 优点：**同步**，直接替换 `persistence` 即可；数据集中到**一个 SQLite 文件**（好备份、原子写、可放持久盘/EFS）；单个实例用它最稳。
-- 定位：阶段 1.5 —— 单实例/单机上云时的**统一持久化文件**，比散落的 `*.json` 更健壮、更好迁移。
-- 代价：SQLite 单文件**不适合多实例共享**（网络文件系统上并发写不稳定）——多实例仍需 Postgres。
+- 定位：阶段 1.5：单实例/单机上云时的**统一持久化文件**，比散落的 `*.json` 更健壮、更好迁移。
+- 代价：SQLite 单文件**不适合多实例共享**（网络文件系统上并发写不稳定），多实例仍需 Postgres。
 
-### 路径 B（最终目标）：Postgres —— 需要 async 化，适合多实例
+### 路径 B（最终目标）：Postgres，需要 async 化，适合多实例
 - 需要先把 `persistence.readJson/writeJson` 以及**所有同步 store** 改成 async（`store.loadFromDisk()`/`saveToDisk()` 变 `await`，`getFacts/user.ts` 等调用点同步改 await）。
 - 规模不小（波及 `accounts/quota/memoryStorage/roleplaySessions/chatCharacter/chatCharacterGrowth/...` 与多个路由）。
 - 好处：真正的共享持久化 + 多实例 + 可接托管(ECS/EKS/Neon/RDS)。
@@ -152,7 +152,7 @@ Postgres 客户端（`pg`）是**异步**的；如果把 `persistence.read/write
 
 ```
 阶段1（已完成）: 本地/单机 24/7（Docker + data 持久盘 + Cloudflare 边缘）
-阶段1.5（可选，先做）: persistence 换成 SQLite(better-sqlite3) Provider —— 单一文件、更稳、好备份
+阶段1.5（可选，先做）: persistence 换成 SQLite(better-sqlite3) Provider：单一文件、更稳、好备份
 阶段2（最终）: persistence + 所有 store 同步化改造为 Postgres（多实例/自动扩容）
 ```
 

@@ -4,12 +4,12 @@
  * 自定义角色（用于「用我自己的角色玩」）
  *
  * ⚠️ 移植适配（非上游原样）：上游把自定义角色存在 **Supabase** 的 `custom_characters` 表里，
- * 而小愈不使用 Supabase（密钥与登录用我们自己的，Supabase 已打桩）——
+ * 而小愈不使用 Supabase（密钥与登录用我们自己的，Supabase 已打桩）
  * 结果是这个功能在小愈里**完全失效**（读写全落空，弹窗永远显示 0/20）。
  *
  * 现在改为：
  *  1) **小愈「聊一聊」里的角色**（`/api/analysis/chat/characters`）自动并入列表，
- *     这正好实现「把你在聊一聊里养的角色拉进狼人杀同桌」——身份/边界/语气都带过来；
+ *     这正好实现「把你在聊一聊里养的角色拉进狼人杀同桌」，身份/边界/语气都带过来；
  *  2) 用户在小愈狼人杀里临时新增的角色存**本地**（localStorage），可增删改。
  *
  * 对外接口与上游完全一致（characters/loading/error/fetch/create/update/delete/canAddMore/remainingSlots），
@@ -52,7 +52,7 @@ function writeLocal(list: CustomCharacter[]): void {
 
 /**
  * 红线⑤（2026-09-28 审查 P1-4）：自建角色（含批量导入）必须过服务端 safety 过滤，命中即拒，绝不落本地。
- * 校验不可达时也拒绝（fail-closed）——宁可这次建不了，也不放行未经过滤的人设去当系统提示词。
+ * 校验不可达时也拒绝（fail-closed），宁可这次建不了，也不放行未经过滤的人设去当系统提示词。
  */
 async function assertCharacterSafe(fields: Array<string | undefined>): Promise<void> {
   const texts = fields.filter((f): f is string => typeof f === 'string' && f.trim().length > 0);

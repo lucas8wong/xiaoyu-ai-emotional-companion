@@ -1,5 +1,5 @@
 /**
- * 「AI 帮我写剧本」输入不限字数——**整份剧本原样进 prompt**（真链路验证，不打桩内部函数）。
+ * 「AI 帮我写剧本」输入不限字数，**整份剧本原样进 prompt**（真链路验证，不打桩内部函数）。
  *
  * 做法：把 DEEPSEEK_BASE_URL 指向本地 stub（在 import 服务前设好 env，因为 deepseek.ts 在模块加载时读 env），
  * stub 记录收到的 messages 并回一份合法 JSON 草稿 → 断言：

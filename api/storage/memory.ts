@@ -52,21 +52,21 @@ export interface ChatMessage {
   audio?: string; // 微信式语音气泡：用户消息附带的录音 data URL（前端点播；模型靠 content 理解）
   /** 引用回复：这条用户消息是在回复哪一句（落库，刷新/换设备后引用卡还在；也是提示词「本轮回复指向」的来源）
    *  kind：被引用的是纯图片/纯语音消息（本身没有文字）时记下类型，界面用占位词而不是空白卡。
-   *  at：被引用消息的时间戳——界面「点引用块跳回原消息」时用它定位（消息 id 会随刷新而变，时间戳不会）。 */
+   *  at：被引用消息的时间戳，界面「点引用块跳回原消息」时用它定位（消息 id 会随刷新而变，时间戳不会）。 */
   replyTo?: { role: 'user' | 'assistant'; content: string; kind?: 'image' | 'audio'; at?: string };
   /**
    * 这条回复引用的**来源链接**（2026-09-29）：本轮 `web_search` 命中的结构化结果（路由层收口后最多 3 条）。
    *
-   * 为什么要落库：在这之前来源只活在服务端的工具结果里，前端只收到一个布尔 search 事件 —— 于是
+   * 为什么要落库：在这之前来源只活在服务端的工具结果里，前端只收到一个布尔 search 事件，于是
    * 「链接」能不能被用户看到，全看模型愿不愿意把 URL 写进正文；用户不问就常常没有，刷新更是一点不剩。
-   * 现在随消息持久化，气泡下方常显。缺省 undefined = 该轮没有搜索（或历史老数据）——
+   * 现在随消息持久化，气泡下方常显。缺省 undefined = 该轮没有搜索（或历史老数据）
    * **不要**用空数组回填，那会把「没搜」和「搜了但没结果」混成同一件事。
    */
   sources?: { title: string; url: string; host?: string }[];
   /**
    * **按段**的来源（2026-09-29）：段下标＝气泡下标（回复按 \n\n 分段发送，一段＝一条气泡）。
    * 模型引用「实时资讯速览」里某条时，它的出处要挂在**提到它的那条气泡**下面，
-   * 而不是把整轮命中都堆在最后一条 —— 那样读者对不上哪句是哪条的出处。null = 该段没有引用。
+   * 而不是把整轮命中都堆在最后一条，那样读者对不上哪句是哪条的出处。null = 该段没有引用。
    * 与 `sources` 并存：前者回答「这句从哪来」，后者回答「这一轮查到的都在这里」。
    */
   sourceSegments?: ({ title: string; url: string; host?: string }[] | null)[];
@@ -86,7 +86,7 @@ export interface UserSession {
   chatPinned?: boolean; // 聊一聊对话置顶（置顶会话排在列表最前，且不受每用户会话上限清理影响）
   characterId?: string; // 聊一聊当前角色（缺省/内置默认 = 小愈），用于每角色独立会话线
   /**
-   * 这条会话上次被用户「读到」的时刻（ms）——未读数的唯一来源（方案 A2 微信式消息列表）。
+   * 这条会话上次被用户「读到」的时刻（ms），未读数的唯一来源（方案 A2 微信式消息列表）。
    *
    * 口径（刻意保守，别改成"存在即未读"）：
    *  - `undefined`（老数据）= **视为已读**。否则上线那一刻，所有人历史里的回复都会变成未读。
@@ -104,7 +104,7 @@ const SESSIONS_FILE = dataFile('sessions.json');
 const MAX_CHAT_MSGS = 100;
 const MAX_CHAT_SESSIONS = 50;
 
-// 会话保留期（分层）：按「最后活跃 updatedAt」起算——游客（设备身份）= 7 天；登录账号 = 30 天。
+// 会话保留期（分层）：按「最后活跃 updatedAt」起算，游客（设备身份）= 7 天；登录账号 = 30 天。
 // 判据：会话 userId 命中 accounts.json（accountStore.getById）= 登录账号；游客 id / 无主遗留会话按 7 天。
 const GUEST_SESSION_TIMEOUT = 7 * 24 * 60 * 60 * 1000;
 const ACCOUNT_SESSION_TIMEOUT = 30 * 24 * 60 * 60 * 1000;
@@ -238,7 +238,7 @@ class MemoryStorage {
     Object.assign(session, updates, { updatedAt: new Date() });
     this.sessions.set(sessionId, session);
 
-    // —— 聊一聊保留上限（防止 sessions.json 无界膨胀）——
+    // 【聊一聊保留上限（防止 sessions.json 无界膨胀）】
     // 单会话：最多保留最近 MAX_CHAT_MSGS 条消息（保留最近，截掉最早的）
     if (session.chatMessages && session.chatMessages.length > MAX_CHAT_MSGS) {
       session.chatMessages = session.chatMessages.slice(-MAX_CHAT_MSGS);

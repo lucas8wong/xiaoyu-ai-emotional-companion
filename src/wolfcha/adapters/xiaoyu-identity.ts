@@ -4,7 +4,7 @@
  * 上游客户端的每一次请求（`/api/chat`、`/api/credits/consume` …）自带的鉴权是 **Supabase session**，
  * 而小愈不使用 Supabase（用户要求：密钥与登录用小愈自己的）。这里在**不改它业务代码**的前提下，
  * 给它发往本站的请求补上小愈的身份头（`X-Device-Id` / `Authorization` / `X-Lang`），
- * 于是服务端 `resolveUserId(req)` 能正常认人 —— 计费、每日局数闸门、运营端统计都落在这套身份上。
+ * 于是服务端 `resolveUserId(req)` 能正常认人：计费、每日局数闸门、运营端统计都落在这套身份上。
  *
  * 幂等安装；只对本站请求生效，不影响它可能发出的第三方请求。
  */

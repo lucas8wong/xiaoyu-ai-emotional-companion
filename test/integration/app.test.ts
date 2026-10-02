@@ -73,7 +73,7 @@ test('未登录访问 me 返回 401', async () => {
   const r = await req('GET', '/api/auth/me');
   assert.strictEqual(r.status, 401);
 });
-// —— 注册后补填邀请码（2026-09）：路由全链路（未登录 / 无效码 / 到账 / 一人一次 / 入口标记）——
+// 【注册后补填邀请码（2026-09）：路由全链路（未登录 / 无效码 / 到账 / 一人一次 / 入口标记）】
 test('补填邀请码：注册后补填到账，重复与无效码被拒，quota 暴露 inviteCode', async () => {
   // 直接建账号发 token（不走 /api/auth/register，避免吃掉该 IP 每小时 15 次的注册限流额度）
   const { accountStore } = await import('../../api/services/accounts.js');
@@ -315,7 +315,7 @@ test('个性化偏好：只改一项不丢其它项（回归）', async () => {
 });
 
 /**
- * 成人档思考模式**已移除**（2026-09-25 产品决定）——端到端钉住"移除干净"：
+ * 成人档思考模式**已移除**（2026-09-25 产品决定），端到端钉住"移除干净"：
  *   ① `/api/roleplay/model-config` 不再下发任何 thinking 状态块；
  *   ② 就算客户端照旧提交 `roleplayThinking`，偏好里也不会出现这个字段（路由已不解构它）；
  *   ③ 就算 .env 里残留旧的思考旋钮，成人档请求体的 enable_thinking 仍是 false
@@ -794,7 +794,7 @@ test('重试去重（2026-09-15 修复）：retry=true 且上一条正是这条�
   assert.strictEqual(msgs.filter(m => m.role === 'user').length, 1, '重试不应把用户消息写第二遍');
   assert.strictEqual(msgs.length, 2, '应为 1 条用户消息 + 1 条回复');
 
-  // ② 普通重复发言（不带 retry）：仍按用户真实发言记录两条——去重不能扩大化
+  // ② 普通重复发言（不带 retry）：仍按用户真实发言记录两条，去重不能扩大化
   const r2 = await post({ sessionId: sid, message: '进入剧情模式' });
   assert.strictEqual(r2.status, 200);
   await r2.text();
@@ -834,7 +834,7 @@ test('AI 失败埋点（2026-09-15 事故后加）：前端上报 → 运营端�
   assert.ok(!/userId|content/.test(JSON.stringify(d)), '埋点里不得出现用户内容/身份字段');
 });
 
-test('AI 帮我写剧本：灵感不限字数——不再截断到 500 字（安全审核看全量，违规内容藏在 500 字后也拦）', async () => {
+test('AI 帮我写剧本：灵感不限字数，不再截断到 500 字（安全审核看全量，违规内容藏在 500 字后也拦）', async () => {
   // 直接建账号发 token（不走 /api/auth/register，避免吃掉该 IP 每小时 15 次的注册限流额度）
   const { accountStore } = await import('../../api/services/accounts.js');
   const reg = accountStore.register({ username: 'rplongidea', email: 'rplongidea@example.com', password: 'pass123' });
@@ -1006,7 +1006,7 @@ test('千世书剧本同步：未登录 401；登录后 PUT/GET 往返；违规�
   assert.strictEqual(reg.status, 200, JSON.stringify(reg.json));
   const token = reg.json.data.token;
 
-  // 未登录（游客）应 401——账号同步是登录用户功能
+  // 未登录（游客）应 401，账号同步是登录用户功能
   const noAuth = await req('GET', '/api/wenyou/scenarios');
   assert.strictEqual(noAuth.status, 401, '未登录应 401');
 
@@ -1128,7 +1128,7 @@ test('AI 生成剧本 ?stream=1：门控/校验失败仍是普通 JSON（不开�
   assert.strictEqual(json.data?.gen?.allowed, false, '应带上生成额度信息供前端展示');
 });
 
-// —— 剧情演绎三模式埋点：走真实路由验证「玩的是哪一个」真的落到了行为记录 ——
+// 【剧情演绎三模式埋点：走真实路由验证「玩的是哪一个」真的落到了行为记录】
 test('剧情模式埋点：狼人杀开局（真实路由 /api/wolfcha/credits/consume）写入 mode=werewolf', async () => {
   const { activityStore } = await import('../../api/services/activity.js');
   const { behaviorDailyStore } = await import('../../api/services/behaviorDaily.js');
@@ -1139,14 +1139,14 @@ test('剧情模式埋点：狼人杀开局（真实路由 /api/wolfcha/credits/c
   /**
    * ⚠️ 2026-09-27 分档后必须用**注册账号**跑这个用例：
    * 游客档只有 5 条/天，而狼人杀开局准入是「一局预估价 80 点 vs 当日额度」取小
-   * （测试进程无 .env → 免费档 30 点 → 准入 30 点）——游客档 10 点会被 402 拦在门外。
+   * （测试进程无 .env → 免费档 30 点 → 准入 30 点），游客档 10 点会被 402 拦在门外。
    * 那是**规则本身**（游客不该有 20 条去开一局），不是埋点坏了；本用例测的是埋点，故用注册账号。
    */
   const { accountStore } = await import('../../api/services/accounts.js');
   const wwReg = accountStore.register({ username: 'itest-ww-a', email: 'itest-ww-a@example.com', password: 'pass123' });
   const wwToken = accountStore.createToken(wwReg.user!.userId);
 
-  // 全新设备指纹（不能以 test- 开头，否则会被 isTestRequest 跳过——那样就测不到埋点了）。
+  // 全新设备指纹（不能以 test- 开头，否则会被 isTestRequest 跳过，那样就测不到埋点了）。
   // ⚠️ 用裸 fetch 而不是上面的 req()：req() 会先塞一个默认 X-Device-Id，同名不同大小写的两个头
   // 会被 fetch 合并成 "a, b"，deviceId 就不是我们想要的那个了（踩过一次）。
   const res = await fetch(baseUrl + '/api/credits/consume', {
@@ -1359,7 +1359,7 @@ test('usage-time/hit：0 秒兜底诊断只计诊断、不落账（让整段没�
  * 聊一聊「编辑重发」（2026-09，方案 1B + 2A）：服务端按 `editAt` 把历史**回到那条用户消息之前**。
  *
  * 为什么必须在这一层验：聊一聊的历史归服务端且是追加式（`chatMessages.push`），
- * 「改写」在客户端做不了 —— 只有服务端真的截断过，界面上的替换才是真的（否则会话里会出现两遍，
+ * 「改写」在客户端做不了，只有服务端真的截断过，界面上的替换才是真的（否则会话里会出现两遍，
  * 而且 AI 会继续对着旧那句往下说）。
  *
  * 本用例走的是「无 DEEPSEEK_API_KEY → 生成失败」这条既有路径（与上面的配额回滚用例同一手法）：

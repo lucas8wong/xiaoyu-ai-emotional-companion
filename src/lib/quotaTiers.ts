@@ -5,7 +5,7 @@
  *
  * 为什么单独成文件：
  *  ① 数字必须来自后端（`quota.guestDailyCredit` / `quota.freeDailyCredit` ÷ `quota.unitCredit`），
- *     前端任何页面都不许写死 5 / 20——否则改 `.env`（`GUEST_DAILY_TIAO` / `FREE_DAILY_CREDIT`）
+ *     前端任何页面都不许写死 5 / 20，否则改 `.env`（`GUEST_DAILY_TIAO` / `FREE_DAILY_CREDIT`）
  *     就会出现「后台改了、界面还印旧数字」的分叉（2026-09-17 的 «還能聊 Infinity 條» 是同类裂缝）。
  *  ② 「游客额度条」在首页会员条、聊一聊顶栏、理一理输入区三处都要出现，句式必须**逐字一致**，
  *     分散写就会出现"有的地方说注册送 20 条、有的地方不提"。

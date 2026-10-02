@@ -36,7 +36,7 @@ export interface GeneratedCharacters {
 export type Gender = "male" | "female" | "nonbinary";
 
 /** 小愈只有一个模型：不再按模型名映射第三方品牌，展示名固定；同名玩家靠序号区分 */
-// 显示名跟随界面语言（内置小愈 = Xiaoyu / 小愈）——不要写死中文，见 src/lib/companionName.ts
+// 显示名跟随界面语言（内置小愈 = Xiaoyu / 小愈），不要写死中文，见 src/lib/companionName.ts
 import { companionShortName } from "../../lib/companionName";
 
 const CHARACTER_GENERATOR_REASONING = { enabled: false } as const;

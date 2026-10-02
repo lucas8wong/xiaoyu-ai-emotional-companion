@@ -34,7 +34,7 @@ export const CACHE_DISCOUNT = Number(process.env.CACHE_PRICE_RATIO || 0.25); // 
  * 而港澳用户白天的活跃时段正好压在 peak 窗口里（实测项目文档 docs/deepseek-v4-thinking-eval.md §0）。
  *
  * 口径边界（重要）：
- *  - **只影响成本记账**（运营端看到的钱）。用户点数（credit）**故意不随时段波动** ——
+ *  - **只影响成本记账**（运营端看到的钱）。用户点数（credit）**故意不随时段波动**
  *    `quota.ts` 调 `costFromUsage` 时不传 `at`，否则同一个动作在白天要多扣一倍额度，
  *    是产品体验决策而不是账单口径（Pro 的每日点数安全阀也会因此提前触发）。
  *  - 出图（按张计费）不分时段，不走这里。
@@ -163,7 +163,7 @@ export interface UsageLike {
 }
 
 /**
- * 取「缓存命中 token 数」——三家字段名不一样，统一在这里认，避免各自漏读导致缓存命中被按全价记账：
+ * 取「缓存命中 token 数」，三家字段名不一样，统一在这里认，避免各自漏读导致缓存命中被按全价记账：
  *  - `prompt_tokens_details.cached_tokens`（DeepSeek / OpenAI 官方形态）
  *  - `prompt_cache_hit_tokens`（DeepSeek 原生形态）
  *  - `cached_tokens`（Featherless 等第三方在顶层回传，2026-09-17 实测确认）
@@ -184,7 +184,7 @@ export function cachedTokensOf(usage: UsageLike | undefined): number {
  * 与 usageStore.record 同口径（含缓存命中折扣）。
  *
  * @param at 调用**发起**时刻（ms）。传了就按分时定价算（peak 时段 × 倍率）；
- *           **不传 = 按 off-peak 基准价**——额度层（quota.ts）刻意不传，用户点数不随时段波动。
+ *           **不传 = 按 off-peak 基准价**，额度层（quota.ts）刻意不传，用户点数不随时段波动。
  */
 export function costFromUsage(usage: UsageLike | undefined, at?: number): number {
   if (!usage) return 0;
@@ -242,7 +242,7 @@ export interface FeatureTotals {
   byFeature: Record<string, FeatureBucket>;
 }
 
-/** 本地日期键（YYYY-MM-DD）——与 getDailyTrend 的本地日期口径保持一致 */
+/** 本地日期键（YYYY-MM-DD），与 getDailyTrend 的本地日期口径保持一致 */
 function todayLocalKey(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -394,7 +394,7 @@ export class UsageStore {
    * 记录一次模型调用（token 渠道）
    * @param feature 成本归属功能（默认 unknown；各调用点显式传，见 deepseek.ts 的 feature 透传）
    * @param opts.estimated 这次成本是「按生成量估算」的（上游没给真实 usage 时的兜底），控制台会标出来
-   * @param opts.at 调用**发起**时刻（ms）——按分时定价算成本（peak × 倍率）。不传 = 用当前时间。
+   * @param opts.at 调用**发起**时刻（ms），按分时定价算成本（peak × 倍率）。不传 = 用当前时间。
    *               长流式跨过 peak 边界时，用「发起时刻」才与实际计费口径一致。
    */
   record(
@@ -438,10 +438,10 @@ export class UsageStore {
   }
 
   /**
-   * 记录一笔「按张计费」的成本（出图等非 token 渠道）——真金白银，必须入账。
+   * 记录一笔「按张计费」的成本（出图等非 token 渠道），真金白银，必须入账。
    * 调用方在**出图成功后**记账（失败/降级不计费，与厂商计费口径一致）。
    *
-   * 口径：`requests`（调用次数）按**计费调用**计——一次出图请求算 1 次，
+   * 口径：`requests`（调用次数）按**计费调用**计，一次出图请求算 1 次，
    * 张数记在 `images`、金额记在 `imageCost`；这样「当天调用次数 = 当天分桶次数之和」恒成立。
    */
   recordImageCost(
@@ -508,7 +508,7 @@ export class UsageStore {
   }
 
   /**
-   * 全部 API 成本（元）—— 口径不变：所有用户（含游客/系统行）的 token 成本 + 图片成本
+   * 全部 API 成本（元），口径不变：所有用户（含游客/系统行）的 token 成本 + 图片成本
    */
   totalCost(): number {
     let c = 0;
@@ -532,7 +532,7 @@ export class UsageStore {
   }
 
   /**
-   * 「谁花的钱」——最近 N 天的功能细分（区间合计 + 按天），空的天补 0。
+   * 「谁花的钱」，最近 N 天的功能细分（区间合计 + 按天），空的天补 0。
    * 控制台用它渲染「API 成本构成」表：功能 × 调用数 × token × 金额 × 占比。
    */
   getFeatureBreakdown(days: number): {

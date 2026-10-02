@@ -22,7 +22,7 @@ const publicRoot = path.join(projectRoot, 'public');
 /** 生成的皮肤统一保存为 WebP（sharp 重编码 + 按用途缩小，避免动辄 1MB/张）。 */
 const IMAGE_EXT = 'webp';
 /**
- * Seedream 参考单价（元/张）—— 仅用于运营端成本记账（真实账单以火山控制台为准）。
+ * Seedream 参考单价（元/张），仅用于运营端成本记账（真实账单以火山控制台为准）。
  * 与 api/services/imageApi.ts 里 seedream 档的参考价同量级，可用 SEEDREAM_PRICE_YUAN 覆盖。
  */
 const SEEDREAM_PRICE_YUAN = Number(process.env.SEEDREAM_PRICE_YUAN || 0.2);
@@ -74,7 +74,7 @@ export interface GenerateSkinResult {
   generated: number;
 }
 
-/* —— 工具函数 —— */
+/* 【工具函数】 */
 
 function asciiSlug(text: string): string {
   return text
@@ -173,7 +173,7 @@ async function expandStyleAnchorWithLLM(theme: string, spec?: string): Promise<S
     const soft = isSoft(theme, spec);
     const specBlock = spec ? `\n【风格规格（必须充分体现）】${spec}\n` : '';
     const styleRule = soft
-      ? `风格要求：**软萌、梦幻、治愈、少女心、有想象力**——棉柔/毛绒/蓬松质感、马卡龙粉紫蓝黄、渐变星云、棉花糖云朵、闪烁星尘、十字星芒、柔软大理石纹理；可可爱爱、粉彩、卡通感是**加分项**，不要违和。`
+      ? `风格要求：**软萌、梦幻、治愈、少女心、有想象力**：棉柔/毛绒/蓬松质感、马卡龙粉紫蓝黄、渐变星云、棉花糖云朵、闪烁星尘、十字星芒、柔软大理石纹理；可可爱爱、粉彩、卡通感是**加分项**，不要违和。`
       : `风格要求：**精致、有质感、有氛围**，风格契合主题即可，**不要强制「璀璨梦幻/华丽」这类固定形容词**；**绝不要幼稚、不要卡通、不要扁平粉彩、不要 clip-art**；星空/宇宙主题参考深邃夜色与星光（深蓝/紫/金），不要马卡龙粉彩。`;
     const prompt =
       `你是「小愈」情绪陪伴产品的资深视觉设计师。请基于用户给的主题，产出一套皮肤「风格锚点」，只输出一个 JSON 对象，不要解释、不要代码围栏。` +
@@ -266,7 +266,7 @@ async function saveImage(filePath: string, img: SeedreamImageResult, slotKey: st
   }
 }
 
-/* —— 主流程 —— */
+/* 【主流程】 */
 
 export async function generateSkin(opts: GenerateSkinOptions): Promise<GenerateSkinResult> {
   const theme = (opts.theme || '').trim();

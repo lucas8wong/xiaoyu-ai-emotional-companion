@@ -6,7 +6,7 @@
  *  - 自研引擎把对局存在 `werewolf-games.json`（完整状态机快照），而**移植版不写那份**；
  *  - 结果就是页签上「累计开局 N」与「最近对局表」来自两个不同来源、口径对不上（实测过）。
  *
- * 这里改为**双方都往同一份轻量台账写一条开局记录**，运营端只读它 —— 累计与明细自然同源。
+ * 这里改为**双方都往同一份轻量台账写一条开局记录**，运营端只读它，累计与明细自然同源。
  * 只记「开局」，不记整局状态：运营端要看的是用量与分布，不是回放。
  */
 
@@ -93,7 +93,7 @@ class WerewolfLedger {
 
   /**
    * 按用户聚合（运营端「谁在玩狼人杀」）。
-   * 直接从台账现算，**不新增文件、不新增写入**——因此与「累计开局」同源，两处数字不会打架。
+   * 直接从台账现算，**不新增文件、不新增写入**，因此与「累计开局」同源，两处数字不会打架。
    */
   userSummaries(): WerewolfUserSummary[] {
     const byUser = new Map<string, WerewolfUserSummary>();
@@ -126,7 +126,7 @@ class WerewolfLedger {
     return Array.from(byUser.values()).sort((a, b) => b.games - a.games || b.lastAt - a.lastAt);
   }
 
-  /** 单个用户在台账里的开局明细（新的在前）——运营端用户详情用 */
+  /** 单个用户在台账里的开局明细（新的在前），运营端用户详情用 */
   byUser(userId: string, limit = 20): LedgerEntry[] {
     if (!userId) return [];
     return this.items.filter((e) => e.userId === userId).slice(-limit).reverse();

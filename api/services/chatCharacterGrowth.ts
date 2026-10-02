@@ -4,13 +4,13 @@
  * 数据持久化到 data/chat-character-growth.json，进程重启不丢失。
  *
  * 设计参考 Everthine「养成」：不做好感度/等级/进度条/每日任务，
- * 成长靠「发生过的痕迹」——日记、反思、自画像沉淀下来，再自然影响角色的口吻与表达。
+ * 成长靠「发生过的痕迹」：日记、反思、自画像沉淀下来，再自然影响角色的口吻与表达。
  * 「程度」是质性的：通过角色的自画像/日记与说话方式让人感受到，而不是 0–100 的刻度。
  */
 
 import { dataFile, readJson, writeJson } from '../storage/persistence.js';
 // 会话状态层（B 档，2026-09-21）：此刻在做什么 / 当下的心情 / 未消的账 / 你们之间的梗。
-// 挂在成长档案上而不是另开一个 store —— 它天然是「这一对（用户×角色）」的属性，与关系记忆同生命周期。
+// 挂在成长档案上而不是另开一个 store，它天然是「这一对（用户×角色）」的属性，与关系记忆同生命周期。
 import type { ChatState } from './chatState.js';
 
 export interface GrowthEntry {
@@ -42,7 +42,7 @@ export interface CharacterGrowthRecord {
   lastReflectAt: number;
   lastPortraitAt: number;
   /**
-   * 会话状态层（B 档，2026-09-21）：**"此刻"的状态**，与上面那些"档案"性质不同——
+   * 会话状态层（B 档，2026-09-21）：**"此刻"的状态**，与上面那些"档案"性质不同
    * 它带 TTL（scene 6h / mood 12h / grudge 24h / joke 7d），过期即消失，不做长期沉淀。
    * 之所以还放在这里：它天然属于「这一对（用户 × 角色）」，另开 store 只会多一份要同步的生命周期。
    */
@@ -106,7 +106,7 @@ class ChatCharacterGrowthStore {
   /**
    * 追加关系记忆（去重、裁剪）。
    *
-   * `sourceAt`（可选）：这条关系记忆**发生的时间**——剧情角色导入时，共同经历发生在剧情里，
+   * `sourceAt`（可选）：这条关系记忆**发生的时间**，剧情角色导入时，共同经历发生在剧情里，
    * 用导入时刻当时间会让"我们那时候…"全都变成今天（2026-09-19 记忆时间轴的同类问题）。
    * 缺省 = 现在（普通对话沉淀，行为与改动前完全一致）。
    */
@@ -126,7 +126,7 @@ class ChatCharacterGrowthStore {
   }
 
   /**
-   * 读会话状态（B 档）。`buildChatPromptParts` 每轮**同步**读它 —— 所以这里只做一次 Map 取、
+   * 读会话状态（B 档）。`buildChatPromptParts` 每轮**同步**读它：所以这里只做一次 Map 取、
    * 不做任何计算或 IO（对话链路上多一次 await 就是多几秒延迟，同 `chatDailyLife.ts` 的教训）。
    */
   getState(userId: string, characterId: string): ChatState | undefined {
@@ -135,7 +135,7 @@ class ChatCharacterGrowthStore {
 
   /**
    * 写会话状态（每轮回复之后调用）。状态由 `chatState.updateChatState` 这个**纯函数**整块算好，
-   * 这里只负责落盘 —— 好处是过期清理与去重逻辑可以脱离 store 单测。
+   * 这里只负责落盘，好处是过期清理与去重逻辑可以脱离 store 单测。
    */
   setState(userId: string, characterId: string, state: ChatState): CharacterGrowthRecord {
     const rec = this.get(userId, characterId);

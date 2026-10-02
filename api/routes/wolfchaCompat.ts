@@ -3,7 +3,7 @@
  *
  * 上游 `src/wolfcha/lib/llm.ts` 把每一次模型调用都打到**它自己服务端**的 `/api/chat`
  * （由那边代理 Bailian / Dashscope / TokenDance 并持有密钥）。小愈不使用它的密钥通道，
- * 因此这里按**上游完全相同的契约**实现这条路由，统一转发到小愈自己的 DeepSeek——
+ * 因此这里按**上游完全相同的契约**实现这条路由，统一转发到小愈自己的 DeepSeek
  * 密钥只存在于服务端（`DEEPSEEK_API_KEY`），前端拿不到。
  *
  * 契约（来自 `vendor/wolfcha/src/lib/llm.ts` 与 `src/types/game.ts` 的 `ChatCompletionResponse`）：
@@ -15,7 +15,7 @@
  * DeepSeek 的 `/chat/completions` 本身就是这个形状（且会返回 `prompt_cache_hit_tokens`，
  * 上游正是靠它统计前缀缓存命中），所以直接把上游响应透传即可，不做二次加工。
  *
- * ⚠️ 说明：请求里的 `model` 字段被**有意忽略**——上游让每个 AI 玩家用不同模型，
+ * ⚠️ 说明：请求里的 `model` 字段被**有意忽略**，上游让每个 AI 玩家用不同模型，
  * 而小愈统一走自己的模型；差异由角色人格承担，不由模型承担。
  */
 
@@ -83,13 +83,13 @@ const CREDIT_PER_GAME_ESTIMATE = WEREWOLF_GAME_TIAO * UNIT_CREDIT; // 单源：q
  *   一局 ≈ 40 条消息 ≈ 40 点 ≈ 20 次 → **每条消息 ≈ 1 点**
  * 因此开局**不做任何预扣**（下面只是 reserve→rollback 的探测，立刻归还），
  * 真正的扣费发生在每条消息上（见 chargeUsage，按真实 token 逐次结算）。
- * 门槛设成「至少 1 条消息的钱」即可，不再要求"攒够一整局"——那会让免费用户
+ * 门槛设成「至少 1 条消息的钱」即可，不再要求"攒够一整局"，那会让免费用户
  * （每日 30 点）被挡在门外，也违背"逐条计费"的本意。
  */
 /**
  * 开局准入 = **一局的预估消耗**，但对免费档只要求「够预扣他今天剩下的额度」。
  *
- * 口径（统一账本 §4.3④）：额度在**开局时**做准入，**局内不打断**——
+ * 口径（统一账本 §4.3④）：额度在**开局时**做准入，**局内不打断**
  * 以前的准入只有 1 条（`1 × UNIT_CREDIT`），于是免费档会出现"开得起来、打到一半没额度"
  * （虽然 `chargeUsage` 扣不动不中断，但用户以为还能再开一局，体验与口径都对不上）。
  */
@@ -105,14 +105,14 @@ const MIN_START_CREDIT = Math.min(CREDIT_PER_GAME_ESTIMATE, FREE_DAILY_CREDIT);
  *
  * A′ 的规则（**余额只在两个时点变动**）：
  *  1. **开局**预扣 `min(一局价 40 条, 当前可用额度)`；不够 `MIN_START_CREDIT` 就直接拦住并说明；
- *     —— 免费档照旧放行（可用 20 条即可开局），差额由平台吸收，这是刻意的引流成本。
+ *     免费档照旧放行（可用 20 条即可开局），差额由平台吸收，这是刻意的引流成本。
  *  2. **局内**只把真实消耗记到本局账上（`usedCredit`），**不碰余额**；页面显示「本局已用约 X 条」。
  *  3. **结算**（局终、中途退出、或 10 分钟无调用、或下一局开局时）按 `min(真实消耗, 预扣)` 结算：
  *     真实 < 预扣 → **退回差额**；真实 > 预扣 → **不再补收**（平台吸收）。
  *     结算结果写进 `lastSettlement`，由 `/credits/balance` 回给前端提示「本局实际 X 条，已退回 Y 条」。
  *
  * 进程重启会让内存里的预留令牌消失（`creditReservations` 是内存态）：此时退款走 `addCreditBonus`
- * 兜底——金额一致，只是退回点数进「赠送」而非「当日」，用户不吃亏。
+ * 兜底，金额一致，只是退回点数进「赠送」而非「当日」，用户不吃亏。
  */
 const GAME_CHARGE_FILE = dataFile('werewolf-game-charge.json');
 const SETTLE_IDLE_MS = 10 * 60 * 1000; // 10 分钟没有模型调用 = 这局结束了（或用户退出了）
@@ -152,7 +152,7 @@ function settleGame(userId: string, reason: string): void {
     quotaStore.settleCredit(userId, g.token, charge); // 预扣模式：多退少补（这里只会退差额）
   } else if (g.reserved > 0) {
     // ⚠️ 用 refundCreditBonus 而**不是** addCreditBonus：这是退款，不是发放。
-    // `addCreditBonus` 会计入「累计获得」，而控制台的「赠送已用 = 累计 − 余额」——
+    // `addCreditBonus` 会计入「累计获得」，而控制台的「赠送已用 = 累计 − 余额」
     // 退款算成发放会让累计虚高、已用虚低（2026-09-29 修，见 quota.ts 两个方法的注释）。
     quotaStore.refundCreditBonus(userId, refund, 'werewolf-refund'); // 重启兜底：预留令牌已随内存丢失
   } else {
@@ -204,7 +204,7 @@ function _dailyLimitFor(userId: string): number {
  * 余额换算成「条」。**返回 `null` = 无限档（Pro）**。
  *
  * ⚠️ 2026-09-17 修的坑：`getCreditQuota()` 对 Pro 返回 `creditRemain: null`（无限不能用 Infinity
- * 表达——JSON 会变 null、前端 `?? 0` 会当成「剩余 0」）。这里原来把 null 直接当 0，
+ * 表达：JSON 会变 null、前端 `?? 0` 会当成「剩余 0」）。这里原来把 null 直接当 0，
  * 于是 **Pro 用户在狼人杀顶栏看到「剩余 0 条」**，以为没额度了。现在把无限单独表达出来。
  */
 function creditsToUses(userId: string): number | null {
@@ -276,7 +276,7 @@ function recordCost(userId: string, u: { prompt_tokens: number; completion_token
 /**
  * 按**真实用量**扣点：reserve 后立刻 settle 同额（等于一次净扣款）。
  * 与自研引擎同一个换算函数（`estimateCreditFromTokens`），所以两边的「点数」含义一致。
- * 扣不动（余额不足）时不阻断本次调用——对局已在进行，中断体验更差；只记日志，由开局闸门控总量。
+ * 扣不动（余额不足）时不阻断本次调用，对局已在进行，中断体验更差；只记日志，由开局闸门控总量。
  */
 /**
  * `preToken` = 无对局时由准入闸门预留的点数令牌（见 /chat handler）。
@@ -323,7 +323,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
     temperature?: number;
     max_tokens?: number;
     stream?: boolean;
-    /** 决定模型必须输出 JSON —— 漏转发它，上游的 generateCharacters 就会拿到散文并报 invalid JSON */
+    /** 决定模型必须输出 JSON，漏转发它，上游的 generateCharacters 就会拿到散文并报 invalid JSON */
     response_format?: { type: string; json_schema?: unknown };
     /** 推理强度（DeepSeek 支持 minimal|low|medium|high） */
     reasoning_effort?: 'minimal' | 'low' | 'medium' | 'high';
@@ -351,7 +351,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
    *  - 而 DeepSeek **不支持 json_schema**，直接 400：`This response_format type is unavailable now`；
    *  - DeepSeek 支持的是 `{type:'json_object'}`（且要求提示词里出现 "json" 一词）。
    *
-   * 因此把 json_schema **降级**为 json_object，并把 schema 原文作为指令注入提示词——
+   * 因此把 json_schema **降级**为 json_object，并把 schema 原文作为指令注入提示词
    * 既保住「API 强制合法 JSON」，又把字段形状交代给模型（上游的解析器再兜一层容错）。
    */
   const rf = body.response_format;
@@ -408,7 +408,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
 
   /**
    * 准入闸门（2026-09-28 审查 B1）：`/api/chat` 挂在裸 `/api` 上、**无需登录**（游客按设备身份即可），
-   * 而 chargeUsage 的设计是「扣不动也不阻断本次调用」——这对**局内**调用是合理的（开局闸门已按局预扣），
+   * 而 chargeUsage 的设计是「扣不动也不阻断本次调用」，这对**局内**调用是合理的（开局闸门已按局预扣），
    * 但对「没有进行中的局」的直连调用就等于：余额为 0 也能无限消耗 DeepSeek（平台白送成本）。
    * 所以：没有进行中的局时，先按单次最低成本**原子预留**点数；扣不动直接 402，根本不发上游请求。
    * 令牌交给 chargeUsage 按真实用量结算（多退少补）；任何提前返回/异常都在 finally 里回滚。
@@ -452,7 +452,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
   if (effectiveResponseFormat) payload.response_format = effectiveResponseFormat;
   /**
    * 🔴 **流式也必须带回 usage**（2026-09-17 实测发现的口子）：
-   * OpenAI 兼容协议里，流式响应**默认不回传 usage**——必须显式请求
+   * OpenAI 兼容协议里，流式响应**默认不回传 usage**，必须显式请求
    * `stream_options: { include_usage: true }`，上游才会在最后一帧带上 `usage`。
    *
    * 不加的后果（实测）：一局狼人杀里**拦截到 34 次 `/api/chat`，只有 15 次产生计费**
@@ -483,7 +483,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
    *  - 带 `response_format` 的请求 = 上游的**结构化生成**（角色人设批次、投票等），
    *    要求严格遵循 JSON Schema。实测关掉推理后这类请求会偶发返回坏结构：
    *    `Character batch N returned invalid schema` / `invalid persona` / `length mismatch`
-   *    —— 表现为**偶发开局失败**，对用户不可接受 → 这类**保留推理**（宁慢不错）。
+   *    表现为**偶发开局失败**，对用户不可接受 → 这类**保留推理**（宁慢不错）。
    *  - 其余请求 = 对局内的单句发言/单个动作，输出短、Schema 宽松。
    *    实测 `reasoning_effort: 'none'` 把单次从 6.2s 降到 2.0s 且输出仍是合法 JSON → **关推理**。
    *
@@ -493,7 +493,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
    *   structured='low'     → 40.9s（**并不更快**，实测排除）
    *   上游传进来的 reasoning_effort 一律忽略（它的配置来自自家模型目录，对我们不适用）。
    *
-   * 结论：推理档位这条路的收益只来自 'none'，而它牺牲的是开局可靠性 —— 不值。
+   * 结论：推理档位这条路的收益只来自 'none'，而它牺牲的是开局可靠性，不值。
    * 真正的加速点在于**少生成人设**（已选角色应跳过对应座位），已记入待办。
    */
   payload.reasoning_effort = 'none';
@@ -521,7 +521,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // —— 流式：上游要求 SSE（`data: {...}` 分块 + `data: [DONE]` 结尾），必须原样直通 ——
+    // 【流式：上游要求 SSE（`data: {...}` 分块 + `data: [DONE]` 结尾），必须原样直通】
     // 否则它的解析器收不到 [DONE]，会报「模型流式响应在 [DONE] 前意外结束」而中止开局。
     if (wantStream) {
       res.status(200);
@@ -582,7 +582,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
         }
         /**
          * 兜底（2026-09-17）：上游若仍未回传 usage（换模型、代理降级、被截断），
-         * **按文本长度估算**后照扣——宁可估得粗，也不能静默不计费（那是平台白送成本）。
+         * **按文本长度估算**后照扣，宁可估得粗，也不能静默不计费（那是平台白送成本）。
          * 估算口径与主链路一致（`estimateTextTokens`）。
          */
         if (!u) {
@@ -603,7 +603,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // —— 非流式：透传上游 OpenAI 兼容响应（choices + usage，含缓存命中字段） ——
+    // 【非流式：透传上游 OpenAI 兼容响应（choices + usage，含缓存命中字段）】
     const text = await upstream.text();
     // 计费与运营端计数都按**真实 usage**（与自研引擎同一换算口径）
     let u: ReturnType<typeof usageOf> = null;
@@ -642,11 +642,11 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
 });
 
 /**
- * Watcha Pay（韩国第三方支付通道）—— 小愈不使用它。
+ * Watcha Pay（韩国第三方支付通道），小愈不使用它。
  *
  * 上游会在进入计费相关界面时探测 `access`，用来决定是否展示 Watcha 购买入口。
  * 我们既不接该通道，就返回 200 + `access:'unavailable'`，让它走**自己已有的**
- * 「不可用」分支 —— 比 404 干净（404 会在 console 里留下报错，也会误导排查）。
+ * 「不可用」分支，比 404 干净（404 会在 console 里留下报错，也会误导排查）。
  */
 router.get('/watcha-pay/access', (_req: Request, res: Response): void => {
   res.json({ access: 'unavailable', purchaseUrl: null });
@@ -708,7 +708,7 @@ router.post('/credits/consume', (req: Request, res: Response): void => {
   /**
    * 开局被拦时的**可执行**回应（2026-09-27 用户拍板 B：「注册才能玩」+ 拦截改成注册引导）。
    *
-   * 分两种人说清两件不同的事——这不是文案口味问题，而是**用户要采取的动作完全不同**：
+   * 分两种人说清两件不同的事，这不是文案口味问题，而是**用户要采取的动作完全不同**：
    *  - 游客（非注册账号）：额度档位本身不够开一局（游客 5 条 < 准入 20 条）⇒ 出路是**注册**；
    *  - 注册账号：今天用完了 ⇒ 出路是**等明天自动恢复 / 获取更多额度 / 升级会员**。
    * 前端据 `reason` / `registerHint` 走统一额度门控（`xiaoyu:quota-exhausted`，Home 决定弹哪个）。
@@ -743,7 +743,7 @@ router.post('/credits/consume', (req: Request, res: Response): void => {
    *  - **额度够一局价**（Plus/Pro/攒够的免费用户）→ **开局预扣一局价**，局终按真实消耗多退少补。
    *  - **额度不够一局价但够准入**（典型：免费档 20 条 < 一局 40 条）→ **不预扣**，改为**局后按真实消耗扣**，
    *    上限 = 开局时的可用额度。否则免费用户一开局余额就归零（显示"剩余 0 条"），体验比旧行为还差。
-   * 两种模式下**局内余额都不动**——余额只在开局或结算时变一次。
+   * 两种模式下**局内余额都不动**，余额只在开局或结算时变一次。
    */
   const reserveFull = isUnlimited || avail >= CREDIT_PER_GAME_ESTIMATE;
   // 预扣金额也只取整条（avail 正常就是整条；历史/异常残差向下取整，别把非整条写进账本）
@@ -786,7 +786,7 @@ router.post('/credits/consume', (req: Request, res: Response): void => {
   werewolfLedger.record({ userId, size: 10, plan, source: 'wolfcha' });
   /**
    * 行为埋点：狼人杀**按局**计入「剧情演绎」使用记录（mode:'werewolf'）。
-   * 位置刻意贴着台账那一行——控制台「用户行为」里的狼人杀局数与本页签「累计开局」
+   * 位置刻意贴着台账那一行，控制台「用户行为」里的狼人杀局数与本页签「累计开局」
    * 因此**同源**，不会出现两个页面数字对不上（这个坑项目里已经踩过一次）。
    * 与 roleplay/textgame 一致：测试请求（test- 设备指纹 / RFC 5737 网段）不计。
    */

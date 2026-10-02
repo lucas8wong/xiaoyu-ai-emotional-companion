@@ -8,13 +8,13 @@
  *   不需要 authorization code 交换 → **不需要 Client Secret**（少一个能泄露的机密）。
  *
  * 防御清单（每一条都对应一种真实攻击，别删）：
- *   1. 只接受 alg=RS256        —— 挡 alg=none / HS256 算法混淆（拿公钥当 HMAC 密钥）
- *   2. kid 必须命中 JWKS        —— 未知 kid 先强制刷新一次 JWKS（应对 Google 轮换密钥）
+ *   1. 只接受 alg=RS256，挡 alg=none / HS256 算法混淆（拿公钥当 HMAC 密钥）
+ *   2. kid 必须命中 JWKS，未知 kid 先强制刷新一次 JWKS（应对 Google 轮换密钥）
  *   3. 必须验签成功
  *   4. exp 未过期（含 5 分钟时钟偏差）
- *   5. aud === 本站 Client ID   —— 挡「别家应用的 token 拿来登我们的站」
+ *   5. aud === 本站 Client ID，挡「别家应用的 token 拿来登我们的站」
  *   6. iss ∈ accounts.google.com
- *   7. email_verified === true  —— 只有 Google 确认过的邮箱才允许按邮箱匹配/建号
+ *   7. email_verified === true，只有 Google 确认过的邮箱才允许按邮箱匹配/建号
  */
 
 import 'dotenv/config';

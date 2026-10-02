@@ -6,7 +6,7 @@
  *
  * 通道（用户 2026-10-01 明确要求「用 myxiaoyu2026@gmail 发，不占验证码那个邮箱」）：
  * 走 `sendEmail(..., { via: 'campaign' })` 的**独立群发 SMTP**（`CAMPAIGN_SMTP_*`，默认
- * `myxiaoyu2026@gmail.com`）——与承载注册验证码/改密的 Resend 主通道**物理隔离**，
+ * `myxiaoyu2026@gmail.com`），与承载注册验证码/改密的 Resend 主通道**物理隔离**，
  * 且不消耗主通道的非关键邮件预算（见 `email.ts` 顶部注释）。
  *
  * 数据：只读 accounts / activity / roleplay-sessions；只新增 `data/holiday-gift-mail.json`
@@ -126,11 +126,11 @@ Every feeling deserves to be understood.`;
   const zhSubject = `🎁 送你 ${d} 天完整 Pro，已到账`;
   const zhBody = `
     <p style="margin:0 0 12px;font-size:15px;color:#243B2E;line-height:1.75">${zhName}<br/>
-      小愈为你准备了一份节日礼物——你的账户已免费开通 <b style="color:#1FA46B">${d} 天完整 Pro</b> 🎁。</p>
+      小愈为你准备了一份节日礼物，你的账户已免费开通 <b style="color:#1FA46B">${d} 天完整 Pro</b> 🎁。</p>
     <p style="margin:0 0 12px;font-size:14px;color:#243B2E;line-height:1.75">在这段时间里，你可以无限畅聊、享受更长的上下文，还能畅玩 AI 剧情与自创角色。</p>
     <p style="margin:0;font-size:14px;color:#243B2E;line-height:1.75">无需任何操作，它已经在你的账户里了。打开 Xiaoyu 就能用。💛</p>`;
   const zhHtml = shell(zhBody, cta, '进入 Xiaoyu →', '你的每一种情绪，都值得被理解。', opts.unsubUrl, '不想再收到这类邮件？');
-  const zhText = `小愈为你准备了一份节日礼物——你的账户已免费开通 ${d} 天完整 Pro。
+  const zhText = `小愈为你准备了一份节日礼物，你的账户已免费开通 ${d} 天完整 Pro。
 
 在这段时间里，你可以无限畅聊、享受更长的上下文，还能畅玩 AI 剧情与自创角色。
 

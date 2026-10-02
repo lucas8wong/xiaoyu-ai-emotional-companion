@@ -6,7 +6,7 @@ import { SELF_HARM_KEYWORDS } from './safety.js';
 import { toOutputLang, toZhTw, type OutputLang } from './zhConvert.js';
 import type { ChatRedirectKind } from './chatRedirect.js';
 /**
- * AI 人设：小愈 —— 拟人化通用人设（内置小愈共用的一份"小愈本愈"）
+ * AI 人设：小愈。拟人化通用人设（内置小愈共用的一份"小愈本愈"）
  * 依据知乎《打造丝滑真人AI【拟人化】》方法论整理：
  * 基本信息 / 性格特点 / 说话习惯（口头禅）/ 互动规则 / 示例对话
  * 小愈还是那个小愈：口头禅、语气词、说话习惯恒定不变；
@@ -114,7 +114,7 @@ export const BRAND_TONE = `【品牌语气】我们相信：你的每一种情�
 - 词汇黑名单（别用）：疗愈、治愈、赋能、内耗、高敏感、创伤修复、"完全懂你"、"永远陪着你"、"最懂你的人"、心理学术语堆砌、模板化安慰、过度煽情、鸡汤大道理`;
 
 /**
- * 【已删除·2026-09-23】原「五种陪伴方式」的五张档位卡（hug/ally/clarify/light/objective）——判断块见 api/services/companionStance.ts：
+ * 【已删除·2026-09-23】原「五种陪伴方式」的五张档位卡（hug/ally/clarify/light/objective），判断块见 api/services/companionStance.ts：
  * 卡名与步骤名被当成示例写进提示词，模型学到的是"标准答案"，于是把内部判断当台词念了出来（用户原话：「行，我接住了」）；
  * 用户没选档位之后这句也不会消失（"接住"在人设与品牌白名单里还在），现改为「判断留在心里 + 明写不许说出口」。
  */
@@ -142,7 +142,7 @@ export const STORY_STYLE_ABSTRACT = `【故事风格·抽象搞笑】用"抽象�
  * 不模仿口音拼写，不做戏仿，不做地方喜剧人设。
  * 「很强」= 浓度拉满但零表演（永远真实陪伴）。
  * 逻辑合理化：小愈是"从东方小城走向世界的小芽"，走过很多地方，
- * 所以能用对方习惯的语气说话——这是她贴近对方的方式，不是她在扮演别人。
+ * 所以能用对方习惯的语气说话，这是她贴近对方的方式，不是她在扮演别人。
  * 因此地区语气不与她"小芽精灵"的身份冲突。
  */
 export const REGION_CARDS: Record<string, string> = {
@@ -170,7 +170,7 @@ export const INTENSITY_MAP: Record<string, string> = {
  * 礼貌/直接程度、句子节奏与温度。不模仿口音拼写（如过度 y'all / innit），不做戏仿。
  * 与中文地区系统同一机制：以标准英语为底，地区感来自节奏、用词与安慰顺序。
  * 逻辑合理化：小愈从东方小城走向世界，在美国、英国等地都停留过，
- * 所以能自然地用当地人的说法陪伴对方——这是她的温柔，不是她在模仿谁。
+ * 所以能自然地用当地人的说法陪伴对方，这是她的温柔，不是她在模仿谁。
  */
 export const REGION_CARDS_EN: Record<string, string> = {
   neutral: `【Region voice: Standard English】Use neutral, clear Standard English. No regional slang, no dialect spelling, no heavy idioms. Warm but plain.`,
@@ -233,7 +233,7 @@ export const CHAT_REDIRECT_GUIDE: Record<OutputLang, Record<ChatRedirectKind, st
     roleplay: '想在故事里玩一场、换个身份待一会儿，我懂～不过「聊一聊」这边我主要是陪你说说话；想演戏的话，「剧情演绎」才是专门的地方：剧本很多，AI 会以剧中的角色跟你实时对戏，剧情跟着你的选择走，也随时能停下、下次接着演。那里还能自己创建剧本，写一句灵感，AI 就帮你把标题、人设、背景、开场都写好。要不要过去挑一个试试？',
     chatCharacter: '想让我换个身份来陪你，这个在「聊一聊」里就能做到：点顶部的角色名字 →「新建角色」，写下 TA 的名字、身份、说话方式和开场白，之后我就会一直以 TA 的人设跟你聊。每个角色有自己的会话线和独立记忆（TA 记得的你、日记、关系都分开存，不会和小愈串在一起），想切换随时切回来。要不要现在就建一个？',
     /**
-     * 成人向请求（2026-09-25）：**不冷拒**——「打住，这里不能聊这个」会让人觉得被嫌弃，
+     * 成人向请求（2026-09-25）：**不冷拒**，「打住，这里不能聊这个」会让人觉得被嫌弃，
      * 而需求本身完全可以被满足，只是地点不对。所以口径是：接住 → 说清这边做什么 → 指路
      * 「剧情演绎」+「无限制模式」（成人模型）→ 把 18+ 确认这一步提前讲明（不然进了剧情还是"没变"）→ 轻邀请。
      */
@@ -265,11 +265,11 @@ export const LANGUAGE_REQUIREMENT: Record<string, string> = {
  * 剧情输出格式·纯文本约束（2026-09-20 追加，单一来源，供所有剧情生成入口复用）
  *
  * 为什么补这条：`scripts/rp-ending-scan.mts` 在**真实线上数据**里跑出的「高频收尾形态」榜中，
- * **代码块围栏（三个反引号）出现了 3 次** —— 模型把 Markdown 漏进了剧情正文（收尾那一句就是它）。
+ * **代码块围栏（三个反引号）出现了 3 次**，模型把 Markdown 漏进了剧情正文（收尾那一句就是它）。
  * 聊一聊那边一直有【格式·纯文本】硬规则，剧情这边**一条都没有**；而剧情还有一条既有先例：
  * 引号字形混用（「」57% / “”20% / ASCII 11%）也是靠「补一条明确到字形的条款」治好的（见 `quoteRuleBlock`）。
  *
- * ⚠️ 本文案**刻意不写反引号本身**（模板字符串里写不了，而且写进去等于给模型一个可照抄的样例）——
+ * ⚠️ 本文案**刻意不写反引号本身**（模板字符串里写不了，而且写进去等于给模型一个可照抄的样例）
  * 用「三个反引号的代码块围栏」这种说法点名即可。
  */
 export function buildPlainTextDirective(lang: string): string {
@@ -296,7 +296,7 @@ export function buildPlainTextDirective(lang: string): string {
  * ⚠️ 本块与既有条款的分工：10.4 管的是**权限**（不许替用户行动/说话/揣测内心），
  *   本块管的是**语法人称**（怎么称呼他）；两者不重复、也不互相替代。
  * ⚠️ 用户自建剧本**结构里没有用户角色名字段**（`custom-roleplay` 只有 `aiName`），
- *   所以那里 `userName` 常为空 —— 而**空的时候恰恰最容易被模型自行起名**（真实案例：
+ *   所以那里 `userName` 常为空，而**空的时候恰恰最容易被模型自行起名**（真实案例：
  *   《民国背德》被写成「林清缇」，用户从没设过这个名字）。所以无名时也**必须**给规则（第二条）。
  */
 export function buildUserPersonDirective(lang: string, userName?: string): string {
@@ -323,7 +323,7 @@ export function buildUserPersonDirective(lang: string, userName?: string): strin
 /**
  * 剧情输出字体·系统性约束（单一来源，供所有剧情生成入口复用）。
  * 把「用户选择的语言/字体」作为一个固定、高优先级的系统设定注入 prompt，
- * 明确禁止其它字体、给出目标字体示例，并声明不可被用户消息覆盖——
+ * 明确禁止其它字体、给出目标字体示例，并声明不可被用户消息覆盖
  * 让 AI 直接生成目标字体（可持续、可复用，而非逐临时拼一句 langHint）。
  * lang 采用剧情 RPLang：'zh'=简体、'zh-TW'=繁体、'en'=英文。
  */

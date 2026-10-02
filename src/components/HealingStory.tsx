@@ -37,7 +37,7 @@ export default function HealingStory({ onExitStructure }: { onExitStructure?: ()
   const [shareOpen, setShareOpen] = useState(false);
   const [storyCopied, setStoryCopied] = useState(false);
 
-  // —— 朗读：云端 Edge TTS（神经音色）优先，浏览器 Web Speech 兜底 ——
+  // 【朗读：云端 Edge TTS（神经音色）优先，浏览器 Web Speech 兜底】
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const engineRef = useRef<'cloud' | 'web' | null>(null);
   const idxRef = useRef(0);

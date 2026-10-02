@@ -141,7 +141,7 @@ router.get('/search', async (req, res) => {
     upstream.searchParams.set('keyword', q);
     const r = await fetch(upstream.toString());
 
-    // ALAPI 限流：HTTP 429 或 JSON code=429 —— 返回 rate_limited（200，不触发前端重试，避免雪崩）
+    // ALAPI 限流：HTTP 429 或 JSON code=429，返回 rate_limited（200，不触发前端重试，避免雪崩）
     if (r.status === 429) {
       res.json({ success: false, error: 'rate_limited', code: 'RATE_LIMITED', message: '表情包搜索太频繁，请稍后再试' });
       return;
@@ -152,7 +152,7 @@ router.get('/search', async (req, res) => {
       return;
     }
     const body = await r.json();
-    // ALAPI 对 token 错误/超限仍返回 HTTP 200 + success:false —— 区分限流与真实错误
+    // ALAPI 对 token 错误/超限仍返回 HTTP 200 + success:false，区分限流与真实错误
     const bodyRec = (body && typeof body === 'object' ? body : {}) as Record<string, unknown>;
     if (bodyRec.success === false) {
       if (bodyRec.code === 429) {
@@ -169,7 +169,7 @@ router.get('/search', async (req, res) => {
       .filter((it) => checkContentSafety(it.title || '').safe)
       .slice(0, 20);
     cache.set(q, { items, ts: Date.now() });
-    // 内存上限（2026-09-29 审查 A3-P2）：图片缓存早有 500 上限，搜索缓存此前无上限——
+    // 内存上限（2026-09-29 审查 A3-P2）：图片缓存早有 500 上限，搜索缓存此前无上限
     // 任意关键词都能各塞一条，长期运行会一直涨。
     if (cache.size > CACHE_MAX) {
       const oldest = cache.keys().next().value;

@@ -28,7 +28,7 @@ import {
   moodOf,
 } from '../../src/lib/storyScene.js';
 
-// —— 主题解析：都市情感语境（文游那张武侠权谋表不能复用，这里是重做后的表）——
+// 【主题解析：都市情感语境（文游那张武侠权谋表不能复用，这里是重做后的表）】
 test('themeOfText：情感剧本文本 → 主题（雨/心动/争执/独处/承诺…）', () => {
   assert.strictEqual(themeOfText('「外面雨大，先进来躲一会儿吧。」'), 'rain');
   assert.strictEqual(themeOfText('他吻了吻她的额头'), 'intimate');
@@ -44,7 +44,7 @@ test('themeOfText：优先级与兜底（天气优先于时段；危机≠对峙
   assert.strictEqual(themeOfText('雨夜，路灯把水洼照得发亮'), 'rain');
   // 危机（追杀/受伤/失控）优先于对峙
   assert.strictEqual(themeOfText('有人追杀他，他受了伤，几乎失控'), 'crisis');
-  // 但"质问/争吵"是对峙而非危机——不要因为写得激烈就升级成危机画面
+  // 但"质问/争吵"是对峙而非危机，不要因为写得激烈就升级成危机画面
   assert.strictEqual(themeOfText('他追上去质问她'), 'conflict');
   assert.strictEqual(themeOfText(''), DEFAULT_THEME);
   assert.strictEqual(themeOfText(null), DEFAULT_THEME);
@@ -70,10 +70,10 @@ test('matchTheme：换幕只认"明确命中"（未命中返回 null，避免画
   assert.strictEqual(themeOfText('雨点砸在窗上'), matchTheme('雨点砸在窗上'));
 });
 
-// —— 红线：出图 prompt 必须只含白名单视觉要素，且显式无人物/无文字 ——
+// 【红线：出图 prompt 必须只含白名单视觉要素，且显式无人物/无文字】
 test('scenePrompt：内容打头（约束已交给负向词，不再占正面 prompt 前段）', () => {
   const p = scenePrompt('hk', 'rain');
-  // 新契约（2026-09-14 换 SDXL base 后）：正面 prompt 由**场景内容**开场——SDXL 前段 token 权重最高，
+  // 新契约（2026-09-14 换 SDXL base 后）：正面 prompt 由**场景内容**开场，SDXL 前段 token 权重最高，
   // 约束挤在前面会让具体器物（输液架/花轿）画不出来。
   assert.ok(p.startsWith('rain on the window from inside'), '场景内容必须打头，实际：' + p.slice(0, 60));
   assert.ok(p.includes('1990s Hong Kong interior'), p);
@@ -82,7 +82,7 @@ test('scenePrompt：内容打头（约束已交给负向词，不再占正面 pr
   assert.ok(/people/.test(SCENE_NEGATIVE_PROMPT) && /person/.test(SCENE_NEGATIVE_PROMPT), SCENE_NEGATIVE_PROMPT);
   assert.ok(/text/.test(SCENE_NEGATIVE_PROMPT) && /watermark/.test(SCENE_NEGATIVE_PROMPT), SCENE_NEGATIVE_PROMPT);
   assert.ok(/blood|corpse|weapon/.test(SCENE_NEGATIVE_PROMPT), SCENE_NEGATIVE_PROMPT);
-  // 户外场景额外压制"室内房间名"（实测不加就会被画成客厅——用户截图就是这种情况）
+  // 户外场景额外压制"室内房间名"（实测不加就会被画成客厅，用户截图就是这种情况）
   const outdoor = negativePromptFor({ scene: 'wet asphalt, street lamps', mood: 'cool', indoor: false });
   assert.ok(/living room/.test(outdoor) && /bedroom/.test(outdoor), outdoor);
   const indoor = negativePromptFor({ scene: 'dim living room', mood: 'warm', indoor: true });
@@ -174,7 +174,7 @@ test('moodOf：冷/暖/中性分档（修掉"什么场景都暖阳"的根因）'
 });
 
 test('红线（2026-09-14 二次复盘）：世界观不得再描述"房间类型"，且色调按分档而非写死暖调', () => {
-  // 用户实测：刑警剧本被画成"暖阳居家书房"——根因是 modern 世界观写了 apartment + 全局 warm palette
+  // 用户实测：刑警剧本被画成"暖阳居家书房"，根因是 modern 世界观写了 apartment + 全局 warm palette
   for (const w of SCENE_WORLDVIEWS) {
     assert.ok(!/apartment|villa|mansion/i.test(w.setting), `${w.id} 的世界观又写房间类型了：${w.setting}`);
   }

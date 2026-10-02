@@ -35,7 +35,7 @@ export function AIConfigFields({ cfg }: { cfg: ReturnType<typeof useAIConfig> })
         <span className="label-row">
           Base URL（可改为代理或区域地址）
           {/* 自定义那一项底下的每条建议地址背后是一个独立产品（LM Studio /
-              Ollama / LiteLLM…），服务商级的那条文档链接对它没有意义 ——
+              Ollama / LiteLLM…），服务商级的那条文档链接对它没有意义
               填到哪条就给哪条的文档，用户得先照着它把服务跑起来。 */}
           {endpointDocs && (
             <a className="ext" href={endpointDocs} target="_blank" rel="noreferrer">
@@ -45,10 +45,10 @@ export function AIConfigFields({ cfg }: { cfg: ReturnType<typeof useAIConfig> })
         </span>
         <input value={cfg.baseURL} onChange={(e) => cfg.changeBaseURL(e.target.value)} placeholder={cfg.preset.baseURL || 'https://api.openai.com/v1'} />
         {/* 点一下就换地址。原先是 <datalist>：那东西只在聚焦/输入时才浮出建议，
-            等于「有几个可选地址」这件事根本看不见，也点不到 —— 另外两个项目都是
+            等于「有几个可选地址」这件事根本看不见，也点不到，另外两个项目都是
             可点的芯片行，这里跟上。芯片之外仍留自由输入（自建代理 / 区域地址）。
             ⚠ 必须排在 <input> 【后面】：没写 for 的 <label> 关联的是它的第一个
-            可标记后代，而芯片是 <button>（可标记）—— 排在前面的话，点一下标题
+            可标记后代，而芯片是 <button>（可标记），排在前面的话，点一下标题
             文字就等于点了第一颗芯片，地址被悄悄改掉并落盘，输入框还丢了可访问名称。 */}
         {(cfg.preset.endpoints?.length ?? 0) > 0 && (
           <div className="chip-list endpoint-chips">
@@ -95,10 +95,10 @@ export function AIConfigFields({ cfg }: { cfg: ReturnType<typeof useAIConfig> })
           思考强度
           <select value={cfg.thinkingLevel} onChange={(e) => cfg.changeThinkingLevel(e.target.value as ThinkingLevel)}>
             {/* ⚠ 最低那一档写什么，取决于这家【有没有关闭值】。gemini / grok /
-                groq / cerebras 这些没有，它们的「关」实际发的是自己的最低档 ——
+                groq / cerebras 这些没有，它们的「关」实际发的是自己的最低档
                 仍在推理、仍在计费。写成「关闭（更快更省）」就是在撒谎：用户以为
                 省下了推理的钱，账单上并没有。
-                选项只留一个词、代价说明放到下面那行 —— 与上游同一分工，下拉保持
+                选项只留一个词、代价说明放到下面那行，与上游同一分工，下拉保持
                 可扫读。 */}
             <option value="off">{cfg.canDisableThinking ? '关闭（更快更省）' : '最低'}</option>
             <option value="low">低</option>
@@ -106,14 +106,14 @@ export function AIConfigFields({ cfg }: { cfg: ReturnType<typeof useAIConfig> })
             <option value="high">高</option>
           </select>
           {!cfg.canDisableThinking && (
-            <span className="hint">该服务商不支持关闭思考——「最低」发送它自己的最低值，仍会推理、仍会计费。调高通常更准确，但更慢、更耗额度。</span>
+            <span className="hint">该服务商不支持关闭思考：「最低」发送它自己的最低值，仍会推理、仍会计费。调高通常更准确，但更慢、更耗额度。</span>
           )}
         </label>
       )}
 
       {/* 中转＝开关 + 地址，与另外两个项目同一形态。自填地址那一项不显示：
           那台按 host 白名单转发，局域网地址够不着、公网自建地址也不在名单里。 */}
-      {/* 中转块对自填地址整块不显示，但跨域问题它一样会遇到 —— 不给一句话，用户
+      {/* 中转块对自填地址整块不显示，但跨域问题它一样会遇到，不给一句话，用户
           只会看到 friendlyError 里那句「打开 CORS 中转」，而那个开关根本不在他屏幕上。 */}
       {!cfg.proxyApplicable && (
         <p className="hint">自填地址不走中转：那台按域名白名单转发，够不着局域网 / 自建地址。遇到跨域（CORS）失败，要在你自己的服务端加响应头。</p>
@@ -122,7 +122,7 @@ export function AIConfigFields({ cfg }: { cfg: ReturnType<typeof useAIConfig> })
       {cfg.proxyApplicable && (
         <div className="proxy-block">
           <span className="label-row">
-            {/* 名字与【本仓 README 里那句】一致（"请求经一台 CORS 中转转发"）——
+            {/* 名字与【本仓 README 里那句】一致（"请求经一台 CORS 中转转发"）
                 那是用户被指过去读隐私说明的地方，界面改叫别的就搜不到了。
                 ⚠ 不要照搬上游的「中转 API」：那台是逐 provider 声明路由的【通用
                 中转】，存在理由不止 CORS（按 origin 拦的 403 也靠它）；本仓这台
@@ -130,7 +130,7 @@ export function AIConfigFields({ cfg }: { cfg: ReturnType<typeof useAIConfig> })
                 用「中转」而不是「代理」：说清了"经手"，也不与翻墙代理混淆。 */}
             <span>
               CORS 中转
-              {/* README 与文档都写着「设置里会标出『必须开』」—— 那句话得在这里真的
+              {/* README 与文档都写着「设置里会标出『必须开』」，那句话得在这里真的
                   兑现，否则用户看到的只是一个能关的开关，关掉就是一次无从解释的
                   CORS 失败。 */}
               {cfg.proxyRequired && <span className="req">必须开</span>}
@@ -142,12 +142,12 @@ export function AIConfigFields({ cfg }: { cfg: ReturnType<typeof useAIConfig> })
           </span>
           <p className="hint">
             {cfg.proxyRequired
-              ? '该服务商不给浏览器发跨域头，直连发不出请求 —— 这一项已默认开启。'
+              ? '该服务商不给浏览器发跨域头，直连发不出请求，这一项已默认开启。'
               : '请求默认从浏览器直连；遇到跨域（CORS）或 403 错误时开启它转发一次。'}
             {/* 措辞与 types.ts 里那段一致：说清「经过」是真的，也说清「只转发
                 不留存」（worker 那段就是 fetch 透传，没有日志、不写存储），再给出
                 可做的事。少了后半句就成了一句吓人而无从应对的话，而这一项对
-                directBlocked 的几家【默认就是开的】—— 吓退用户等于让 app 用不了。 */}
+                directBlocked 的几家【默认就是开的】，吓退用户等于让 app 用不了。 */}
             {cfg.proxyOn && ' 开启后你的 API Key 与完整 prompt 会经过这台中转再到服务商；它只转发不留存，在意的话可改成自建地址（见文档）。'}
           </p>
           {cfg.proxyOn && (
@@ -155,7 +155,7 @@ export function AIConfigFields({ cfg }: { cfg: ReturnType<typeof useAIConfig> })
               {/* 漏写 https:// 是这一栏最常见的错法，而它【不会报错】：拼出来的
                   `cors.example.dev/https://…` 是个相对地址，浏览器按本站域名解析，
                   请求 404 在自己站上，任何报错都不指向"少了协议头"。
-                  留空【不算错】—— 那是「用内置的那台」。 */}
+                  留空【不算错】，那是「用内置的那台」。 */}
               <input
                 value={cfg.proxyAddr}
                 onChange={(e) => cfg.changeProxyAddr(e.target.value)}

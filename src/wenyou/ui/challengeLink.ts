@@ -10,7 +10,7 @@ export interface Challenge {
   opening?: number
 }
 
-// 从局内状态反查开局下标（state.opening 存 `${name}——${prompt}`），供分享链编码。
+// 从局内状态反查开局下标（state.opening 存 `${name}，${prompt}`），供分享链编码。
 export function openingIndexOf(sc: Scenario, st: GameState): number | undefined {
   if (!st.opening || !sc.openings) return undefined
   const i = sc.openings.findIndex((o) => openingLabel(o) === st.opening)
@@ -28,7 +28,7 @@ export function buildShareUrl(sc: Scenario, openingIndex?: number, base?: string
   return `${dir}s/${seg}/`
 }
 
-// 社交分享用的题材封面绝对 URL（供微博 pic / QQ空间 pics 参数——平台服务端抓取，须绝对地址）。
+// 社交分享用的题材封面绝对 URL（供微博 pic / QQ空间 pics 参数，平台服务端抓取，须绝对地址）。
 // 仅内置剧本有预生成的 /og/<id>.jpg；自定义/生成局无封面，返回 undefined（X/Telegram 仍靠入口页 OG meta）。
 export function ogImageUrl(sc: Scenario, base?: string): string | undefined {
   if (!builtinScenarios.some((b) => b.id === sc.id)) return undefined

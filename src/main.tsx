@@ -24,7 +24,7 @@ installXiaoyuIdentity();
 
 /**
  * 全局异常兜底接线（2026-09-17 立，配合 AppErrorBoundary）：
- *   ① `vite:preloadError`：Vite 官方事件——懒加载 chunk 取不到时触发（最常见成因是「部署后旧页面取旧 hash」，
+ *   ① `vite:preloadError`：Vite 官方事件，懒加载 chunk 取不到时触发（最常见成因是「部署后旧页面取旧 hash」，
  *      见 src/lib/appRecovery.ts）。这里直接自动刷新一次，用户不需要做任何事；
  *   ② `unhandledrejection` / `error`：只做**记录下来**（统一前缀 [Xiaoyu]），不再让它们静默消失。
  *      注意只记「真正的 JS 异常」（有 error 对象），避免图片 404 之类把 console 刷满。
@@ -73,7 +73,7 @@ function initialLang(): Lang {
 }
 
 // 首访等待 geo 返回前的中性加载壳：不含任何语言相关文案。
-// 这样用户第一次看到的不会是"先英文后中文"的闪切——正文总在最终语言确定后才渲染。
+// 这样用户第一次看到的不会是"先英文后中文"的闪切，正文总在最终语言确定后才渲染。
 function BootShell() {
   return (
     <div className="min-h-screen bg-brand flex items-center justify-center">

@@ -1,5 +1,5 @@
 /**
- * 界面展示字体（品牌/标题/tagline 等 `.font-display` 与全局正文）——按「界面语言 + 文字脚本」联动。
+ * 界面展示字体（品牌/标题/tagline 等 `.font-display` 与全局正文），按「界面语言 + 文字脚本」联动。
  * 简体(zh-CN)→简体字；繁体(zh-TW)→繁体字；英文(en)→英文。
  * 字体完全自托管（src/fonts-display.css → /fonts/display/*，Google Fonts 子集 + 霞鹜文楷）。
  */

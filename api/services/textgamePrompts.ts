@@ -7,7 +7,7 @@
  * 所以真正到达模型的 system 只有 `gmBase + langDirective`，剧本主持词是作为 first user message 进来的。
  */
 
-/** 输出语言硬要求（按界面语言）——同时追加到最后一条用户消息上（模型对最新指令权重最高） */
+/** 输出语言硬要求（按界面语言），同时追加到最后一条用户消息上（模型对最新指令权重最高） */
 export function textgameLangDirective(langKey: string): string {
   return langKey === 'en'
     ? '\n\n[HARD OUTPUT LANGUAGE REQUIREMENT] The player\u2019s interface language is English. You MUST write your ENTIRE reply in English only \u2014 the narration, every choice text, the summary, attribute-change keys and the JSON block included. Output ZERO Chinese characters (no CJK / \u6f22\u5b57). Even if the scenario, events, attributes or past turns are in Chinese or Traditional Chinese, keep your entire reply in English. This is a strict, irreversible requirement: any Chinese character in the reply is a failure. Do not quote, echo or translate back into Chinese.'

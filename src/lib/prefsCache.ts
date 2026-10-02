@@ -22,7 +22,7 @@ export function setCachedPreferences(p: UserPreferences | null): void {
 /**
  * 清空缓存（2026-09-28 审查 B5）：`clearAuth()` 必须调用。
  * 否则同一个标签页换账号时，下一个账号会**继承**上一个账号的区域/强度/关系档，
- * 更糟的是继承 `adultConfirmed` —— 客户端的 18+ 门槛会被直接跳过。
+ * 更糟的是继承 `adultConfirmed`，客户端的 18+ 门槛会被直接跳过。
  */
 export function resetPreferencesCache(): void {
   cache = null;

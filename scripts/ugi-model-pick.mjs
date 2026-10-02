@@ -14,7 +14,7 @@
  *
  * 选型维度说明：
  *   - Writing ✍️       文笔质量
- *   - W/10-Adherence   指令/格式遵循 —— 本项目最大风险点（我们那套规则块近百条禁令）
+ *   - W/10-Adherence   指令/格式遵循，本项目最大风险点（我们那套规则块近百条禁令）
  *   - avg_nsfw_score   如实写成人向内容的意愿/质量
  *   - Active Parameters 决定显存：4-bit 量化约需 active×0.6~0.8 GB
  */
@@ -137,7 +137,7 @@ const recent = (m, year = 2025) => releaseTs(m.release) >= Date.UTC(year, 0, 1);
 const nsfwCapable = (m) => Number.isFinite(m.nsfw) && m.nsfw > 0;
 
 console.log('UGI 榜单快照：' + models.length + ' 个模型，' + header.length + ' 列');
-console.log('⚠️ 纯英文基准 —— 对中文能力零信息量，本脚本只用于给「英文分支」选型。');
+console.log('⚠️ 纯英文基准，对中文能力零信息量，本脚本只用于给「英文分支」选型。');
 
 // A. 综合
 show('A. 综合 UGI 前 12（不限尺寸）', [...models].sort(by('ugi')), 12);

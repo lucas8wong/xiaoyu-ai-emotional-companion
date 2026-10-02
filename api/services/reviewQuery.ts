@@ -1,11 +1,11 @@
 /**
- * 审阅档案的**查询层**：分页 / 日期范围 / 筛选 / 搜索 —— 纯函数、零 I/O、可单测。
+ * 审阅档案的**查询层**：分页 / 日期范围 / 筛选 / 搜索：纯函数、零 I/O、可单测。
  *
  * 为什么从浏览器搬到服务端（2026-09-25）：
  *   · 档案改成增量累积之后条目会到几百上千条，列表接口**不可能**再把全部条目的正文
  *     推给手机（原来 50 条就 800KB）；于是列表只给「当前页的摘要」。
  *   · 一旦列表只给当前页，原来那种「前端过滤 + 前端统计本页」就必然算错：
- *     计数会变成「本页有几条未读」而不是「这个范围内还有几条没审」——那正是这次要修的病。
+ *     计数会变成「本页有几条未读」而不是「这个范围内还有几条没审」，那正是这次要修的病。
  *   · 搜索同理：只搜当前页等于没搜。放到服务端才能搜到整个档案。
  *
  * 设置项标签（REVIEW_LABELS）也搬到这里，接口随列表下发（前端直接用服务端给的这份）：
@@ -87,7 +87,7 @@ export interface ReviewQueryResult {
   items: ReviewItemSummary[];
   /** 整个档案的条数（未过滤） */
   total: number;
-  /** 应用了「类型 / 日期 / 搜索」之后的条数（**不含**已读筛选——胶囊计数就取这一档） */
+  /** 应用了「类型 / 日期 / 搜索」之后的条数（**不含**已读筛选，胶囊计数就取这一档） */
   scoped: number;
   /** 应用了全部筛选之后的条数 */
   filtered: number;
@@ -117,7 +117,7 @@ export function normalizeQuery(params: ReviewQueryParams = {}): ReviewQueryResul
   return { kind, read, from, to, q, order, page, pageSize };
 }
 
-/** 一条样本的搜索用字符串（正文也进——搜索要能搜到整个档案，不是只搜本页） */
+/** 一条样本的搜索用字符串（正文也进，搜索要能搜到整个档案，不是只搜本页） */
 export function haystackOf(item: ReviewItem, read?: ReviewReadState | null): string {
   const parts: string[] = [
     String(item.reviewId || ''), String(item.sampleKey || ''), String(item.date || ''),
@@ -133,7 +133,7 @@ export function haystackOf(item: ReviewItem, read?: ReviewReadState | null): str
   if (meta.title) parts.push(String(meta.title));
   if (meta.model) parts.push(String(meta.model));
   for (const [k, n] of Object.entries(meta.styleCounts || {})) parts.push(`${k} ${labelOf('style', k)} ×${n}`);
-  // ⚠️ 别 push 一个「半截 问句 慢」这样的固定词串——那会让每次搜索都命中全部样本（2026-09-20 踩过）
+  // ⚠️ 别 push 一个「半截 问句 慢」这样的固定词串，那会让每次搜索都命中全部样本（2026-09-20 踩过）
   for (const s of item.signals || []) parts.push(s.t);
   if (item.kind === 'roleplay') {
     if (meta.viaUnlimited === true) parts.push('无限制模式 无限制');
@@ -141,7 +141,7 @@ export function haystackOf(item: ReviewItem, read?: ReviewReadState | null): str
     else parts.push('未标记 老数据');
     /**
      * ⚠️ 只有在**真的走过无限制模型**时才把「无限制标记 N 轮」放进搜索串。
-     * 原来不分情况都放，于是搜「无限制」会把「带标记但全程保守」的样本一起捞回来——
+     * 原来不分情况都放，于是搜「无限制」会把「带标记但全程保守」的样本一起捞回来
      * 那正好违反了「搜无限制要指向真的用了无限制模型的样本」这条口径（等于筛了个寂寞）。
      */
     if (meta.markedTurns && meta.viaUnlimited === true) parts.push(`无限制标记 ${meta.markedTurns} 轮`);

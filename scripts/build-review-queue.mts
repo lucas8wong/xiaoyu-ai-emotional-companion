@@ -1,5 +1,5 @@
 /**
- * 生成「去除账号关联」的审阅队列 —— 运营/开发审阅对话质量用的**唯一入口**。
+ * 生成「去除账号关联」的审阅队列，运营/开发审阅对话质量用的**唯一入口**。
  *
  * 用法：
  *   npx tsx scripts/build-review-queue.mts                     # 并进 data/review-queue.jsonl（增量档案）
@@ -17,17 +17,17 @@
  *    服务端会顺手把已读标记迁到新指纹上（不迁移的表现 = 之前标过的已读全变回未读）。
  *
  * 默认只收**真实用户**：测试 / 开发身份（`test-` 前缀设备、@test.com、TEST_ACCOUNTS、
- * 内置开发者邮箱、DEV_ACCOUNTS）整条排除——审阅队列是用来照真实用户行为改模型的，
+ * 内置开发者邮箱、DEV_ACCOUNTS）整条排除，审阅队列是用来照真实用户行为改模型的，
  * 自测对话混进来会把结论带偏。
  *
  * 安全设计：
  *   ① 只写审阅副本文件（`data/review-queue.jsonl`），绝不改动/删除任何既有用户数据。
- *   ② 写盘前必须过 `assertDeidentified()`——宁可不出文件，也不出带身份的队列（fail-closed）。
+ *   ② 写盘前必须过 `assertDeidentified()`，宁可不出文件，也不出带身份的队列（fail-closed）。
  *   ③ 控制台只打印计数与类别，**不打印任何一条用户内容**。
  *   ④ 先写 `.tmp` 再 rename：不会留下半截文件，也不会覆盖到一半失败。
  *
  * ⚠️ 2026-09-25 实测踩到的坑（已修）：本脚本原先**没有加载 .env**，而 `PERSISTENCE_PROVIDER`
- *    是在 `storage/persistence.ts` 模块求值时读的 —— 于是 `npx tsx scripts/build-review-queue.mts`
+ *    是在 `storage/persistence.ts` 模块求值时读的，于是 `npx tsx scripts/build-review-queue.mts`
  *    会走**文件**提供者，去读 `data/*.json` 那批**迁移前的旧快照**（实测只扫出 15 条聊一聊 /
  *    25 条剧情，而线上 sqlite 里是 74 / 314），"跑成功了但审的是过期内容"。
  *    现在 `dotenv/config` 放在**所有业务模块之前**导入，并在启动时打印数据源，防止再踩。
@@ -88,14 +88,14 @@ console.log(
 );
 
 /**
- * 「这条是不是真实用户」——**测试 / 开发身份默认不入队**。
+ * 「这条是不是真实用户」，**测试 / 开发身份默认不入队**。
  *
  * 为什么复用既有判据而不是在这里另写一份正则：`accountFilters.ts` 开篇就写明
  * 「避免两处各写一份、日后口径漂移」。所以账号级直接用它的两个函数，设备级直接用
  * `isTestRequest` 本身（会话里不存 IP，所以只走它其中的 deviceId 规则）。
  *
  * 为什么这件事必须做：审阅队列的用途是**照真实用户的行为去改模型**。自测对话混进来，
- * 会让你把「我自己测出来的现象」当成「用户在抱怨」——结论直接被带偏。
+ * 会让你把「我自己测出来的现象」当成「用户在抱怨」，结论直接被带偏。
  */
 function makeIsTestUser(): (userId: string) => boolean {
   return (userId: string): boolean => {
@@ -125,7 +125,7 @@ const result = buildReviewQueue({
   kinds,
   /**
    * 基础设置快照（与支付后台按钮同一份口径）：陪伴方式 / 深度思考档位 / 地区语气 / 括号心理 …。
-   * 键由 reviewQueue 的白名单过滤——整份偏好丢进去也不会泄露（尤其以剧本 id 为 key 的那张表）。
+   * 键由 reviewQueue 的白名单过滤，整份偏好丢进去也不会泄露（尤其以剧本 id 为 key 的那张表）。
    */
   getUserSettings: (userId: string) => {
     const p = preferenceStore.get(userId);
@@ -213,10 +213,10 @@ console.log(
   `　跳过：测试/开发身份 ${result.stats.skippedTest} / dataEnhance 关闭 ${result.stats.skippedByDataEnhance} / 轮数不足 ${result.stats.skippedByFilter}`
 );
 if (includeTest) {
-  console.log('   ⚠️ 已开启 --include-test：队列里含测试身份（条目带 test:true）——正常审阅不该这么跑');
+  console.log('   ⚠️ 已开启 --include-test：队列里含测试身份（条目带 test:true），正常审阅不该这么跑');
 }
 const hitDesc = describeHits(result.stats.scrubHits).join('、');
 console.log(`   脱敏命中：${hitDesc || '（无）'}`);
 if (result.items.length === 0) {
-  console.log('   ⚠️ 队列为空——检查是否所有用户都关了「允许用于改进服务」，或 min-turns 设得太高');
+  console.log('   ⚠️ 队列为空，检查是否所有用户都关了「允许用于改进服务」，或 min-turns 设得太高');
 }

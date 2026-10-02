@@ -58,7 +58,7 @@ const SCENARIO_ID_MAX = 64;
 
 /**
  * 归一化单剧本表：只收 boolean 值。
- * 传 'true' / 1 / null / undefined 一律丢弃——宁可当「没拨过开关」，也不要错数据
+ * 传 'true' / 1 / null / undefined 一律丢弃，宁可当「没拨过开关」，也不要错数据
  * （否则一个字符串 'false' 会被当成「用户明确关了」，把默认开顶掉）。
  */
 function normalizeScenarioUnlimitedMap(v: any): ScenarioUnlimitedMap {
@@ -87,7 +87,7 @@ export interface Preferences {
   chatInnerMonologueEnabled: boolean; // 聊一聊括号心理/神态开关（默认开）
   /**
    * 和小愈的关系档（2026-09-21）：朋友 friend（默认）/ 损友 buddy / 家人 family / 恋人 lover。
-   * 只影响聊一聊的口吻参数（称呼、分寸、玩梗强度、连发条数），**不影响内容尺度**——
+   * 只影响聊一聊的口吻参数（称呼、分寸、玩梗强度、连发条数），**不影响内容尺度**
    * safety.ts 的红线与关系档无关，恒成立（聊一聊侧没有剧情那条「无限制模式」）。
    */
   xiaoyuRelation: RelationKind;
@@ -102,7 +102,7 @@ export interface Preferences {
    * 「无限制模式」的**单剧本**显式选择（默认空表）：key = 剧本 id，value = 用户在那个剧本里亲手拨的开关。
    *
    * 为什么需要它：本人用无限制模型创建的剧本，进聊天时成人模式默认开（见 roleplay.ts 的
-   * unlimitedForScenario）。可用户总得有办法只关掉**这一个**剧本——如果那一下写的是全局
+   * unlimitedForScenario）。可用户总得有办法只关掉**这一个**剧本，如果那一下写的是全局
    * roleplayUnlimited，他所有剧本的成人模式会一起被关掉。
    *
    * 缺省（表里没有这个剧本）= 用户没在那个剧本里拨过开关，**不等于「关」**：
@@ -128,7 +128,7 @@ export interface Preferences {
   proactiveFrequency: 'random' | 'frequent' | 'occasional' | 'intense'; // 主动找我的频率偏好：random 随机(默认) / frequent 常来(约每天5次) / occasional 偶尔 / intense 高频随性(每天≤10次)
   learnedPreferences: LearnedPreferences; // 8 维微调
   /**
-   * 用户上报的 IANA 时区（如 Asia/Hong_Kong）——**不是**用户设置项，而是浏览器上报的客观环境值
+   * 用户上报的 IANA 时区（如 Asia/Hong_Kong），**不是**用户设置项，而是浏览器上报的客观环境值
    * （见 POST /api/reengage/timezone；PreferencePanel 开启推送/召回时上报）。
    * 用途：时间锚（timeAnchor.ts）用它算「用户那边的今天」，避免海外用户跨日时"今天"算错一天。
    */
@@ -210,12 +210,12 @@ class PreferenceStore {
       roleplayAutoSceneArt: typeof p.roleplayAutoSceneArt === 'boolean' ? p.roleplayAutoSceneArt : false,
       // 默认关：无限制模式必须由用户显式开启（既是产品选择，也是内容安全阀）
       roleplayUnlimited: typeof p.roleplayUnlimited === 'boolean' ? p.roleplayUnlimited : false,
-      // 单剧本表：整表归一化后必须**显式搬过来**——normalize 是逐字段构造，
+      // 单剧本表：整表归一化后必须**显式搬过来**，normalize 是逐字段构造，
       // 漏一行就会把已存的选择静默清零（和 customRoleplay.create 那类「逐字段丢字段」是同一个坑）
       roleplayUnlimitedByScenario: normalizeScenarioUnlimitedMap(p.roleplayUnlimitedByScenario),
       // 默认关：剧本生成走无限制模型同样要用户显式开启（且需过 18+ 成年确认那道闸）
       roleplayScriptUnlimited: typeof p.roleplayScriptUnlimited === 'boolean' ? p.roleplayScriptUnlimited : false,
-      // 叙事模式（三态）：只有真的是那两个取值才落字段——「没拨过」必须保持字段不存在，
+      // 叙事模式（三态）：只有真的是那两个取值才落字段，「没拨过」必须保持字段不存在，
       // 否则前端没法区分「用户选的就是 immersive」与「他还没选，我该用本地缓存迁上来」
       ...(p.narrativeStyle === 'classic' || p.narrativeStyle === 'immersive' ? { narrativeStyle: p.narrativeStyle } : {}),
       proactivePush: typeof p.proactivePush === 'boolean' ? p.proactivePush : false,

@@ -63,7 +63,7 @@ function isQuotaExhaustedResp(r: { code?: string; status?: number } | null | und
 }
 
 /**
- * 当前历史条目是「剧情模式第几层」——由压条目时写的 `state.xiaoyuRp` 读回（缺省 0 = 列表层）。
+ * 当前历史条目是「剧情模式第几层」，由压条目时写的 `state.xiaoyuRp` 读回（缺省 0 = 列表层）。
  * 用它判断「本层有没有自己的历史条目可退」，不需要自己记账（文游子树也会压条目，记账必漂移）。
  */
 function rpEntryRank(): number {
@@ -78,7 +78,7 @@ function rpEntryRank(): number {
 /**
  * SSE `{type:'meta'}` 下发的审计信息（本轮实际走了哪个 provider）。
  *
- * 为什么要单独抽类型：它要在**两处**活着——流式中途构造的气泡，以及定稿时那个新构造的对象
+ * 为什么要单独抽类型：它要在**两处**活着，流式中途构造的气泡，以及定稿时那个新构造的对象
  * （`finish()` 不带它 → `viaUnlimited/model` 全丢，管理端统计偏低，2026-09-17 记录在案的缺陷）。
  */
 type MetaInfo = { adult: boolean; model: string };
@@ -87,7 +87,7 @@ type MetaInfo = { adult: boolean; model: string };
  * assistant 消息上的「生成时元信息」：无限制模型 / 模型名 / **叙事模式**（2026-09-18）。
  *
  * 为什么收敛成一个函数：全组件有**三处**定稿点都会构造新的 assistant 对象
- * （流式中途的气泡、`finish()` 定稿、续写完成），每多一个字段就多一次「漏搬 → 静默丢失」的机会——
+ * （流式中途的气泡、`finish()` 定稿、续写完成），每多一个字段就多一次「漏搬 → 静默丢失」的机会
  * `viaUnlimited/model` 已经在 2026-09-17 栽过一次（见上面 MetaInfo 的注释）。
  *
  * `style` 为什么必须落盘：叙事模式原先只存在浏览器 localStorage，服务端与数据里没有这个维度，
@@ -100,7 +100,7 @@ function assistantMetaOf(meta: MetaInfo | null, style: 'classic' | 'immersive') 
   };
 }
 
-// —— 非 AI 原创来源的作者标注：作品归属链接（用圆形图标按钮承载，不直接显示链接文本）——
+// 【非 AI 原创来源的作者标注：作品归属链接（用圆形图标按钮承载，不直接显示链接文本）】
 const SOURCE_AUTHOR_LINKS: { key: string; url: string }[] = [
   { key: '糖醋鱼饼', url: 'https://xhslink.cn/m/wjX0GG97K7' },
 ];
@@ -154,7 +154,7 @@ function RPCover({ s, imgClass, fallbackClass }: { s?: (Pick<RoleplayScenarioInf
  *
  * 为什么抽成组件：详情页「同场角色」与聊天气泡里的说话人头像**必须是同一张脸**。
  * 之前两处各写一份，详情页那份没认 `lead`，于是主角位上显示的是「裴」字色块
- *（用户截图指出「主角的位置都要有主角头像」）—— 抽成一份就不会再分叉。
+ *（用户截图指出「主角的位置都要有主角头像」），抽成一份就不会再分叉。
  */
 function CastAvatar({ member, scenario, imgClass, textClass }: {
   member: { name: string; avatar?: string; lead?: boolean };
@@ -242,7 +242,7 @@ interface RoleplayPageProps {
   initialAdultIntent?: boolean;
   /**
    * 年龄闸门开合状态上报给上层。
-   * 为什么需要：闸门打开期间必须让 Home 压掉注册弹窗——否则会出现「偏好抽屉 + 注册弹窗 + 年龄闸门」
+   * 为什么需要：闸门打开期间必须让 Home 压掉注册弹窗，否则会出现「偏好抽屉 + 注册弹窗 + 年龄闸门」
    * 三层叠着（视觉复核实测），闸门之外还挂着另一个带自己关闭按钮的对话框，阻塞意图含混。
    * 这道控制权在 Home（{modals} 由它渲染），所以只能上报。
    */
@@ -259,15 +259,15 @@ interface RoleplayPageProps {
   onOpenChat?: () => void;
 }
 
-// —— 剧情会话持久化：登录/游客都写后端（跨设备、供控制台查看）；游客本地作镜像与兜底 ——
+// 【剧情会话持久化：登录/游客都写后端（跨设备、供控制台查看）；游客本地作镜像与兜底】
 /**
  * 会话本地键：**solo 沿用旧键**（`cure_rp_session_<id>`），multi 加后缀。
- * 这样老用户的本地存档一字不动地继续可用，多角色线从空档开始 —— 不需要任何本地迁移。
+ * 这样老用户的本地存档一字不动地继续可用，多角色线从空档开始，不需要任何本地迁移。
  */
 const rpSessionKey = (id: string, mode: RoleplayMode = 'solo') => 'cure_rp_session_' + id + (mode === 'multi' ? '_multi' : '');
 /** 记住用户在这部剧本里上次选的是哪条线（下次进详情页默认选它） */
 const rpModeKey = (id: string) => 'cure_rp_mode_' + id;
-// —— 角色名自定义（跨语言沉浸）：AI 角色名 / 用户自己的名字，按剧本存 localStorage ——
+// 【角色名自定义（跨语言沉浸）：AI 角色名 / 用户自己的名字，按剧本存 localStorage】
 const rpNamesKey = (id: string) => 'cure_rp_names_' + id;
 function loadRpNames(id: string): { ai: string; user: string } | null {
   const o = lsGetJson<{ ai?: unknown; user?: unknown } | null>(rpNamesKey(id), null);
@@ -277,7 +277,7 @@ function loadRpNames(id: string): { ai: string; user: string } | null {
 function saveRpNames(id: string, ai: string, user: string): void {
   lsSet(rpNamesKey(id), JSON.stringify({ ai, user }));
 }
-// —— 用户偏好/独特需求（每剧本）：登录/游客都写后端（跨设备、供控制台查看）；游客本地作镜像与兜底 ——
+// 【用户偏好/独特需求（每剧本）：登录/游客都写后端（跨设备、供控制台查看）；游客本地作镜像与兜底】
 const rpPrefKey = (id: string, mode: RoleplayMode = 'solo') => 'cure_rp_pref_' + id + (mode === 'multi' ? '_multi' : '');
 function loadLocalPreference(id: string, mode: RoleplayMode = 'solo'): string {
   return lsGet(rpPrefKey(id, mode)) || '';
@@ -355,7 +355,7 @@ async function loadSessionRaw(id: string, mode: RoleplayMode = 'solo'): Promise<
  * 「最近一次真的写下去的会话快照」（每个剧本一份，仅本页生命周期内有效）。
  *
  * 用途：写入前跑一遍与服务端同源的「未完成回合」判据（`src/lib/rpWriteGuard.ts`），
- * 命中就**整笔跳过**（本地镜像 + 后端都不写）—— 而不是像 2026-09-18 之前那样
+ * 命中就**整笔跳过**（本地镜像 + 后端都不写），而不是像 2026-09-18 之前那样
  * 「本地先写下去、后端拒写」，让游客 / 后端回退路径拿到一份比服务端少一条回复的分叉数据。
  */
 const lastWrittenSession = new Map<string, RoleplayMessage[]>();
@@ -370,7 +370,7 @@ async function saveSession(id: string, mode: RoleplayMode, msgs: RoleplayMessage
    *
    * 客户端「重新生成」会先造一个「以用户消息结尾、比库里短、把已生成的回复截掉」的中间态
    *（`regenerateAt` → `setMessages(start.base)`）。以前这里会立刻把它写下去：
-   *   ① 后端护栏拒写，并记一条运营埋点 `roleplay / UNANSWERED_TURN` —— 可**用户什么都没看到**
+   *   ① 后端护栏拒写，并记一条运营埋点 `roleplay / UNANSWERED_TURN`，可**用户什么都没看到**
    *     （这一轮新回复回来后正常落盘），运营卡上的「用户实际看到失败提示」因此被凭空放大
    *     （2026-09-18 当天 25 次里 16 次就是这么来的）；
    *   ② 本地镜像**却被真的截断了**（本函数是先写本地、再写后端），游客（唯一来源就是本地镜像）
@@ -393,7 +393,7 @@ async function saveSession(id: string, mode: RoleplayMode, msgs: RoleplayMessage
 }
 /**
  * 「重新开始」：**只清当前这条线**的存档（另一条线原样保留）。
- * 这就是双模式的直接体现 —— 把多角色线重开，不该顺手抹掉用户的单角色线。
+ * 这就是双模式的直接体现，把多角色线重开，不该顺手抹掉用户的单角色线。
  */
 function clearSession(id: string, mode: RoleplayMode): void {
   lastWrittenSession.delete(rpSnapshotKey(id, mode)); // 重开这段剧情：快照随之作废，别拿旧历史去比对
@@ -407,7 +407,7 @@ export default function RoleplayPage({ onBack, onNeedLogin, authUser, onOpenMemb
     if (initialWenyouGame) return 'wenyou'; // 深链直达文游续玩
     /**
      * 2026-09-18（用户拍板 A 案）：**首次进入不再落到「模块介绍页」**。
-     * 老逻辑是 `localStorage.cure_rp_intro_seen !== '1' ? 'intro' : 'list'`——新用户进剧情演绎会被
+     * 老逻辑是 `localStorage.cure_rp_intro_seen !== '1' ? 'intro' : 'list'`，新用户进剧情演绎会被
      * 整页介绍（这是什么/剧本来源/收费说明/温馨提示 + 唯一按钮「查看剧本」）拦住，不点进不去。
      * 现在剧情演绎底下是**三个并列模式**（AI剧情扮演 / AI文游 / AI狼人杀），落地直接进剧本列表
      * 才能一眼看到模式切换；那页介绍的内容也只描述了「角色扮演」一种模式，容易让新用户以为模块
@@ -421,7 +421,7 @@ export default function RoleplayPage({ onBack, onNeedLogin, authUser, onOpenMemb
 const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent || '');
 
 // 真机 iOS 键盘处理：对局聊天用 fixed 全屏壳 + body 锁滚动 + 瞬时回落（与聊一聊一致）。
-  // 仅「chat」阶段才锁——列表/详情/自建表单页仍需正常滚动，不能锁正文滚动。
+  // 仅「chat」阶段才锁，列表/详情/自建表单页仍需正常滚动，不能锁正文滚动。
   const { inset: kbInset, offsetTop: vvOffsetTop } = useVisualViewport();
   /**
    * 聊天壳底边：**默认铺到布局视口底边（0）**，只有「真键盘」弹起时才抬起。
@@ -430,7 +430,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
    */
   const liftBottom = bottomAnchorPx(kbInset);
   useIosKeyboardLock(stage === 'chat');
-  // —— 首次进入 · 剧情模式功能引导气泡（coach-mark）——
+  // 【首次进入 · 剧情模式功能引导气泡（coach-mark）】
   const [rpCoachOpen, setRpCoachOpen] = useState<boolean>(() => {
     try { return localStorage.getItem('cure_rp_coach_seen') !== '1'; } catch { return false; }
   });
@@ -445,7 +445,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
    * 引导气泡的步骤顺序（用户 2026-09-17 拍板：狼人杀**并入现有队列**，不单独给老用户补弹）：
    * 三个模式 tab 相邻介绍（文游 → 狼人杀），再讲自建与介绍入口。
    * 记住：故事线里 tab 的视觉顺序是 角色剧情扮演 | AI 文游 | AI 狼人杀，
-   * 这里把「角色剧情扮演(mode)」放在最后是历史顺序，不要为了“好看”重排——老用户虽然看不到，
+   * 这里把「角色剧情扮演(mode)」放在最后是历史顺序，不要为了“好看”重排，老用户虽然看不到，
    * 但换过序的截图/文档会对不上。
    */
   const rpCoachSteps = useMemo<CoachStep[]>(() => [
@@ -500,7 +500,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   /**
    * 开场白打字机（O1，2026-10-01）
    *
-   * 需求：「第一条信息出来的时候是流式的」——多角色剧本里还要"每个角色的气泡逐个出现"。
+   * 需求：「第一条信息出来的时候是流式的」，多角色剧本里还要"每个角色的气泡逐个出现"。
    * 做法：进一部**没有存档**的剧本时，开场白不瞬间全出，而是把已揭示的字符数记在这里，
    * 渲染时切片；因为多角色解析器是流式容错的，切片推进时自然就是"旁白先长出来 → 李嬷嬷
    * 的气泡出现、再长 → 世子的气泡再出现"。
@@ -535,7 +535,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tipOpen, setTipOpen] = useState(false);
-  // —— 把剧情角色加到聊一聊（方案 A1）：确认卡 → 导入（物化角色 + 记忆迁移）→ 「去看看」 ——
+  // 【把剧情角色加到聊一聊（方案 A1）：确认卡 → 导入（物化角色 + 记忆迁移）→ 「去看看」】
   const [toChatOpen, setToChatOpen] = useState(false);
   const [toChatBusy, setToChatBusy] = useState(false);
   const [toChatErr, setToChatErr] = useState<string | null>(null);
@@ -543,7 +543,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   const [storyInfoOpen, setStoryInfoOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [confirmRestart, setConfirmRestart] = useState(false);
-  /** 顶栏「⋯」低频项菜单（界面外观 / 意见反馈 / 分享对话 / 重新开始）—— 见顶栏注释：7 个图标挤不下 */
+  /** 顶栏「⋯」低频项菜单（界面外观 / 意见反馈 / 分享对话 / 重新开始），见顶栏注释：7 个图标挤不下 */
   const [rpMoreOpen, setRpMoreOpen] = useState(false);
   /**
    * 「⋯」菜单的落点（相对**聊天壳**的 top/right，px）。
@@ -563,14 +563,14 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   const rpMoreRef = useRef<HTMLDivElement>(null);
   /**
    * 「⋯」菜单**本体**的 ref。为什么需要它：菜单为了毛玻璃已经搬到聊天壳层（不再是 rpMoreRef 的子节点），
-   * 而下面的「点外部关闭」判定原来只认 `rpMoreRef` —— 于是**点菜单项本身也会被当成点外部**：
+   * 而下面的「点外部关闭」判定原来只认 `rpMoreRef`，于是**点菜单项本身也会被当成点外部**：
    * mousedown 先把菜单关掉，随后的 click 落空 → 用户看到的就是「点了没反应」
    * （2026-09-15 用户反馈「剧情模式也有界面外观这个选项，但是点了以后没反应」的根因）。
    */
   const rpMoreMenuRef = useRef<HTMLDivElement>(null);
-  /** 反馈入口收进「⋯」菜单（用户要求）—— 与顶栏那个 FeedbackButton 调的是同一个 store 动作 */
+  /** 反馈入口收进「⋯」菜单（用户要求），与顶栏那个 FeedbackButton 调的是同一个 store 动作 */
   const setFeedbackOpen = useAppStore(s => s.setFeedbackOpen);
-  /** 界面外观（含卡片不透明度滑块）——见菜单里那一项：用户常问透明度在哪调 */
+  /** 界面外观（含卡片不透明度滑块），见菜单里那一项：用户常问透明度在哪调 */
   const setAppearanceOpen = useAppStore(s => s.setAppearanceOpen);
   /** 「把 TA 加到聊一聊」：导入成功后把目标角色交给聊一聊（只走 UI 层，不写任何消息集合） */
   const setPendingChatCharId = useAppStore(s => s.setPendingChatCharId);
@@ -594,12 +594,12 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
       document.removeEventListener('touchstart', onDocDown);
     };
   }, [rpMoreOpen]);
-  // —— 剧情配乐（BGM）：默认按剧本曲风映射；♪ 面板可换同风格曲目/关闭；登录用户跨设备同步 ——
+  // 【剧情配乐（BGM）：默认按剧本曲风映射；♪ 面板可换同风格曲目/关闭；登录用户跨设备同步】
   // 范围：剧本详情（看背景故事/开场）即随进入手势开播，进对话沿用同一 Audio 延续不重播；离开该剧本（回列表等）才停
   const [bgmOpen, setBgmOpen] = useState(false);
   const bgmStoryView = stage === 'detail' || stage === 'chat';
   const bgm = useScenarioBgm(bgmStoryView && selected ? selected.id : null, !!authUser, bgmStoryView && selected ? selected.tags : undefined);
-  // —— 剧情角色配音（S1 声音层）：按「剧本标签分组 + AI 角色性别」自动选音色（storyVoice），
+  // 剧情角色配音（S1 声音层）：按「剧本标签分组 + AI 角色性别」自动选音色（storyVoice），
   //    默认关（想听再开），登录用户跨设备同步（偏好键 roleplayVoiceEnabled）；合成与播放见 useStoryVoice。
   const rpVoicePick = useMemo(
     () => (selected
@@ -627,7 +627,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     }
     return selected?.openingAssistant || '';
   }, [messages, selected]);
-  // —— 场景画面（S2/S5）：当前幕只在明确命中新主题时推进；专属画面按需生成、缓存复用 ——
+  // 【场景画面（S2/S5）：当前幕只在明确命中新主题时推进；专属画面按需生成、缓存复用】
   const rpThemeHit = useMemo(() => matchTheme(rpSceneText), [rpSceneText]);
   // null = "还没有任何明确的一幕" → 底图走**主场景图**（这部剧自己的空间），不再掉进 daily 的厨房晨光
   const [rpSceneTheme, setRpSceneTheme] = useState<string | null>(null);
@@ -660,7 +660,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     }
     if (rpThemeHit && rpThemeHit !== rpSceneTheme) setRpSceneTheme(rpThemeHit);
   }, [selected?.id, rpThemeHit, rpSceneTheme]);
-  // —— 环境音（S1 声音层）：随「换幕」切换雨/风/室内底噪，剧情文本含"雷"触发一次性雷声；默认关 ——
+  // 【环境音（S1 声音层）：随「换幕」切换雨/风/室内底噪，剧情文本含"雷"触发一次性雷声；默认关】
   // 必须放在 rpSceneTheme/rpSceneText 之后（闭包引用它们）
   const ambience = useStoryAmbience({
     theme: rpSceneTheme || '',
@@ -699,13 +699,13 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     return () => clearTimeout(t);
   }, [rpSceneArt.msg]);
   const [hasSaved, setHasSaved] = useState(false);
-  // —— 用户偏好/独特需求（每剧本持久保存，AI 后续始终参考）——
+  // 【用户偏好/独特需求（每剧本持久保存，AI 后续始终参考）】
   const [userPreference, setUserPreference] = useState('');
   const [prefOpen, setPrefOpen] = useState(false);
   const [prefDraft, setPrefDraft] = useState('');
   /**
    * 「我的偏好」弹窗的手机适配（真机反馈：窗口顶部超出屏幕、被顶栏盖住，关闭键点不到、也拖不动）。
-   * 根因：内容（7 个设置块 + 文本域）本来就比手机屏高，而旧写法用 `items-center` 居中——
+   * 根因：内容（7 个设置块 + 文本域）本来就比手机屏高，而旧写法用 `items-center` 居中
    * 超高时顶部与底部一起溢出，外层又不滚动 → 顶部的关闭 X 被推出可视区，永远够不着。
    * 现在的做法：手机上改成**底部抽屉**（贴底 + 头部固定 + 中间内容区独立滚动 + 按住把手下滑关闭），
    *              ≥sm 仍是居中弹窗；壳的 top/bottom 跟随 visualViewport，软键盘弹起时整块抬到键盘之上。
@@ -738,7 +738,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     setPrefSheetDy(0);
     if (dy > 88) setPrefOpen(false);
   };
-  // —— 剧情叙事模式（classic=小说笔法·第三人称长文 / immersive=对话笔法·口语短句）——
+  // 【剧情叙事模式（classic=小说笔法·第三人称长文 / immersive=对话笔法·口语短句）】
   /**
    * **服务端偏好为准 + localStorage 只做冷启动缓存**（2026-09-25 C 方案）。
    *
@@ -771,7 +771,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   }, [stage, flashStyleHint]);
 
   /**
-   * @param flash 是否弹那层 3.5s 浮层提示。详情页（进剧情之前）**不弹**——
+   * @param flash 是否弹那层 3.5s 浮层提示。详情页（进剧情之前）**不弹**
    *   它把两种写法的说明直接铺在卡片里，浮层只会重复一遍；聊天页的顶栏药丸仍然要弹
    *   （那里只有两个词，没有解释空间）。除这一个参数外，三处入口共用同一份副作用。
    */
@@ -779,12 +779,12 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     setNarrativeStyle(v);
     if (flash) flashStyleHint();
     try { localStorage.setItem('rp_narrative_style', v); } catch { /* ignore */ }
-    // 服务端为准（跨设备同步）：失败也不回滚——下次进页面会以服务端值纠正过来
+    // 服务端为准（跨设备同步）：失败也不回滚，下次进页面会以服务端值纠正过来
     savePreferences({ narrativeStyle: v }).then(r => {
       if (r.success && r.data) setCachedPreferences(r.data);
     }).catch(() => {});
   };
-  // —— 括号心理/神态（剧情模式独立开关，默认开；与偏好设置同步）——
+  // 【括号心理/神态（剧情模式独立开关，默认开；与偏好设置同步）】
   const [innerOn, setInnerOn] = useState(() => {
     const c = getCachedPreferences();
     return c ? c.roleplayInnerMonologueEnabled !== false : true;
@@ -798,7 +798,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   };
   /**
    * 剧情文本「内容类型」首次提示（一次性，localStorage 记住）：
-   * 括号写心理/神态是**约定**、不是自明的排版——Character.AI 也要靠官方文档教用户把括号读成舞台指示；
+   * 括号写心理/神态是**约定**、不是自明的排版，Character.AI 也要靠官方文档教用户把括号读成舞台指示；
    * 既然现在心声有了独立的视觉（浅底+竖线），就顺手告诉用户"这团色块是什么"，点掉后永不再出现。
    */
   const [textLegendSeen, setTextLegendSeen] = useState(() => {
@@ -814,7 +814,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     return messages.findIndex(m => m.role === 'assistant' && hasThoughtMarker(m.content));
   }, [messages, textLegendSeen]);
 
-  // —— 深度思考（剧情模式内联快捷开关，默认高；与偏好设置同步）——
+  // 【深度思考（剧情模式内联快捷开关，默认高；与偏好设置同步）】
   const [thinkingLevel, setThinkingLevel] = useState<'off' | 'high' | 'max'>(() => {
     const c = getCachedPreferences();
     // max 仅 Pro/Lifetime；非 Pro（游客/免费/Plus）初始即归为 high，避免残留 max 显示
@@ -822,9 +822,9 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
       : (c?.thinkingLevel === 'max' && getCachedPlan() === 'pro') ? 'max'
       : 'high';
   });
-  // 关键时刻自动画面（Pro 权益，默认关）——状态声明必须在「偏好拉取 effect」之前（其 setter 会被那个 effect 用）
+  // 关键时刻自动画面（Pro 权益，默认关），状态声明必须在「偏好拉取 effect」之前（其 setter 会被那个 effect 用）
   const [autoArtOn, setAutoArtOn] = useState<boolean>(() => getCachedPreferences()?.roleplayAutoSceneArt === true);
-  // —— 无限制模式（默认关，需用户显式开启）——
+  // 【无限制模式（默认关，需用户显式开启）】
   // 开启后剧情改用去限制模型，并在 system prompt 末尾注入「放开尺度、角色可更主动」的条款。
   // 默认关本身就是内容安全阀：不开就等于完全走 DeepSeek 的保守行为。
   const [unlimitedOn, setUnlimitedOn] = useState<boolean>(() => getCachedPreferences()?.roleplayUnlimited === true);
@@ -837,7 +837,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
    */
   const [adultConfirmed, setAdultConfirmed] = useState<boolean | null>(() => getCachedPreferences()?.adultConfirmed ?? null);
   const [adultGateOpen, setAdultGateOpen] = useState(false);
-  /** 这次弹 18+ 确认是为了开哪个开关：剧情「无限制模式」还是「用无限制模型生成剧本」——两者共用一个确认框 */
+  /** 这次弹 18+ 确认是为了开哪个开关：剧情「无限制模式」还是「用无限制模型生成剧本」，两者共用一个确认框 */
   const [adultGateFor, setAdultGateFor] = useState<'unlimited' | 'script'>('unlimited');
   const [adultGateBusy, setAdultGateBusy] = useState(false);
   const [adultGateErr, setAdultGateErr] = useState('');
@@ -845,7 +845,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   const [unlimitedNotice, setUnlimitedNotice] = useState('');
   /**
    * 瞬时提示（2.6s 自动消失）。只用在「开关开在别处、用户当场看不到结果」的时刻：
-   * 引导卡自动开启、年龄未满、模型不可用。**刻意不做成常驻横幅**——聊天界面要保持干净、
+   * 引导卡自动开启、年龄未满、模型不可用。**刻意不做成常驻横幅**：聊天界面要保持干净、
    * 不堆提示（用户 2026-09-27 明确要求），所以反馈预算只花这几秒。
    */
   const [adultToast, setAdultToast] = useState('');
@@ -867,7 +867,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
           const confirmed = typeof r.data.adultConfirmed === 'boolean' ? r.data.adultConfirmed : null;
           if (confirmed !== null) setAdultConfirmed(confirmed);
           // 模型不可用 / 没做过成年确认 → 服务端这一轮绝不会走成人模型，开关不能留成「开」
-          //（否则用户看到的是「开着」，实际走的是保守模型 —— 正是角色扮演这几处注释反复要避免的静默失效）
+          //（否则用户看到的是「开着」，实际走的是保守模型，正是角色扮演这几处注释反复要避免的静默失效）
           if (!ready || confirmed === false) setUnlimitedOn(false);
         } else setUnlimitedReady(false);
       })
@@ -882,7 +882,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
       if (r.success && r.data) {
         setCachedPreferences(r.data);
         // 服务端是权威：没做成年确认时它会把这次写入降级为关（见 routes/user.ts 的写入闸）。
-        // 必须跟随服务端回传值，否则开关会显示成「开着但服务端不用」——正是 roleplayModel 里要避免的静默失效。
+        // 必须跟随服务端回传值，否则开关会显示成「开着但服务端不用」，正是 roleplayModel 里要避免的静默失效。
         if (typeof r.data.roleplayUnlimited === 'boolean') setUnlimitedOn(r.data.roleplayUnlimited);
         if (typeof r.data.adultConfirmed === 'boolean') setAdultConfirmed(r.data.adultConfirmed);
       }
@@ -910,7 +910,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
    *   · 未过 18+   → 立刻弹年龄闸门，确认后自动打开；点「未满 18」什么都不开。
    * ⚠️ 年龄闸门**一次都不能省**：这是合规红线，也是服务端硬门槛（未确认的写入会被降级为关）。
    * 必须等 unlimitedReady / adultConfirmed 查回来再走（否则「查得慢」会变成误开或误弹）；
-   * 配置请求失败时 unlimitedReady=false、adultConfirmed 可能停在 null —— 所以先判 available 再判年龄。
+   * 配置请求失败时 unlimitedReady=false、adultConfirmed 可能停在 null，所以先判 available 再判年龄。
    */
   const adultIntentDone = useRef(false);
   /** 这次年龄闸门是不是引导卡带出来的：决定「未满 18」的结果要不要用瞬时提示说出来（抽屉没开时那句 notice 看不到） */
@@ -935,7 +935,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialAdultIntent, unlimitedReady, adultConfirmed]);
 
-  // —— 剧本生成用无限制模型（默认关）——
+  // 【剧本生成用无限制模型（默认关）】
   // 为什么单独一个开关：剧本生成默认走 DeepSeek（不占账号并发池），而它的任务提示词要求
   // 「不要净化成纯情清水」、官方 DeepSeek 恰恰会净化。把选择权交给用户，而不是替他决定。
   const [scriptUnlimitedOn, setScriptUnlimitedOn] = useState<boolean>(() => getCachedPreferences()?.roleplayScriptUnlimited === true);
@@ -979,7 +979,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   /**
    * 这个剧本有没有「成人模式默认开」的资格：**本人**创建、且创建时用的是无限制模型。
    *
-   * 服务端有同一套判定（services/roleplay.ts 的 unlimitedForScenario 第 2 层）——
+   * 服务端有同一套判定（services/roleplay.ts 的 unlimitedForScenario 第 2 层）
    * 两边必须是同一套规则，否则会出现「开关显示开着、服务端却没用」的静默错位。
    * 从「精选/玩家共创」区块进来时那份数据不带该标记（那是非本人视角），
    * 所以回查一次自己的自建剧本列表：同一个人玩自己投稿过的剧本也该算数。
@@ -993,7 +993,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   /**
    * 这个剧本此刻**实际生效**的无限制模式（只用于开关显示与写入分流），与服务端
    * unlimitedForScenario 同序：该剧本的显式选择 > 剧本自带默认 > 全局偏好。
-   * 模型没配好 / 没做过 18+ 确认时一律显示为关——服务端那一轮绝不会走成人模型。
+   * 模型没配好 / 没做过 18+ 确认时一律显示为关，服务端那一轮绝不会走成人模型。
    */
   function effectiveUnlimitedFor(s: RoleplayScenarioInfo | null, prefs: UserPreferences | null = getCachedPreferences()): boolean {
     if (unlimitedReady === false || adultConfirmed === false) return false;
@@ -1099,7 +1099,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
         if (typeof r.data.roleplayInnerMonologueEnabled === 'boolean') setInnerOn(r.data.roleplayInnerMonologueEnabled);
         if (typeof r.data.roleplayAutoSceneArt === 'boolean') setAutoArtOn(r.data.roleplayAutoSceneArt);
         // 开关按**当前剧本**的有效值重算（含「本人用无限制模型建的剧本默认开」）：
-        // 不能直接照搬全局偏好——深链进来时 enterChat 可能跑在这之前，会把剧本默认开覆盖掉
+        // 不能直接照搬全局偏好，深链进来时 enterChat 可能跑在这之前，会把剧本默认开覆盖掉
         setUnlimitedOn(effectiveUnlimitedFor(rpSelectedRef.current, r.data));
         // 叙事模式以服务端为准（同一份偏好，冷启动时也会走到这里）
         if (r.data.narrativeStyle === 'classic' || r.data.narrativeStyle === 'immersive') setNarrativeStyle(r.data.narrativeStyle);
@@ -1109,14 +1109,14 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
       }
     }).catch(() => {});
   }, []);
-  // —— 重新生成（**任意一条** AI 回复，可选填反馈沉淀为偏好）——
+  // 【重新生成（**任意一条** AI 回复，可选填反馈沉淀为偏好）】
   const [regenerateOpen, setRegenerateOpen] = useState(false);
   /** 要重写的是第几条消息（null = 弹窗未打开）；每条 AI 回复各自可以重生成，不再只有最后一条 */
   const [regenerateTarget, setRegenerateTarget] = useState<number | null>(null);
   const [regenerateFeedback, setRegenerateFeedback] = useState('');
   const [regenerating, setRegenerating] = useState(false);
   /**
-   * 「续写中」——服务端正在把上一条**没写完**的回复接着写完（自动续写或用户点「续写」）。
+   * 「续写中」，服务端正在把上一条**没写完**的回复接着写完（自动续写或用户点「续写」）。
    * 与 sending / regenerating 分开：它不改历史结构（只让同一条继续往下长），
    * 但同样要占住输入框与按钮，避免用户以为是卡死而重复发送。
    */
@@ -1124,7 +1124,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   /**
    * A 方案（生成后重复闸）：服务端判到本条回复复读了历史片段，正在重写一版。
    * 重写期间服务端**不再下发 delta**（避免用户看到两段），最终文本由 done.reply 覆盖定稿。
-   * 这里只为把"卡住"和"正在重写"区分开——否则用户会以为请求挂了。
+   * 这里只为把"卡住"和"正在重写"区分开，否则用户会以为请求挂了。
    */
   const [rewriting, setRewriting] = useState(false);
   /**
@@ -1142,7 +1142,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   /**
    * 换剧本 / 回列表时退出编辑态。
    * 为什么必须清：`editTarget` 记的是「第几条」这个**下标**，跨剧本后会指到另一个剧本的历史上
-   *（重发就会改写别的剧情 —— 这类下标越界事故在这个文件里出过，宁可显式清掉）。
+   *（重发就会改写别的剧情，这类下标越界事故在这个文件里出过，宁可显式清掉）。
    */
   useEffect(() => {
     setEditTarget(null);
@@ -1171,7 +1171,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     if (!last || last.role !== 'assistant' || !last.content.trim()) return;
     rpVoicePrepare(String(messages.length - 1), last.content);
   }, [messages, sending, regenerating, rpVoiceEnabled, rpVoicePrepare]);
-  // —— AI 辅助聊天：为玩家生成候选下一句（每次生成消耗 1 条聊天额度）——
+  // 【AI 辅助聊天：为玩家生成候选下一句（每次生成消耗 1 条聊天额度）】
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [suggestLoading, setSuggestLoading] = useState(false);
   const [suggestError, setSuggestError] = useState('');
@@ -1182,7 +1182,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   const [suggestDuplicate, setSuggestDuplicate] = useState(false);
   const rpIsPro = chatQuota ? (chatQuota.plan === 'pro' || !!chatQuota.lifetime) : getCachedPlan() === 'pro';
 
-  // —— 关键时刻自动画面（Pro 权益，默认关）——
+  // 【关键时刻自动画面（Pro 权益，默认关）】
   // 只在「高压/亲密/承诺/和好/离别」这几幕自动补一张专属画面；同一剧本同一幕只尝试一次（失败也静默）。
   const rpAutoTriedRef = useRef<Set<string>>(new Set());
   const changeAutoArt = (next: boolean) => {
@@ -1227,7 +1227,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     }
   }, [chatQuota]);
 
-  // —— 剧本点赞（乐观更新 + 服务端确认；likeState 覆盖服务端初始 likes/likedByMe）——
+  // 【剧本点赞（乐观更新 + 服务端确认；likeState 覆盖服务端初始 likes/likedByMe）】
   const [likeState, setLikeState] = useState<Record<string, { liked: boolean; count: number }>>({});
   const likingIds = useRef(new Set<string>());
   const likeInfo = (s: RoleplayScenarioInfo) => likeState[s.id] || { liked: !!s.likedByMe, count: s.likes || 0 };
@@ -1257,7 +1257,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
       likingIds.current.delete(s.id);
     }
   };
-  // —— 跨端实时同步点赞（SSE）：任何用户点赞/取消都会推送最新计数，更新后触发重排 ——
+  // 【跨端实时同步点赞（SSE）：任何用户点赞/取消都会推送最新计数，更新后触发重排】
   useEffect(() => {
     const es = new EventSource('/api/roleplay/likes/stream');
     es.onmessage = (ev) => {
@@ -1297,7 +1297,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   const [editingCustom, setEditingCustom] = useState<CustomScenarioInfo | null>(null); // 非空=正在编辑某自建剧本
   // 编辑基线：进入编辑态时的字段原值，用于「已修改」标注与「恢复原样」（覆盖 AI 回填与手动改动）
   const [customBaseline, setCustomBaseline] = useState<{ title: string; aiName: string; aiPersona: string; background: string; opening: string } | null>(null);
-  // —— AI 辅助创建剧本：灵感/整份剧本 → 草稿（标题/角色名/人设/背景/开场），每次生成消耗 1 条聊天额度 ——
+  // 【AI 辅助创建剧本：灵感/整份剧本 → 草稿（标题/角色名/人设/背景/开场），每次生成消耗 1 条聊天额度】
   // 输入**不限字数**（用户可能直接把写好的整份剧本贴进来）；输入框随内容自动增高，长文也看得全
   const [draftIdea, setDraftIdea] = useState('');
   const [drafting, setDrafting] = useState(false);
@@ -1408,7 +1408,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
 
   /**
    * 跨模式桥的**用户主动入口**（B 方案 A 项）：剧情输入栏额度行右侧那个常显小链接。
-   * 与三条「系统主动提示」不同，它是用户自己走进去的——**不消耗、也不受** 72h 预算约束，
+   * 与三条「系统主动提示」不同，它是用户自己走进去的：**不消耗、也不受** 72h 预算约束，
    * 不调用 markBridgeShown（那是「我们打扰了用户一次」的记账）。
    */
   const goChatFromPull = () => {
@@ -1484,7 +1484,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   };
 
   /**
-   * —— 手机返回键 / 屏幕边缘侧滑 / 浏览器后退：剧情模式内**逐级回退** ——
+   * 【手机返回键 / 屏幕边缘侧滑 / 浏览器后退：剧情模式内**逐级回退**】
    * 需求（2026-09-19 用户原话）：「剧情模式的每一层级，手机上的回退功能都应该是让它回退到上一个层级
    * 而不是全部到小愈主界面」。改之前这里没有注册过处理器，Home 的 popstate 一收到返回就把整个
    * 剧情模式关掉（`closeRoleplay()`）→ 不管在哪一层都跳回小愈主界面。
@@ -1495,7 +1495,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
    * 文游 → 返回 false，让文游子树自己的处理器先把内部层级退完再退出。
    *
    * ⚠️ 注册必须放在下面各个 `if (stage === …) return` 之前（Hooks 规则）。
-   * 处理器**只注册一次**（注册顺序 = 挂载顺序 = 嵌套深度）：更深的东西后注册、先被问到 ——
+   * 处理器**只注册一次**（注册顺序 = 挂载顺序 = 嵌套深度）：更深的东西后注册、先被问到
    * 文游子树（src/wenyou/App.tsx）与自建剧本里的图片裁剪弹层都是这么接进来的。
    * 层级/弹层这些会变的值走 `rpBackRef` 快照（每次渲染后刷新），`leaveChat` 走 ref，
    * 这样既不重注册、也不会拿到旧的 `stage` / `messages`。
@@ -1520,7 +1520,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   /**
    * 每进一层补压一条**自己的**历史条目（`xiaoyuRp: rank`）。
    * ⚠️ 实测教训（2026-09-19 首轮验证）：历史里只有 Home 那一条剧情模式条目时，返回键**只有第一次**
-   * 是同文档回退（能被 popstate 接到），第二次就跨文档了 —— 浏览器直接离开小愈。
+   * 是同文档回退（能被 popstate 接到），第二次就跨文档了，浏览器直接离开小愈。
    * 逐层压条目之后：对局 → 设定页 → 列表 → 小愈主界面 各消耗一次返回，第 5 次才离开站点。
    */
   useEffect(() => {
@@ -1543,7 +1543,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     setStage('list'); // goList（其余分支上面已分流）
   };
   /**
-   * 页内「上一层」统一入口（各层左上角 ←）：**优先交给浏览器后退**，由 popstate 处理器做层级变更 ——
+   * 页内「上一层」统一入口（各层左上角 ←）：**优先交给浏览器后退**，由 popstate 处理器做层级变更
    * 页内 ← 与手机返回键就永远是同一条路径，不会各自漂移；只有历史里确实没有本层条目时才直接改状态。
    */
   const rpGoUp = useCallback(() => {
@@ -1601,7 +1601,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   }, [messages]);
 
   // 桥② 出戏保护：用户**明说**「不演了 / 说点真的 / 这是我现实里的事」时才出现。
-  // 只认显式元话语（Tier A），不做任何猜测——也绝不替用户判断情绪或危机（那是 safety.ts 的职责）。
+  // 只认显式元话语（Tier A），不做任何猜测，也绝不替用户判断情绪或危机（那是 safety.ts 的职责）。
   const bridgeOocRef = useRef(false);
   useEffect(() => {
     const last = messages[messages.length - 1];
@@ -1712,7 +1712,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   };
   // 流式回复只原地更新最近一条 assistant 的 content（messages.length 不变），
   // 因此必须额外依赖「最后一条消息的长度」，否则流式期间文字变长时不会自动跟随。
-  // ⚠️ 2026-09-17 加固：这里原来直接读 `.content.length`——只要历史里有一条缺 content 的脏数据
+  // ⚠️ 2026-09-17 加固：这里原来直接读 `.content.length`，只要历史里有一条缺 content 的脏数据
   // （旧版本写入 / localStorage 被改坏），这个**每次渲染都会执行**的表达式就抛错，
   // 而全站当时没有 ErrorBoundary → 整页白屏。改为对非字符串安全取值。
   const rpLastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
@@ -1744,7 +1744,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   /**
    * 剧情会话自动保存（退出后回来可继续；登录用户跨设备同步）。
    *
-   * ⚠️ 2026-09-18：改成**串行 + 最新优先**（`createSerialSaveQueue`）—— 以前是「状态一变就并发送一次
+   * ⚠️ 2026-09-18：改成**串行 + 最新优先**（`createSerialSaveQueue`），以前是「状态一变就并发送一次
    * 整份历史」，于是 ①流式打字期间会重复发几十次一模一样的内容（每次都要整份重写服务端记录），
    * ②更旧的请求可能晚于更新的请求落盘，把新内容盖回去（线上日志抓到过：2 条的旧状态落在 3 条新状态之后）。
    * 现在同一时刻只有一个写请求在途，期间只保留最新一份，收尾再补写一次。
@@ -1802,7 +1802,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     // 开场文本里的默认名替换为自定义名（跨语言沉浸）
     if (aName !== s.ai.name && opening) opening = opening.split(s.ai.name).join(aName);
     // ⚠️ 2026-09-17 修复（线上反馈「无存档进剧情时开场白被吞」的根因）：
-    // loadSession() 曾经的实现是 `stripFallbackBubbles(loadLocalSession(id))`——该函数**永远返回数组**，
+    // loadSession() 曾经的实现是 `stripFallbackBubbles(loadLocalSession(id))`，该函数**永远返回数组**，
     // 「没有会话」于是从 `null` 变成 `[]`，而 `[]` 是 truthy → 原来的 `saved || [{ 开场白 }]` 永远取到空数组，
     // 于是「第一次进一部没演过的剧情」剧情区一条消息都没有（开场白被吞），
     // 只有该剧本已有存档的用户才看得到内容（所以维护者自己「没问题」）。
@@ -1815,13 +1815,13 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     /**
      * 🚨 2026-09-18：会话尾部停在一条**没人接的用户消息**上时，把失败态恢复出来。
      *
-     * 之前这里是 `setSendFailed(null)` 一刀切 —— 于是「生成失败 / 生成途中关掉页面 / 刚点『重新生成』
+     * 之前这里是 `setSendFailed(null)` 一刀切，于是「生成失败 / 生成途中关掉页面 / 刚点『重新生成』
      * 就退出」留下的尾部用户消息，在刷新或重进剧情后**既没有提示条也没有重试入口**，
      * 用户看到的就是「我说了最后一句，AI 从此不回我了」，只能靠再发一条新消息绕过（那一句永远没人接）。
      * 线上实测 30 / 271 个会话是这个形态（含用户 Twinkle 的《疯批总裁的白月光》129 条那条）。
      *
      * 这里只恢复**系统提示条**（`SendFailedNotice` + 既有 `retryTurn()`），
-     * 绝不替角色编台词、也不往 messages 里塞任何东西 —— 2026-09-15 红线不变。
+     * 绝不替角色编台词、也不往 messages 里塞任何东西，2026-09-15 红线不变。
      */
     setSendFailed(endsWithUnansweredTurn(initial) ? 'UNANSWERED' : null);
     setInput('');
@@ -1927,7 +1927,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     setCreateError('');
     try {
       // 审计标记（方案 A2）：记录这个剧本创建时「剧本生成」开关是否开了无限制模式。
-      // 只报 boolean，不报模型名 —— 草稿生成路径目前不下发 meta，编造模型名不如不报。
+      // 只报 boolean，不报模型名，草稿生成路径目前不下发 meta，编造模型名不如不报。
       // 一并回传这次用过的「剧本灵感」：控制台要能看到用户是拿什么提示词让 AI 生成的
       // （草稿生成接口不落库，所以只能在这里带走；没写过灵感 / 纯手写时为 undefined）
       const r = await createCustomRoleplay({ ...customForm, createdWithUnlimited: scriptUnlimitedOn, creationPrompt: draftIdea.trim() || undefined });
@@ -2001,7 +2001,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
         onNeedPay?.();
         setDraftError('');
       } else if (r.code === 'DRAFT_FORMAT') {
-        // 格式抖动（模型 JSON 没写好）——与内容无关：措辞要让人安心并鼓励"再点一次"，别让他去改灵感
+        // 格式抖动（模型 JSON 没写好），与内容无关：措辞要让人安心并鼓励"再点一次"，别让他去改灵感
         setDraftError(editingCustom ? t('rpCustomAiFormatRevise') : t('rpCustomAiFormat'));
       } else if (r.code === 'CONTENT_REJECTED') {
         setDraftError(editingCustom ? t('rpCustomRejected') : t('rpCustomAiRejected'));
@@ -2045,7 +2045,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     // 见 assistantMetaOf），供管理端「用户行为」核对成人模式使用情况（方案 A2）与按叙事模式分档统计收尾习惯。
     // 拿不到就保持 null → 该条记为「未记录」。
     //
-    // 🚨 用可变持有对象而不是 `let meta`：**除了 onDelta，还必须把它带回给调用方**——
+    // 🚨 用可变持有对象而不是 `let meta`：**除了 onDelta，还必须把它带回给调用方**
     //    2026-09-17 的记录里「41 条里 40 条未记录」就是这里漏的：runTurn 的 finish() 重新构造消息对象、
     //    没带上 meta，于是流式过程中带过 meta 的那条被定稿时覆盖掉了。
     const metaRef: { current: MetaInfo | null } = { current: null };
@@ -2055,7 +2055,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     rpTurnAbortRef.current = ac;
     try {
       // 剧情走流式：逐 token 追加，不让用户对着 spinner 空等整段回复（不刻意变慢）
-      // ⚠️ 上下文一律过 toRequestMessages：content 取「**当前选中**的那一版」——
+      // ⚠️ 上下文一律过 toRequestMessages：content 取「**当前选中**的那一版」
       //    否则切了版本/重抽之后，会把用户已经看不见的旧版当台词回灌给模型（本轮功能的关键不变量）
       const r = await roleplayChatStream(selected!.id, toRequestMessages(base), rpLang, aiName.trim() || undefined, userName.trim() || undefined, prefOverride ?? userPreference, narrativeStyle, {
         onDelta: (delta) => {
@@ -2069,7 +2069,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
         // meta 一定早于第一个 delta 到达（服务端在生成前下发），所以 onDelta 构造消息时已经拿得到
         onMeta: (m) => { metaRef.current = m; },
         // C 方案：服务端发现回复断在半句上，正在**自动续写**（同一段文字继续往下长）。
-        // 这里只用来显示「正在续写」——不新增消息、不打断打字动效。
+        // 这里只用来显示「正在续写」：不新增消息、不打断打字动效。
         onContinue: () => setContinuing(true),
         // A 方案：服务端正在重写这一版（重写期间不再有 delta，最终由 done.reply 覆盖）
         onRewrite: () => { setContinuing(false); setRewriting(true); },
@@ -2108,7 +2108,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
    * 一个回合（发送 / 重试 / 重新生成共用）。
    *
    * 🚨 2026-09-15 线上事故的根因就修在这里：请求失败时**绝不能**把兜底文案写进 messages。
-   * 之前是 `applyAssist(r.error || t('errNetwork'))`——于是「网络好像开小差了，稍后再试试好吗？🌱」
+   * 之前是 `applyAssist(r.error || t('errNetwork'))`，于是「网络好像开小差了，稍后再试试好吗？🌱」
    * 被当成角色台词显示、被自动保存进剧情会话、还被回灌给模型当上下文
    *（生产库 data/xiaoyu.sqlite 里已经留下 3 处：1 条 errNetwork + 2 条「生成失败，请稍后重试」）。
    *
@@ -2151,7 +2151,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
       rememberMeta(outcome);
       const firstCode = outcome.kind === 'fail' ? outcome.code : '';
 
-      // —— 自动重试（上限 AUTO_RETRY_MAX，当前=1）：网络断 / 等超时 / 上游报错，且一个字都没收到 ——
+      // 【自动重试（上限 AUTO_RETRY_MAX，当前=1）：网络断 / 等超时 / 上游报错，且一个字都没收到】
       let autoRetries = 0;
       while (outcome.kind === 'fail' && autoRetries < AUTO_RETRY_MAX && shouldAutoRetry({ code: outcome.code, status: outcome.status }, false)) {
         autoRetries += 1;
@@ -2210,7 +2210,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
      * 发下一条消息 = 把上一轮的「编辑分支」**固化**（只留当前那一支）。
      * 依据见 `commitUserBranch` 注释：2A 口径下改写只属于"当轮"，另一支之后永远切不回去
      *（切回要连其后所有对话一起换 = 对话树，已明确不做），而每个尾巴都是一整段台词（最长 4000 字）
-     * ——留着就是纯死重量，`roleplay-sessions.json` 会白涨。
+     *。留着就是纯死重量，`roleplay-sessions.json` 会白涨。
      */
     const lastUser = lastUserIndex(messages);
     const baseMsgs = lastUser >= 0 ? commitUserBranch(messages, lastUser) : messages;
@@ -2228,10 +2228,10 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     await runTurn(newMsgs);
   };
 
-  // —— 编辑重发（2026-09，1B + 2A）：改掉刚发的那句话，从这句重新接下去 ——
+  // 【编辑重发（2026-09，1B + 2A）：改掉刚发的那句话，从这句重新接下去】
   /**
    * 进入编辑态：把这条用户消息的原文填进输入栏，并**备份**用户本来正在写的草稿
-   *（取消编辑要原样还回去 —— 不能因为点了一下「编辑」就把没发出去的话吃掉）。
+   *（取消编辑要原样还回去，不能因为点了一下「编辑」就把没发出去的话吃掉）。
    * 只有 `canEditAt` 认的那条（最后一条用户消息）才有调用入口。
    */
   const openEdit = (i: number) => {
@@ -2252,7 +2252,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   /**
    * 提交一次编辑重发。与 `send()` 的三处关键差别：
    *   ① 历史用 `startEditResend()` 造：旧正文留成上一版、旧回复冻结成可切回的分支（1B）、
-   *      主线截到改写句（以 user 结尾）——这正是后端 `/chat` 要求的"以用户消息结尾"的回合起点；
+   *      主线截到改写句（以 user 结尾），这正是后端 `/chat` 要求的"以用户消息结尾"的回合起点；
    *   ② **必须**把编辑前的整份历史当快照交给 `runTurn`：失败/取消/额度不足时整体回滚（`rollbackTo`），
    *      用户回到动手前的样子，绝不能出现"改了但没接上，旧剧情也没了"；
    *   ③ 那个中间态（以 user 结尾、比已存历史短）**不许落盘**：前端 `saveSession` 的护栏会跳过，
@@ -2286,7 +2286,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     else void send();
   };
   /**
-   * 切换这条用户消息的分支（◀/▶）：纯本地 —— 不重新生成、不消耗额度、两边内容都不丢。
+   * 切换这条用户消息的分支（◀/▶）：纯本地。不重新生成、不消耗额度、两边内容都不丢。
    * 只在「它仍是最后一条用户消息」时可用（2A），一旦又聊了新的，分支就固化了（见 send()）。
    */
   const switchUserBranch = (i: number, dir: -1 | 1) => {
@@ -2312,7 +2312,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     await runTurn(messages);
   };
 
-  // —— AI 辅助聊天：加载聊天额度、为玩家生成候选下一句、选中即发送 ——
+  // 【AI 辅助聊天：加载聊天额度、为玩家生成候选下一句、选中即发送】
   const loadChatQuota = () => {
     getQuota().then(r => { if (r.success && r.data) setChatQuota(r.data); }).catch(() => {});
   };
@@ -2366,7 +2366,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     send(content);
   };
 
-  // —— 我的偏好/独特需求：打开编辑 & 保存 ——
+  // 【我的偏好/独特需求：打开编辑 & 保存】
   const openPref = () => {
     setPrefDraft(userPreference);
     setPrefOpen(true);
@@ -2376,7 +2376,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
    * 让用户点了邮件里的按钮就能直接看到「无限制模式」那个开关，不用自己找。
    * 只自动开一次（ref 守卫）；抽屉只在剧情对话页存在（依赖 selected），所以等进了剧情再开。
    *
-   * 2026-09-27（A 案）：剧本详情页那条一键直达**不再**走这里——它改成在弹窗里就地开启
+   * 2026-09-27（A 案）：剧本详情页那条一键直达**不再**走这里，它改成在弹窗里就地开启
    * 无限制模式（changeUnlimitedOn(true)，未过 18+ 先弹闸门），不再开抽屉、也不再把人带进对话让他自己拨。
    * 于是 `prefOpenAfterEnter` 那套「每次点都算数」的状态机随之删掉，这条路只剩邮件深链一个入口。
    */
@@ -2397,10 +2397,10 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     setPrefOpen(false);
   };
 
-  // —— 重新生成（**任意一条** AI 回复，可选填反馈沉淀为该剧本的用户偏好）——
+  // 【重新生成（**任意一条** AI 回复，可选填反馈沉淀为该剧本的用户偏好）】
   /**
    * 打开「重新生成」弹窗（带上是第几条）。
-   * 每条 AI 回复都有自己的入口；开场白除外——它前面没有用户消息（后端 `/chat` 也要求历史以 user 结尾），
+   * 每条 AI 回复都有自己的入口；开场白除外，它前面没有用户消息（后端 `/chat` 也要求历史以 user 结尾），
    * 且它是剧本设定的一部分，不是 AI 当场生成的。
    */
   const openRegenerate = (i: number) => {
@@ -2411,7 +2411,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   };
   /**
    * 重生成第 i 条 AI 回复：`base` 截到这条之前（其后对话作废，弹窗里已按条数明确提示），
-   * 并把被替换掉的那条交给 `runTurn` —— 新回复作为**最新一版**追加，旧版留在 ◀/▶ 里可回看。
+   * 并把被替换掉的那条交给 `runTurn`，新回复作为**最新一版**追加，旧版留在 ◀/▶ 里可回看。
    */
   const regenerateAt = async (i: number, feedback: string) => {
     if (!selected || regenerating || sending || continuing) return;
@@ -2439,13 +2439,13 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
    * 「续写」：把**没写完的那条**接着说下去（B/C 方案的手动入口，用户自己点）。
    *
    * 与「重新生成」的关键差别：
-   *   - 重新生成是**换一版**（从这条起重写，其后对话作废）；续写是**在同一条里往下长**——
+   *   - 重新生成是**换一版**（从这条起重写，其后对话作废）；续写是**在同一条里往下长**
    *     服务端接着断点写，用户看到的是半截台词自己续上，后面的剧情一句不动；
    *   - 请求把当前历史原样带回并置 `continueTurn: true`，服务端据此认出「最后一条 assistant 就是断点」；
    *   - 结果仍作为这条的**新一版**落进 versions（可从 ◀/▶ 回看续写前的半截）。
    *
    * 额度口径：与「重新生成」一致，算作新的一回合（服务端按回合扣）。**自动**续写不额外扣
-   * ——那次续写发生在同一个请求里，用户并没有发第二条消息。
+   *。那次续写发生在同一个请求里，用户并没有发第二条消息。
    */
   const continueAt = async (i: number) => {
     if (!selected || sending || regenerating || continuing) return;
@@ -2514,7 +2514,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
    *
    * 两个来源取并集：
    *   ① 服务端标记 `m.incomplete`（B 方案：上游 finish_reason=length、或续写用尽上限后仍断在半句）；
-   *   ② 对**当前显示的正文**跑一次完整性判定 —— 好处是**老数据也管**：
+   *   ② 对**当前显示的正文**跑一次完整性判定，好处是**老数据也管**：
    *      数据库里那些已经存成半截的历史（含用户「小愈的朋友」那条 `（他并未退`）刷新后同样会给提示与续写入口，
    *      不需要任何数据迁移；切版本时也会跟着当前版本重算。
    */
@@ -2584,7 +2584,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
      * 模块底下现在是三个并列模式 → 改成**模块级说明**：开头三行分别介绍三种玩法，
      * 名字**直接取各自 tab 的键**（切换器同一份文案，不另起名字、不会漂移）；
      * 后面三张卡（来源 / 收费 / 提示）也改成模块口径。
-     * 狼人杀有反向闸门（`?ww=off` / `cure_ww_dev=0`）——锁着时这一行挂「开发中」角标，不假装能玩。
+     * 狼人杀有反向闸门（`?ww=off` / `cure_ww_dev=0`），锁着时这一行挂「开发中」角标，不假装能玩。
      */
     const introModes = [
       { key: 'roleplay', icon: Sparkles, name: t('roleplayTitle'), body: t('rpIntroModeRoleplayBody'), locked: false },
@@ -2668,7 +2668,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
    * 成人模式的公共浮层：18+ 年龄闸门 + 瞬时提示。
    *
    * ⚠️ 2026-09-27（A 案）：这两个 portal 必须挂在**所有 stage**，不能只留在「剧情对话」那一支里。
-   * 实测教训：引导卡从「聊一聊」过来时用户停在**剧本列表**层、就地开启又发生在**剧本详情**的温馨提示里——
+   * 实测教训：引导卡从「聊一聊」过来时用户停在**剧本列表**层、就地开启又发生在**剧本详情**的温馨提示里
    * 这两层都拿不到只有对话页才渲染的那份 JSX，于是 adultGateOpen=true 置了却**弹不出闸门**、
    * 瞬时提示也永远不出现（用户点下去像没反应）。所以下面三个 stage 的 return 各自套一层。
    * portal 挂 body 的原因见闸门自身注释（Home 的 {modals} 会盖住本页任何 fixed 后代）。
@@ -2698,7 +2698,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
               <button
                 onClick={() => {
                   setAdultGateOpen(false); setAdultGateErr(''); setUnlimitedNotice(t('adultGateUnderageMsg'));
-                  // 「这句 notice 挂在抽屉里」——抽屉没开（引导卡 / 详情页弹窗里就地开启这两条路）时他看不到，
+                  // 「这句 notice 挂在抽屉里」，抽屉没开（引导卡 / 详情页弹窗里就地开启这两条路）时他看不到，
                   // 所以要补一句瞬时提示，别让点击像没反应；抽屉开着（用户自己拨开关）时保持原地提示，避免两处重复。
                   if (adultGateFromIntent.current || !prefOpen) showAdultToast(t('adultGateUnderageMsg'));
                   adultGateFromIntent.current = false;
@@ -2714,7 +2714,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
         document.body,
       )}
       {/* 瞬时提示（2.6s 自动消失）：只用在「开关开在别处、用户当场看不到结果」的时刻（引导卡自动开启、
-          年龄未满、模型不可用）。刻意不做成常驻横幅——聊天界面保持干净，不堆提示（用户 2026-09-27 要求）。 */}
+          年龄未满、模型不可用）。刻意不做成常驻横幅，聊天界面保持干净，不堆提示（用户 2026-09-27 要求）。 */}
       {!!adultToast && typeof document !== 'undefined' && createPortal(
         <div
           className="fixed left-1/2 -translate-x-1/2 top-4 z-[90] max-w-[92vw] px-3.5 py-2 rounded-full bg-gray-900/88 text-white text-[12.5px] leading-snug shadow-lg pointer-events-none text-center"
@@ -3128,7 +3128,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     const exitCustom = () => { setEditingCustom(null); rpGoUp(); };
     const isEdit = !!editingCustom;
     const canSubmit = customForm.aiPersona.trim() && customForm.background.trim() && customForm.opening.trim();
-    // —— 编辑态「已修改」标注：与进入编辑时的原值（customBaseline）对比，AI 回填与手动改动都会亮起；可单字段恢复原样 ——
+    // 【编辑态「已修改」标注：与进入编辑时的原值（customBaseline）对比，AI 回填与手动改动都会亮起；可单字段恢复原样】
     // 自建剧本可编辑字段：只作类型用（原为 `const fk = [...] as const` + `typeof fk[number]`，
     // 那个值从来没被读过，eslint 报「assigned a value but only used as a type」）
     type CustomFieldKey = 'title' | 'aiName' | 'aiPersona' | 'background' | 'opening';
@@ -3293,7 +3293,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
     const s = selected;
     /**
      * 「开场剧情」卡显示的是**场景**文本（与改造前一致：这里一直是 openingScene）。
-     * ⚠️ 注：进聊天时用的开场是**台词**优先（`openingAssistant`），两者取舍不同 —— 别顺手统一。
+     * ⚠️ 注：进聊天时用的开场是**台词**优先（`openingAssistant`），两者取舍不同，别顺手统一。
      */
     const detailOpening = (rpMode === 'multi' ? (s.multiOpeningScene || s.multiOpeningAssistant) : '') || s.openingScene;
     return (
@@ -3425,7 +3425,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
             <p className="text-sm text-gray-700 leading-relaxed mt-1.5"><b className="text-gray-800">{t('rpSpeech')}: </b>{s.ai.speech}</p>
           </div>
 
-          {/* 同场角色（多角色剧本）：把**全部**角色的身份与一句话介绍列出来 ——
+          {/* 同场角色（多角色剧本）：把**全部**角色的身份与一句话介绍列出来
               主角的详细设定在上面的 AI 角色卡里，这里仍保留一条（带「主角」标记），
               这样"这部戏有谁"是一份完整名单，而不是让玩家自己去拼。 */}
           {(s.cast?.length ?? 0) >= 2 && (
@@ -3592,7 +3592,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
             {hasSaved ? t('rpContinue') : t('roleplayStart')}
           </button>
 
-          {/* 把剧情角色加到聊一聊（方案 A1）：把 TA 从"剧里"带到常驻聊天窗口 —— 人设 + 你们的共同经历一起过去。
+          {/* 把剧情角色加到聊一聊（方案 A1）：把 TA 从"剧里"带到常驻聊天窗口，人设 + 你们的共同经历一起过去。
               入口下的一行小字先说清模式差异，点开后的确认卡里再用一整块讲「不是剧情模式 + 开不了无限制模式」。 */}
           <div className="mt-1">
             <button
@@ -3718,7 +3718,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
   /**
    * 多角色（群像）渲染上下文（2026-10-01）
    *   · 只有 cast.length >= 2 才启用；
-   *   · 主角色（lead）的标记名跟随用户自定义名 —— 与后端 roleplayReply、开场白替换**三处必须同口径**，
+   *   · 主角色（lead）的标记名跟随用户自定义名：与后端 roleplayReply、开场白替换**三处必须同口径**，
    *     否则前端认不出服务端下发的标记，整段会退回旁白；
    *   · 单角色剧本 cast 为空 → 下面所有分支都走原路径，行为逐字不变。
    */
@@ -3750,7 +3750,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
           // 原写法 `height: visualViewport.height` 与 `bottom: kbInset` **等价**（bottom 也是按同一个高度算的），
           // 所以两者都会在"可视视口 < 布局视口"时留白。
           // 现改为：**默认锚定布局视口底边**（`bottom: 0`），只有在**真键盘弹起**时才抬底边。
-          // 阈值 120px：真软键盘 ≥ ~200px，而浏览器工具栏收缩通常 ≤ ~100px —— 目的是不把"工具栏"误判成"键盘"。
+          // 阈值 120px：真软键盘 ≥ ~200px，而浏览器工具栏收缩通常 ≤ ~100px，目的是不把"工具栏"误判成"键盘"。
           : { top: vvOffsetTop ? vvOffsetTop + 'px' : 0, bottom: liftBottom || 0 }
       }
     >
@@ -3776,7 +3776,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
       />
       {/* ⚠️ 2026-09-15 用户要求顶栏也跟随「卡片不透明度」变透明 → 与气泡/输入栏同一套
           （`card-white` + 毛玻璃；默认 80% 时观感与原来的 bg-white/85 几乎一致，往下拖才明显透出场景）。
-          注意：图标是 `text-ink-soft`，全透时压在亮场景上对比度会变低 —— 见 CHANGELOG 里记录的这个取舍。 */}
+          注意：图标是 `text-ink-soft`，全透时压在亮场景上对比度会变低，见 CHANGELOG 里记录的这个取舍。 */}
       {/* ⚠️ z-30：**必须高于模式行的 z-20**。原来顶栏与模式行同为 z-10、模式行 DOM 更靠后
           → 顶栏里的「⋯」下拉（哪怕写了 z-50）也被限制在顶栏的层叠上下文里，**整片被模式行盖住**
           （用户反馈"点开后内容被叙事模式选择覆盖了"）。 */}
@@ -3786,7 +3786,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
             <ArrowLeft className="w-5 h-5" />
           </button>
           {/* 聊天页不展示剧情名，把空间留给常用设置图标。
-              ⚠️ 2026-09-15 用户反馈「顶栏图标有点挤了」——实测：7 个图标塞在 304px 里、**彼此间隙 0px**（手机 390px）。
+              ⚠️ 2026-09-15 用户反馈「顶栏图标有点挤了」：实测：7 个图标塞在 304px 里、**彼此间隙 0px**（手机 390px）。
               7 个图标在这个宽度本来就不够放，所以把**低频 4 项**（意见反馈 / 专属画面 / 重新开始 / 分享对话）收进「⋯」，
               常驻 5 个 + 「⋯」用 justify-between 均匀铺开 → 间隙更宽，触摸区仍保持 44px。
               「重新开始」是破坏性操作，收进菜单顺带更安全（不会误点）。 */}
@@ -3823,7 +3823,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
               )}
             </button>
             {/* 「⋯」：收纳低频项（界面外观 / 意见反馈 / 分享对话 / 重新开始），让常驻图标有呼吸感。
-                注意：**菜单本体不在这里渲染**（见文件下方聊天壳层的 `{rpMoreOpen && …}`）——
+                注意：**菜单本体不在这里渲染**（见文件下方聊天壳层的 `{rpMoreOpen && …}`）
                 顶栏自带 backdrop-blur-md，菜单留在顶栏里就只是"半透明没有毛玻璃"。 */}
             <div className="relative flex-shrink-0" ref={rpMoreRef}>
               <button
@@ -3840,7 +3840,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
         </div>
       </div>
 
-      {/* 顶栏「⋯」菜单本体：渲染在**聊天壳层**（与顶栏并列），而不是顶栏内部 —— 这是毛玻璃能生效的前提。
+      {/* 顶栏「⋯」菜单本体：渲染在**聊天壳层**（与顶栏并列），而不是顶栏内部，这是毛玻璃能生效的前提。
           ⚠️ 踩过的坑：顶栏自己有 `backdrop-blur-md` ⇒ 顶栏成了它内部元素的 **backdrop root**，
           菜单挂在顶栏里时，它自己的 `backdrop-filter` 只能糊到"顶栏自己的像素"（菜单悬在顶栏外面，
           那块是空的）→ 实测观感就是"半透明但没毛玻璃、底下的字直接穿上来"。
@@ -3918,7 +3918,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
 
       {/* 保读性白纱（**不吃「卡片不透明度」滑块**）：顶/底各一层极淡渐变。
           为什么必须有：滑块拖到 0%（全透）时，顶栏图标（text-ink-soft）与模式行那行 11px 说明文字
-          压在**亮场景**上会低于无障碍对比度（实测全透时约 3.8:1 < AA 4.5）——这层保证"再透也读得清"。
+          压在**亮场景**上会低于无障碍对比度（实测全透时约 3.8:1 < AA 4.5），这层保证"再透也读得清"。
           它是**下限**，不是遮罩：只在最上 144px / 最下 112px 有，中间完全是场景。 */}
       <div className="pointer-events-none fixed inset-x-0 top-0 z-[1] h-20 bg-gradient-to-b from-white/55 via-white/40 to-transparent" />
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[1] h-36 bg-gradient-to-t from-white/70 via-white/45 to-transparent" />
@@ -3932,7 +3932,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
           两者都铺底 + 半透明白遮罩，保证气泡可读 */}
       {s?.chatBackground ? (
         /* 🔴 2026-09-15 用户选 A：背景层由「只铺中间聊天区」改为**铺满整个视口**（`fixed inset-0`），
-           顶栏/模式行/输入栏全部浮在场景之上 —— 否则顶栏透明后露出的是**皮肤氛围背景**（浅色），
+           顶栏/模式行/输入栏全部浮在场景之上，否则顶栏透明后露出的是**皮肤氛围背景**（浅色），
            会形成"浅色顶栏 → 硬边切进深色场景"的接缝。`pointer-events-none` 保证不拦截任何点击。 */
         <div className="pointer-events-none fixed inset-0 z-0">
           <img src={s.chatBackground} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
@@ -3979,7 +3979,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
            * 打字机自然就是"上一位说完、下一位的气泡才出现"。识别不到标记 → multi 为假 → 原单气泡。
            */
           /**
-           * 开场白打字机（O1）：只切**第 0 条 assistant 消息的渲染文本**——
+           * 开场白打字机（O1）：只切**第 0 条 assistant 消息的渲染文本**
            * 解析与显示都用切片，复制/落盘/长图分享/TTS 仍取 m.content 全文。
            * 多角色剧本下，切片推进 + 流式容错解析器 = 每个角色的气泡逐个出现、各自逐字长出来。
            */
@@ -4227,7 +4227,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
             code={sendFailed}
             /**
              * 文案分两类：
-             *  · UNANSWERED = 进剧情时发现「上一句还挂着、没人接」（2026-09-18）——不是网络错，是那一轮没落上，
+             *  · UNANSWERED = 进剧情时发现「上一句还挂着、没人接」（2026-09-18），不是网络错，是那一轮没落上，
              *    所以用「这句还没等到回答」的口径 + 同一个重试按钮（点一下就让角色接上这一句）；
              *  · 其余（TIMEOUT / NETWORK / ABORTED）沿用「这条没发送成功」的文案。
              * 服务端可读错误串（旧行为）继续原样展示。
@@ -4292,7 +4292,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
       <div className="relative z-20 flex-shrink-0 border-t border-gray-100 chrome-white-top backdrop-blur-md px-3 pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))]">
         {/* 额度行 + 跨模式桥的「用户主动入口」（B 方案 A 项）。
             这一条**任何时刻都在**：不弹窗、不占额外高度、不消耗额度、不点就等于不存在；
-            与时间驱动的三条桥不同，它不需要预算——72h 冷却只约束「系统主动提示」，不约束用户自己走进来的门。 */}
+            与时间驱动的三条桥不同，它不需要预算，72h 冷却只约束「系统主动提示」，不约束用户自己走进来的门。 */}
         <div className="mb-1.5 flex items-center justify-between gap-2">
           {chatQuota ? (
             <p className="text-[11px] text-gray-700 leading-relaxed">
@@ -4440,8 +4440,8 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* 头部固定：把手（下滑关闭）+ 标题 + 关闭键——不参与滚动，任何屏高都点得到。
-                ⚠️ 2026-09-17：这里**不再**放「偏好说明」——那段话讲的是下面的文本框，
+            {/* 头部固定：把手（下滑关闭）+ 标题 + 关闭键，不参与滚动，任何屏高都点得到。
+                ⚠️ 2026-09-17：这里**不再**放「偏好说明」，那段话讲的是下面的文本框，
                 挂在这里离文本框 403px（真机实测），中间还隔着 4 组开关；已下移到文本框正上方（见内容区）。 */}
             <div
               className="shrink-0 px-5 pt-3 pb-1.5 touch-none"
@@ -4465,7 +4465,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
               </div>
             </div>
             {/* 内容区：整块窗口唯一可滚动的地方（min-h-0 才能让 flex 子项收缩出滚动条）。
-                2026-09-17 起明确分两节：上=即时生效的开关，下=需要保存的偏好文本——
+                2026-09-17 起明确分两节：上=即时生效的开关，下=需要保存的偏好文本
                 标题「我的偏好」只覆盖后者，所以两节各自带小节标题，避免「不点保存就不算数」的误会。 */}
             <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 pt-1 pb-3 space-y-3">
               <div className="flex items-baseline justify-between gap-2 px-1">
@@ -4568,7 +4568,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
                   </button>
                 </div>
               </div>
-              {/* 叙事模式（2026-09-25 C 方案）：两种模式的**对比**就放在这里——
+              {/* 叙事模式（2026-09-25 C 方案）：两种模式的**对比**就放在这里
                   以前只有一个切换条 + 一条 3.5s 浮层提示，用户没法在"设定"的地方看清差别；
                   这里把篇幅/语体/人称/收尾逐条列出来，并直接可切（与顶部切换条同一份状态）。 */}
               <div className="rounded-xl border border-clay-border bg-clay-bg px-3 py-2.5" data-testid="rp-style-card">
@@ -4596,7 +4596,7 @@ const IS_ANDROID = typeof navigator !== 'undefined' && /Android/i.test(navigator
                   ))}
                 </div>
               </div>
-              {/* 小节 2：这段剧情的偏好。说明必须**紧贴**它要说明的文本框——
+              {/* 小节 2：这段剧情的偏好。说明必须**紧贴**它要说明的文本框
                   2026-09-17 之前它挂在抽屉顶部，真机实测离文本框 403px（用户反馈「距离过远」）。 */}
               <div className="space-y-1.5 px-1 pt-0.5">
                 <p className="text-[11px] font-bold text-ink-soft">{t('rpPrefSection')}</p>

@@ -49,10 +49,10 @@ export interface ProviderConfig {
   /**
    * 额外合并进请求体的字段（第三方托管专有能力的逃生口，避免把某家的私有字段写死进业务代码）。
    * 典型用途：Featherless 的 { chat_template_kwargs: { enable_thinking: false } }
-   * —— Qwen3.5 系默认开启思考，不关掉会白烧几百到上千输出 token。
+   * Qwen3.5 系默认开启思考，不关掉会白烧几百到上千输出 token。
    *
    * 注：**成人档禁止思考模式**（2026-09-25 产品决定）由 roleplayModel 的 enforceNoThinking
-   * 强制保证——那道不变量会把这里的 enable_thinking 覆盖成 false，所以本层不需要知道这条业务规则。
+   * 强制保证，那道不变量会把这里的 enable_thinking 覆盖成 false，所以本层不需要知道这条业务规则。
    */
   extraBody?: Record<string, unknown>;
   /** 显式 API Key；不填则回落到 process.env.DEEPSEEK_API_KEY（保持改造前行为） */
@@ -84,7 +84,7 @@ const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
  * 没有真实 usage 时的保守 token 估算（只用于兜底，会以 `estimated` 标记入账）。
  *
  * 什么时候用：① 第三方托管不支持 `stream_options.include_usage`，流式拿不到 usage；
- * ② 流式中途被中断（用户点停止/断线）——上游已经生成的 token 是真花钱的，
+ * ② 流式中途被中断（用户点停止/断线），上游已经生成的 token 是真花钱的，
  * 但末尾那帧 usage 永远不会到，此前这类调用**一分钱都不记账**（成本盲区）。
  *
  * 系数：中文 ≈ 1 token / 1.5 字符；其余（英文/标点/数字/emoji）≈ 1 token / 4 字符。
@@ -140,7 +140,7 @@ interface GenerateContentRequest {
   /**
    * 成本归属功能（聊一聊/剧情扮演/文游/狼人杀…），用于运营端「API 成本构成」细分。
    * 取值见 api/services/usage.ts 的 UsageFeature；不传 = 'unknown'（控制台显示为「历史未分类」）。
-   * 每个调用点都应显式标注——控制台靠这一个字段回答「这笔钱是谁花的」。
+   * 每个调用点都应显式标注，控制台靠这一个字段回答「这笔钱是谁花的」。
    */
   feature?: string;
   tools?: Array<{ type: 'function'; function: { name: string; description?: string; parameters?: any } }>; // 函数调用工具
@@ -156,7 +156,7 @@ interface GenerateContentRequest {
   // 每次调用拿到真实 usage 时回调（供额度层做「预扣 → 真实结算」校正）。后台辅助调用请勿传，避免重复计费。
   onUsage?: (usage: UsageLike) => void;
   // 外部中断信号：客户端断开（如关闭「AI 生成剧本」弹窗）时中止上游调用，避免白烧一次多段生成。
-  // 外部取消不重试、也不当作「响应超时」——它是一次明确的放弃。
+  // 外部取消不重试、也不当作「响应超时」，它是一次明确的放弃。
   signal?: AbortSignal;
 }
 
@@ -494,7 +494,7 @@ async function generateContentStream(
 
 /**
  * 创建「任意 OpenAI 兼容后端」客户端（双分支模型路由用：中文 / 英文各一套第三方模型）。
- * 强制 isDeepSeek=false —— 第三方托管不认 DeepSeek 专有字段（thinking / user_id / stream_options），
+ * 强制 isDeepSeek=false，第三方托管不认 DeepSeek 专有字段（thinking / user_id / stream_options），
  * 必须走条件化分支，否则会直接 400。
  */
 export function createCompatClient(cfg: Omit<ProviderConfig, 'isDeepSeek'>): any {

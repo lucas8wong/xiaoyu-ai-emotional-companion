@@ -29,7 +29,7 @@ test('A. 内置小愈的显示名跟随界面语言（唯一真源）', () => {
   assert.equal(companionShortName('en'), 'Xiaoyu');
   assert.equal(companionShortName('zh-CN'), '小愈');
   assert.equal(companionShortName('zh-TW'), '小愈');
-  // 内置角色的记录名就是「小愈」，但**显示名**必须跟随语言 —— 这就是当初的 bug
+  // 内置角色的记录名就是「小愈」，但**显示名**必须跟随语言，这就是当初的 bug
   const builtin = { id: 'xiaoyu', isDefault: true, name: '小愈' };
   assert.equal(displayNameForCharacter(builtin, 'en'), 'Xiaoyu');
   assert.equal(displayNameForCharacter(builtin, 'zh-TW'), '小愈');

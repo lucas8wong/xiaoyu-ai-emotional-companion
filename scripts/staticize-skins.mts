@@ -1,6 +1,6 @@
 /**
  * 皮肤静态化脚本：把管理员生成的皮肤（public/skins/<id>/meta.json）重新生成为
- * 静态资源——写 src/lib/generated-skins.ts（并入前端 SKINS）+ src/generated-skins.css
+ * 静态资源，写 src/lib/generated-skins.ts（并入前端 SKINS）+ src/generated-skins.css
  * （每套皮肤 :root[data-skin=id] 的 CSS 变量），并把 public/skins/manifest.json 置空。
  *
  * 用途：

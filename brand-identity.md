@@ -192,7 +192,7 @@ Each look is one way she keeps you company, written as a persona:
 
 - 中文字面：小愈 = 一点点的治愈
 - 对外英文：**gentle healing**（不要用 little healing，gentle 更温暖优雅）
-- 名字巧思：**Yu = you** —— 构成故事收尾的高潮点
+- 名字巧思：**Yu = you**，构成故事收尾的高潮点
 
 ---
 
@@ -207,7 +207,7 @@ Each look is one way she keeps you company, written as a persona:
 - **她的宝箱 = 怀里一罐金色光球**：她把攒下的光，分给每个难过的人
 - **性格**：温柔、安静、会认真听；偶尔困倦、也会累
 - **来处**：东方的一座小城（不说 China，低调）
-- **软肋**：她也渴望被世界温柔照亮（"治愈者也需要被爱"——最戳的钩子）
+- **软肋**：她也渴望被世界温柔照亮（"治愈者也需要被爱"，最戳的钩子）
 
 ## 2.2 多面人格（Many Faces = 8 张形象图）
 
@@ -224,7 +224,7 @@ Each look is one way she keeps you company, written as a persona:
 | **7.png** | 睡衣 + 抱小熊 | 有点困但硬撑的"小软糯" | 你深夜脆弱、需要被抱时（**最能戳"我也想被爱"**） |
 | **8.png** | 白风衣 + 放大镜 + 罗盘 | 陪你探索的"小探险家" | 你迷茫想被指引时 |
 
-> 用法：写文案时挑对应造型，讲"今天的小愈是 XX"——让形象图各有叙事，不死板。
+> 用法：写文案时挑对应造型，讲"今天的小愈是 XX"，让形象图各有叙事，不死板。
 
 ---
 
@@ -237,8 +237,8 @@ Each look is one way she keeps you company, written as a persona:
 
 ## 4 章叙事（IG 连载 / About 页）
 1. **她从哪里来**：从东方小城出发，坚信每种情绪都值得被认真对待
-2. **她拥抱世界**：把怀里那罐光，分给每个难过的人——"被听见就是治愈"
-3. **她也想被爱**：芽会耷拉，"你的芽在发光啊"——治愈是双向的
+2. **她拥抱世界**：把怀里那罐光，分给每个难过的人，"被听见就是治愈"
+3. **她也想被爱**：芽会耷拉，"你的芽在发光啊"，治愈是双向的
 4. **现在她在这里**：住进手机，24h 陪你。名字叫 Yu = you，因为她在照亮的就是你
 
 ---
@@ -278,7 +278,7 @@ Each look is one way she keeps you company, written as a persona:
 - **字体**：无衬线、圆润（如 NunitoSans / VarelaRound，项目 fonts 已有）
 
 ## 6.2 形象图使用规则
-- **主形象**：2.png（微笑给光，最亲和）—— 用于 Hero / About 主图
+- **主形象**：2.png（微笑给光，最亲和），用于 Hero / About 主图
 - **多面展示**：8 张拼图或轮播，展示"many faces"
 - **故事配图**：按 PART 2 的"造型→场景"对应，别混用
 - **Logo**：绿色爱心 + 嫩芽（xiaoyu-logo 系列）

@@ -1,11 +1,11 @@
 /**
- * 档位卡（价格卡 / 状态卡）——会员线所有「档位」外观的唯一出处。
+ * 档位卡（价格卡 / 状态卡），会员线所有「档位」外观的唯一出处。
  *
- * 复用点（为什么必须有）：同一个「档位卡」在会员弹窗里被手写了三遍且各不相同——
+ * 复用点（为什么必须有）：同一个「档位卡」在会员弹窗里被手写了三遍且各不相同
  *   ① 三张价格卡（Free/Plus/Pro，`MembershipCompare`）
  *   ② Plus→Pro 升级大卡（`MembershipModal` 的 plus 视图，带缎带 + 权益列表）
  *   ③ Pro 续费「当前档位」状态卡（`MembershipModal` 的 pro 视图）
- * 三份各自写图标芯片、描边、价格字号、CTA —— 于是「续费视图没跟上价格卡的改版」成了必然。
+ * 三份各自写图标芯片、描边、价格字号、CTA。于是「续费视图没跟上价格卡的改版」成了必然。
  * 现在档位配色集中在 `PLAN_THEME` 一处，三处共用同一套壳。
  *
  * 配色纪律（不要绕过）：Free=中性沙 / Plus=薄荷（品牌绿）/ Pro=琥珀。
@@ -22,7 +22,7 @@ export type PlanKey = 'free' | 'plus' | 'pro';
 /**
  * 皮肤强调色表面 / CTA：跟随用户所选皮肤（`--color-accent` → `--color-primary`），
  * 与首页会员横幅同源。会员升级/续费这类「皮肤氛围优先」的卡片与按钮用它，
- * 档位身份色（Free 沙 / Plus 薄荷 / Pro 琥珀）则用 PLAN_THEME —— 两者都在这个文件里，
+ * 档位身份色（Free 沙 / Plus 薄荷 / Pro 琥珀）则用 PLAN_THEME，两者都在这个文件里，
  * 以便「哪一处该跟皮肤、哪一处该跟档位」是**一处可读的规矩**，而不是各文件各写。
  */
 export const SKIN_ACCENT_SURFACE = 'border-accent/40 bg-gradient-to-r from-accent-soft/70 to-primary-lighter/50';
@@ -87,7 +87,7 @@ export interface PlanCardProps {
   unit?: ReactNode;
   /** 划线原价（与价格同行内联，长三币种串会自动折行） */
   originalPrice?: ReactNode;
-  /** 价格下方的折算小字（如另两币种 `$4.99 · ¥35`）——主价固定为本币，折算只做参考 */
+  /** 价格下方的折算小字（如另两币种 `$4.99 · ¥35`），主价固定为本币，折算只做参考 */
   priceNote?: ReactNode;
   /** 价格上方的徽标（限时特惠 / 省 3 个月 / 永久会员…） */
   badge?: ReactNode;

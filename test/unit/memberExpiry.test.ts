@@ -31,7 +31,7 @@ test('到期时刻已过（含「正好到期」）：expired，且给出过期�
   assert.strictEqual(at.daysLeft, null);
 });
 
-test('只有 7 天 Pro 体验：trial —— 这就是此前显示「到期 —」的那批用户', () => {
+test('只有 7 天 Pro 体验：trial，这就是此前显示「到期 —」的那批用户', () => {
   const f = expiryFieldsOf({ plan: 'free', unlockUntil: null, trialProUntil: NOW + 5 * DAY }, NOW);
   assert.strictEqual(f.expiryKind, 'trial', '体验期必须算作「会员到期」');
   assert.strictEqual(f.daysLeft, 5);

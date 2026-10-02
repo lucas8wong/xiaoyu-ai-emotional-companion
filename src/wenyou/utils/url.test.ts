@@ -14,7 +14,7 @@ describe('isHttpUrl', () => {
     expect(isHttpUrl('  https://x.example/relay  ')).toBe(true)
   })
 
-  it('别的协议一律不合格 —— 它要拼成 fetch 的目标', () => {
+  it('别的协议一律不合格，它要拼成 fetch 的目标', () => {
     expect(isHttpUrl('javascript:alert(1)')).toBe(false)
     expect(isHttpUrl('ftp://x.example')).toBe(false)
     expect(isHttpUrl('')).toBe(false)

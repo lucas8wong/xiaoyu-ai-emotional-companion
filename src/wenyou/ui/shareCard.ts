@@ -34,7 +34,7 @@ export async function drawShareCard(
   const achShown = achievements.slice(0, 6)
   const showGoal = !!st.ambition
   const headerH = art ? bannerH : 150 // 无图时退化为暗色刊头
-  // 卡底页脚：钩子问句 + 挑战二维码（自包含——图片被单独转发也带着入口与钩子）
+  // 卡底页脚：钩子问句 + 挑战二维码（自包含，图片被单独转发也带着入口与钩子）
   const hook = hookQuestion(sc, st)
   const shareUrl = buildShareUrl(sc, openingIndexOf(sc, st))
   const footerH = 168

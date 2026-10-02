@@ -49,7 +49,7 @@ test('额度换算：Plus 用超了也不能出现负数（负数插进文案会
   assert.equal(quotaChatRemain({ creditEnabled: false, plan: 'plus', chatLimitPerDay: 30, chatUsedToday: 31 }), 0);
 });
 
-test('额度换算：只有无限档的字符串形式才是 "Infinity"——文案插值前必须先问 quotaIsUnlimited', () => {
+test('额度换算：只有无限档的字符串形式才是 "Infinity"，文案插值前必须先问 quotaIsUnlimited', () => {
   // 这条断言就是线上 bug 的守卫：任何有限档都不该把 Infinity 印给用户
   const finite = [
     { creditEnabled: true, creditRemain: 12, unitCredit: 2 },

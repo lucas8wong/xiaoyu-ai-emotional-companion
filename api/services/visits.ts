@@ -87,7 +87,7 @@ export class VisitStore {
       else if (Array.isArray(parsed.visitors)) rawList.push(...parsed.visitors);
 
       // 旧格式（v1/v2，无每日记录）迁移时才把历史访客并入迁移当天；
-      // v3/v4 已有 daily 历史，绝不能把历史访客灌进「启动当天」的集合——
+      // v3/v4 已有 daily 历史，绝不能把历史访客灌进「启动当天」的集合
       // 否则每次重启服务器都会把当天「每日访问量」虚增到累计总数
       const hasDailyHistory = !!(parsed && parsed.daily && typeof parsed.daily === 'object'
         && !Array.isArray(parsed.daily) && Object.keys(parsed.daily).length > 0);

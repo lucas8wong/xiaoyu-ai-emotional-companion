@@ -4,11 +4,11 @@
  *
  * 设计要点（都与项目既有结论对齐，别另起一套）：
  * 1. 音色 = VoxCPM 的「**文本音色设计**」前缀（与 `VoiceSettingsModal.composeVoice` 同口径）：
- *    语言词**只在英文界面加**（中文不加，让 VoxCPM 按文本语言自然读——普通话读普通话、粤港文本读粤语）。
+ *    语言词**只在英文界面加**（中文不加，让 VoxCPM 按文本语言自然读：普通话读普通话、粤港文本读粤语）。
  * 2. 默认音色按「**剧本标签分组**（与 storyBgm 共用同一套分组）+ **AI 角色性别**」双维度选，
  *    所以同一套标签下的男主/女主不会共用一个声音（`RoleplayScenarioInfo.ai.gender` 前端可见）。
  * 3. `speakableRoleplayText()`：剧情文本 → 可朗读文本。**必须去掉 （）/() 里的心理活动与神态**
- *    —— 括号心理描写是"看不见的内心"（`buildRoleplayInnerMonologueBlock` 鼓励模型用它），
+ *    括号心理描写是"看不见的内心"（`buildRoleplayInnerMonologueBlock` 鼓励模型用它），
  *    念出来会立刻出戏；对白与旁白保留。
  *
  * 本文件是**纯函数**（无 DOM/无请求），便于单测；播放与缓存见 `src/hooks/useStoryVoice.ts`。
@@ -131,7 +131,7 @@ function stripMarkdownLite(s: string): string {
 }
 
 /**
- * 去掉配对的括号内容（含嵌套）。**括号不配对时整对跳过**——
+ * 去掉配对的括号内容（含嵌套）。**括号不配对时整对跳过**
  * 宁可留着（可能只是文案里的一个笑脸括号），也不能因为一个落单的 "(" 把后半段台词整段吞掉。
  */
 function dropBalanced(text: string, open: string, close: string): string {

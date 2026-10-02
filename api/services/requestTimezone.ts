@@ -9,10 +9,10 @@ import { preferenceStore } from './preferences.js';
 import { normalizeTimezone } from './timeAnchor.js';
 
 /**
- * 请求方所在时区（IANA）——「时间锚」用它算**用户那边的今天/现在**。
+ * 请求方所在时区（IANA），「时间锚」用它算**用户那边的今天/现在**。
  *
  * 取值优先级：
- *  1. `X-Timezone` 请求头（前端每个请求都带，浏览器 `Intl` 解析）——**立刻生效**：
+ *  1. `X-Timezone` 请求头（前端每个请求都带，浏览器 `Intl` 解析），**立刻生效**：
  *     存量用户不必先去设置里开推送、游客也从第一条消息起就对，出国/换设备自动跟随；
  *  2. 用户偏好里已存的时区（历史上报过，或下面第 3 步回写的）；
  *  3. undefined → 调用方回退 APP_DEFAULT_TZ。

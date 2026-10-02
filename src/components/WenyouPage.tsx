@@ -1,5 +1,5 @@
 /**
- * AI 文游（人生模拟器）—— 千世书引擎移植
+ * AI 文游（人生模拟器），千世书引擎移植
  * 挂在小愈「剧情演绎」下：全屏舞台，自带返回按钮。
  * 首次进入显示功能引导气泡（coach-mark）：选剧本 → AI 生成剧本 → 命书阁。
  * 目标按钮来自引擎内部 DOM（.wy-root 下按 class 查询填充 ref），不改动千世书源码。
@@ -36,7 +36,7 @@ export default function WenyouPage({ onBack, initialResumeId, onGoChat }: { onBa
       wyGenRef.current = gen;
       wyArchiveRef.current = arc;
       // 等字体切片与首页网格布局稳定后再显示引导（rAF 后再置位）：
-      // 否则目标矩形还在变，高亮「洞」与气泡会跟着目标挪 —— 实测首次进入时引导自身就贡献了 0.137 的 CLS，
+      // 否则目标矩形还在变，高亮「洞」与气泡会跟着目标挪，实测首次进入时引导自身就贡献了 0.137 的 CLS，
       // 且配合旧版「每次重测都重新滚动」会表现为「页面自己跳几下」（2026-09-18 用户反馈修复）。
       const settle = (): void => { requestAnimationFrame(() => setHomeReady(true)); };
       try {

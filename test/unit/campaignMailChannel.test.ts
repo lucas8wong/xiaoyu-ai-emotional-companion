@@ -6,7 +6,7 @@
  *   用户连验证码都收不到；若占用了主通道的每日非关键预算，同样会把额度从验证码那里抢走。
  *
  * 因为 email.ts 在模块加载时就把 MAIL_MODE 固定成常量，所以本文件必须在动态 import 之前
- * 设置环境变量 —— 因此它单独成一个文件（其余测试共用进程内已加载的模块）。
+ * 设置环境变量，因此它单独成一个文件（其余测试共用进程内已加载的模块）。
  */
 
 import { test } from 'node:test';
@@ -40,7 +40,7 @@ test('群发通道未配凭据：发送明确失败，且不占用主通道（�
   assert.strictEqual(r.ok, false, '没配凭据就必须失败，不能假装成功');
   assert.ok(r.detail.includes('CAMPAIGN_SMTP_USER'));
 
-  // 关键断言：群发这条路**没有**计提主通道额度 —— 额度还在，第一次计提返回 true
+  // 关键断言：群发这条路**没有**计提主通道额度，额度还在，第一次计提返回 true
   assert.strictEqual(tryConsumeNonCriticalMail(), true, '群发不得吃掉验证码的额度');
   const after = readJson<{ nonCriticalSent: number }>(budgetFile(), { nonCriticalSent: 0 });
   assert.strictEqual(after.nonCriticalSent, 1, '只有这一次显式计提被记账');

@@ -44,7 +44,7 @@ export default function StoryBgmPanel({ open, onClose, scenario, bgm, ambience }
   return (
     <div className="fixed inset-0 z-[70] flex items-end justify-center" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" onClick={onClose} />
-      {/* 面板本体：与全站弹窗一致——半透明白（跟随「卡片不透明度」）+ 毛玻璃。
+      {/* 面板本体：与全站弹窗一致，半透明白（跟随「卡片不透明度」）+ 毛玻璃。
           原来写死 `bg-white` → 拖到 0% 也依旧实心，与「界面外观」里的透明度滑块完全脱钩。 */}
       <div className="bg-white relative flex w-full max-w-2xl max-h-[82dvh] flex-col overflow-hidden rounded-t-[28px] shadow-[0_-8px_40px_rgba(0,0,0,0.18)]">
         {/* 头部：柔光渐变 + 一句话氛围文案（改成半透明渐变，否则中间那段实心白会把毛玻璃挡掉） */}

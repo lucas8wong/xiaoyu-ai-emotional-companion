@@ -21,7 +21,7 @@ test('atmosphereFor：主题 → 氛围（雨用雨丝、夜用光斑、回忆�
   assert.strictEqual(atmosphereFor(null).kind, 'bloom');
 });
 
-test('atmosphereFor：强度克制（叠加色极淡、暗角 ≤ 0.3）——不能影响气泡可读性', () => {
+test('atmosphereFor：强度克制（叠加色极淡、暗角 ≤ 0.3），不能影响气泡可读性', () => {
   for (const t of [...SCENE_THEMES.map(x => x.id), 'unknown']) {
     const s = atmosphereFor(t);
     const m = s.tint.match(/rgba\(([^)]+)\)/);

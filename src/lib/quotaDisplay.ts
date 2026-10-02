@@ -1,5 +1,5 @@
 /**
- * 聊天额度的显示换算——**唯一口径**（纯函数，无浏览器依赖，可在 node 测试里直接跑）。
+ * 聊天额度的显示换算，**唯一口径**（纯函数，无浏览器依赖，可在 node 测试里直接跑）。
  *
  * 为什么单独成文件：这段逻辑原来长在 `src/services/api.ts` 里，而 `api.ts` 顶层用了
  * `import.meta.env`，node 测试跑不起来（所以它一直没被单测覆盖）。
@@ -37,7 +37,7 @@ const DEFAULT_UNIT_CREDIT = 2;
  * 把当前用户聊天额度换算成「还能聊 N 条」。
  * 开启点数时按 `creditRemain / unitCredit`；否则按旧条数字段。
  *
- * @returns 条数；**无限档返回 `Infinity`**——插进文案前先过 {@link quotaIsUnlimited}。
+ * @returns 条数；**无限档返回 `Infinity`**，插进文案前先过 {@link quotaIsUnlimited}。
  */
 export function quotaChatRemain(quota: QuotaRemainFields | null | undefined): number {
   if (!quota) return Infinity;
@@ -54,7 +54,7 @@ export function quotaChatRemain(quota: QuotaRemainFields | null | undefined): nu
 /**
  * 额度是否为「无限」（Pro / 终身 / 7 天 Pro 体验，以及还没拿到额度时的保守处理）。
  *
- * 界面据此显示「无限畅聊」，**不要**把 `quotaChatRemain()` 的数字直接插进 `{ n }`——
+ * 界面据此显示「无限畅聊」，**不要**把 `quotaChatRemain()` 的数字直接插进 `{ n }`
  * `Infinity` 在三种语言里都会印成英文单词（繁中「還能聊 Infinity 條」就是这么来的）。
  */
 export function quotaIsUnlimited(quota: QuotaRemainFields | null | undefined): boolean {

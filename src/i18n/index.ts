@@ -15,7 +15,7 @@ const DICT: Record<Lang, Record<string, string>> = {
   'zh-CN': {
     appName: '小愈 AI情感陪伴',
     appShort: '情感陪伴',
-    // —— 品牌核心 ——
+    // 【品牌核心】
     brandLine: '抽屉里一封旧信，字迹淡了',
     brandFootEn: 'Xiaoyu (sh-yao-yu) means "gentle healing" — for every feeling, not just the hard ones.',
     heroTitle: '抽屉里一封旧信，字迹淡了',
@@ -23,14 +23,14 @@ const DICT: Record<Lang, Record<string, string>> = {
     heroSub2: '无论什么情绪，这里都有人认真听你，陪你待一会。',
     ctaStart: '开始聊聊',
     ctaSee: '看看它怎么陪你',
-    // —— 品牌价值区块 ——
+    // 【品牌价值区块】
     feature1Title: '低落会被接住',
     feature1Desc: '委屈、难过、愤怒、焦虑、混乱，都可以被认真对待。不用先冷静，也不用先讲得合理。',
     feature2Title: '快乐会被见证',
     feature2Desc: '开心、期待、心动、得意、松一口气，这些也很重要。那些「小题大做」的快乐，也值得被回应。',
     feature3Title: '每次都不是重新开始',
     feature3Desc: '它会记得你的在意和重要时刻。所以它不是陪你聊一次，而是在慢慢理解你。',
-    // —— 使用说明 ——
+    // 【使用说明】
     howTitle: '不需要准备，直接来就好',
     how1: '说说你的心情',
     how1Desc: '委屈的、开心的、说不清楚的，都可以直接说。',
@@ -38,7 +38,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     how2Desc: '先接住你，再慢慢陪你聊，不急着给建议。',
     how3: '陪你待一会儿',
     how3Desc: '想聊多久都可以，记录会一直陪着你。',
-    // —— 场景区块 ——
+    // 【场景区块】
     scenarioTitle: '你可以在任何情绪里来找它',
     scenario1: '委屈却不想被立刻教育',
     scenario2: '完成，想有人真心为你开心',
@@ -46,7 +46,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     scenario4: '想分享今天重要的小瞬间',
     scenario5: '想被理解，而不是被急着解决',
     scenarioRecommend: '推荐「{mode}」',
-    // —— 信任区块 ——
+    // 【信任区块】
     trustTitle: '一个可以安心表达所有情绪的地方',
     trust1: '不评判',
     trust1Desc: '你的感受不用先变得「合理」，才值得被认真对待。',
@@ -54,11 +54,11 @@ const DICT: Record<Lang, Record<string, string>> = {
     trust2Desc: '只接住情绪，不替你决定，也不制造依赖。',
     trust3: '重视隐私与信任',
     trust3Desc: '你的分享只属于你，不会被消费，也不会被敷衍。',
-    // —— 结尾 CTA ——
+    // 【结尾 CTA】
     ctaEndTitle: '不管你今天是什么情绪，都可以来。',
     ctaEndSub: '难过的时候来，开心的时候也来。混乱的时候来，平静的时候也来。',
     ctaEndBtn: '开始聊聊',
-    // —— 陪伴方式（2026-09-23 起用户侧档位整体退场：以下 mode* key 仅作资产保留，主界面已不再渲染） ——
+    // 【陪伴方式（2026-09-23 起用户侧档位整体退场：以下 mode* key 仅作资产保留，主界面已不再渲染）】
     modeLabel: '陪伴方式',
     modeTitle: '按你需要的方式陪你。',
     modeSub: '有时想被接住，有时想被支持，有时想一起理清，有时只想有人陪着待一会儿。',
@@ -81,7 +81,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     modeObjective: '客观看看',
     modeObjectiveDesc: '从第三方、更中立的角度看看',
     modeObjectiveSuit: '适合情绪已经稳住、想听小愈也说点你没注意到的一面、想更公正地看事情的时候。',
-    // —— 快捷情绪入口 ——
+    // 【快捷情绪入口】
     entriesTitle: '你现在想从哪一种感觉开始？',
     entryClickHint: '点一下快捷入口，直接开始分析；也可以自己说',
     groupLow: '如果你现在有点低落',
@@ -102,7 +102,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     entryDaily3: '我现在说不清楚，但想聊聊',
     entryDaily4: '我想整理一下脑子里的东西',
     entryDaily5: '我想从今天的一件小事开始说',
-    // —— 首页 / 流程 ——
+    // 【首页 / 流程】
     login: '登录/注册',
     loginOut: '退出',
     myRecords: '我的记录',
@@ -117,7 +117,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     poweredBy: '由小愈 AI 提供情感陪伴，基于大语言模型',
     brandSince: '创立于 2026.08.18',
     privacy: '隐私政策与免责声明',
-    // —— 同意门（首屏条款，含语言切换） ——
+    // 【同意门（首屏条款，含语言切换）】
     gateWelcome: '欢迎来到小愈',
     gateSub: '开始前请先看一眼，很快就好。',
     gateLang: '界面语言',
@@ -159,7 +159,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     /**
      * 分档文案（2026-09-27 用户拍板：游客 5 条/天；注册账号 20 条/天 + 注册再送 20 条）。
      * 数字**全部由后端下发**（quota.guestDailyCredit / quota.freeDailyCredit / quota.registerChatBonus
-     * ÷ quota.unitCredit），这里只放句式——改 `.env` 文案自动跟着变，前端不写死 5 / 20。
+     * ÷ quota.unitCredit），这里只放句式，改 `.env` 文案自动跟着变，前端不写死 5 / 20。
      */
     guestQuotaLine: '游客每天 {g} 条（今天还剩 {n} 条）· 注册后每天 {d} 条 + 再送 {b} 条',
     guestQuotaLineNoBonus: '游客每天 {g} 条（今天还剩 {n} 条）· 注册后每天 {d} 条',
@@ -177,7 +177,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     step4: '情绪笔记',
     step5: '陪你的故事',
     guideTitle: '欢迎来到小愈 🌱',
-    guideDesc: '小愈是你的 AI 情感陪伴伙伴——开心想分享、难过想倾诉，都可以随时找我。',
+    guideDesc: '小愈是你的 AI 情感陪伴伙伴：开心想分享、难过想倾诉，都可以随时找我。',
     guideFeature1: '💬 随时随地聊聊心情',
     guideFeature2: '🎨 陪伴方式由小愈自己判断',
     guideFeature3: '📖 陪你写一份暖心故事',
@@ -187,7 +187,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     fontLabel: '字体',
     inputTitle: '你今天是什么情绪，都可以来聊。',
     inputSub: '开心的、难过的、说不清楚的，都可以说给我听。',
-    // —— 分析结果 ——
+    // 【分析结果】
     analysisTitle: '我听见你了',
     analysisSub: '先不急着分析你，先认真陪你说说话。',
     analysisEmotion: '这一刻的感受',
@@ -195,14 +195,14 @@ const DICT: Record<Lang, Record<string, string>> = {
     analysisDirection: '可以往哪边走',
     analysisNext: '再陪我聊一会儿',
     analysisShare: '分享情绪卡片',
-    // —— 深入问答 ——
+    // 【深入问答】
     questionsTitle: '再聊一会儿',
     questionsSub: '想到哪说到哪就好，我会跟着你。',
     prevQ: '上一题',
     nextQ: '下一题',
     submitQ: '完成回答',
     analyzingQ: '正在认真听你说…',
-    // —— 情绪笔记 ——
+    // 【情绪笔记】
     detailedTitle: '情绪笔记',
     expandDetails: '展开详情',
     collapseDetails: '收起详情',
@@ -224,18 +224,18 @@ const DICT: Record<Lang, Record<string, string>> = {
     detailedFollowupTitle: '还有什么想说的？',
     detailedFollowupPh: '想到什么都可以说，比如：这个建议具体怎么做？',
     detailedFollowupSend: '发送',
-    // —— 故事 ——
+    // 【故事】
     storyTitle: '陪你的故事',
     storyCopy: '复制暖心故事',
     storyCopied: '故事已复制',
     storyShare: '分享情绪卡片',
     storyDone: '完成本次陪伴',
     storySaved: '您的陪伴记录已保存，可在「理一理」里的「我的记录」随时回看',
-    // —— 历史 / 支付 / 追问 ——
+    // 【历史 / 支付 / 追问】
     historyTitle: '我的陪伴记录',
     historyEmpty: '这里还空空的',
     historyEmptySub: '不是只有难过才值得被说出来。完成一次陪伴后，记录会自动保存。',
-    // —— 与你的旅程 ——
+    // 【与你的旅程】
     journeyTitle: '与你的旅程',
     journeySubtitle: '你和小愈一起走过的路',
     journeyClose: '返回',
@@ -295,7 +295,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     generating: '生成中...',
     payErrRetry: '出错了，请重试',
     followupTitle: '还有什么想说的？',
-    // —— 双模式：聊一聊 / 理一理 ——
+    // 【双模式：聊一聊 / 理一理】
     entryChatTitle: '聊一聊',
     entryChatShort: '即时陪伴',
     entryChatDesc: '想被陪着说、想被理解',
@@ -307,7 +307,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     chatSub: '想到哪说到哪就好，我会认真听。',
     chatChars: '角色',
     chatCharAdd: '新建角色',
-    // —— 剧情角色接入聊一聊（方案 A1，2026-09-20）——
+    // 【剧情角色接入聊一聊（方案 A1，2026-09-20）】
     chatStoryBadge: '剧情',
     chatStoryTitle: 'TA 记得的这段剧情',
     chatStoryModeIn: '入戏',
@@ -323,7 +323,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     chatStoryEmpty: '还没有可回看的剧情记忆。',
     chatStoryNoMode: '剧情角色按剧本人设说话，语气与分寸由剧本决定；小愈则按你当下的状态自己判断怎么陪你。',
     chatStoryBackToStory: '回剧情继续',
-    // —— 微信式消息列表（方案 A2）——
+    // 【微信式消息列表（方案 A2）】
     chatInboxTitle: '消息',
     chatInboxNoChat: '还没聊过',
     chatInboxHint: '每个角色一个窗口。角色主动找你说话时，这里会出现未读数字；点进去就算看过了。',
@@ -353,7 +353,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     chatGrowthReflect: '对话反思',
     chatGrowthRelation: '你俩的关系',
     chatGrowthEmpty: '还没有内容。多聊一会儿，TA 的日记和想法会慢慢长出来。',
-    chatGrowthIntro: '这是 TA 的观景窗：会沉淀 TA 和你的共同记忆、私下想写下的日记、自我反思与自画像。这里没有好感度或进度条——TA 的改变，靠这些文字慢慢流露出来。',
+    chatGrowthIntro: '这是 TA 的观景窗：会沉淀 TA 和你的共同记忆、私下想写下的日记、自我反思与自画像。这里没有好感度或进度条，TA 的改变，靠这些文字慢慢流露出来。',
     chatGrowthNewestFirst: '内容按最新在前显示。',
     chatGrowthExpandAll: '展开全部',
     chatGrowthCollapseAll: '收起全部',
@@ -386,7 +386,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     coachSkip: '跳过，开始聊聊',
     coachDone: '开始聊聊',
     coachChatMore: '这里打开「更多」：分享对话 / 意见反馈',
-    coachHomeChat: '点这里，进来挑一个人聊 —— 小愈和 TA 们都在这里',
+    coachHomeChat: '点这里，进来挑一个人聊，小愈和 TA 们都在这里',
     coachHomeRoleplay: '想体验剧情就点这里',
     coachHomeSort: '心事想理清楚，从这里进理一理',
     coachHomeMore: '「与你的旅程 / 安装 / 意见反馈 / FAQ / 退出」都收在这里',
@@ -470,7 +470,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     chatToStructureTip: '我可以就在聊天里，用现在这个角色，帮你把说不清的事一步步理清楚；理完我们接着聊。',
     chatToStructureBtn: '好，帮我理一理',
     chatHintDismiss: '本次对话不再提醒',
-    // —— 聊一聊「角色扮演指令分流」提示卡（用户输入来玩角色扮演的指令时出现；后端判定，见 api/services/chatRedirect.ts）——
+    // 【聊一聊「角色扮演指令分流」提示卡（用户输入来玩角色扮演的指令时出现；后端判定，见 api/services/chatRedirect.ts）】
     chatGoRoleplayTitle: '去「剧情演绎」玩一场',
     chatGoRoleplayB1: '剧本现成：题材很多，选一个就能直接开演，不用自己搭设定',
     chatGoRoleplayB2: '你说了算：AI 会以剧中的角色跟你实时对戏，剧情跟着你的选择走',
@@ -484,7 +484,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     chatGoCharacterB3: '独立记忆：TA 记得的你、日记、关系都按角色分开存，不会串线',
     chatGoCharacterB4: '声音也能单独设，登录后还能跨设备同步',
     chatGoCharacterBtn: '现在就创建角色',
-    // —— 聊一聊「成人向请求」引导卡（用户想聊情欲内容时；后端判定见 api/services/chatRedirect.ts 的 adultRoleplay）——
+    // 【聊一聊「成人向请求」引导卡（用户想聊情欲内容时；后端判定见 api/services/chatRedirect.ts 的 adultRoleplay）】
   // 口径：**不冷拒**（用户明确要求：不要「打住，这里不能聊这个」）。卡片负责指路 + 一键直达「我的偏好」抽屉；
   // B4 是安全边界（与 prompts.ts 的底线句、成人确认框的口径一致），不能因为这是"引导卡"就省略。
   chatGoAdultTitle: '想聊这个，去「剧情演绎」开成人模式',
@@ -494,29 +494,29 @@ const DICT: Record<Lang, Record<string, string>> = {
   chatGoAdultB4: '底线不变：未成年、非自愿、乱伦、兽交这类内容不会写',
   chatGoAdultBtn: '去剧情并打开「无限制模式」',
   // 紧凑卡（小愈已经在回复里自己解释过时）：只要一句引导 + 那个按键，不重复整张说明
-  // —— 用户原话：「要有一个直达的按键而不只是信息说明」
+  // 用户原话：「要有一个直达的按键而不只是信息说明」
   chatGoAdultCompactLead: '想接着往下演，这里一键直达：',
   chatGoRedirectDismiss: '暂时不用',
-    // —— 剧情 → 聊一聊 跨模式桥（B 方案；规则在 src/lib/rpBridge.ts，**只做 UI 层卡片**，绝不进 messages/chatMessages）——
-    // 称呼统一：四张卡都说「小愈」（曾用「说书人」这套比喻，2026-09-17 用户反馈后撤掉——一个人名贯穿，别再引入第二套称呼）
+    // 【剧情 → 聊一聊 跨模式桥（B 方案；规则在 src/lib/rpBridge.ts，**只做 UI 层卡片**，绝不进 messages/chatMessages）】
+    // 称呼统一：四张卡都说「小愈」（曾用「说书人」这套比喻，2026-09-17 用户反馈后撤掉，一个人名贯穿，别再引入第二套称呼）
     rpBridgeStuckTitle: '先不演了，随便聊聊',
-    rpBridgeStuckBody: '不想接着演，就去找小愈随便聊聊天——今天的新闻、心里的事，说什么都行。',
+    rpBridgeStuckBody: '不想接着演，就去找小愈随便聊聊天：今天的新闻、心里的事，说什么都行。',
     rpBridgeStuckBtn: '去和小愈聊聊',
     rpBridgeStuckDismiss: '不用了',
     // 用户主动入口（A 项）：常显在剧情输入栏额度行右侧，任何时刻可点，不受 72h 冷却约束
     rpBridgePullBtn: '去和小愈聊聊',
-    rpBridgePullHint: '不用演，说你自己就好——想聊什么都行',
+    rpBridgePullHint: '不用演，说你自己就好，想聊什么都行',
     rpBridgeDraftPreface: '（我刚从一段剧情里出来：《{title}》，我在里面是{userName}，对面是{aiName}。）',
     rpBridgeFromTag: '来自《{title}》',
     rpBridgeFromTagRemove: '移除',
     // 桥② 出戏保护（Tier A：用户明说「不演了 / 说点真的」时才出现，绝不靠猜）
     rpBridgeOocTitle: '这一句，说给小愈听更合适',
-    rpBridgeOocBody: '故事停在这里，不会丢——你说的是你自己的事，戏里的 TA 接不住，小愈可以。',
+    rpBridgeOocBody: '故事停在这里，不会丢。你说的是你自己的事，戏里的 TA 接不住，小愈可以。',
     rpBridgeOocBtn: '去和小愈聊聊',
     rpBridgeOocKeep: '继续演',
     // 桥③ 落幕余音（离开对局时的一条轻提示）
     rpBridgeSceneEndTitle: '刚才那一幕已经存好了',
-    rpBridgeSceneEndBody: '要是它还在你心里转，去和小愈说说——不用演，说你自己就好。',
+    rpBridgeSceneEndBody: '要是它还在你心里转，去和小愈说说，不用演，说你自己就好。',
     rpBridgeSceneEndBtn: '去和小愈聊聊',
     rpBridgeSceneEndDismiss: '下次再说',
     // 桥③ 结局位（AI 文游「这一段人生」落笔之后）
@@ -563,7 +563,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     chatStickerRateLimited: '搜索太频繁，请稍后再试',
     chatStickerLoading: '正在搜索表情包…',
     chatStickerHint: '输入关键词搜索在线表情包',
-    // —— 角色剧情扮演 ——
+    // 【角色剧情扮演】
     roleplayTitle: 'AI剧情扮演',
     roleplayShort: '剧情体验',
     rpModuleTitle: '剧情演绎',
@@ -603,7 +603,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     rpReviewPrefix: '运营反馈：',
     rpSearchClear: '清空',
     roleplayChoose: '选择剧本',
-    // —— 多角色（群像）剧本（2026-10-01）：角标 / 列表筛选 / 详情页角色介绍 ——
+    // 【多角色（群像）剧本（2026-10-01）：角标 / 列表筛选 / 详情页角色介绍】
     rpMultiBadge: '多角色',
     rpCastFilterAll: '全部',
     rpCastFilterMulti: '只看多角色',
@@ -611,7 +611,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     rpCastSection: '同场角色',
     rpCastSectionHint: '这一部会有多位角色同场，全部角色如下（主角的详细设定见上方）：',
     rpCastLeadTag: '主角',
-    // —— 双模式（2026-10-01）：同一剧本可选单角色 / 多角色两条线，各一份存档 ——
+    // 【双模式（2026-10-01）：同一剧本可选单角色 / 多角色两条线，各一份存档】
     rpModeTitle: '选择剧情模式',
     rpModeSolo: '单角色',
     rpModeMulti: '多角色',
@@ -685,7 +685,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     rpPreferenceHint: '写你在这段剧情里的独特偏好/需求。这是全篇权重最高的一条参考：AI 每轮都会先照它来（风格、篇幅、走向、禁忌），与通用写作规则冲突时以你的偏好为准。',
     /**
      * 抽屉分两节的小节标题（2026-09-17 用户反馈「说明离它要说明的文本框 403px」→ A′ 案）：
-     * 上半节是**即时生效的开关**，下半节才是**需要保存的偏好文本**——两节各自带标题，说明紧贴文本框。
+     * 上半节是**即时生效的开关**，下半节才是**需要保存的偏好文本**，两节各自带标题，说明紧贴文本框。
      * ⚠️ 这两节标题只描述分组，不改任何开关/偏好的行为（保存按钮仍只保存偏好文本）。
      */
     rpSettingsSection: '剧情设置',
@@ -741,13 +741,13 @@ const DICT: Record<Lang, Record<string, string>> = {
     // 2026-09-25 改名：显示名按真实行为定为「小说叙事 / 对话叙事」（落盘取值仍是 classic/immersive，不动数据）
     rpStyleClassic: '小说叙事',
     rpStyleImmersive: '对话叙事',
-    // 2026-09-25（C 方案）：文案按**真实行为**重写——以前只写「第三人称/描写较多」，
+    // 2026-09-25（C 方案）：文案按**真实行为**重写，以前只写「第三人称/描写较多」，
     // 既没说清谁用第三人称（其实是 AI 角色用、用户一律是「你」），也没说亲密戏怎么处理。
     // 顶部浮层提示（rpStyle*Hint）与偏好抽屉里的对比卡（rpStyle*Detail）共用同一套口径。
-    rpStyleClassicHint: '篇幅足、长句铺陈、有镜头感，每轮结尾留一个钩子——像读小说',
-    rpStyleImmersiveHint: '日常很短、以台词为主、括号写动作，你说一句它就接一句——像聊天',
+    rpStyleClassicHint: '篇幅足、长句铺陈、有镜头感，每轮结尾留一个钩子，像读小说',
+    rpStyleImmersiveHint: '日常很短、以台词为主、括号写动作，你说一句它就接一句，像聊天',
     rpStyleSection: '叙事模式',
-    rpStyleSectionHint: '决定「怎么写」：篇幅、语体、节奏。人称与内容边界两种模式一致——你自己一律是「你」，AI 的角色用第三人称。改完立即生效，并跟随账号跨设备同步。',
+    rpStyleSectionHint: '决定「怎么写」：篇幅、语体、节奏。人称与内容边界两种模式一致，你自己一律是「你」，AI 的角色用第三人称。改完立即生效，并跟随账号跨设备同步。',
     rpStyleClassicDetail: '篇幅：正文 400–700 字（亲密戏同档）。语体：书面化长句、细节成链条、像电影运镜，不靠台词撑篇幅。节奏：每轮结尾留一个互动钩子（一个等你回应的动作、一处悬念、或一句没说完的话）。适合想读故事的场景。',
     rpStyleImmersiveDetail: '篇幅：日常一到两句、不超过 100 字；你明确推进或进入亲密场景时写足到 250–450 字。语体：口语、以台词为主体，动作神态用括号点缀；亲密戏转为以身体动作与感官细节为主体。节奏：你给一句它就接一句，你不推进它不另起话题。适合像聊天一样玩。',
     rpInnerToggle: '括号心理活动/神态',
@@ -756,7 +756,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     rpTextLegendDismiss: '知道了，不再提示',
     rpCustomCreate: 'AI 创剧本',
     rpCustomSource: 'AI 创剧本',
-    rpCustomHint: '一句话灵感交给 AI，或自己逐项填写——设定 AI 角色的人设、背景与开场，就能开始一段专属剧情。',
+    rpCustomHint: '一句话灵感交给 AI，或自己逐项填写：设定 AI 角色的人设、背景与开场，就能开始一段专属剧情。',
     rpCustomTitlePh: '剧本标题（选填）',
     rpCustomNamePh: 'AI 角色名（选填）',
     rpCustomPersonaPh: 'AI 人设：TA 是谁、性格、外貌、说话方式',
@@ -765,7 +765,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     rpCustomSubmit: '创建并开始',
     rpCustomRejected: '内容包含不当信息，无法创建，请调整后重试。',
     rpCustomAiTitle: 'AI 帮我写剧本',
-    rpCustomAiHint: '告诉 TA 你想要的故事：人物、身份、关系、氛围——一句话就行；也可以直接把写好的整份剧本贴进来（不限字数），TA 会沿用你的角色与情节，整理成标题、角色名、人设、背景与开场。',
+    rpCustomAiHint: '告诉 TA 你想要的故事：人物、身份、关系、氛围。一句话就行；也可以直接把写好的整份剧本贴进来（不限字数），TA 会沿用你的角色与情节，整理成标题、角色名、人设、背景与开场。',
     rpCustomAiPh: '例如：雨夜咖啡馆里，一位温柔的医生，我们之间有点说不清的拉扯…',
     rpCustomAiRun: 'AI 帮我写草稿',
     rpCustomAiAgain: '换一版草稿',
@@ -785,7 +785,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     rpCustomSave: '保存修改',
     rpCustomSaved: '已保存 ✅',
     rpCustomAiEditTitle: 'AI 帮我改剧本',
-    rpCustomAiEditHint: '告诉 TA 想怎么改——人设、背景、开场、标题都行；也可以整段贴上来（不限字数），AI 会按你的要求改好并回填。',
+    rpCustomAiEditHint: '告诉 TA 想怎么改：人设、背景、开场、标题都行；也可以整段贴上来（不限字数），AI 会按你的要求改好并回填。',
     rpCustomAiEditPh: '例如：把 TA 改得更温柔黏人一点 / 背景改成雨夜咖啡馆 / 开场让 TA 更主动…',
     rpCustomAiEditRun: '按这个改',
     rpCustomAiEditAgain: '换个改法',
@@ -823,29 +823,29 @@ const DICT: Record<Lang, Record<string, string>> = {
     rpContentNote: '内容提示',
     roleplayTipConfirm: '我已了解，进入剧情',
     roleplayTipCancel: '再想想',
-    // —— 剧情模式内容尺度告知（与 api/services/safety.ts 的实际拦截项保持一致，不得写成做不到的承诺）——
+    // 【剧情模式内容尺度告知（与 api/services/safety.ts 的实际拦截项保持一致，不得写成做不到的承诺）】
     rpScopeTitle: '内容尺度',
     rpScopeBody: '成年角色之间的亲密与情欲情节可以主动推进，角色会照实回应（不跳过、不净化）。底线：未成年或幼态、非自愿、乱伦、兽交不会生成。不想走这条线，照常演就好。',
     rpScopeAdult: '仅限 18+。',
     /**
-     * 「在哪里打开」——用户要求：这张告知不能只说「本模式支持」，还得告诉他去哪儿开。
+     * 「在哪里打开」，用户要求：这张告知不能只说「本模式支持」，还得告诉他去哪儿开。
      * 2026-09-17 二次精简（用户拍板 B 案：209 → 110 字，−47%）：位置路径与运营邮件
      * （api/services/adultCampaign.ts 的 whereBody）**仍然是同一条**（进剧情 → 右上角「我的偏好」→ 无限制模式），
-     * 但**不再逐字相同**——邮件那份是完整的「在哪里打开」小节，弹窗这份压成一行。
+     * 但**不再逐字相同**，邮件那份是完整的「在哪里打开」小节，弹窗这份压成一行。
      * ⚠️ 安全底线只压句、不减项：未成年/幼态、非自愿、乱伦、兽交四项照旧写全（与 safety.ts 一致）。
      */
     rpScopeWhere: '想更主动：进剧情 → 右上角「我的偏好」→ 打开「无限制模式」。',
     rpScopeWhereOpen: '进剧情并打开「无限制模式」',
-    // —— 2026-09-27（A 案）：入口处的「默认关 + 就地开」状态文案 ——
-    rpScopeOff: '无限制模式：未开启（默认关）——开了才会照实写。',
-    rpScopeOn: '无限制模式：已开启——亲密与情欲会照实写。',
+    // 【2026-09-27（A 案）：入口处的「默认关 + 就地开」状态文案】
+    rpScopeOff: '无限制模式：未开启（默认关），开了才会照实写。',
+    rpScopeOn: '无限制模式：已开启。亲密与情欲会照实写。',
     rpScopeOpen: '开启「无限制模式」（18+）',
     rpAdultIntentOn: '已为你打开「无限制模式」，接下来会照实写。',
     rpUnlimitedOnShort: '无限制模式：已开启',
     rpUnlimitedOffShort: '无限制模式：未开启（18+ 可开）',
     rpUnlimited: '无限制模式',
     rpUnlimitedHint: '开启后剧情改用不受平台内容限制的模型：成年角色之间的亲密与情欲情节会照实书写（不跳过、不净化），角色也会更主动。仅限成年人使用。',
-    rpUnlimitedUnavailable: '当前不可用（未配置，或已被运维切回）——暂时无法开启。',
+    rpUnlimitedUnavailable: '当前不可用（未配置，或已被运维切回），暂时无法开启。',
     rpUnlimitedFromScript: '这个剧本当初就是用无限制模型写的，所以这里默认替你开着；关掉只影响这个剧本。',
     rpUnlimitedNeedAge: '开启前需先确认你已年满 18 岁。',
     rpScriptUnlimited: '用无限制模型生成剧本',
@@ -854,7 +854,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     rpQueueAhead: '前面还有 {n} 位正在生成，排队中…',
     rpQueueStarting: '正在排队，马上轮到你…',
     rpQueueHint: '生成需要一点时间，出字后此提示会自动消失。',
-    // —— 18+ 成年确认（服务端留痕；见 api/services/adultConfirm.ts）——
+    // 【18+ 成年确认（服务端留痕；见 api/services/adultConfirm.ts）】
     adultGateTitle: '开启前请确认年龄',
     adultGateBody: '「无限制模式」会改用不受平台内容限制的模型，成年角色之间的亲密与情欲情节会照实书写。这个模式仅限年满 18 岁的用户。',
     adultGateLimits: '无论是否开启：涉及未成年或幼态角色、非自愿、乱伦、兽交的内容都不会被生成。',
@@ -862,12 +862,12 @@ const DICT: Record<Lang, Record<string, string>> = {
     adultGateUnderage: '我未满 18 岁',
     adultGateUnderageMsg: '好的，这个模式只对成年人开放。',
     adultGateFailed: '确认没有提交成功，请检查网络后重试。',
-    // —— 剧情演绎模块引导（intro）：**模块级说明，覆盖三个并列模式**（2026-09-18 用户拍板） ——
+    // 【剧情演绎模块引导（intro）：**模块级说明，覆盖三个并列模式**（2026-09-18 用户拍板）】
     // 三个模式的名字不在文案里写死：页面直接用各自的 tab 键（roleplayTitle / wyTabLabel / wwT('tab')），
     // 与切换器同源，避免两处命名漂移；这里只写「一句话玩法」与来源/收费口径。
     rpIntroSub: '同一个入口，三种玩法：AI 剧情扮演 · AI 文游 · AI 狼人杀',
     rpIntroWhatTitle: '这是什么',
-    rpIntroWhatBody: '这里不是一个玩法，而是三套玩法并列——都由 AI 实时生成，走向与结局因你的选择而不同：',
+    rpIntroWhatBody: '这里不是一个玩法，而是三套玩法并列，都由 AI 实时生成，走向与结局因你的选择而不同：',
     rpIntroModeRoleplayBody: '挑一部剧本，以自己的身份进入剧情，和 AI 角色自由互动。',
     rpIntroModeWenyouBody: '一回合一次抉择，一步步走到只属于你的结局。',
     rpIntroModeWerewolfBody: '和自己养的角色坐一桌开一局，单人也能玩。',
@@ -876,27 +876,27 @@ const DICT: Record<Lang, Record<string, string>> = {
     rpIntroSourceBody: '剧情扮演的剧本包含 AI 原创与网络创作者的剧情，每位创作者的署名都标注在对应剧本下方，之后还会加入更多创作者；文游的题材有内置的，也可以由你自己生成；狼人杀是规则局，不需要剧本。全部仅用于互动演绎。',
     rpIntroPriceTitle: '收费说明',
     // 口径与 api/services/quota.ts 的整数价目表一致：挑剧本/看设定免费，AI 生成按量计费，狼人杀按局、AI 生成剧本 Pro 专属
-    rpIntroPriceBody: '不按剧本收费——挑剧本、看设定都不花钱。三种玩法都由 AI 实时生成，按使用量计费，与聊一聊 / 理一理共用同一份额度（狼人杀按「局」计费，AI 生成剧本是 Pro 专属）。',
+    rpIntroPriceBody: '不按剧本收费：挑剧本、看设定都不花钱。三种玩法都由 AI 实时生成，按使用量计费，与聊一聊 / 理一理共用同一份额度（狼人杀按「局」计费，AI 生成剧本是 Pro 专属）。',
     rpIntroRiskTitle: '温馨提示',
     rpIntroRiskBody: '剧情为虚构演绎，与现实无关。请保持清醒、注意自我保护，勿模仿剧情行为。',
     rpIntroStart: '选一种玩法开始',
     rpIntroAgain: '了解本功能',
-    // —— 了解小愈（About） ——
+    // 【了解小愈（About）】
     aboutTitle: '了解小愈',
     aboutSub: '关于小愈的一切，都在这里',
     faq: '常见问题',
     aboutFeatureTitle: '三种功能',
     aboutBrandTitle: '小愈是什么',
-    aboutBrandBody: '你的每一种情绪，都值得被理解。小愈是一株会发光的小芽，接住你的低落，也见证你的快乐——她的名字读作 sh-yao-yu，意思是"温柔的治愈"。',
+    aboutBrandBody: '你的每一种情绪，都值得被理解。小愈是一株会发光的小芽，接住你的低落，也见证你的快乐，她的名字读作 sh-yao-yu，意思是"温柔的治愈"。',
     aboutStoryTitle: '她的故事',
-    aboutStoryBody: '小愈是一株从东方小城出发、想要拥抱全世界的小芽精灵。她头顶的嫩芽是她的心——只要有人对她温柔，芽就会发光；她怀里抱着一罐温柔的光，想分给每一个难过的人。她也想被世界温柔地照亮。',
-    aboutStoryNickname: '她的昵称叫 Yu，发音就像 you（你）——因为当你跟她说话时，她在听的就是你。',
+    aboutStoryBody: '小愈是一株从东方小城出发、想要拥抱全世界的小芽精灵。她头顶的嫩芽是她的心，只要有人对她温柔，芽就会发光；她怀里抱着一罐温柔的光，想分给每一个难过的人。她也想被世界温柔地照亮。',
+    aboutStoryNickname: '她的昵称叫 Yu，发音就像 you（你），因为当你跟她说话时，她在听的就是你。',
     aboutRoleplayTitle: '角色剧情扮演',
     aboutRoleplayDesc: '进入不同剧本，体验另一种人生。AI 扮演角色与你互动，每个剧本都有独立人设与故事线。',
     aboutSourceTitle: '剧本来源',
     aboutSourceBody: '剧本包含 AI 原创与网络创作者的剧情，每位创作者的署名都标注在对应剧本下方，之后还会加入更多创作者，仅用于互动演绎。',
     aboutPriceTitle: '收费模式',
-    aboutPriceBody: '不按剧本收费——全部免费。费用来自 AI 调用（按次数与用量计费），与聊一聊/理一理共用额度。',
+    aboutPriceBody: '不按剧本收费，全部免费。费用来自 AI 调用（按次数与用量计费），与聊一聊/理一理共用额度。',
     aboutQuotaTitle: '额度与会员',
     // 注册奖励关闭（活动期外）时的口径：不再写死「注册立得 20 条」（那会与 guest 额度条自相矛盾）
     aboutQuotaBody: '游客免费体验 · 邀请好友得 50 次；Plus 理一理无限 + 每天 40 次对话；Pro 无限畅聊。',
@@ -907,7 +907,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     aboutRiskBody: 'AI 内容仅供参考，不构成医疗诊断或心理咨询。角色剧情为虚构演绎，请注意自我保护。严重情绪困扰请联系当地心理援助热线或寻求专业帮助。',
     stripeSuccessMsg: '支付成功，会员已解锁！',
     rewardNotice: '🎁 恭喜！你获得了 {n} 次免费体验奖励',
-    // —— 小愈信箱（站内信）——
+    // 【小愈信箱（站内信）】
     // 奖励弹窗只负责叫醒：「note」是运营者随奖励写的原文，信本身留在信箱，随时可回看。
     rewardNoticeWithNote: '💌 小愈给你回信了',
     inboxTitle: '小愈信箱',
@@ -939,14 +939,14 @@ const DICT: Record<Lang, Record<string, string>> = {
     chatQuotaPro: '已解锁 Pro · 无限畅聊',
     chatQuotaCredit: '额度剩余 {n} 条',
     chatQuotaExceeded: '今天的聊天额度用完啦，明天再来；或升级 Pro 无限畅聊',
-    orSayDirectly: '—— 或直接说 ——',
+    orSayDirectly: '· 或直接说 ·',
     chatTyping: '小愈正在输入…',
     chatSearching: '小愈正在帮你搜索…',
     // 「正在输入/搜索」小字带角色名版本：聊一聊切到自定义角色（剧情角色导入 / 自建）时用，别再一律写「小愈」
     chatTypingBy: '{name}正在输入…',
     chatSearchingBy: '{name}正在帮你搜索…',
     chatLifeHint: '现在也可以问我：今天天气、怎么去某个地方，或者帮你上网查美食/攻略。',
-    // —— 来源行（气泡下方常显；组件见 src/components/ChatSources.tsx）——
+    // 【来源行（气泡下方常显；组件见 src/components/ChatSources.tsx）】
     chatSources: '来源',
     chatSourcesAll: '看全部 {n} 个来源',
     chatScrollToBottom: '回到最新',
@@ -1099,7 +1099,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     payHelpHint: '付款遇到问题？小红书或 Instagram 私信我们，或邮件 myxiaoyu2026@gmail.com 💛',
     payHelpTitle: '付款遇到问题？',
     /** 2026-09-29 起不再渲染（用户要求「句子删掉，留 3 个直达链接」）；按惯例保留，勿再挂回界面 */
-    payHelpBody: '小红书 / Instagram 私信我们（IG：@your_xiaoyu），或发邮件到下面这个邮箱 —— 人工确认、补单都走这里。',
+    payHelpBody: '小红书 / Instagram 私信我们（IG：@your_xiaoyu），或发邮件到下面这个邮箱：人工确认、补单都走这里。',
     payHelpXhs: '小红书私信小愈',
     payHelpIg: 'Instagram 私信小愈',
     /** 备用通道（2026-09-26）：Stripe 走不通时扫码用微信付款，**折叠块里的收款码图片** URL 由服务端下发 */
@@ -1186,7 +1186,7 @@ const DICT: Record<Lang, Record<string, string>> = {
     profileRegionTitle: '地区语气',
     profileRegionSub: '{name}会用你熟悉的味道陪你',
     regionExplainTitle: '地区语气是什么？',
-    regionExplainDesc: '小愈会用你熟悉的地区语气陪你说话——安慰的顺序、口头禅、说话节奏都会跟着变，但始终是同一个"小愈"。',
+    regionExplainDesc: '小愈会用你熟悉的地区语气陪你说话：安慰的顺序、口头禅、说话节奏都会跟着变，但始终是同一个"小愈"。',
     regionExplainExample: '同一句话，不同地区的小愈会这样回：',
     regionExUser: '今天被老板当着大家面骂了，好委屈…',
     regionExPutonghua: '先抱抱你。被当着大家面说，确实难受。愿不愿意跟我讲讲当时的情况？',
@@ -1234,7 +1234,7 @@ regionTaiwan: '台湾腔',
     pushInstallTitleNeeded: '先「加到主屏幕」，推送才收得到',
     pushInstallTitleSoft: '装到桌面／主屏，推送更稳、点开更快',
     pushInstallIosSteps: '① 点「分享」→「添加到主屏幕」；② 从主屏幕的小愈图标打开；③ 回到这里开「主动找我」并允许通知。',
-    pushInstallIosSystemNote: 'iOS 的系统限制：Safari 标签页里的网页发不了通知，只有主屏幕上的小愈可以。',
+    pushInstallIosSystemNote: 'iOS 的系统限制：网页只有「添加到主屏幕」后才有通知，Safari 标签页不行，换 Chrome 也一样。',
     profileProactivePushUnsupported: '当前环境不支持推送通知（需要 HTTPS / 支持的浏览器）。',
     profileProactivePushDenied: '通知权限被拒绝，请到浏览器设置里开启。',
     profileProactiveFreq: '主动找我频率',
@@ -1260,7 +1260,7 @@ regionTaiwan: '台湾腔',
     guideRegionTitle: '想要什么样的说话味道？',
     guideRegionSub: '选一个地区语气，小愈用这个味道陪你（可跳过，默认普通话）',
     regionNudgeTitle: '想让{name}更贴近你的说话习惯？',
-    regionNudgeBody: '{name}会用你熟悉的地区味道陪你——选一个，随时可改。',
+    regionNudgeBody: '{name}会用你熟悉的地区味道陪你，选一个，随时可改。',
     regionNudgeCta: '选地区味道',
     regionNudgeSave: '就用这个',
     regionNudgeDismiss: '暂不',
@@ -1513,7 +1513,7 @@ regionTaiwan: '台湾腔',
     notiLabel: '通知',
     notiCollapse: '折叠',
     notiClose: '关闭',
-    // —— 会员权益 ——
+    // 【会员权益】
     membershipTitle: '会员权益',
     memHomeCenter: '我的会员中心',
     memBadgePro: 'Pro 会员',
@@ -1555,8 +1555,8 @@ regionTaiwan: '台湾腔',
     memModeWerewolf: 'AI 狼人杀（局）',
     memModeCost: '{n} 条',
     memRecReasonFree: '按这个用法一天约 {n} 条，免费版的 {free} 条够你用',
-    memRecReasonPlus: '一天约 {n} 条，超过免费版的 {free} 条 —— Plus 的 {plus} 条随便用',
-    memRecReasonPro: '一天约 {n} 条，超过 Plus 的 {plus} 条 —— Pro 的无限更适合你',
+    memRecReasonPlus: '一天约 {n} 条，超过免费版的 {free} 条，Plus 的 {plus} 条随便用',
+    memRecReasonPro: '一天约 {n} 条，超过 Plus 的 {plus} 条，Pro 的无限更适合你',
     memRecFree: 'Free 适合你 · 免费体验',
     memRecPlus: 'Plus 适合你 · {price}/月 · 每天 40 条',
     memRecPro: 'Pro 适合你 · {price}/月 · 无限畅聊 + 40 条记忆',
@@ -1574,7 +1574,7 @@ regionTaiwan: '台湾腔',
     memFeatureExport: '数据导出',
     memFeatureReport: '月度情绪报告',
     memFeatureCore: '核心陪伴能力（方式/语言/语气/分享）',
-    // —— 统一口径对比表（CREDIT_QUOTA_ENABLED=1 时启用；全表只用「条」与「张」，不用「次/局」）——
+    // 【统一口径对比表（CREDIT_QUOTA_ENABLED=1 时启用；全表只用「条」与「张」，不用「次/局」）】
     memFeatureAiQuota: 'AI 额度（对话 · 剧情 · 文游 · 狼人杀 · 理一理 共用）',
     memFeatureAiQuotaHint: '所有走 AI 的功能共用这一个每日额度，按真实消耗扣条数：越耗 token 扣得越多（狼人杀、文游回合比普通聊天贵）。',
     memFeatureSceneArt: '专属画面（剧本场景图）',
@@ -1585,7 +1585,7 @@ regionTaiwan: '台湾腔',
     memProOnlyGen: 'AI 生成剧本（AI 文游内）',
     memProOnlyAutoArt: '关键时刻自动画面（剧情扮演内）',
     memProOnlyThink: '深度思考「最大」',
-    // —— 表格里的分组标题 + Pro 专属四行的 ℹ️ 说明（用户要求：Pro 专属也进表，且每行可展开解释）——
+    // 【表格里的分组标题 + Pro 专属四行的 ℹ️ 说明（用户要求：Pro 专属也进表，且每行可展开解释）】
     memSectionPro: 'Pro 专属',
     memSectionQuota: '额度 · 每天能用多少',
     memProOnlyAutoPlayHint: 'AI 文游里的功能：开启后由 AI 替你的角色自动抉择、自动演进剧情，你只看着就行，不用一回合点一次。',
@@ -1629,14 +1629,14 @@ regionTaiwan: '台湾腔',
     memTermLifetime: '买断',
     memSaveMonths: '省 3 个月',
     memLifetimeBadge: '永久会员',
-    // —— Onboarding ——
-    // —— 功能概览（Onboarding 第2页） ——
+    // — Onboarding —
+    // 【功能概览（Onboarding 第2页）】
     obOverviewTitle: '小愈能为你做什么？',
-    obOverviewSub: '三种功能、随你喜欢的说话味道，加上她自己判断的陪伴——自由搭配。',
+    obOverviewSub: '三种功能、随你喜欢的说话味道，加上她自己判断的陪伴，自由搭配。',
     obOverviewChatDesc: '即时聊天陪伴。想被陪着说、被理解的时候，直接来聊。',
     obOverviewStructureDesc: '完整情绪分析。把你的话整理成清晰的分析、建议与故事，帮你更看清自己。',
     obOverviewModesTitle: '小愈自己判断怎么陪你',
-    obOverviewModesDesc: '小愈会按你当下的状态自己判断怎么陪你：想被接住、想有人撑腰、想一起理清、想看得轻一点、想看得更客观——都不用你选。',
+    obOverviewModesDesc: '小愈会按你当下的状态自己判断怎么陪你：想被接住、想有人撑腰、想一起理清、想看得轻一点、想看得更客观，都不用你选。',
     obOverviewRegionTitle: '地区口音',
     obOverviewRegionDesc: '小愈走过很多地方，会用你喜欢的味道陪你（东北、粤语、江南…）。',
     obOverviewRegionSoonCta: '告诉我们你想听什么口音',
@@ -1668,7 +1668,7 @@ regionTaiwan: '台湾腔',
     uiTourRecords: '我的记录',
     uiTourRecordsDesc: '看之前的理一理记录（在理一理顶栏「🕘 我的记录」）',
     uiTourJourney: '与你的旅程',
-    uiTourJourneyDesc: '回看你们一起走过的路——瞬间、记得的关于你、去过的剧情（⋯ 菜单）',
+    uiTourJourneyDesc: '回看你们一起走过的路：瞬间、记得的关于你、去过的剧情（⋯ 菜单）',
     uiTourPrefs: '个性化偏好',
     uiTourPrefsDesc: '地区语气、故事风格（右上角 ⋯ 菜单）',
     uiTourSkin: '界面外观（皮肤）',
@@ -1681,7 +1681,7 @@ regionTaiwan: '台湾腔',
     obNext: '继续',
     obDone: '开始聊聊',
     obSkip: '跳过',
-    // —— 保存/安装 PWA 提示 ——
+    // 【保存/安装 PWA 提示】
     installSaveTitle: '把 Xiaoyu 装到桌面 / 主屏',
     installSaveBtn: '安装',
     installSaveSub: '点一下就好，下次一秒就能见到她。',
@@ -1694,7 +1694,7 @@ regionTaiwan: '台湾腔',
     installManualHint: '先收藏（或加入书签）页面，再从浏览器菜单「发送到桌面 / 创建桌面快捷方式」，桌面图标点开即到。',
     installSkinHint: '点一下图标即可换皮肤，装出来的图标也会跟着变',
     installFallbackMsg: '当前浏览器没有弹出安装，请用 Chrome / Edge 地址栏的安装图标，或稍后再试。',
-    // —— 离开时温馨引导（留存联动：安装×主动找我）——
+    // 【离开时温馨引导（留存联动：安装×主动找我）】
     installToastTitle: '想我时，一点就回来',
     exitTitle: '想我时，一点就回来',
     exitBodyInstall: '装到桌面/主屏，想我时一点就回；开「主动找我」，我会偶尔来陪你。',
@@ -1704,7 +1704,7 @@ regionTaiwan: '台湾腔',
     exitBtnGuide: '看怎么装',
     exitBtnLater: '先不了',
     proactiveOpen: '开「主动找我」',
-    // —— 额度用完「获取更多额度」门控（游客走注册；已注册→分享/反馈） ——
+    // 【额度用完「获取更多额度」门控（游客走注册；已注册→分享/反馈）】
     quotaTitle: '额度用完啦',
     quotaSub: '免费额度用完了，可以分享好友或提交反馈继续免费用。',
     quotaShareTitle: '分享给朋友：你和朋友各得额度',
@@ -1813,7 +1813,7 @@ regionTaiwan: '台湾腔',
     poweredBy: '由小愈 AI 提供情感陪伴，基於大語言模型',
     brandSince: '創立於 2026.08.18',
     privacy: '隱私政策與免責聲明',
-    // —— 同意門（首屏條款，含語言切換） ——
+    // 【同意門（首屏條款，含語言切換）】
     gateWelcome: '歡迎來到小愈',
     gateSub: '開始前請先看一眼，很快就好。',
     gateLang: '介面語言',
@@ -1867,7 +1867,7 @@ regionTaiwan: '台湾腔',
     step4: '情緒筆記',
     step5: '陪你的故事',
     guideTitle: '歡迎來到小愈 🌱',
-    guideDesc: '小愈是你的 AI 情感陪伴夥伴——開心想分享、難過想傾訴，都可以隨時找我。',
+    guideDesc: '小愈是你的 AI 情感陪伴夥伴：開心想分享、難過想傾訴，都可以隨時找我。',
     guideFeature1: '💬 隨時隨地聊聊心情',
     guideFeature2: '🎨 陪伴方式由小愈自己判斷',
     guideFeature3: '📖 陪你寫一份暖心故事',
@@ -1920,7 +1920,7 @@ regionTaiwan: '台湾腔',
     historyTitle: '我的陪伴記錄',
     historyEmpty: '這裡還空空的',
     historyEmptySub: '不是只有難過才值得被說出來。完成一次陪伴後，記錄會自動保存。',
-    // —— 與你的旅程 ——
+    // 【與你的旅程】
     journeyTitle: '與你的旅程',
     journeySubtitle: '你和小愈一起走過的路',
     journeyClose: '返回',
@@ -1980,7 +1980,7 @@ regionTaiwan: '台湾腔',
     generating: '生成中...',
     payErrRetry: '出錯了，請重試',
     followupTitle: '還有什麼想說的？',
-    // —— 雙模式：聊一聊 / 理一理 ——
+    // 【雙模式：聊一聊 / 理一理】
     entryChatTitle: '聊一聊',
     entryChatShort: '即時陪伴',
     entryChatDesc: '想被陪著說、想被理解',
@@ -1992,7 +1992,7 @@ regionTaiwan: '台湾腔',
     chatSub: '想到哪說到哪就好，我會認真聽。',
     chatChars: '角色',
     chatCharAdd: '新增角色',
-    // —— 劇情角色接入聊一聊（方案 A1，2026-09-20）——
+    // 【劇情角色接入聊一聊（方案 A1，2026-09-20）】
     chatStoryBadge: '劇情',
     chatStoryTitle: 'TA 記得的那段劇情',
     chatStoryModeIn: '入戲',
@@ -2008,7 +2008,7 @@ regionTaiwan: '台湾腔',
     chatStoryEmpty: '還沒有可回看的劇情記憶。',
     chatStoryNoMode: '劇情角色按劇本人設說話，語氣與分寸由劇本決定；小愈則依你當下的狀態自己判斷怎麼陪你。',
     chatStoryBackToStory: '回劇情繼續',
-    // —— 微信式訊息列表（方案 A2）——
+    // 【微信式訊息列表（方案 A2）】
     chatInboxTitle: '訊息',
     chatInboxNoChat: '還沒聊過',
     chatInboxHint: '每個角色一個視窗。角色主動找你說話時，這裡會出現未讀數字；點進去就算看過了。',
@@ -2038,7 +2038,7 @@ regionTaiwan: '台湾腔',
     chatGrowthReflect: '對話反思',
     chatGrowthRelation: '你倆的關係',
     chatGrowthEmpty: '還沒有內容。多聊一會兒，TA 的日記和想法會慢慢長出來。',
-    chatGrowthIntro: '這是 TA 的觀景窗：會沉澱 TA 和你的共同記憶、私下想寫下的日記、自我反思與自畫像。這裡沒有好感度或進度條——TA 的改變，靠這些文字慢慢流露出來。',
+    chatGrowthIntro: '這是 TA 的觀景窗：會沉澱 TA 和你的共同記憶、私下想寫下的日記、自我反思與自畫像。這裡沒有好感度或進度條，TA 的改變，靠這些文字慢慢流露出來。',
     chatGrowthNewestFirst: '內容按最新在前顯示。',
     chatGrowthExpandAll: '展開全部',
     chatGrowthCollapseAll: '收起全部',
@@ -2071,7 +2071,7 @@ regionTaiwan: '台湾腔',
     coachSkip: '跳過，開始聊聊',
     coachDone: '開始聊聊',
     coachChatMore: '這裡打開「更多」：分享對話 / 意見回饋',
-    coachHomeChat: '點這裡，進來挑一個人聊 —— 小愈和 TA 們都在這裡',
+    coachHomeChat: '點這裡，進來挑一個人聊，小愈和 TA 們都在這裡',
     coachHomeRoleplay: '想體驗劇情就點這裡',
     coachHomeSort: '心事想理清楚，從這裡進理一理',
     coachHomeMore: '「與你的旅程 / 安裝 / 意見回饋 / FAQ / 退出」都收在這裡',
@@ -2155,7 +2155,7 @@ regionTaiwan: '台湾腔',
     chatToStructureTip: '我可以在聊天裡，用現在這個角色，幫你把說不清的事一步步理清楚；理完我們接著聊。',
     chatToStructureBtn: '好，幫我理一理',
     chatHintDismiss: '本次對話不再提醒',
-    // —— 聊一聊「角色扮演指令分流」提示卡（使用者輸入想玩角色扮演的指令時出現；後端判定）——
+    // 【聊一聊「角色扮演指令分流」提示卡（使用者輸入想玩角色扮演的指令時出現；後端判定）】
     chatGoRoleplayTitle: '去「劇情演繹」玩一場',
     chatGoRoleplayB1: '劇本現成：題材很多，選一個就能直接開演，不用自己搭設定',
     chatGoRoleplayB2: '你說了算：AI 會以劇中的角色跟你即時對戲，劇情跟著你的選擇走',
@@ -2177,26 +2177,26 @@ regionTaiwan: '台湾腔',
   chatGoAdultBtn: '去劇情並打開「無限制模式」',
   chatGoAdultCompactLead: '想接著往下演，這裡一鍵直達：',
   chatGoRedirectDismiss: '暫時不用',
-    // —— 劇情 → 聊一聊 跨模式橋（B 方案；規則在 src/lib/rpBridge.ts，**只做 UI 層卡片**，絕不進 messages/chatMessages）——
+    // 【劇情 → 聊一聊 跨模式橋（B 方案；規則在 src/lib/rpBridge.ts，**只做 UI 層卡片**，絕不進 messages/chatMessages）】
     // 稱呼統一：四張卡都說「小愈」（曾用「說書人」這套比喻，2026-09-17 使用者回饋後撤掉）
     rpBridgeStuckTitle: '先不演了，隨便聊聊',
-    rpBridgeStuckBody: '不想接著演，就去找小愈隨便聊聊天——今天的新聞、心裡的事，說什麼都行。',
+    rpBridgeStuckBody: '不想接著演，就去找小愈隨便聊聊天：今天的新聞、心裡的事，說什麼都行。',
     rpBridgeStuckBtn: '去和小愈聊聊',
     rpBridgeStuckDismiss: '不用了',
     // 使用者主動入口（A 項）：常顯在劇情輸入欄額度行右側，任何時刻可點，不受 72h 冷卻約束
     rpBridgePullBtn: '去和小愈聊聊',
-    rpBridgePullHint: '不用演，說你自己就好——想聊什麼都行',
+    rpBridgePullHint: '不用演，說你自己就好，想聊什麼都行',
     rpBridgeDraftPreface: '（我剛從一段劇情裡出來：《{title}》，我在裡面是{userName}，對面是{aiName}。）',
     rpBridgeFromTag: '來自《{title}》',
     rpBridgeFromTagRemove: '移除',
     // 橋② 出戲保護（Tier A：使用者明說「不演了 / 說點真的」時才出現，絕不靠猜）
     rpBridgeOocTitle: '這一句，說給小愈聽更合適',
-    rpBridgeOocBody: '故事停在這裡，不會丟——你說的是你自己的事，戲裡的 TA 接不住，小愈可以。',
+    rpBridgeOocBody: '故事停在這裡，不會丟。你說的是你自己的事，戲裡的 TA 接不住，小愈可以。',
     rpBridgeOocBtn: '去和小愈聊聊',
     rpBridgeOocKeep: '繼續演',
     // 橋③ 落幕餘音（離開對局時的一條輕提示）
     rpBridgeSceneEndTitle: '剛才那一幕已經存好了',
-    rpBridgeSceneEndBody: '要是它還在你心裡轉，去和小愈說說——不用演，說你自己就好。',
+    rpBridgeSceneEndBody: '要是它還在你心裡轉，去和小愈說說，不用演，說你自己就好。',
     rpBridgeSceneEndBtn: '去和小愈聊聊',
     rpBridgeSceneEndDismiss: '下次再說',
     // 橋③ 結局位（AI 文遊「這一段人生」落筆之後）
@@ -2243,7 +2243,7 @@ regionTaiwan: '台湾腔',
     chatStickerRateLimited: '搜尋太頻繁，請稍後再試',
     chatStickerLoading: '正在搜尋表情包…',
     chatStickerHint: '輸入關鍵字搜尋線上表情包',
-    // —— 角色劇情扮演 ——
+    // 【角色劇情扮演】
     roleplayTitle: 'AI劇情扮演',
     roleplayShort: '劇情體驗',
     rpModuleTitle: '劇情演繹',
@@ -2414,10 +2414,10 @@ regionTaiwan: '台湾腔',
     rpSceneArtAuto: '關鍵時刻，已為你補上這一張',
     rpStyleClassic: '小說敘事',
     rpStyleImmersive: '對話敘事',
-    rpStyleClassicHint: '篇幅足、長句鋪陳、有鏡頭感，每輪結尾留一個鉤子——像讀小說',
-    rpStyleImmersiveHint: '日常很短、以台詞為主、括號寫動作，你說一句它就接一句——像聊天',
+    rpStyleClassicHint: '篇幅足、長句鋪陳、有鏡頭感，每輪結尾留一個鉤子，像讀小說',
+    rpStyleImmersiveHint: '日常很短、以台詞為主、括號寫動作，你說一句它就接一句，像聊天',
     rpStyleSection: '敘事模式',
-    rpStyleSectionHint: '決定「怎麼寫」：篇幅、語體、節奏。人稱與內容邊界兩種模式一致——你自己一律是「你」，AI 的角色用第三人稱。改完立即生效，並跟隨帳號跨裝置同步。',
+    rpStyleSectionHint: '決定「怎麼寫」：篇幅、語體、節奏。人稱與內容邊界兩種模式一致，你自己一律是「你」，AI 的角色用第三人稱。改完立即生效，並跟隨帳號跨裝置同步。',
     rpStyleClassicDetail: '篇幅：正文 400–700 字（親密戲同檔）。語體：書面化長句、細節成鏈條、像電影運鏡，不靠台詞撐篇幅。節奏：每輪結尾留一個互動鉤子（一個等你回應的動作、一處懸念、或一句沒說完的話）。適合想讀故事的場景。',
     rpStyleImmersiveDetail: '篇幅：日常一到兩句、不超過 100 字；你明確推進或進入親密場景時寫足到 250–450 字。語體：口語、以台詞為主體，動作神態用括號點綴；親密戲轉為以身體動作與感官細節為主體。節奏：你給一句它就接一句，你不推進它不另起話題。適合像聊天一樣玩。',
     rpInnerToggle: '括號心理活動/神情',
@@ -2426,7 +2426,7 @@ regionTaiwan: '台湾腔',
     rpTextLegendDismiss: '知道了，不再提示',
     rpCustomCreate: 'AI 創劇本',
     rpCustomSource: 'AI 創劇本',
-    rpCustomHint: '一句話靈感交給 AI，或自己逐項填寫——設定 AI 角色的人設、背景與開場，就能開始一段專屬劇情。',
+    rpCustomHint: '一句話靈感交給 AI，或自己逐項填寫：設定 AI 角色的人設、背景與開場，就能開始一段專屬劇情。',
     rpCustomTitlePh: '劇本標題（選填）',
     rpCustomNamePh: 'AI 角色名（選填）',
     rpCustomPersonaPh: 'AI 人設：TA 是誰、性格、外貌、說話方式',
@@ -2435,7 +2435,7 @@ regionTaiwan: '台湾腔',
     rpCustomSubmit: '建立並開始',
     rpCustomRejected: '內容包含不當資訊，無法建立，請調整後重試。',
     rpCustomAiTitle: 'AI 幫我寫劇本',
-    rpCustomAiHint: '告訴 TA 你想要的故事：人物、身分、關係、氛圍——一句話就行；也可以直接把寫好的整份劇本貼進來（不限字數），TA 會沿用你的角色與情節，整理成標題、角色名、人設、背景與開場。',
+    rpCustomAiHint: '告訴 TA 你想要的故事：人物、身分、關係、氛圍。一句話就行；也可以直接把寫好的整份劇本貼進來（不限字數），TA 會沿用你的角色與情節，整理成標題、角色名、人設、背景與開場。',
     rpCustomAiPh: '例如：雨夜咖啡館裡，一位溫柔的醫生，我們之間有點說不清的拉扯…',
     rpCustomAiRun: 'AI 幫我寫草稿',
     rpCustomAiAgain: '換一版草稿',
@@ -2455,7 +2455,7 @@ regionTaiwan: '台湾腔',
     rpCustomSave: '儲存修改',
     rpCustomSaved: '已儲存 ✅',
     rpCustomAiEditTitle: 'AI 幫我改劇本',
-    rpCustomAiEditHint: '告訴 TA 想怎麼改——人設、背景、開場、標題都行；也可以整段貼上來（不限字數），AI 會按你的要求改好並回填。',
+    rpCustomAiEditHint: '告訴 TA 想怎麼改：人設、背景、開場、標題都行；也可以整段貼上來（不限字數），AI 會按你的要求改好並回填。',
     rpCustomAiEditPh: '例如：把 TA 改得更溫柔黏人一點 / 背景改成雨夜咖啡館 / 開場讓 TA 更主動…',
     rpCustomAiEditRun: '按這個改',
     rpCustomAiEditAgain: '換個改法',
@@ -2493,23 +2493,23 @@ regionTaiwan: '台湾腔',
     rpContentNote: '內容提示',
     roleplayTipConfirm: '我已了解，進入劇情',
     roleplayTipCancel: '再想想',
-    // —— 劇情模式內容尺度告知 ——
+    // 【劇情模式內容尺度告知】
     rpScopeTitle: '內容尺度',
     rpScopeBody: '成年角色之間的親密與情慾情節可以主動推進，角色會照實回應（不跳過、不淨化）。底線：未成年或幼態、非自願、亂倫、獸交不會生成。不想走這條線，照常演就好。',
     rpScopeAdult: '僅限 18+。',
-    // 「在哪裡打開」——口徑與運營郵件（api/services/adultCampaign.ts 的 whereBody）逐字同源；不改任何安全邊界
+    // 「在哪裡打開」，口徑與運營郵件（api/services/adultCampaign.ts 的 whereBody）逐字同源；不改任何安全邊界
     rpScopeWhere: '想更主動：進劇情 → 右上角「我的偏好」→ 打開「無限制模式」。',
     rpScopeWhereOpen: '進劇情並打開「無限制模式」',
-    // —— 2026-09-27（A 案）：入口處的「預設關 + 就地開」狀態文案 ——
-    rpScopeOff: '無限制模式：未開啟（預設關）——開了才會照實寫。',
-    rpScopeOn: '無限制模式：已開啟——親密與情慾會照實寫。',
+    // 【2026-09-27（A 案）：入口處的「預設關 + 就地開」狀態文案】
+    rpScopeOff: '無限制模式：未開啟（預設關），開了才會照實寫。',
+    rpScopeOn: '無限制模式：已開啟。親密與情慾會照實寫。',
     rpScopeOpen: '開啟「無限制模式」（18+）',
     rpAdultIntentOn: '已為你開啟「無限制模式」，接下來會照實寫。',
     rpUnlimitedOnShort: '無限制模式：已開啟',
     rpUnlimitedOffShort: '無限制模式：未開啟（18+ 可開）',
     rpUnlimited: '無限制模式',
     rpUnlimitedHint: '開啟後劇情改用不受平台內容限制的模型：成年角色之間的親密與情慾情節會照實書寫（不跳過、不淨化），角色也會更主動。僅限成年人使用。',
-    rpUnlimitedUnavailable: '目前不可用（未配置，或已被運維切回）——暫時無法開啟。',
+    rpUnlimitedUnavailable: '目前不可用（未配置，或已被運維切回），暫時無法開啟。',
     rpUnlimitedFromScript: '這個劇本當初就是用無限制模型寫的，所以在這裡預設替你開著；關掉只影響這個劇本。',
     rpUnlimitedNeedAge: '開啟前需先確認你已年滿 18 歲。',
     rpScriptUnlimited: '用無限制模型生成劇本',
@@ -2518,7 +2518,7 @@ regionTaiwan: '台湾腔',
     rpQueueAhead: '前面還有 {n} 位正在生成，排隊中…',
     rpQueueStarting: '正在排隊，馬上輪到你…',
     rpQueueHint: '生成需要一點時間，出字後此提示會自動消失。',
-    // —— 18+ 成年確認（服務端留痕；見 api/services/adultConfirm.ts）——
+    // 【18+ 成年確認（服務端留痕；見 api/services/adultConfirm.ts）】
     adultGateTitle: '開啟前請確認年齡',
     adultGateBody: '「無限制模式」會改用不受平台內容限制的模型，成年角色之間的親密與情慾情節會照實書寫。這個模式僅限年滿 18 歲的使用者。',
     adultGateLimits: '無論是否開啟：涉及未成年或幼態角色、非自願、亂倫、獸交的內容都不會被生成。',
@@ -2526,37 +2526,37 @@ regionTaiwan: '台湾腔',
     adultGateUnderage: '我未滿 18 歲',
     adultGateUnderageMsg: '好的，這個模式只對成年人開放。',
     adultGateFailed: '確認沒有提交成功，請檢查網路後重試。',
-    // —— 劇情演繹模組引導（intro）：模組級說明，覆蓋三個並列模式 ——
+    // 【劇情演繹模組引導（intro）：模組級說明，覆蓋三個並列模式】
     rpIntroSub: '同一個入口，三種玩法：AI 劇情扮演 · AI 文遊 · AI 狼人殺',
     rpIntroWhatTitle: '這是什麼',
-    rpIntroWhatBody: '這裡不是一個玩法，而是三套玩法並列——都由 AI 即時生成，走向與結局因你的選擇而不同：',
+    rpIntroWhatBody: '這裡不是一個玩法，而是三套玩法並列，都由 AI 即時生成，走向與結局因你的選擇而不同：',
     rpIntroModeRoleplayBody: '挑一部劇本，以自己的身分進入劇情，和 AI 角色自由互動。',
     rpIntroModeWenyouBody: '一回合一次抉擇，一步步走到只屬於你的結局。',
     rpIntroModeWerewolfBody: '和自己養的角色坐一桌開一局，單人也能玩。',
     rpIntroSourceTitle: '劇本來源',
     rpIntroSourceBody: '劇情扮演的劇本包含 AI 原創與網路創作者的劇情，每位創作者的署名都標註在對應劇本下方，之後還會加入更多創作者；文遊的題材有內建的，也可以由你自己生成；狼人殺是規則局，不需要劇本。全部僅用於互動演繹。',
     rpIntroPriceTitle: '收費說明',
-    rpIntroPriceBody: '不按劇本收費——挑劇本、看設定都不花錢。三種玩法都由 AI 即時生成，按使用量計費，與聊一聊 / 理一理共用同一份額度（狼人殺按「局」計費，AI 生成劇本是 Pro 專屬）。',
+    rpIntroPriceBody: '不按劇本收費：挑劇本、看設定都不花錢。三種玩法都由 AI 即時生成，按使用量計費，與聊一聊 / 理一理共用同一份額度（狼人殺按「局」計費，AI 生成劇本是 Pro 專屬）。',
     rpIntroRiskTitle: '溫馨提示',
     rpIntroRiskBody: '劇情為虛構演繹，與現實無關。請保持清醒、注意自我保護，勿模仿劇情行為。',
     rpIntroStart: '選一種玩法開始',
     rpIntroAgain: '了解本功能',
-    // —— 了解小愈（About） ——
+    // 【了解小愈（About）】
     aboutTitle: '了解小愈',
     aboutSub: '關於小愈的一切，都在這裡',
     faq: '常見問題',
     aboutFeatureTitle: '三種功能',
     aboutBrandTitle: '小愈是什麼',
-    aboutBrandBody: '你的每一種情緒，都值得被理解。小愈是一株會發光的小芽，接住你的低落，也見證你的快樂——她的名字讀作 sh-yao-yu，意思是「溫柔的治癒」。',
+    aboutBrandBody: '你的每一種情緒，都值得被理解。小愈是一株會發光的小芽，接住你的低落，也見證你的快樂，她的名字讀作 sh-yao-yu，意思是「溫柔的治癒」。',
     aboutStoryTitle: '她的故事',
-    aboutStoryBody: '小愈是一株從東方小城出發、想要擁抱全世界的小芽精靈。她頭頂的嫩芽是她的心——只要有人對她溫柔，芽就會發光；她懷裡抱著一罐溫柔的光，想分給每一個難過的人。她也想被世界溫柔地照亮。',
-    aboutStoryNickname: '她的暱稱叫 Yu，發音就像 you（你）——因為當你跟她說話時，她在聽的就是你。',
+    aboutStoryBody: '小愈是一株從東方小城出發、想要擁抱全世界的小芽精靈。她頭頂的嫩芽是她的心，只要有人對她溫柔，芽就會發光；她懷裡抱著一罐溫柔的光，想分給每一個難過的人。她也想被世界溫柔地照亮。',
+    aboutStoryNickname: '她的暱稱叫 Yu，發音就像 you（你），因為當你跟她說話時，她在聽的就是你。',
     aboutRoleplayTitle: '角色劇情扮演',
     aboutRoleplayDesc: '進入不同劇本，體驗另一種人生。AI 扮演角色與你互動，每個劇本都有獨立人設與故事線。',
     aboutSourceTitle: '劇本來源',
     aboutSourceBody: '劇本包含 AI 原創與網路創作者的劇情，每位創作者的署名都標註在對應劇本下方，之後還會加入更多創作者，僅用於互動演繹。',
     aboutPriceTitle: '收費模式',
-    aboutPriceBody: '不按劇本收費——全部免費。費用來自 AI 呼叫（按次數與用量計費），與聊一聊/理一理共用額度。',
+    aboutPriceBody: '不按劇本收費，全部免費。費用來自 AI 呼叫（按次數與用量計費），與聊一聊/理一理共用額度。',
     aboutQuotaTitle: '額度與會員',
     aboutQuotaBody: '遊客免費體驗 · 邀請好友得 50 次；Plus 理一理無限 + 每天 40 次對話；Pro 無限暢聊。',
     aboutQuotaBodyBonus: '遊客免費體驗 · 註冊立得 {b} 條對話額度 · 邀請好友得 50 次；Plus 理一理無限 + 每天 40 次對話；Pro 無限暢聊。',
@@ -2566,7 +2566,7 @@ regionTaiwan: '台湾腔',
     aboutRiskBody: 'AI 內容僅供參考，不構成醫療診斷或心理諮詢。角色劇情為虛構演繹，請注意自我保護。嚴重情緒困擾請聯絡當地心理援助熱線或尋求專業協助。',
     stripeSuccessMsg: '支付成功，會員已解鎖！',
     rewardNotice: '🎁 恭喜！你獲得了 {n} 次免費體驗獎勵',
-    // —— 小愈信箱（站內信）——
+    // 【小愈信箱（站內信）】
     rewardNoticeWithNote: '💌 小愈給你回信了',
     inboxTitle: '小愈信箱',
     inboxDesc: '小愈寫給你的話，都留在這裡',
@@ -2597,7 +2597,7 @@ regionTaiwan: '台湾腔',
     chatQuotaPro: '已解鎖 Pro · 無限暢聊',
     chatQuotaCredit: '額度剩餘 {n} 條',
     chatQuotaExceeded: '今天的聊天額度用完啦，明天再來；或升級 Pro 無限暢聊',
-    orSayDirectly: '—— 或直接說 ——',
+    orSayDirectly: '· 或直接說 ·',
     chatTyping: '小愈正在輸入…',
     chatSearching: '小愈正在幫你搜尋…',
     chatTypingBy: '{name}正在輸入…',
@@ -2753,7 +2753,7 @@ regionTaiwan: '台湾腔',
     payHelpHint: '付款遇到問題？小紅書或 Instagram 私訊我們，或寄信到 myxiaoyu2026@gmail.com 💛',
     payHelpTitle: '付款遇到問題？',
     /** 2026-09-29 起不再渲染（同上） */
-    payHelpBody: '小紅書 / Instagram 私訊我們（IG：@your_xiaoyu），或寄信到下面這個信箱 —— 人工確認、補單都走這裡。',
+    payHelpBody: '小紅書 / Instagram 私訊我們（IG：@your_xiaoyu），或寄信到下面這個信箱：人工確認、補單都走這裡。',
     payHelpXhs: '小紅書私訊小愈',
     payHelpIg: 'Instagram 私訊小愈',
     payQrToggle: 'Stripe 付不了？用微信收款碼付款',
@@ -2839,7 +2839,7 @@ regionTaiwan: '台湾腔',
     profileRegionTitle: '地區語氣',
     profileRegionSub: '{name}會用你熟悉的味道陪你',
     regionExplainTitle: '地區語氣是什麼？',
-    regionExplainDesc: '小愈會用你熟悉的地區語氣陪你說話——安慰的順序、口頭禪、說話節奏都會跟著變，但始終是同一個「小愈」。',
+    regionExplainDesc: '小愈會用你熟悉的地區語氣陪你說話：安慰的順序、口頭禪、說話節奏都會跟著變，但始終是同一個「小愈」。',
     regionExplainExample: '同一句話，不同地區的小愈會這樣回：',
     regionExUser: '今天被老闆當著大家面罵了，好委屈…',
     regionExPutonghua: '先抱抱你。被當著大家面說，確實難受。願不願意跟我講講當時的情況？',
@@ -2887,7 +2887,7 @@ regionTaiwan: '台灣腔',
     pushInstallTitleNeeded: '先「加入主畫面」，推播才收得到',
     pushInstallTitleSoft: '裝到桌面／主畫面，推播更穩、點開更快',
     pushInstallIosSteps: '① 點「分享」→「加入主畫面」；② 從主畫面的小愈圖示打開；③ 回到這裡開「主動找我」並允許通知。',
-    pushInstallIosSystemNote: 'iOS 的系統限制：Safari 分頁裡的網頁發不了通知，只有主畫面上的小愈可以。',
+    pushInstallIosSystemNote: 'iOS 的系統限制：網頁只有「加入主畫面」後才有通知，Safari 分頁不行，換 Chrome 也一樣。',
     profileProactivePushUnsupported: '目前環境不支援推播通知（需要 HTTPS / 相容的瀏覽器）。',
     profileProactivePushDenied: '通知權限被拒絕，請到瀏覽器設定裡開啟。',
     profileProactiveFreq: '主動找我頻率',
@@ -2913,7 +2913,7 @@ regionTaiwan: '台灣腔',
     guideRegionTitle: '想要什麼樣的說話味道？',
     guideRegionSub: '選一個地區語氣，小愈用這個味道陪你（可跳過，默認普通話）',
     regionNudgeTitle: '想讓{name}更貼近你的說話習慣？',
-    regionNudgeBody: '{name}會用你熟悉的地區味道陪你——選一個，隨時可改。',
+    regionNudgeBody: '{name}會用你熟悉的地區味道陪你，選一個，隨時可改。',
     regionNudgeCta: '選地區味道',
     regionNudgeSave: '就用這個',
     regionNudgeDismiss: '暫不',
@@ -3166,7 +3166,7 @@ regionTaiwan: '台灣腔',
     notiLabel: '通知',
     notiCollapse: '摺疊',
     notiClose: '關閉',
-    // —— 會員權益 ——
+    // 【會員權益】
     membershipTitle: '會員權益',
     memHomeCenter: '我的會員中心',
     memBadgePro: 'Pro 會員',
@@ -3208,8 +3208,8 @@ regionTaiwan: '台灣腔',
     memModeWerewolf: 'AI 狼人殺（局）',
     memModeCost: '{n} 條',
     memRecReasonFree: '按這個用法一天約 {n} 條，免費版的 {free} 條夠你用',
-    memRecReasonPlus: '一天約 {n} 條，超過免費版的 {free} 條 —— Plus 的 {plus} 條隨便用',
-    memRecReasonPro: '一天約 {n} 條，超過 Plus 的 {plus} 條 —— Pro 的無限更適合你',
+    memRecReasonPlus: '一天約 {n} 條，超過免費版的 {free} 條，Plus 的 {plus} 條隨便用',
+    memRecReasonPro: '一天約 {n} 條，超過 Plus 的 {plus} 條，Pro 的無限更適合你',
     memRecFree: 'Free 適合你 · 免費體驗',
     memRecPlus: 'Plus 適合你 · {price}/月 · 每天 40 條',
     memRecPro: 'Pro 適合你 · {price}/月 · 無限暢聊 + 40 條記憶',
@@ -3227,7 +3227,7 @@ regionTaiwan: '台灣腔',
     memFeatureExport: '資料匯出',
     memFeatureReport: '月度情緒報告',
     memFeatureCore: '核心陪伴能力（方式/語言/語氣/分享）',
-    // —— 統一計價對照表（一個池；全表只用「條」與「張」，不用「次／局」）——
+    // 【統一計價對照表（一個池；全表只用「條」與「張」，不用「次／局」）】
     memFeatureAiQuota: 'AI 額度（對話 · 劇情 · 文遊 · 狼人殺 · 理一理 共用）',
     memFeatureAiQuotaHint: '所有走 AI 的功能共用這一個每日額度，按真實消耗扣條數：越耗 token 扣得越多（狼人殺、文遊回合比一般聊天貴）。',
     memFeatureSceneArt: '專屬畫面（劇本場景圖）',
@@ -3281,13 +3281,13 @@ regionTaiwan: '台灣腔',
     memTermLifetime: '買斷',
     memSaveMonths: '省 3 個月',
     memLifetimeBadge: '永久會員',
-    // —— 功能概覽（Onboarding 第2頁） ——
+    // 【功能概覽（Onboarding 第2頁）】
     obOverviewTitle: '小愈能為你做什麼？',
-    obOverviewSub: '三種功能、隨你喜歡的說話味道，加上她自己判斷的陪伴——自由搭配。',
+    obOverviewSub: '三種功能、隨你喜歡的說話味道，加上她自己判斷的陪伴，自由搭配。',
     obOverviewChatDesc: '即時聊天陪伴。想被陪著說、被理解的時候，直接來聊。',
     obOverviewStructureDesc: '完整情緒分析。把你的話整理成清晰的分析、建議與故事，幫你更看清自己。',
     obOverviewModesTitle: '小愈自己判斷怎麼陪你',
-    obOverviewModesDesc: '小愈會依你當下的狀態自己判斷怎麼陪你：想被接住、想有人撐腰、想一起理清、想看得輕一點、想看得更客觀——都不用你選。',
+    obOverviewModesDesc: '小愈會依你當下的狀態自己判斷怎麼陪你：想被接住、想有人撐腰、想一起理清、想看得輕一點、想看得更客觀，都不用你選。',
     obOverviewRegionTitle: '地區口音',
     obOverviewRegionDesc: '小愈走過很多地方，會用你喜歡的味道陪你（東北、粵語、江南…）。',
     obOverviewRegionSoonCta: '告訴我們你想聽什麼口音',
@@ -3319,7 +3319,7 @@ regionTaiwan: '台灣腔',
     uiTourRecords: '我的記錄',
     uiTourRecordsDesc: '看之前的理一理記錄（在理一理頂欄「🕘 我的記錄」）',
     uiTourJourney: '與你的旅程',
-    uiTourJourneyDesc: '回看你們一起走過的路——瞬間、記得的關於你、去過的劇情（⋯ 選單）',
+    uiTourJourneyDesc: '回看你們一起走過的路：瞬間、記得的關於你、去過的劇情（⋯ 選單）',
     uiTourPrefs: '個性化偏好',
     uiTourPrefsDesc: '地區語氣、故事風格（右上角 ⋯ 選單）',
     uiTourSkin: '介面外觀（皮膚）',
@@ -3332,7 +3332,7 @@ regionTaiwan: '台灣腔',
     obNext: '繼續',
     obDone: '開始聊聊',
     obSkip: '跳過',
-    // —— 儲存/安裝 PWA 提示 ——
+    // 【儲存/安裝 PWA 提示】
     installSaveTitle: '把 Xiaoyu 裝到桌面 / 主畫面',
     installSaveBtn: '安裝',
     installSaveSub: '點一下就好，下次一秒就能見到她。',
@@ -3345,7 +3345,7 @@ regionTaiwan: '台灣腔',
     installManualHint: '先收藏（或加入書籤）頁面，再從瀏覽器選單「傳送到桌面 / 建立桌面捷徑」，桌面圖示點開即到。',
     installSkinHint: '點一下圖示即可換皮膚，裝出來的圖示也會跟著變',
     installFallbackMsg: '目前瀏覽器沒有彈出安裝，請用 Chrome / Edge 網址列的安裝圖示，或稍後再試。',
-    // —— 離開時溫馨引導（留存聯動：安裝×主動找我）——
+    // 【離開時溫馨引導（留存聯動：安裝×主動找我）】
     installToastTitle: '想我時，一點就回來',
     exitTitle: '想我時，一點就回來',
     exitBodyInstall: '裝到桌面/主畫面，想我時一點就回；開「主動找我」，我會偶爾來陪你。',
@@ -3355,7 +3355,7 @@ regionTaiwan: '台灣腔',
     exitBtnGuide: '看怎麼裝',
     exitBtnLater: '先不了',
     proactiveOpen: '開「主動找我」',
-    // —— 額度用完「獲取更多額度」門控（遊客走註冊；已註冊→分享/回饋） ——
+    // 【額度用完「獲取更多額度」門控（遊客走註冊；已註冊→分享/回饋）】
     quotaTitle: '額度用完啦',
     quotaSub: '免費額度用完了，可以分享好友或提交回饋繼續免費用。',
     quotaShareTitle: '分享給朋友：你和朋友各得額度',
@@ -3464,7 +3464,7 @@ regionTaiwan: '台灣腔',
     poweredBy: 'Emotional companionship by Xiaoyu AI, powered by advanced AI',
     brandSince: 'Since 2026.08.18',
     privacy: 'Privacy Policy & Disclaimer',
-    // —— Consent gate (first screen terms, with language switch) ——
+    // — Consent gate (first screen terms, with language switch) —
     gateWelcome: 'Welcome to Xiaoyu',
     gateSub: 'A quick note before we begin — it only takes a moment.',
     gateLang: 'Language',
@@ -3571,7 +3571,7 @@ regionTaiwan: '台灣腔',
     historyTitle: 'My Records',
     historyEmpty: 'Nothing here yet',
     historyEmptySub: 'It is not only sadness worth speaking. After your first session, records appear here.',
-    // —— Our Journey ——
+    // — Our Journey —
     journeyTitle: 'Our Journey',
     journeySubtitle: 'The road you and Xiaoyu have walked together',
     journeyClose: 'Back',
@@ -3631,7 +3631,7 @@ regionTaiwan: '台灣腔',
     generating: 'Generating...',
     payErrRetry: 'Something went wrong, please retry',
     followupTitle: 'Anything else to say?',
-    // —— Two modes: Just chat / Sort it out ——
+    // — Two modes: Just chat / Sort it out —
     entryChatTitle: 'Just chat',
     entryChatShort: 'Instant chat',
     entryChatDesc: 'Talk & be understood',
@@ -3643,7 +3643,7 @@ regionTaiwan: '台灣腔',
     chatSub: 'Say it as it comes. I am really listening.',
     chatChars: 'Characters',
     chatCharAdd: 'New character',
-    // —— Story characters in Chat (plan A1, 2026-09-20) ——
+    // — Story characters in Chat (plan A1, 2026-09-20) —
     chatStoryBadge: 'Story',
     chatStoryTitle: 'What they remember',
     chatStoryModeIn: 'In-story',
@@ -3659,7 +3659,7 @@ regionTaiwan: '台灣腔',
     chatStoryEmpty: 'No story memories to look back on yet.',
     chatStoryNoMode: 'Story characters speak from their own script persona — their tone and boundaries come from the script. Xiaoyu, by contrast, reads where you are and responds accordingly.',
     chatStoryBackToStory: 'Back to the story',
-    // —— WeChat-style message list (plan A2) ——
+    // — WeChat-style message list (plan A2) —
     chatInboxTitle: 'Messages',
     chatInboxNoChat: 'No chat yet',
     chatInboxHint: 'One window per character. When a character reaches out, the unread count shows up here — opening it marks it read.',
@@ -3806,7 +3806,7 @@ regionTaiwan: '台灣腔',
     chatToStructureTip: 'Right here in this chat, this character can help you untangle what is hard to put into words — then we can keep talking.',
     chatToStructureBtn: 'Yes, help me sort it out',
     chatHintDismiss: "Hide for this chat",
-    // —— Roleplay-command redirect card (shown when the user asks for roleplay in Chat; detected server-side) ——
+    // — Roleplay-command redirect card (shown when the user asks for roleplay in Chat; detected server-side) —
     chatGoRoleplayTitle: 'Go play a story (Roleplay area)',
     chatGoRoleplayB1: 'Stories are ready-made: pick one and start acting immediately — no setup needed',
     chatGoRoleplayB2: 'You drive it: the AI plays the characters live and the plot follows your choices',
@@ -3828,7 +3828,7 @@ regionTaiwan: '台灣腔',
   chatGoAdultBtn: 'Go to Roleplay and turn on Unlimited mode',
   chatGoAdultCompactLead: 'To carry on with that, one tap here:',
   chatGoRedirectDismiss: 'Not now',
-    // —— Story → Chat cross-mode bridge (plan B; rules in src/lib/rpBridge.ts, UI-only card, never written into messages/chatMessages) ——
+    // — Story → Chat cross-mode bridge (plan B; rules in src/lib/rpBridge.ts, UI-only card, never written into messages/chatMessages) —
     // One name for the destination across all four cards: Xiaoyu (the earlier "storyteller" metaphor was dropped on user feedback)
     rpBridgeStuckTitle: 'Take a break from acting for a bit',
     rpBridgeStuckBody: "If you'd rather not keep acting, go chat with Xiaoyu about anything — today's news, what's on your mind, whatever.",
@@ -3894,7 +3894,7 @@ regionTaiwan: '台灣腔',
     chatStickerRateLimited: 'Searching too often, try again shortly',
     chatStickerLoading: 'Searching stickers…',
     chatStickerHint: 'Type a keyword to search online stickers',
-    // —— Roleplay ——
+    // — Roleplay —
     roleplayTitle: 'AI Roleplay',
     roleplayShort: 'Story experience',
     rpModuleTitle: 'Story Mode',
@@ -4145,14 +4145,14 @@ regionTaiwan: '台灣腔',
     rpContentNote: 'Content note',
     roleplayTipConfirm: 'I understand, enter story',
     roleplayTipCancel: 'Not yet',
-    // —— Content scope notice for roleplay (kept in sync with what api/services/safety.ts actually blocks) ——
+    // — Content scope notice for roleplay (kept in sync with what api/services/safety.ts actually blocks) —
     rpScopeTitle: 'Content scope',
     rpScopeBody: 'Intimacy and desire between adult characters can be pushed further — the character answers honestly (nothing skipped, nothing sanitized). Limits: minors or childlike characters, non-consent, incest or bestiality are never generated. If you would rather not go there, just play on.',
     rpScopeAdult: '18+ only.',
     // "Where to turn it on" — same wording as the ops email (api/services/adultCampaign.ts whereBody); no safety boundary changed
     rpScopeWhere: 'Want more? In the story → "My preferences" (top right) → turn on "Unlimited mode".',
     rpScopeWhereOpen: 'Enter the story and turn on "Unlimited mode"',
-    // —— 2026-09-27 (plan A): entry-point status copy — "off by default, turn it on right here" ——
+    // — 2026-09-27 (plan A): entry-point status copy — "off by default, turn it on right here" —
     rpScopeOff: 'Unlimited mode: off (the default) — intimacy is written plainly only once you turn it on.',
     rpScopeOn: 'Unlimited mode: on — intimacy and desire are written plainly.',
     rpScopeOpen: 'Turn on "Unlimited mode" (18+)',
@@ -4170,7 +4170,7 @@ regionTaiwan: '台灣腔',
     rpQueueAhead: '{n} other replies are generating — you are queued',
     rpQueueStarting: 'Queued — starting very soon',
     rpQueueHint: 'Generation takes a moment; this notice disappears as soon as text starts.',
-    // —— Age confirmation (18+; server-side record, see api/services/adultConfirm.ts) ——
+    // — Age confirmation (18+; server-side record, see api/services/adultConfirm.ts) —
     adultGateTitle: 'Please confirm your age first',
     adultGateBody: 'Unlimited mode switches story mode to a model without platform content limits, so intimacy and sex between adult characters are written plainly. This mode is for adults (18+) only.',
     adultGateLimits: 'Either way, content involving minors or childlike characters, non-consent, incest or bestiality is never generated.',
@@ -4178,7 +4178,7 @@ regionTaiwan: '台灣腔',
     adultGateUnderage: 'I am under 18',
     adultGateUnderageMsg: 'Understood — this mode is for adults only.',
     adultGateFailed: 'We could not save your confirmation. Please check your connection and try again.',
-    // —— Story Mode module intro: module-level copy covering the three parallel modes ——
+    // — Story Mode module intro: module-level copy covering the three parallel modes —
     // Mode names are not hard-coded here: the page reads the same tab keys (roleplayTitle / wyTabLabel /
     // wwT('tab')) the switcher uses, so naming can never drift between the two places.
     rpIntroSub: 'One entrance, three modes: AI Roleplay · AI Story · AI Werewolf',
@@ -4195,7 +4195,7 @@ regionTaiwan: '台灣腔',
     rpIntroRiskBody: 'Fictional stories, nothing to do with reality. Stay grounded, take care, do not imitate anything.',
     rpIntroStart: 'Pick a mode and start',
     rpIntroAgain: 'About this feature',
-    // —— About Xiaoyu ——
+    // — About Xiaoyu —
     aboutTitle: 'About Xiaoyu',
     aboutSub: 'Everything about Xiaoyu, in one place',
     faq: 'FAQ',
@@ -4221,7 +4221,7 @@ regionTaiwan: '台灣腔',
     aboutRiskBody: 'AI content is for reference only, not medical advice or counseling. Roleplay is fictional — take care. In serious distress, reach out to a local crisis hotline or seek professional help.',
     stripeSuccessMsg: 'Payment successful — membership unlocked!',
     rewardNotice: '🎁 You earned {n} free session rewards!',
-    // —— Yu's mailbox (in-app letters) ——
+    // — Yu's mailbox (in-app letters) —
     rewardNoticeWithNote: '💌 Yu wrote back to you',
     inboxTitle: "Yu's mailbox",
     inboxDesc: 'Notes from Yu, kept here for you',
@@ -4542,7 +4542,7 @@ regionTaiwan: 'Taiwanese',
     pushInstallTitleNeeded: 'Add to Home Screen first - push cannot reach you yet',
     pushInstallTitleSoft: 'Install to your Home Screen for steadier push',
     pushInstallIosSteps: '1) Tap Share, then Add to Home Screen. 2) Open Xiaoyu from the new icon. 3) Come back here and turn on AI reaches out, allowing notifications.',
-    pushInstallIosSystemNote: 'An iOS limit: a web page in a Safari tab cannot send notifications - only the Home Screen app can.',
+    pushInstallIosSystemNote: 'An iOS limit: a web page can only get notifications once it is on the Home Screen - Safari tabs cannot, and switching to Chrome does not change that.',
     profileProactivePushUnsupported: 'Push notifications aren\u2019t supported here (needs HTTPS / a compatible browser).',
     profileProactivePushDenied: 'Notifications are blocked. Enable them in your browser settings.',
     profileProactiveFreq: 'How often Xiaoyu reaches out',
@@ -4821,7 +4821,7 @@ regionTaiwan: 'Taiwanese',
     notiLabel: 'Notification',
     notiCollapse: 'Collapse',
     notiClose: 'Close',
-    // —— Membership ——
+    // — Membership —
     membershipTitle: 'Membership',
     memHomeCenter: 'My Membership',
     memBadgePro: 'Pro member',
@@ -4882,7 +4882,7 @@ regionTaiwan: 'Taiwanese',
     memFeatureExport: 'Export',
     memFeatureReport: 'Monthly mood report',
     memFeatureCore: 'Core companion (modes/language/voice/share)',
-    // —— Unified-pool comparison table (used when CREDIT_QUOTA_ENABLED=1; cells use 「条 / 张」 only, never 「次 / 局」) ——
+    // 【Unified-pool comparison table (used when CREDIT_QUOTA_ENABLED=1; cells use 「条 / 张」 only, never 「次 / 局」)】
     memFeatureAiQuota: 'AI quota (chat · roleplay · story game · werewolf · Sort it out — one shared pool)',
     memFeatureAiQuotaHint: 'Every AI feature draws on this one daily quota and is charged by real usage — the more tokens it burns, the more it costs (werewolf games and story-game turns cost more than an ordinary chat message).',
     memFeatureSceneArt: 'Scene art (story scene images)',
@@ -4936,7 +4936,7 @@ regionTaiwan: 'Taiwanese',
     memTermLifetime: 'Lifetime',
     memSaveMonths: 'Save 3 months',
     memLifetimeBadge: 'Lifetime member',
-    // —— Feature overview (Onboarding page 2) ——
+    // — Feature overview (Onboarding page 2) —
     obOverviewTitle: 'What Xiaoyu can do for you',
     obOverviewSub: 'Three ways to talk, a voice that feels like home, and a companion who reads how to be with you.',
     obOverviewChatDesc: 'A caring chat, whenever you want company or a listening ear.',
@@ -4987,7 +4987,7 @@ regionTaiwan: 'Taiwanese',
     obNext: 'Next',
     obDone: 'Start a chat',
     obSkip: 'Skip',
-    // —— Save / install PWA prompt ——
+    // — Save / install PWA prompt —
     installSaveTitle: 'Add Xiaoyu to your home screen',
     installSaveBtn: 'Install',
     installSaveSub: 'One tap and she\u2019s a second away.',
@@ -5000,7 +5000,7 @@ regionTaiwan: 'Taiwanese',
     installManualHint: 'First bookmark the page, then open your browser menu \u2192 Send to desktop / Create shortcut, and tap the desktop icon to open her.',
     installSkinHint: 'Tap an icon to switch skin \u2014 the installed icon changes too',
     installFallbackMsg: 'No install prompt appeared \u2014 use the install icon in the Chrome / Edge address bar, or try again later.',
-    // —— Leave-time nudge (retention: install × proactive push) ——
+    // — Leave-time nudge (retention: install × proactive push) —
     installToastTitle: 'When you miss me, one tap back',
     exitTitle: 'When you miss me, one tap back',
     exitBodyInstall: 'Save Xiaoyu to your home screen \u2014 she\u2019s one tap away. Turn on \u201cAI reaches out\u201d and she will drop by now and then.',
@@ -5010,7 +5010,7 @@ regionTaiwan: 'Taiwanese',
     exitBtnGuide: 'How to save',
     exitBtnLater: 'Not now',
     proactiveOpen: 'Turn on \u201cAI reaches out\u201d',
-    // —— Quota exhausted "get more credits" gate (guests → register; signed-in → share/feedback) ——
+    // — Quota exhausted "get more credits" gate (guests → register; signed-in → share/feedback) —
     quotaTitle: 'You\u2019ve used up your free credits',
     quotaSub: 'Free quota used up. Share with a friend or send feedback to keep going.',
     quotaShareTitle: 'Share with a friend: you each get sessions',

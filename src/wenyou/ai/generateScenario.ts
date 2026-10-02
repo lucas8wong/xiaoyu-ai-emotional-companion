@@ -90,7 +90,7 @@ function eventsPrompt(theme: string, sk: Skeleton, usedSummaries: string[], n: n
       role: 'system',
       content: `你在为一个文字人生模拟剧本撰写「本地事件池」（无需 AI 即可游玩的分支剧情单元）。只输出一个 JSON 对象 { "events": [ ... ] }，不要任何解释或围栏。
 
-剧本：《${sk.title}》——${sk.intro}
+剧本：《${sk.title}》，${sk.intro}
 回合单位：${sk.turnUnit}，全局共 ${sk.maxTurns} 回合。
 属性（effects 与 requires 只能用这些 key）：
 ${attrLines}
@@ -174,7 +174,7 @@ export async function generateScenario(
     }
   }
 
-  // 一个支线都没产出意味着该剧本没有可玩的本地模式（hasLocalMode 为 false）——
+  // 一个支线都没产出意味着该剧本没有可玩的本地模式（hasLocalMode 为 false）
   // 这是失败而非成功，不能静默提交：抛错让上层提示用户重试/换模型。
   if (events.length === 0) throw new Error('未能生成任何有效支线事件，请重试或更换模型')
 

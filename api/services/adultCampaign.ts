@@ -11,8 +11,8 @@
  *
  * 红线（延续项目既有约定）：
  *   - 绝不给处于情绪危机（自伤/自杀类）的用户发促销性质的邮件（复用 reengage 的 isCrisisSafe 口径）；
- *   - **本邮件**绝不替用户打开「无限制模式」——只告诉他在哪儿开；开启前必须先做 18+ 成年确认（adultConfirm.ts）。
- *     （2026-09-27 补充：站内那条「聊一聊 → 去剧情并打开「无限制模式」」的引导卡是**另一条路**——
+ *   - **本邮件**绝不替用户打开「无限制模式」，只告诉他在哪儿开；开启前必须先做 18+ 成年确认（adultConfirm.ts）。
+ *     （2026-09-27 补充：站内那条「聊一聊 → 去剧情并打开「无限制模式」」的引导卡是**另一条路**
  *      用户按的按钮上明确写着「打开」，所以那份意愿会被带到底：先弹 18+ 闸门，确认后自动开启
  *      （见 RoleplayPage 的 initialAdultIntent）。邮件这条口径不变，仍然只指路、不替用户改设置。）
  *   - 邮件必须带一键退订（List-Unsubscribe），且退订入口与召回共用同一份名单。
@@ -183,7 +183,7 @@ const EMPTY_EXCLUSIONS = (): Record<ExclusionReason, number> => ({
   adultConfirmed: 0, crisis: 0, duplicateEmail: 0, alreadyDelivered: 0,
 });
 
-/** 筛选所需的全部外部数据，全部由调用方注入 —— 便于单测在不碰真实 store 的情况下跑 */
+/** 筛选所需的全部外部数据，全部由调用方注入，便于单测在不碰真实 store 的情况下跑 */
 export interface AudienceInput {
   accounts: { userId: string; email: string; username?: string | null }[];
   /** 用户活跃记录（无则视为从未活跃） */
@@ -207,7 +207,7 @@ export interface AudienceInput {
   /**
    * 剧情总对话条数下限（0/缺省 = 不限）。
    * 与 minRoleplay（**开过几个不同剧本**）是两回事：实测多数人只开过 1 个本但会玩很多轮，
-   * 按「本数 ≥2」收窄会直接掉到个位数——衡量「玩得多不多」应该看轮数。
+   * 按「本数 ≥2」收窄会直接掉到个位数，衡量「玩得多不多」应该看轮数。
    */
   minRoleplayMessages?: number;
 }
@@ -234,7 +234,7 @@ export function buildAudience(input: AudienceInput): { recipients: CampaignRecip
 
     const rp = input.roleplayOf(userId);
     if (input.audience === 'roleplay') {
-      // 「最近玩过剧情」两个维度分开判：次数不够 vs 玩过但太久没玩——原因分开记，
+      // 「最近玩过剧情」两个维度分开判：次数不够 vs 玩过但太久没玩，原因分开记，
       // 运营才看得出收窄是哪一维造成的（合成一个计数器等于把信息丢掉）。
       if (rp.sessions < minRoleplay) { excluded.noRoleplay++; continue; }
       if (rpWindowMs && (!rp.latestUpdatedAt || input.now - rp.latestUpdatedAt > rpWindowMs)) { excluded.roleplayNotRecent++; continue; }
@@ -298,20 +298,20 @@ const COPY: Record<Lang, CopyBlock> = {
   'zh-CN': {
     subject: '剧情模式更新：内容尺度多了一个可选档',
     greeting: '你好，',
-    lead: '剧情模式新增了「无限制模式」——现在可以在「我的偏好」里自行开启，默认是关闭的。',
+    lead: '剧情模式新增了「无限制模式」，现在可以在「我的偏好」里自行开启，默认是关闭的。',
     whatTitle: '开启后会怎样',
     whatBody: '剧情会改用不受平台内容限制的模型：成年角色之间的亲密与情欲情节会照实书写（不跳过、不净化），角色也会更主动。',
     whereTitle: '在哪里打开',
     whereBody: '进入任意一段剧情 → 右上角的「我的偏好」（滑杆图标）→ 找到「无限制模式」并开启。',
     ageTitle: '关于年龄',
     ageBody: '这个模式仅限年满 18 岁的用户，开启前需要先确认你已成年；未确认时开关不会生效。',
-    limits: '无论是否开启，涉及未成年或幼态角色、非自愿、乱伦、兽交的内容都不会被生成——这条底线不变。',
+    limits: '无论是否开启，涉及未成年或幼态角色、非自愿、乱伦、兽交的内容都不会被生成，这条底线不变。',
     cta: '进入剧情模式 →',
     footer: '来自 Xiaoyu · 你的每一种情绪，都值得被理解。',
     unsub: '不想再收到这类邮件？',
     unsubLink: '点这里退订',
     support: `有任何问题，回信或联系 ${SUPPORT_EMAIL}，会有专人回复。`,
-    text: (d, u) => `剧情模式新增了「无限制模式」——可在「我的偏好」里自行开启，默认关闭。\n\n`
+    text: (d, u) => `剧情模式新增了「无限制模式」，可在「我的偏好」里自行开启，默认关闭。\n\n`
       + `开启后：剧情改用不受平台内容限制的模型，成年角色之间的亲密与情欲情节会照实书写（不跳过、不净化），角色也会更主动。\n\n`
       + `在哪里打开：进入任意一段剧情 → 右上角「我的偏好」（滑杆图标）→ 找到「无限制模式」并开启。\n\n`
       + `关于年龄：仅限年满 18 岁用户，开启前需先确认已成年；未确认时开关不会生效。\n`
@@ -321,20 +321,20 @@ const COPY: Record<Lang, CopyBlock> = {
   'zh-TW': {
     subject: '劇情模式更新：內容尺度多了一個可選檔',
     greeting: '你好，',
-    lead: '劇情模式新增了「無限制模式」——現在可以在「我的偏好」裡自行開啟，預設是關閉的。',
+    lead: '劇情模式新增了「無限制模式」，現在可以在「我的偏好」裡自行開啟，預設是關閉的。',
     whatTitle: '開啟後會怎樣',
     whatBody: '劇情會改用不受平台內容限制的模型：成年角色之間的親密與情慾情節會照實書寫（不跳過、不淨化），角色也會更主動。',
     whereTitle: '在哪裡打開',
     whereBody: '進入任意一段劇情 → 右上角的「我的偏好」（滑桿圖示）→ 找到「無限制模式」並開啟。',
     ageTitle: '關於年齡',
     ageBody: '這個模式僅限年滿 18 歲的使用者，開啟前需要先確認你已成年；未確認時開關不會生效。',
-    limits: '無論是否開啟，涉及未成年或幼態角色、非自願、亂倫、獸交的內容都不會被生成——這條底線不變。',
+    limits: '無論是否開啟，涉及未成年或幼態角色、非自願、亂倫、獸交的內容都不會被生成，這條底線不變。',
     cta: '進入劇情模式 →',
     footer: '來自 Xiaoyu · 你的每一種情緒，都值得被理解。',
     unsub: '不想再收到這類郵件？',
     unsubLink: '點這裡退訂',
     support: `有任何問題，回信或聯繫 ${SUPPORT_EMAIL}，會有專人回覆。`,
-    text: (d, u) => `劇情模式新增了「無限制模式」——可在「我的偏好」裡自行開啟，預設關閉。\n\n`
+    text: (d, u) => `劇情模式新增了「無限制模式」，可在「我的偏好」裡自行開啟，預設關閉。\n\n`
       + `開啟後：劇情改用不受平台內容限制的模型，成年角色之間的親密與情慾情節會照實書寫（不跳過、不淨化），角色也會更主動。\n\n`
       + `在哪裡打開：進入任意一段劇情 → 右上角「我的偏好」（滑桿圖示）→ 找到「無限制模式」並開啟。\n\n`
       + `關於年齡：僅限年滿 18 歲使用者，開啟前需先確認已成年；未確認時開關不會生效。\n`
@@ -491,7 +491,7 @@ export interface CampaignRunSummary {
   /**
    * 名单明细。**dry-run 审批要看的正是这些**：为什么少了人（排除原因）、语言分布、
    * 每日上限与发完这批要几个发送日。少了它们，预览只剩一个「planned=54」，
-   * 运营没法判断该不该按发送——所以必须一并回传，不能只留在内部的 CampaignPlan 里。
+   * 运营没法判断该不该按发送，所以必须一并回传，不能只留在内部的 CampaignPlan 里。
    */
   excluded: Record<ExclusionReason, number>;
   byLang: Record<string, number>;

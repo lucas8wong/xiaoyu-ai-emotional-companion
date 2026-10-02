@@ -12,7 +12,7 @@ import { notifyNewFeedback } from '../services/adminNotifier.js';
 import { announcementStore } from '../services/announcements.js';
 import { inboxStore } from '../services/inbox.js';
 import { preferenceStore, resolveThinkingLevelFor } from '../services/preferences.js';
-// 关系档白名单（2026-09-21）：非法值一律**当没传**（不能让它落成 friend —— 那会把用户
+// 关系档白名单（2026-09-21）：非法值一律**当没传**（不能让它落成 friend，那会把用户
 // 已经选好的"恋人"静默改回默认；偏好面板是字段级提交，一次手滑不该丢设置）。
 import { isRelationKind } from '../services/chatRelation.js';
 import { adultConfirmStore, isAdultConfirmed } from '../services/adultConfirm.js';
@@ -75,7 +75,7 @@ router.get('/announcement', async (req: Request, res: Response): Promise<void> =
 /**
  * 小愈信箱：当前用户收到的信（新在前）+ 未读数
  *
- * 身份用 resolveUserId（注册用户=账号；游客=设备+IP 哈希）——
+ * 身份用 resolveUserId（注册用户=账号；游客=设备+IP 哈希）
  * **游客也要能收信**：运营端奖励邮件的收件人必须是有邮箱的注册用户，
  * 而无邮箱的游客此前完全看不到运营者写给他的回复（2026-09-30 补上）。
  * GET /api/inbox
@@ -115,7 +115,7 @@ router.post('/inbox/read', async (req: Request, res: Response): Promise<void> =>
  * 为什么要单独做这层归一，而不是只挡写入：
  *   存量数据里可能已经有 `roleplayUnlimited: true`（本门槛上线前开启的用户）。
  *   服务端从路由层（roleplay.ts prefAllowedFor）起就不放行，但如果前端仍读到 true，
- *   用户看到的就是「开关明明开着、剧情却没变化」——正是 roleplayModel.ts 里
+ *   用户看到的就是「开关明明开着、剧情却没变化」，正是 roleplayModel.ts 里
  *   明确要避免的「用户开了但静默没生效」。所以对外只暴露生效值：
  *   开关显示为关 → 用户点开 → 弹 18+ 确认 → 确认后同一次操作即真正开启。
  */
@@ -177,7 +177,7 @@ router.put('/preferences', async (req: Request, res: Response): Promise<void> =>
    *   偏好接口是「整包写入」，前端一次 savePreferences 可能顺带提交多个字段；
    *   用 400 会让别的字段也一起失败。改成降级 + 回传 adultConfirmed=false，
    *   前端就能就地弹 18+ 确认框，确认后重试同一次写入即可。
-   * 注意：这是**兜底**，不是唯一防线——真正的关卡在 roleplay.ts prefAllowedFor（路由到去限制模型那一步），
+   * 注意：这是**兜底**，不是唯一防线，真正的关卡在 roleplay.ts prefAllowedFor（路由到去限制模型那一步），
    * 因为偏好文件可能被直连请求或历史数据改成 true。
    */
   const adultConfirmed = isAdultConfirmed(userId);

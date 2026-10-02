@@ -77,7 +77,7 @@ test('未配置收件邮箱：日志兜底且不崩溃', async () => {
   process.env.ADMIN_NOTIFY_EMAIL = 'ops@example.com';
 });
 
-// —— 新用户反馈提醒（控制台收到反馈即发邮件；含游客；每日上限防灌水）——
+// 【新用户反馈提醒（控制台收到反馈即发邮件；含游客；每日上限防灌水）】
 
 function fb(partial: Partial<Feedback> = {}): Feedback {
   return {

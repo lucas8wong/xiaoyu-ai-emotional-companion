@@ -28,7 +28,7 @@ test('回合纪律块：三语齐全，且显式声明「冲突时以本节为�
   const en = rp.buildTurnDisciplineBlock('en', 'immersive');
 
   assert.ok(zh.includes('【回合纪律 · 最高优先级】'), 'zh 缺标题');
-  assert.ok(zh.includes('一律以本节为准'), 'zh 缺优先级声明 —— 压不住上文那三条正向力');
+  assert.ok(zh.includes('一律以本节为准'), 'zh 缺优先级声明，压不住上文那三条正向力');
   assert.ok(en.includes('HIGHEST PRIORITY') && en.includes('this section wins'), 'en 缺优先级声明');
   assert.ok(tw.includes('【回合紀律 · 最高優先級】'), 'zh-TW 未转繁体：' + tw.slice(0, 40));
 
@@ -64,7 +64,7 @@ test('回合纪律块：亲密场景的两处豁免（否则它会反过来压�
   assert.ok(im.includes('亲密场景除外'), '缺「用户没推进」条目的亲密豁免');
   assert.ok(im.includes('但亲密推进场景除外') && im.includes('250–450 字'), '缺「长度跟人走」的亲密豁免');
   const en = rp.buildTurnDisciplineBlock('en', 'immersive');
-  // 2026-09-25：文案由「按成人模式的亲密档（adult-mode block）」改为**引用本模式的亲密档**——
+  // 2026-09-25：文案由「按成人模式的亲密档（adult-mode block）」改为**引用本模式的亲密档**
   // 那句在非成人档是悬空引用（成人块不在 prompt 里）。所以断言改成认「本模式的亲密档 + 数字」，
   // 不再绑死旧句子；数字口径来自 narrativeStyle 档案（120–250 words，连字符/短横线都算）。
   assert.ok(/Exception — /.test(en) && /120[–-]250 words/.test(en), 'en 缺亲密豁免（本模式亲密档）');
@@ -91,7 +91,7 @@ test('roleplayTaskInstr：沉浸收尾不再要求「由你主动引出下一个
 test('V2 规则末条：从「由你先引出话题」改为「用户先、你后」', () => {
   const zh = rp.buildSystemPrompt(scenario, 'zh');
   const en = rp.buildSystemPrompt(scenario, 'en');
-  assert.ok(!zh.includes('由你先引出话题'), 'zh 旧条款仍在 —— 会继续把模型推向「自己开路」');
+  assert.ok(!zh.includes('由你先引出话题'), 'zh 旧条款仍在，会继续把模型推向「自己开路」');
   assert.ok(zh.includes('用户先、你后'), 'zh 新条款缺失');
   assert.ok(!en.includes('You introduce the topic first'), 'en 旧条款仍在');
   assert.ok(en.includes('The player first, you second'), 'en 新条款缺失');
@@ -110,7 +110,7 @@ test('成人模式仍物理移除篇幅压制条款（改了 V2 规则末条后�
   // 官方剧本走 pickRulesText：immersive + adult=true 时该条必须被删干净
   const adult = rp.buildSystemPrompt(scenario, 'zh', undefined, undefined, undefined, 'immersive', true);
   const normal = rp.buildSystemPrompt(scenario, 'zh', undefined, undefined, undefined, 'immersive', false);
-  assert.ok(!adult.includes(capZh), '成人模式下压制条款没被移除 —— relaxLengthCaps 的短语匹配被改坏了');
+  assert.ok(!adult.includes(capZh), '成人模式下压制条款没被移除，relaxLengthCaps 的短语匹配被改坏了');
   assert.ok(normal.includes(capZh), '非成人模式下不该误删');
   // 新加的「用户先、你后」条款不能被误当成压制条款删掉
   assert.ok(adult.includes('用户先、你后'), '新条款被 relaxLengthCaps 误删');
@@ -123,7 +123,7 @@ test('回合纪律块 4b「钩子 ≠ 问句」：三语齐全、两种叙事模
   const en = rp.buildTurnDisciplineBlock('en', 'immersive');
   const enCl = rp.buildTurnDisciplineBlock('en', 'classic');
 
-  // 4b 是**两种模式共用**的（经典/沉浸只有第 2/5/6 条分档）——这正是「要考虑用户使用的叙事模式」的落点
+  // 4b 是**两种模式共用**的（经典/沉浸只有第 2/5/6 条分档），这正是「要考虑用户使用的叙事模式」的落点
   for (const [name, text] of [['immersive', im], ['classic', cl]] as const) {
     assert.ok(text.includes('4b. **钩子 ≠ 问句**'), name + ' 档缺 4b 条款');
     assert.ok(text.includes('禁止用征询用户要不要继续的元话语收尾'), name + ' 档缺「元话语」禁令');
@@ -191,11 +191,11 @@ test('composeRoleplaySystem：纪律块在写作规则之后；写了偏好时�
   const discipline = rp.buildTurnDisciplineBlock('zh', 'immersive');
   /**
    * 2026-09-27：成人档的纪律块有了**自己的分支**（成人模式下不再收窄主动性，见
-   * `roleplayAdultInitiative.test.ts`）。所以这里按 adult 取对应变体比对 ——
+   * `roleplayAdultInitiative.test.ts`）。所以这里按 adult 取对应变体比对
    * 不变量本身没变（纪律块仍是最后一段），变的是「哪一份纪律块」。
    */
   const disciplineAdult = rp.buildTurnDisciplineBlock('zh', 'immersive', false, true);
-  assert.ok(composed.endsWith(disciplineAdult), '回合纪律块不在最末尾 —— 位置错了就压不住上文');
+  assert.ok(composed.endsWith(disciplineAdult), '回合纪律块不在最末尾，位置错了就压不住上文');
   assert.strictEqual(composed.indexOf(disciplineAdult), composed.lastIndexOf(disciplineAdult), '纪律块重复注入');
   // 顺序：成人块 → 任务指令 → 纪律
   assert.ok(composed.indexOf('【任务指令】') < composed.indexOf(disciplineAdult));
@@ -228,6 +228,6 @@ test('composeRoleplaySystem：纪律块在写作规则之后；写了偏好时�
   const withPref = rp.composeRoleplaySystem({
     sys, lang: 'zh', style: 'immersive', adult: false, taskInstr: '【任务指令】', userPreference: '想要温柔一点',
   });
-  assert.ok(withPref.endsWith('想要温柔一点'), '偏好块不在最末 —— 会被纪律块与规则压住');
+  assert.ok(withPref.endsWith('想要温柔一点'), '偏好块不在最末，会被纪律块与规则压住');
   assert.ok(withPref.indexOf(rp.buildTurnDisciplineBlock('zh', 'immersive', true)) < withPref.indexOf('想要温柔一点'));
 });

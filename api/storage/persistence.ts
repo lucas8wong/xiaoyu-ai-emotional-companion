@@ -2,7 +2,7 @@
  * 持久化抽象层（存储层唯一缝点）
  *
  * 所有业务服务的数据读写都必须经过本模块（readJson / writeJson / persistence），
- * 不允许直接碰 fs —— 这样将来把存储迁移到 SQLite / Cloudflare D1 / KV 时，
+ * 不允许直接碰 fs，这样将来把存储迁移到 SQLite / Cloudflare D1 / KV 时，
  * 只需要替换本模块的 PersistenceProvider 实现（按「逻辑文件」存取 JSON），
  * 18 个业务服务零改动。
  *
@@ -74,7 +74,7 @@ export function readJson<T>(file: string, fallback: T, reviver?: (key: string, v
 
 /**
  * 启动自检（2026-09-28 审查 P1-7）：数据目录必须存在，且必须真的能写入并读回。
- * 为什么必须 fail fast：sqlite 实现曾把读写异常全部吞掉，而 data/ 又没有任何代码创建——
+ * 为什么必须 fail fast：sqlite 实现曾把读写异常全部吞掉，而 data/ 又没有任何代码创建
  * new Database('data/xiaoyu.sqlite') 抛 SQLITE_CANTOPEN 后，每个读返回 null、每个写被丢弃，
  * 接口却照样 200。宁可启动失败，也不能「看起来正常地把用户数据全丢掉」。
  */

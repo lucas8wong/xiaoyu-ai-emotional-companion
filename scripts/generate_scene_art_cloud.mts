@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 剧情场景配图 —— **云 API 批量生成**（替代本机 SDXL 跑批 `generate_scene_art.py`）
+ * 剧情场景配图，**云 API 批量生成**（替代本机 SDXL 跑批 `generate_scene_art.py`）
  *
  * 为什么换云：本机只有一张 16GB 卡，跑批要与 VoxCPM TTS 侧车互斥（显存闸 ≥11.5GB 才敢跑），
  * 且 SDXL 画不准机构性道具。云 API 不看显存、几分钟跑完、语义遵循度更高。
@@ -77,7 +77,7 @@ const auditRetries = Math.max(0, Number(valOf('--audit-retries', '3')) || 3);
 const isDry = has('--dry-run');
 const skipExisting = has('--skip-existing') || isDry;
 
-// —— 选层 ——
+// 【选层】
 const all = has('--all') || (!has('--pool') && !has('--masters') && !has('--own'));
 const rows: Row[] = [];
 if (has('--pool') || all) for (const r of cfg.matrix || []) rows.push({ group: 'pool', key: `${r.worldview}-${r.theme}`, file: r.file, prompt: r.prompt, negative: r.negative, worldview: r.worldview, theme: r.theme });
@@ -99,7 +99,7 @@ console.log(`webp 转码器：${webpTool()}   输出目录：${outDir}`);
 console.log(`本次待出：${queue.length} 张（pool ${queue.filter(r => r.group === 'pool').length} / masters ${queue.filter(r => r.group === 'masters').length} / own ${queue.filter(r => r.group === 'own').length}）  估价 ≈ ¥${est}`);
 
 if (isDry) {
-  // 干跑：把"将要发给模型的完整清单"落盘 —— 可人工逐条审 prompt（红线"用户文本不进 prompt"的可审计证据）
+  // 干跑：把"将要发给模型的完整清单"落盘，可人工逐条审 prompt（红线"用户文本不进 prompt"的可审计证据）
   const planPath = path.join(ROOT, 'temp', 'scene-art-cloud-plan.json');
   fs.mkdirSync(path.dirname(planPath), { recursive: true });
   fs.writeFileSync(planPath, JSON.stringify({
@@ -118,7 +118,7 @@ if (!providerReady(provider)) {
   process.exit(2);
 }
 
-// —— 红线抽检（复用 generate_scene_art.py 的判定口径）——
+// 【红线抽检（复用 generate_scene_art.py 的判定口径）】
 const AUDIT_Q = '这是一张场景插画。请只输出一个JSON对象（不要其他文字）：'
   + '{"has_person":true|false,"has_text":true|false,"description":"一句话"}。'
   + 'has_person 包含人物、剪影、远景行人、镜中人、雕像分辨不清的人形；has_text 包含任何可辨认的文字/字母/招牌/水印。';
@@ -154,7 +154,7 @@ async function audit(bytes: Buffer, ext: string): Promise<{ ok: boolean; why?: s
   }
 }
 
-// —— 主流程 ——
+// 【主流程】
 interface ManifestItem { file: string; group: string; provider: string; seed: number; seconds?: number; bytes?: number; ext?: string; audit?: string; error?: string; prompt: string; promptStage?: string; attempts?: number; billed?: number }
 
 /** 账号级错误（免费额度用尽/余额不足/Key 失效）一旦出现就**全批中止**，不再继续撞墙 */
@@ -163,7 +163,7 @@ let abortReason: string | null = null;
 /**
  * 阶梯式重试：**先换 seed**（同样的 prompt 换一版），**仍不合格就退到"纯主题"兜底 prompt**。
  *
- * 为什么要退一步：实测（2026-09-14）万相会把霓虹招牌上的字真画出来——8/8 张被抽检拒，
+ * 为什么要退一步：实测（2026-09-14）万相会把霓虹招牌上的字真画出来，8/8 张被抽检拒，
  * 而 `deTextTriggers` 只能清掉"词面"上的霓虹。某些剧本的空间描述里"街景/门面"这类对象类
  * 仍会稳定带出招牌 → 与其反复换 seed 抽奖（项目自己的纪律：不靠抽奖），不如退到按设计
  * 不含招牌的**主题层**，把这一张图救回来。
@@ -264,7 +264,7 @@ async function main() {
   console.log(`耗时 ${((Date.now() - started) / 1000).toFixed(0)}s，估算成本 ≈ ¥${estimateCostYuan(provider, billed)}（只算真正出图的请求；本脚本**不知道免费额度**，若走免费池则实付 ¥0，以厂商控制台账单为准）`);
   console.log(`清单：${path.relative(ROOT, manifestPath)}`);
   if (abortReason) {
-    console.error('\n🛑 已中止整批 —— 账号级错误（重试无意义）：');
+    console.error('\n🛑 已中止整批，账号级错误（重试无意义）：');
     console.error('   ' + abortReason);
     console.error('   去控制台处理后再续跑（已成功的会被 --skip-existing 跳过，不重复花钱）：');
     console.error('     · 关闭「仅使用免费额度」或充值：https://bailian.console.aliyun.com/  （费用与配额）');

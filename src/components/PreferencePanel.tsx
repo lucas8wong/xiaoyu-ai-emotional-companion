@@ -19,7 +19,7 @@ import { CHIP, GroupLabel, OptionGroup, ToggleRow } from './ui/controls';
 /**
  * ⚠️ 2026-09-23：本文件内原来还有 `selectedCls/normalCls` 两个「深色填充 + 方角」的选中态常量，
  * 只被「关系类型」一处用（「陪伴方式」网格退场后），而同一屏的其它组早就是 `CHIP` 的
- * 「沙色轨道 + 白胶囊 + 品牌细环」语言 —— 一屏两套选中文案正是 `ui/controls.tsx` 立那一层要治的病。
+ * 「沙色轨道 + 白胶囊 + 品牌细环」语言，一屏两套选中文案正是 `ui/controls.tsx` 立那一层要治的病。
  * 现在关系类型也换成 `OptionGroup`（同一套语言），这两个常量随之删除。
  */
 
@@ -80,7 +80,7 @@ interface PreferencePanelProps {
   /**
    * 关系类型（2026-09-21）：朋友 / 损友 / 家人 / 恋人。
    *
-   * 面板自己**不碰数据源**：由调用方（ChatPage）决定写哪儿——
+   * 面板自己**不碰数据源**：由调用方（ChatPage）决定写哪儿
    * 内置小愈写用户级 `savePreferences({ xiaoyuRelation })`，自定义角色写
    * `updateChatCharacter(id, { relation })`（每角色一档）。不传 = 面板自己按用户级存。
    */
@@ -270,7 +270,7 @@ export default function PreferencePanel({ onFeedback, showStoryStyle = false, on
     persist({ thinkingLevel: v });
   };
   const changeStoryStyle = (s: 'poetic' | 'concise' | 'warm' | 'abstract') => { setStoryStyle(s); persist({ storyStyle: s }); };
-  // —— AI 主动找我（推送通知）——
+  // 【AI 主动找我（推送通知）】
   const changePush = async (v: boolean) => {
     if (pushBusy) return; // 防连点
     setPushBusy(true);

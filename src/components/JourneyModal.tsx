@@ -42,7 +42,7 @@ const STORY_PREVIEW = 6;
 
 /**
  * 自建剧本内部 id 兜底：数据层（`api/services/scenarioTitle.ts`）已统一解析成用户自己起的剧名，
- * 这里只防「极端情况下内部 id 露到界面上」。两种前缀都要认——角色扮演自建是 `custom_`，
+ * 这里只防「极端情况下内部 id 露到界面上」。两种前缀都要认，角色扮演自建是 `custom_`，
  * 千世书自建是 `custom-`（此前只写下划线，于是千世书自建书在旅程里一直显示 `custom-xxxx`）。
  */
 const isCustomId = (title: string): boolean => /^custom[_-]/i.test(String(title || ''));
@@ -382,7 +382,7 @@ export default function JourneyModal({ open, onClose, onStartChat, onStartStruct
         {/* 顶部已有皮肤爱心 logo，此处不重复放第二个图标 */}
         <p className="text-gray-600 font-medium">{t('journeyEmpty')}</p>
         <p className="text-sm mt-1">{t('journeyEmptySub')}</p>
-        {/* 三个直达入口：等比例模拟首页——聊一聊/剧情演绎两张卡并列，理一理为下方居中二级入口 */}
+        {/* 三个直达入口：等比例模拟首页，聊一聊/剧情演绎两张卡并列，理一理为下方居中二级入口 */}
         <div className="mt-6 max-w-md mx-auto">
           <div className="grid grid-cols-2 gap-2">
             <button

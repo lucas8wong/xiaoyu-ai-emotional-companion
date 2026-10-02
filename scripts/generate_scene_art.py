@@ -4,7 +4,7 @@
 剧情「场景配图」离线批量生成（docs/roleplay-immersion-plan.md §4.3 = S3 出图库）
 
 生成的是**共享主题池**这一层：`public/img/roleplay-scenes/{worldview}-{theme}.webp`
-（5 世界观 × 14 主题 = 70 张），全站剧本按标签+剧情文本命中复用 —— 静态托管、即时加载、零实时算力。
+（5 世界观 × 14 主题 = 70 张），全站剧本按标签+剧情文本命中复用：静态托管、即时加载、零实时算力。
 
 配置不在这里维护：prompt/主题表/世界观都来自 `src/lib/storyScene.ts`，先用
     npx tsx scripts/export-scene-config.mts
@@ -19,7 +19,7 @@
 
 ⚠️ 显存闸（方案 §2.3 定的硬约束）：本机可用显存实测在 3.6GB↔15.5GB 之间摆动
 （VoxCPM TTS 侧车与桌面应用争用）。sdxl-turbo @1024 峰值约 10.5GB，故脚本**默认要求
-空闲 ≥ 11.5GB**，不够就退出并说明"需与 VoxCPM 互斥"——**不要**为了跑批去偷偷停生产侧车。
+空闲 ≥ 11.5GB**，不够就退出并说明"需与 VoxCPM 互斥"，**不要**为了跑批去偷偷停生产侧车。
 """
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ import zlib
 from pathlib import Path
 
 # Windows 控制台默认 GBK：直接 print ❌/✅ 会 UnicodeEncodeError 崩掉
-# （最要命的是"显存不足"提示正好用 ❌ —— 恰恰在最需要它说话时崩）。强制 UTF-8 输出。
+# （最要命的是"显存不足"提示正好用 ❌，恰恰在最需要它说话时崩）。强制 UTF-8 输出。
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
@@ -122,7 +122,7 @@ def audit_image(path: Path, env: dict, timeout: int = 120) -> dict:
         if not m:
             return {"error": "no json"}
         return json.loads(m.group(0))
-    except Exception as e:  # noqa: BLE001 —— 抽检失败不该让整批出图挂掉
+    except Exception as e:  # noqa: BLE001，抽检失败不该让整批出图挂掉
         return {"error": f"{type(e).__name__}: {e}"}
 
 
@@ -135,7 +135,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="剧情场景配图批量生成（共享主题池）")
     ap.add_argument("--config", default=str(ROOT / "temp" / "scene-config.json"))
     ap.add_argument("--out-dir", default=str(DEFAULT_OUT))
-    # ⚠️ 2026-09-14 修正：原默认 1024x576（16:9）**是错的**——场景图在真机上是**竖版**
+    # ⚠️ 2026-09-14 修正：原默认 1024x576（16:9）**是错的**，场景图在真机上是**竖版**
     #    满屏背景（手机容器实测 421×631 = 0.668，object-cover 会把 16:9 裁掉 62%）。
     #    改成竖版 3:4；口径与云路径一致（api/services/imageApi.ts 的 DEFAULT_SCENE_SIZE）。
     ap.add_argument("--size", default="960x1280", help="宽x高（默认 960x1280 竖版 3:4 场景背景）")
@@ -186,7 +186,7 @@ def main() -> int:
         print(
             f"❌ 空闲显存 {free_gb:.2f}GB < 需要的 {MIN_FREE_GB}GB。\n"
             "   sdxl-turbo@1024x576 峰值实测约 8.8GB，本机 VoxCPM TTS 侧车会占 10GB+。\n"
-            "   方案（docs/roleplay-immersion-plan.md §2.3）：**与 VoxCPM 互斥**——\n"
+            "   方案（docs/roleplay-immersion-plan.md §2.3）：**与 VoxCPM 互斥**，\n"
             "   在低峰窗口停 TTS 侧车（含守护进程）再跑批，跑完恢复；或稍后重试（占用会波动）。\n"
             "   确认要硬跑可加 --force-low-vram。"
         )
@@ -256,7 +256,7 @@ def main() -> int:
             peak = torch.cuda.max_memory_allocated() / 1024 ** 3
             secs = time.perf_counter() - t0
 
-            # —— 内置红线抽检：出现人物/文字就换 seed 重出（不靠 prompt 的运气）——
+            #。内置红线抽检：出现人物/文字就换 seed 重出（不靠 prompt 的运气）
             audit_info = {"checked": False}
             if args.audit:
                 tries = 0

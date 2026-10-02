@@ -15,8 +15,8 @@ import { isTestAccount } from '../api/routes/paymentAdmin.js';
 
 const CONFIRM = process.env.PRO_LAUNCH_CONFIRM === '1';
 
-// —— 三语公告（限时 15 天：注册即送 7 天完整 Pro）
-// 活动期按 .env PRO_TRIAL_PROMO_START=2026-09-03 + PRO_TRIAL_PROMO_DAYS=15 推导，窗口 [START, START+DAYS) → 2026-09-03 至 09-17（含首尾）。 ——
+// 三语公告（限时 15 天：注册即送 7 天完整 Pro）
+// 活动期按 .env PRO_TRIAL_PROMO_START=2026-09-03 + PRO_TRIAL_PROMO_DAYS=15 推导，窗口 [START, START+DAYS) → 2026-09-03 至 09-17（含首尾）。
 const TITLE_ZH = '限时 15 天（9/3–9/17）：注册即送 7 天完整 Pro';
 const CONTENT_ZH = '活动时间：2026年9月3日至9月17日。在此期间注册或登录，即可免费领 7 天完整 Pro：无限畅聊、更长上下文、AI 生成专属剧本、自创聊天对象（性格/背景/头像自定），越聊 TA 越成长；心情日记一键分享。限时赠送，别错过。';
 const TITLE_TW = '限時 15 天（9/3–9/17）：註冊即送 7 天完整 Pro';
@@ -24,9 +24,9 @@ const CONTENT_TW = '活動時間：2026年9月3日至9月17日。在此期間註
 const TITLE_EN = 'Limited time (Sep 3–17, 2026): 7 days of Pro free on sign-up';
 const CONTENT_EN = 'Campaign period: September 3 – September 17, 2026. Sign up or log in during this window to claim 7 full days of Pro: unlimited chats, longer context, AI-written stories, and any character you create — chat more and they grow with you; share your mood diary in one tap. Limited-time gift — don\'t miss it.';
 
-// —— 邮件 ——
+// 【邮件】
 const EMAIL_SUBJECT = '小愈 Pro 限时 15 天：注册即送 7 天完整 Pro 🎁';
-const EMAIL_ZH = '限时 15 天：现在注册或登录，都能免费体验 7 天完整 Pro（无限畅聊、更长上下文、AI 生成专属文游剧本，全都解锁）。\n\n你也可以不只有小愈——创建任何想聊天的对象，设定 TA 的性格和背景、上传头像；聊得越多，TA 会随着你们的互动慢慢成长。心情日记现在也能一键分享成图片。\n\n首次创建角色的朋友，额外送 1 次 AI 剧本生成额度。\n\n把你的自建剧本投稿到「精选」，被运营挑中的会展示给所有玩家。\n\n登录小愈，开始创造属于你们的故事。';
+const EMAIL_ZH = '限时 15 天：现在注册或登录，都能免费体验 7 天完整 Pro（无限畅聊、更长上下文、AI 生成专属文游剧本，全都解锁）。\n\n你也可以不只有小愈：创建任何想聊天的对象，设定 TA 的性格和背景、上传头像；聊得越多，TA 会随着你们的互动慢慢成长。心情日记现在也能一键分享成图片。\n\n首次创建角色的朋友，额外送 1 次 AI 剧本生成额度。\n\n把你的自建剧本投稿到「精选」，被运营挑中的会展示给所有玩家。\n\n登录小愈，开始创造属于你们的故事。';
 const EMAIL_EN = 'Every feeling deserves to be understood.';
 
 function esc(s: string): string {
@@ -59,7 +59,7 @@ async function main(): Promise<void> {
   ].join('\n');
 
   if (!CONFIRM) {
-    console.log('【DRY-RUN】未执行。将做以下动作——');
+    console.log('【DRY-RUN】未执行。将做以下动作，');
     console.log(message);
     console.log('真正执行请设 PRO_LAUNCH_CONFIRM=1（并要求 .env 设 PRO_TRIAL_DAYS=7）');
     return;

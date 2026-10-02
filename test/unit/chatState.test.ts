@@ -2,7 +2,7 @@
  * 聊一聊「会话状态层」守卫（B 档，2026-09-21）
  *
  * 这组断言钉死六件事：
- *   ① scene 只收**具体动作**——万能动作（叹气/点头/眼神）、被 slop 清单点名的道具族（手机/灯/声音）、
+ *   ① scene 只收**具体动作**：万能动作（叹气/点头/眼神）、被 slop 清单点名的道具族（手机/灯/声音）、
  *      以及**别扭句**（同一个词隔字重复，实测原句「把怀里那罐光往怀里搂了搂」）一律不收；
  *   ② 情绪惯性：判得出就更新，判不出就**沿用**（不自作主张重置成中性）；
  *   ③ 账（grudge）宁缺勿滥：短、指向你、且不处在低落气氛里，三条同时成立才记；
@@ -46,7 +46,7 @@ test('scene：具体动作收下；万能动作、被点名的道具族、别扭
   assert.equal(st.extractScene('行，我笨。'), undefined);
 });
 
-test('scene：纯函数与幂等——同一份输入跑两遍结果一致', () => {
+test('scene：纯函数与幂等，同一份输入跑两遍结果一致', () => {
   const a = st.extractScene('（把杯子往你那边推了推）喝点');
   const b = st.extractScene('（把杯子往你那边推了推）喝点');
   assert.equal(a, b);
@@ -68,7 +68,7 @@ test('mood：各档命中；判不出返回 undefined（沿用旧心情，不硬
 
 /* ───────── ③ grudge ───────── */
 
-test('grudge：短、指你、且不在低落气氛里——三条同时成立才记账', () => {
+test('grudge：短、指你、且不在低落气氛里，三条同时成立才记账', () => {
   assert.equal(st.detectGrudge({ userText: '哈哈哈你也太笨了吧', scene: 'playful' }), '哈哈哈你也太笨了吧');
   assert.equal(st.detectGrudge({ userText: '你完了', scene: 'playful' }), '你完了');
   // 不指你：用户在讲别人
@@ -105,7 +105,7 @@ test('updateChatState：不改入参（纯函数），过期条目自动消失',
   const snapshot = JSON.parse(JSON.stringify(prev));
   const next = st.updateChatState(prev, { userText: '在吗', aiReply: '在。', now });
 
-  assert.deepEqual(prev, snapshot, '入参被改动了 —— updateChatState 必须是纯函数');
+  assert.deepEqual(prev, snapshot, '入参被改动了，updateChatState 必须是纯函数');
   assert.equal(next.scene, undefined, '过期 scene 应当消失');
   assert.equal(next.grudges, undefined, '过期账应当消失');
   assert.equal(next.jokes, undefined, '过期梗应当消失');
@@ -232,7 +232,7 @@ test('接线：成长档案里的状态会进真实 system；连续两条带括�
 
 /**
  * 夹具是**真实数据**：同一个糗事在三个不同会话里被讲了三次（用户原话「好像过了很久又说一次」）。
- * 三条都要能被抽到 —— 第一条尤其重要：它后半截带"你"，靠**逗号也切句**才保得住前半截。
+ * 三条都要能被抽到，第一条尤其重要：它后半截带"你"，靠**逗号也切句**才保得住前半截。
  */
 const REAL_OWN_LIFE = [
   '反正我也没什么好藏的，今天我自己还坐错车，一路坐到终点站才反应过来，你要测反应速度的话我大概不及格。',
@@ -290,7 +290,7 @@ test('注入块：明写"已经讲过、不许再从头讲一遍"，并给延续
   assert.ok(block.includes('【你自己的近况 · 这些你已经讲过了】'), '块标题不在');
   assert.ok(block.includes('今天坐错车一路坐到终点站'));
   assert.ok(block.includes('不许再从头讲一遍'), '缺"别再讲第二遍"的硬要求');
-  assert.ok(block.includes('新进展'), '只禁不给出口 —— 会把模型逼向"干脆不提自己"');
+  assert.ok(block.includes('新进展'), '只禁不给出口，会把模型逼向"干脆不提自己"');
   // 探针实测（scripts/chat-selflife-probe.mts）：直问"你今天干嘛了"时她仍会把**过程**复述一遍
   // ⇒ 因此加一条"非要提就一句话带过"，这一条也是从实测来的，不是想当然。
   assert.ok(block.includes('一句话带过'), '缺"别复述过程"这一层（实测她会把经过再讲一遍）');

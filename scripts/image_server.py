@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-剧情「按需出图」GPU 侧车（端口 8004）—— docs/roleplay-immersion-plan.md §4.5（S5）
+剧情「按需出图」GPU 侧车（端口 8004），docs/roleplay-immersion-plan.md §4.5（S5）
 
 职责边界（很重要，别越界）：
 - 本侧车**只接受白名单枚举**（worldview / theme / seed / 尺寸），**不接受自由文本 prompt**。
@@ -111,7 +111,7 @@ def get_pipe():
         # 这种必须走 from_single_file；否则 from_pretrained 会直接报缺 model_index.json。
         if MODEL_ID.lower().endswith((".safetensors", ".ckpt")) or os.path.isfile(MODEL_ID):
             # ⚠️ from_single_file 只在**具体 pipeline 类**上（AutoPipelineForText2Image 没有这个方法，实测报
-            # AttributeError）。先按 SD1.5 试，失败再按 SDXL 试 —— 两种单文件 checkpoint 都能覆盖。
+            # AttributeError）。先按 SD1.5 试，失败再按 SDXL 试，两种单文件 checkpoint 都能覆盖。
             from diffusers import StableDiffusionPipeline, StableDiffusionXLPipeline
             try:
                 pipe = StableDiffusionPipeline.from_single_file(MODEL_ID, torch_dtype=torch.float16)
@@ -148,7 +148,7 @@ class GenRequest(BaseModel):
     seed: Optional[int] = None
     width: int = 1024
     height: int = 576
-    # 负向词（可选）。**只在 guidance > 1 时被使用**——guidance = 0 时 diffusers 会忽略它，
+    # 负向词（可选）。**只在 guidance > 1 时被使用**，guidance = 0 时 diffusers 会忽略它，
     # 所以老调用方（sceneArt.ts 不带该字段）行为一字不变。
     negative: Optional[str] = None
 

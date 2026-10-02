@@ -97,7 +97,7 @@ router.get('/likes/stream', (req: Request, res: Response): void => {
  * GET /api/roleplay/model-config → { available, zh, en, adultConfirmed, unlimitedActive, routing }
  *
  * available=false 表示第三方模型未配置或被运维开关（RP_PROVIDER=deepseek）强制切回，
- * 此时前端应把开关置灰并说明原因——避免用户选了却静默用不上。
+ * 此时前端应把开关置灰并说明原因，避免用户选了却静默用不上。
  * adultConfirmed=false 表示该用户还没做过 18+ 成年确认（services/adultConfirm.ts）：
  * 前端点开「无限制模式」时必须先弹确认、确认成功后重试，否则服务端不会真的放行。
  * unlimitedActive = 该用户此刻**真的会**走上去限制模型（= 偏好为 true 且已成年确认），
@@ -170,7 +170,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
     const { scenarioId, messages, lang, aiName, userName, userPreference, narrativeStyle, innerMonologueEnabled, thinkingLevel, continueTurn, replacedReply, mode } = req.body || {};
     /**
      * 本回合演的是哪条线（solo = 只有主角；multi = cast 同场）。
-     * ⚠️ 这是**生成侧**的开关：单角色线**绝不能**注入群像块 —— 否则用户演 solo 时会莫名多出配角。
+     * ⚠️ 这是**生成侧**的开关：单角色线**绝不能**注入群像块，否则用户演 solo 时会莫名多出配角。
      * 缺省 solo，与「老数据/老客户端 = 单存档」同一口径。
      */
     const rpMode: RoleplayMode = parseRoleplayMode(mode);
@@ -207,7 +207,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
 
     /**
      * 手动续写（B/C 方案的前端入口）：用户看到「这条回复没写完」后点「续写」，
-     * 前端把**同一条历史原样带回来**并置 `continueTurn: true` —— 最后一条 assistant 就是断点。
+     * 前端把**同一条历史原样带回来**并置 `continueTurn: true`，最后一条 assistant 就是断点。
      * 语义与自动续写完全一致（同一段文字继续往下长），只是由用户点出来、并且**算作新的一回合**
      * （与「重新生成」同口径：各扣一次额度）。
      */
@@ -286,12 +286,12 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
     /**
      * 跑一轮生成（含 C 方案自动续写）。
      *
-     * 抽成一个函数是为了让「流式」与「非流式」两条分支共用**同一套完整性逻辑**——
+     * 抽成一个函数是为了让「流式」与「非流式」两条分支共用**同一套完整性逻辑**
      * 否则旧客户端会看到和网页端不同的收尾（一边自动补齐、一边留半截）。
      */
     /**
      * 本轮是否**真的**路由到了第三方去限制模型（由生成链路的 onMeta 回报）。
-     * 生成后重复闸默认只在这一档生效（见 repeatGate 的 scope）——退化是那台 abliterated 模型的特性，
+     * 生成后重复闸默认只在这一档生效（见 repeatGate 的 scope），退化是那台 abliterated 模型的特性，
      * 官方 DeepSeek 链路不该为它多花一次调用与等待。
      */
     let viaUnlimited = false;
@@ -349,7 +349,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
 
 
     /**
-     * 生成后重复闸（A 方案，2026-09-24）——判据与采纳策略全在 services/repeatGate.ts，这里只负责接线。
+     * 生成后重复闸（A 方案，2026-09-24），判据与采纳策略全在 services/repeatGate.ts，这里只负责接线。
      *
      * 为什么重写那一版**不带 onToken**：第一版已经逐 token 流出去了，再流一遍会让用户看到两段。
      * 所以重写期间只下发 {type:'rewrite'} 让前端显示"正在重写"，最终由 done.reply 一次性覆盖
@@ -413,7 +413,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
       /**
        * 心跳保活（2026-09-25 补）：长静默期（上游排队、长上下文生成、一次续写两段拼接）
        * 上游一个字节都不吐，而前端 `roleplayChatStream` 的空闲看门狗是 **90s**
-       *（api.ts 的 createIdleGuard）——这条链路此前**没有心跳**（只有 likes/stream 有），
+       *（api.ts 的 createIdleGuard），这条链路此前**没有心跳**（只有 likes/stream 有），
        * 静默超过 90s 就会被前端判成 TIMEOUT 掐断；Cloudflare 回源也有「长时间无数据」的耐心上限。
        * 注释行（': ping'）不是 `data:` 前缀，客户端解析器天然忽略，不会污染正文。
        */
@@ -479,13 +479,13 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
       }
       const repeat = outputSafe ? await assessFinalRepeat(finalReply) : { free: false, degree: 0 };
       if (repeat.free) {
-        // 判为重复：不 commit、改回滚 —— 本次不消耗额度
+        // 判为重复：不 commit、改回滚。本次不消耗额度
         if (creditToken && quotaUserId) { quotaStore.rollbackCredit(quotaUserId, creditToken); creditToken = null; }
         for (let i = 0; i < quotaConsumed; i++) { if (quotaUserId) quotaStore.rollbackChat(quotaUserId); }
         quotaConsumed = 0;
       } else if (creditToken && quotaUserId) { quotaStore.commitCredit(quotaUserId, creditToken); creditToken = null; }
       /**
-       * B 方案：done 里带上「本轮写完没有」——`finishReason` 是上游原值（`length` = 撞上 max_tokens），
+       * B 方案：done 里带上「本轮写完没有」，`finishReason` 是上游原值（`length` = 撞上 max_tokens），
        * `incomplete` 是服务端的文本判据结果（见 src/lib/replyCompleteness.ts），`continued` 是自动续写次数。
        * 前端据此：仍不完整时给「没写完 + 续写」入口；埋点区分 PARTIAL_LENGTH / PARTIAL_UNCLOSED / PARTIAL_MID_SENTENCE。
        * 老前端不认识这几个字段 → 行为与改造前完全一致（兼容）。
@@ -513,7 +513,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
 
     const repeat = outputSafe ? await assessFinalRepeat(finalReply) : { free: false, degree: 0 };
     if (repeat.free) {
-      // 判为重复：不 commit、改回滚 —— 本次不消耗额度
+      // 判为重复：不 commit、改回滚。本次不消耗额度
       if (creditToken && quotaUserId) { quotaStore.rollbackCredit(quotaUserId, creditToken); creditToken = null; }
       for (let i = 0; i < quotaConsumed; i++) { if (quotaUserId) quotaStore.rollbackChat(quotaUserId); }
       quotaConsumed = 0;
@@ -540,7 +540,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
  *
  * 只服务一种剧本：**本人用无限制模型创建的自建剧本**（createdWithUnlimited === true）。
  * 这种剧本进聊天时成人模式默认开（见 services/roleplay.ts 的 unlimitedForScenario），
- * 所以用户需要一条「只关掉这个剧本」的路——否则他只能去关全局偏好，
+ * 所以用户需要一条「只关掉这个剧本」的路，否则他只能去关全局偏好，
  * 而那一下会把他**所有**剧本的成人模式一起关掉。
  *
  * 为什么不复用 POST /api/user/preferences 写 roleplayUnlimitedByScenario：
@@ -549,7 +549,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
  *
  * 权限与红线：
  *   - 必须登录（自建剧本按 userId 私有）；
- *   - 必须是**本人**的自建剧本，且创建时确实用了无限制模型——资格剧本之外一律拒绝（400），
+ *   - 必须是**本人**的自建剧本，且创建时确实用了无限制模型，资格剧本之外一律拒绝（400），
  *     免得这条接口变成绕过全局开关的第二条入口；
  *   - 要「开」必须先过 18+ 成年确认：没确认就**降级为 false 落盘**并回传 adultConfirmed，
  *     与 /api/user/preferences 的写入闸同口径（悄悄拒绝会让前端显示成「开着但服务端不用」）。
@@ -665,7 +665,7 @@ router.post('/suggestions', async (req: Request, res: Response): Promise<void> =
 
     /**
      * 判重退费（2026-10-01）：新一批建议与**上一批建议**比。
-     * 判到重复就**不 commit、改回滚**——本次不消耗额度，并把 duplicate/free 回执前端，
+     * 判到重复就**不 commit、改回滚**，本次不消耗额度，并把 duplicate/free 回执前端，
      * 由前端保留上一批建议并提示「这次的建议和上次一样，本次未扣额度」。
      * 注意：判重失败/超时一律按「不重复」处理（照常扣费），绝不让判重把主流程拖坏。
      */
@@ -703,7 +703,7 @@ router.post('/suggestions', async (req: Request, res: Response): Promise<void> =
  * DELETE /api/roleplay/session?scenarioId=&mode=
  *
  * `mode`：solo（单角色线）/ multi（多角色线）。**每部剧本每条线各一份存档**。
- * 缺省 solo —— 老客户端（只会传 scenarioId）读到的仍是它当年那一份，不会因为多出多角色线而串档。
+ * 缺省 solo，老客户端（只会传 scenarioId）读到的仍是它当年那一份，不会因为多出多角色线而串档。
  */
 router.get('/session', (req: Request, res: Response): void => {
   const scenarioId = String(req.query?.scenarioId || '');
@@ -735,18 +735,18 @@ router.post('/session', (req: Request, res: Response): void => {
     const result = roleplaySessionStore.save(userId, sid, messages, typeof userPreference === 'string' ? userPreference.slice(0, 4000) : undefined, snapTitle || undefined, rpMode);
     /**
      * 🚨 未完成回合护栏命中（2026-09-18，见 src/lib/rpWriteGuard.ts 的 dropsSavedReply）：
-     * 客户端想把「还没有回复的这一轮」截断保存 —— 以前这一步会**静默抹掉已生成的回复**，
+     * 客户端想把「还没有回复的这一轮」截断保存，以前这一步会**静默抹掉已生成的回复**，
      * 会话永久停在那条没人回的用户消息上。现在拒写并在这里记一条运营埋点：
      * 「今天有多少轮剧情是本该有回复、却没落上盘」，不再只靠用户投诉才知道。
      *
-     * ⚠️ 口径（2026-09-18 第二版）：命中**不等于**「用户看到了失败提示」——它多半正是「重新生成」的
+     * ⚠️ 口径（2026-09-18 第二版）：命中**不等于**「用户看到了失败提示」，它多半正是「重新生成」的
      * 正常截断（前端 2026-09-18 起已在源头不写这一笔，见 RoleplayPage.saveSession）。所以运营端
      * `aiFailureStore` 把 `UNANSWERED_TURN` 归为**护栏类**，不计入「用户实际看到失败提示」。
      */
     if (result.blocked) {
       /**
        * 测试设备不计（与 `POST /api/ai-failure` 同口径）：验证脚本（headless 真机跑）也会做「重新生成」
-       * 之类的操作，护栏命中不该在运营卡上留下假失败 —— 那会让「今天有多少次 AI 真没接上」被自测污染。
+       * 之类的操作，护栏命中不该在运营卡上留下假失败，那会让「今天有多少次 AI 真没接上」被自测污染。
        */
       if (!isTestRequest(getClientIp(req), String(req.headers['x-device-id'] || ''))) {
         aiFailureStore.record('roleplay', result.blocked, false);
@@ -836,10 +836,10 @@ router.post('/custom', (req: Request, res: Response): void => {
   }
   const rec = customRoleplayStore.create(user.userId, { title, aiName, aiPersona, background, opening, avatar: avatar || undefined, chatBackground: chatBackground || undefined,
     // 审计标记（方案 A2·客户端自述）：创建这条路用的是「剧本生成」开关，服务端不掌握，由前端上报。
-    // 只采信 boolean / 字符串——传 'true'、1、对象之类的畸形值一律忽略（宁可记为未记录，也不要错数据）。
+    // 只采信 boolean / 字符串：传 'true'、1、对象之类的畸形值一律忽略（宁可记为未记录，也不要错数据）。
     createdWithUnlimited: typeof createdWithUnlimited === 'boolean' ? createdWithUnlimited : undefined,
     createdWithModel: typeof createdWithModel === 'string' ? createdWithModel : undefined,
-    // AI 建剧提示词（前端保存时回传「AI 帮我写剧本」用过的灵感）——控制台据此看到用户是拿什么描述生成的
+    // AI 建剧提示词（前端保存时回传「AI 帮我写剧本」用过的灵感），控制台据此看到用户是拿什么描述生成的
     creationPrompt: typeof creationPrompt === 'string' ? creationPrompt : undefined });
   res.json({ success: true, data: rec });
 });
@@ -862,7 +862,7 @@ router.post('/custom/draft', async (req: Request, res: Response): Promise<void> 
       res.status(401).json({ success: false, error: '请先登录', code: 'LOGIN_REQUIRED' });
       return;
     }
-    // 灵感/整份剧本：**不做字数截断**（用户可能直接贴整份剧本）——只 trim，安全审核与模型各自见全量
+    // 灵感/整份剧本：**不做字数截断**（用户可能直接贴整份剧本），只 trim，安全审核与模型各自见全量
     const idea = normalizeCustomIdea(req.body?.idea);
     const rpLang: RPLang = String(req.body?.lang || '') === 'en' ? 'en' : String(req.body?.lang || '') === 'zh-TW' ? 'zh-TW' : 'zh';
     const langKey = toOutputLang(rpLang);
@@ -924,7 +924,7 @@ router.post('/custom/draft', async (req: Request, res: Response): Promise<void> 
      * ⚠️ 两类失败必须**分开报**（2026-09-20 修）：
      *  · 内容/安全不过（scenarioCheck / outputCheck）→ `CONTENT_REJECTED`：这是红线，用户该改灵感；
      *  · **草稿不完整**（模型把 JSON 写坏/写漏）→ `DRAFT_FORMAT`：与内容无关，用户只需再点一次。
-     *  以前两者共用 CONTENT_REJECTED，前端文案是"这个灵感暂时无法生成，请换一种描述再试" ——
+     *  以前两者共用 CONTENT_REJECTED，前端文案是"这个灵感暂时无法生成，请换一种描述再试"
      *  会让人误以为**自己的想法被判定违规**（用户报的"AI 创剧本有时会出错"多数就是这一类格式抖动）。
      */
     const unsafe = !scenarioCheck.safe || !outputCheck.safe;
@@ -939,7 +939,7 @@ router.post('/custom/draft', async (req: Request, res: Response): Promise<void> 
           code: 'DRAFT_FORMAT',
           error: langKey === 'en'
             ? 'The draft did not come back properly this time. Please tap generate again — nothing was charged.'
-            : '这次没能生成成功（不是内容问题），再点一次就好——本次没有扣额度',
+            : '这次没能生成成功（不是内容问题），再点一次就好，本次没有扣额度',
         });
         return;
       }
@@ -1224,7 +1224,7 @@ router.post('/custom/:id/revise', async (req: Request, res: Response): Promise<v
           code: 'DRAFT_FORMAT',
           error: langKey === 'en'
             ? 'The change did not come back properly this time. Please tap it again — nothing was charged.'
-            : '这次没能改成功（不是内容问题），再点一次就好——本次没有扣额度',
+            : '这次没能改成功（不是内容问题），再点一次就好，本次没有扣额度',
         });
         return;
       }
@@ -1335,7 +1335,7 @@ router.get('/scene/art', (req: Request, res: Response): void => {
     success: true,
     data: {
       url: findCachedSceneArt(scenarioId, theme),
-      // 该剧本的「主场景图」（每部内置剧本一张）——前端优先用它，让整部剧在自己的空间里
+      // 该剧本的「主场景图」（每部内置剧本一张），前端优先用它，让整部剧在自己的空间里
       masterUrl: findMasterSceneArt(scenarioId),
       // C 方案：该剧本**这一幕的批量专属图**（云 API 跑批预生成，确定存在时优先于上面两者）
       ownUrl: findOwnThemeArt(scenarioId, theme),

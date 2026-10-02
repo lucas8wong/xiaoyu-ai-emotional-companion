@@ -5,7 +5,7 @@ import { buildTurnMessages } from '../engine/prompt'
 
 describe('liyuan 隐藏 endTone', () => {
   it('致死/封箱隐藏结局存在且为哨兵 safety<=-1', () => {
-    // 注：一夜爆红·伶界天骄 已从「隐藏天堂结局(endTone 即终局)」改为「人生里程碑」——
+    // 注：一夜爆红·伶界天骄 已从「隐藏天堂结局(endTone 即终局)」改为「人生里程碑」
     // 抱病登台爆红只置 has(一夜爆红) 并继续人生，到满期 fame>=60 才以「伶界天骄」盖棺(见 liyuan.ts)。
     for (const t of ['开罪权贵·横死乱世', '名节尽毁·封箱绝迹']) {
       const e = liyuan.endings.find((x) => x.tone === t)

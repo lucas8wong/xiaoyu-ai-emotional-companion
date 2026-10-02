@@ -16,9 +16,9 @@ describe('hookQuestion', () => {
     expect(hookQuestion(sc, st)).toContain('羽化登仙')
   })
   it('极端横祸：引用灾祸引子', () => {
-    const st = { ...initState(sc), fateHighlight: { text: '飞来横祸——一场无妄之灾', kind: 'disaster' as const, turn: 3 } }
+    const st = { ...initState(sc), fateHighlight: { text: '飞来横祸：一场无妄之灾', kind: 'disaster' as const, turn: 3 } }
     const q = hookQuestion(sc, st)
     expect(q).toContain('飞来横祸')
-    expect(q).not.toContain('一场无妄之灾') // lead() 只取破折号前的引子，剥掉尾巴
+    expect(q).not.toContain('一场无妄之灾') // lead() 只取分隔号前的引子，剥掉尾巴
   })
 })

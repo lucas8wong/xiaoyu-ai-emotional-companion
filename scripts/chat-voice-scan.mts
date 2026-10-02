@@ -5,7 +5,7 @@
  *   「小愈经常说类似『我在呢，想说点什么的时候慢慢说。』，这也太人机了……让小愈不管在哪种陪伴模式下
  *    都更像正常 18 到 26 岁人类会说话的方式」。
  *   上一次做同类收敛（`scripts/rp-ending-scan.mts`，治「结尾老问『想跟我多说点？』」）的教训写得很清楚：
- *   **改提示词之前必须先知道真实比例与分布**，否则只能照着一个用户看到的几句话去改 —— 那正是 overfit。
+ *   **改提示词之前必须先知道真实比例与分布**，否则只能照着一个用户看到的几句话去改，那正是 overfit。
  *
  * 它给出四件事，全部来自线上真实数据：
  *   ① 基线：AI 回复的长短分布 + 「空表态短句率」（只有表态、不接具体内容的短回复占比）；
@@ -13,7 +13,7 @@
  *   ③ 口癖榜：**同一个短语在一段会话里被反复用了多少条回复**（判据与提示词共用 `collectShortTics`，
  *      避免「扫描说一套、提示词禁另一套」）；
  *   ④ 分布：按**陪伴方式**（hug/ally/clarify/light/objective，2026-09-23 起用户侧档位已退场，
- *      该维度只反映**历史数据**里用户当时选的档位）与**按用户**分档 —— 用来判断
+ *      该维度只反映**历史数据**里用户当时选的档位）与**按用户**分档，用来判断
  *      「是不是某一种模式、或某一个人的毛病」，而不是普遍习惯。
  *   ⑤ 探针（`--probe=<正则>`，2026-09-23 加）：只盯用户投诉的那**一句**具体的话（如「我接住了」），
  *      给出命中数 + 样本。它是**描述性**的：命中 0 只说明那一句没了，**不能**拿来宣称"人机感改好了"。
@@ -33,7 +33,7 @@
  * **全程 readonly 打开，不写任何东西。**
  *
  * 剔除口径（如实计数、不静默丢）：
- *   · 系统/兜底文案（`src/lib/fallbackBubbles.ts` 那张表）—— 它按红线 6 本就不该出现在业务消息里，
+ *   · 系统/兜底文案（`src/lib/fallbackBubbles.ts` 那张表），它按红线 6 本就不该出现在业务消息里，
  *     混进统计会把「系统的毛病」说成「模型的习惯」；
  *   · 上游退化输出（整条 ≤3 字残渣，或同一个小句在正文里出现 ≥3 次的自循环复读）。
  *
@@ -89,7 +89,7 @@ const kv = <T>(key: string): T | null => {
   try { return row ? (JSON.parse(row.value) as T) : null; } catch { return null; }
 };
 
-/** 时间戳两种形态混存（数字毫秒 / ISO 字符串），统一归一化——同 rp-ending-scan.mts 的踩坑说明 */
+/** 时间戳两种形态混存（数字毫秒 / ISO 字符串），统一归一化，同 rp-ending-scan.mts 的踩坑说明 */
 function tsOf(value: unknown): number {
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (typeof value === 'string') {
@@ -112,7 +112,7 @@ const isTestIdentity: (userId: string) => boolean = (() => {
   };
 })();
 
-/** 陪伴方式（preferences.json 是数组；无记录的用户按默认 hug —— 与 preferences.ts 的归一化一致） */
+/** 陪伴方式（preferences.json 是数组；无记录的用户按默认 hug，与 preferences.ts 的归一化一致） */
 const MODE_OF: (userId: string) => string = (() => {
   const prefs = kv<Array<{ userId?: string; mode?: string }>>('preferences.json') || [];
   const byId = new Map<string, string>();
@@ -127,7 +127,7 @@ const MODE_LABEL: Record<string, string> = {
 /**
  * 「我在」这一族的两个**描述性**判据（2026-09-19）。
  *
- * 为什么要单列：用户投诉的就是这个字面组合，线上实测占 23.2%（13/56）——这是最直接的前后对比读数。
+ * 为什么要单列：用户投诉的就是这个字面组合，线上实测占 23.2%（13/56），这是最直接的前后对比读数。
  * 但**决策指标不是它**：写死一个短语只能盯住一个人看到的那一句（`src/lib/rpEnding.ts` 开篇同一条教训）。
  * 所以报告里字面与家族分成两行，且明确标注为「描述性」；真正决定"改好没有"的是上一条结构指标。
  */
@@ -137,7 +137,7 @@ const FAMILY_TIC = /我在呢|慢慢说|我在这儿|我就在这里|我一直�
 /**
  * 系统引导类文案（**不是模型生成的**）：`prompts.ts` 里那几个常量，命中即整条剔除。
  *
- * 首跑基线时没剔它，榜单上立刻冒出「聊一聊」「换个身份」「要不要」「的角色」四个"高频短句"——
+ * 首跑基线时没剔它，榜单上立刻冒出「聊一聊」「换个身份」「要不要」「的角色」四个"高频短句"
  * 全是从「角色扮演指令分流引导语」那几条常量里来的。它们跟小愈怎么说话毫无关系，
  * 混进去就是把**代码里的常量**说成**模型的习惯**（与 rp-ending-scan 剔除剧本开场白是同一类踩坑）。
  */
@@ -211,9 +211,9 @@ for (const s of records) {
     if (Number.isFinite(ts) && ts > until) continue;
     // 剔除①：系统/兜底文案（红线 6 的同类：它不是角色说的话）
     if (isFallbackBubble(content)) { excluded.fallback += 1; continue; }
-    // 剔除②：代码里的常量（分流引导语）——同上，不是模型生成的
+    // 剔除②：代码里的常量（分流引导语），同上，不是模型生成的
     if (CANNED.has(content.trim())) { excluded.canned += 1; continue; }
-    // 剔除③：上游退化输出（整条残渣 / 自循环复读）——判据与 rp-ending-scan 一致
+    // 剔除③：上游退化输出（整条残渣 / 自循环复读），判据与 rp-ending-scan 一致
     const tail = rpLastClause(content);
     const repeats = tail.length >= 2 ? content.split(tail).length - 1 : 0;
     if (content.trim().length <= 3 || repeats >= 3) { excluded.degenerate += 1; continue; }
@@ -224,7 +224,7 @@ for (const s of records) {
     if (probeHit && probeSamples.length < 200) probeSamples.push({ day: dayOf(ts), mode: MODE_OF(userId), text: content });
     replies.push({
       userId, sessionKey, day: dayOf(ts), mode: MODE_OF(userId), lang,
-      // 长度一律用「去标点的内容字数」——与 `chatIsShortReply` 同一把尺子，否则阈值对不上账
+      // 长度一律用「去标点的内容字数」，与 `chatIsShortReply` 同一把尺子，否则阈值对不上账
       chars: content.replace(/[^\u4e00-\u9fffA-Za-z0-9]/g, '').length,
       ending,
       filler: ending === 'statement' && chatIsShortReply(content, lang),
@@ -236,7 +236,7 @@ for (const s of records) {
   }
   if (!replies.length) continue;
 
-  // 会话内口癖：同一短语出现在 ≥3 条不同回复里（门槛比提示词的 2 条更严 —— 这里要的是「严重到什么程度」）
+  // 会话内口癖：同一短语出现在 ≥3 条不同回复里（门槛比提示词的 2 条更严，这里要的是「严重到什么程度」）
   const tics = new Map<string, number>();
   for (const t of collectShortTics(texts, lang, {
     shortMinCount: 3, shortMax: 8, shortWindow: texts.length, shortMinLen: 3, shortMaxLen: 12,
@@ -260,7 +260,7 @@ if (!allReplies.length) {
   process.exit(0);
 }
 
-// ———————————————— 聚合 ————————————————
+// 【聚合】
 const pct = (n: number, d: number): string => (d ? (100 * n / d).toFixed(1) + '%' : '—');
 const quantile = (arr: number[], p: number): number => (arr.length ? arr[Math.min(arr.length - 1, Math.floor(p * arr.length))] : 0);
 const sortedChars = allReplies.map((r) => r.chars).sort((a, b) => a - b);
@@ -321,7 +321,7 @@ const streakSessions = sessionAggs.filter((s) => s.fillerPairs > 0).length;
 const totalFillerPairs = sessionAggs.reduce((a, s) => a + s.fillerPairs, 0);
 const days = [...byDay.keys()].filter((d) => d !== '未知日期').sort();
 
-// ———————————————— 输出 ————————————————
+// 【输出】
 console.log('\n=== 聊一聊「人机感 / 复读」扫描（只读 ' + DB_PATH + '）===');
 console.log('范围：' + (includeTest ? '含测试/开发身份' : '仅真实用户（已排除测试/开发身份）')
   + (since ? '｜自 ' + dayOf(since) : '') + (Number.isFinite(until) ? '｜至 ' + dayOf(until) : '')
@@ -330,9 +330,9 @@ console.log('样本：原始 AI 回复 ' + rawAssistant + ' 条 → 剔除 系�
   + ' + 代码常量（分流引导语）' + excluded.canned + ' + 上游退化 ' + excluded.degenerate
   + ' → 统计 ' + allReplies.length + ' 条｜会话 ' + sessionAggs.length + ' 段｜日期 '
   + (days[0] || '—') + ' ~ ' + (days[days.length - 1] || '—'));
-console.log('口径：剔除的都不是「模型怎么说话」——兜底文案与分流引导语是系统写的（红线 6 的同类，'
+console.log('口径：剔除的都不是「模型怎么说话」，兜底文案与分流引导语是系统写的（红线 6 的同类，'
   + '首跑没剔就把「代码里的常量」说成了「模型的习惯」），退化输出是上游自循环复读。');
-console.log('注意：「空表态短句」是**结构代理指标**（很短 + 陈述收尾），不等于「那些条条都是空壳」——'
+console.log('注意：「空表态短句」是**结构代理指标**（很短 + 陈述收尾），不等于「那些条条都是空壳」，'
   + '真正的空壳要靠语义判，脚本只用**可判定**的结构做前后对比。所以它只能用来比前后，不能拿来宣称绝对值。');
 console.log('阈值：很短 = 去标点后 ≤24 字（按真实分布 p10–p25 定的，见 `chatIsShortReply` 的说明；'
   + '这个产品里的「很短」是 20 字上下，不是 10 字）。');
@@ -372,7 +372,7 @@ if (probeRe) {
     console.log('    样本（最多 5 条）：');
     for (const s of probeSamples.slice(0, 5)) console.log('      · [' + s.day + ' · ' + s.mode + '] ' + s.text.slice(0, 80));
   } else {
-    console.log('    （真实回复里 0 命中；样本 ' + allReplies.length + ' 条 —— 0 只说明这一句没出现，不等于整体改好）');
+    console.log('    （真实回复里 0 命中；样本 ' + allReplies.length + ' 条，0 只说明这一句没出现，不等于整体改好）');
   }
 }
 
@@ -394,14 +394,14 @@ for (const [k, b] of [...byLang.entries()].sort((a, c) => c[1].total - a[1].tota
 
 console.log('\n【按用户分布】（AI 回复 ≥' + MIN_TURNS_PER_USER + ' 条的用户，共 ' + perUser.usersCounted + '/' + perUser.usersWithData + ' 个）');
 if (perUser.usersCounted === 0) {
-  // ⚠️ 首跑这里打的是「p50 0% p90 0% 最高 0%」——那会被读成「空表态率是 0」，而真相是
+  // ⚠️ 首跑这里打的是「p50 0% p90 0% 最高 0%」，那会被读成「空表态率是 0」，而真相是
   //    **一个用户都没达到门槛**（样本里每段会话平均不到 2 条回复）。宁可明说样本不足，也不给假读数。
   console.log('  ⚠️ 样本不足：没有任何用户达到 ≥' + MIN_TURNS_PER_USER + ' 条，**出不了用户分位**'
     + '（不是「0%」）。全站按条数加权 ' + pct(fillers, allReplies.length) + ' 条可参考，但它会被少数长会话带偏。');
   console.log('  → 用户维度的 p50/p90 要等真实数据积累后再跑同一命令；这也是「样本 56 条只能看方向」的一部分。');
 } else {
   console.log('  空表态短句率 p50 ' + perUser.p50 + '%   p90 ' + perUser.p90 + '%   最高 ' + perUser.max + '%'
-    + '   （对比全站按条数加权 ' + pct(fillers, allReplies.length) + ' —— 差得越多，说明被少数用户/超长会话带偏得越厉害）');
+    + '   （对比全站按条数加权 ' + pct(fillers, allReplies.length) + '，差得越多，说明被少数用户/超长会话带偏得越厉害）');
 }
 const topUsers = [...byUser.entries()].filter(([, b]) => b.total >= MIN_TURNS_PER_USER)
   .sort((a, b) => b[1].filler / b[1].total - a[1].filler / a[1].total).slice(0, 8);

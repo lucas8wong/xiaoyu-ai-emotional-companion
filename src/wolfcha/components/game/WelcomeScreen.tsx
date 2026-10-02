@@ -401,7 +401,7 @@ export function WelcomeScreen({
    * 开局被额度拦住 → **统一额度门控**（2026-09-27 用户拍板 B：「注册才能玩」+ 拦截改成注册引导）。
    *
    * 为什么走事件而不是自己弹窗：小愈的额度用尽决策已经有**一处中央实现**（`xiaoyu:quota-exhausted`
-   * → `Home.handleQuotaExhausted`）——游客→注册弹窗、已注册免费→「获取更多额度」（分享/反馈）、
+   * → `Home.handleQuotaExhausted`）：游客→注册弹窗、已注册免费→「获取更多额度」（分享/反馈）、
    * Plus→会员升级。狼人杀自己再弹一套，就会与聊一聊/剧情出现两套口径（2026-09-05 那轮就是为了
    * 消灭这种分叉）。这里只负责：**告诉用户为什么开不了**（带真实数字）+ 把决策交出去。
    *
@@ -562,11 +562,11 @@ export function WelcomeScreen({
     // Demo mode: allow guests and skip credit checks
     // ⚠️ 移植适配：上游要求「先登录它自己的账号」，而小愈的身份由小愈负责
     // （请求头由 adapters/xiaoyu-identity.ts 注入，服务端据此识别用户与额度）。
-    // 这里不再弹它那套登录框——它的 Supabase 登录在小愈里本来就用不了，
+    // 这里不再弹它那套登录框，它的 Supabase 登录在小愈里本来就用不了，
     // 会让用户卡在一个无法完成的登录上（表现为「点了没反应」）。
     // 真正的准入在服务端：/api/credits/consume 的每日次数闸门与点数账本。
 
-    // ① 提前拦（2026-09-27 用户拍板 B）：额度**低于开局准入**时不必发那个注定 402 的请求 ——
+    // ① 提前拦（2026-09-27 用户拍板 B）：额度**低于开局准入**时不必发那个注定 402 的请求
     //    直接走统一额度门控，用户立刻知道出路（游客→注册 / 已注册→获取额度或等明天）。
     //    `minStartTiao` 拿不到（老服务端 / 接口失败）时为 null → 落回下面那条「低余额提醒」旧行为。
     if (
@@ -597,7 +597,7 @@ export function WelcomeScreen({
 
   /**
    * 印章点击（移植适配，非上游原样）：
-   * 上游把「还没签名字」表达为按钮 disabled —— 用户点了毫无反应、也没有任何提示，
+   * 上游把「还没签名字」表达为按钮 disabled：用户点了毫无反应、也没有任何提示，
    * 实测被当成「按钮坏了」。这里改为**保持可点**，并在名字为空时给出明确反馈：
    * 聚焦到输入框 + 复用上游自己的提示文案（welcome.signature.waiting）。
    */
@@ -709,7 +709,7 @@ export function WelcomeScreen({
                     ? t("welcome.account.unlimited")
                     : t("welcome.account.remaining", { count: creditsLoading ? "..." : (credits ?? 0) })}
                 </span>
-                {/* A′（2026-09-17）：开局前必须告知本局约消耗多少 —— 一局 40 条 ≈ 免费档两天额度，
+                {/* A′（2026-09-17）：开局前必须告知本局约消耗多少，一局 40 条 ≈ 免费档两天额度，
                     不提示的话用户玩完才发现额度没了（这是当时最大的投诉来源）。 */}
                 {gameEstimate != null && (
                   <span className="opacity-70">
@@ -828,7 +828,7 @@ export function WelcomeScreen({
             )}
 
             <div className="mt-4 flex flex-col items-center gap-3">
-              {/* A′（2026-09-17）：**按印章前**就要看到本局花多少 —— 藏在账号下拉里等于没提示 */}
+              {/* A′（2026-09-17）：**按印章前**就要看到本局花多少，藏在账号下拉里等于没提示 */}
               {gameEstimate != null && (
                 <div className="wc-seal-hint" data-testid="ww-cost-notice">
                   {unlimited
@@ -851,7 +851,7 @@ export function WelcomeScreen({
                 className="wc-wax-seal"
                 onClick={handleSealClick}
                 data-testid="ww-seal"
-                /* 无障碍名（2026-09-21 真机走查）：印章是本模式的主按钮，但它是纯图标按钮——
+                /* 无障碍名（2026-09-21 真机走查）：印章是本模式的主按钮，但它是纯图标按钮
                    aria-label / title / 文本全空、SVG 也没 aria-hidden ⇒ 读屏用户听到一个没有名字的「按钮」。
                    这里补三语 label（welcome.sealAria）。 */
                 aria-label={t('welcome.sealAria')}

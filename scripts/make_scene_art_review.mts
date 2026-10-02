@@ -53,7 +53,7 @@ const exists = (f: string) => ['webp', 'png', 'jpg'].some((e) => fs.existsSync(p
 /**
  * 🔴 **图片 URL 必须带 mtime 版本号**。
  * 项目自己踩过这个坑（CHANGELOG：用户看到"旧的暖光客厅"其实是浏览器缓存）：出图后文件名不变，
- * 浏览器/CDN 会继续给旧图。对照页刷新看不到更新，就是这个原因 —— 图片 URL 一模一样。
+ * 浏览器/CDN 会继续给旧图。对照页刷新看不到更新，就是这个原因，图片 URL 一模一样。
  * 这里用**文件 mtime** 做版本号：重出即失效，刷新就一定是新图。
  */
 function versioned(file: string): string {
@@ -180,7 +180,7 @@ body.only-pending figure:not(.pending){display:none}
   <span id="aspectCount" class="dim">旧横版待重出 —</span>
   <span class="dim">生成于 ${new Date().toLocaleString('zh-CN')} · 图片 URL 带 mtime 版本号 · 本页由后台定时重生成</span>
 </header>
-<p class="cropnote">📱 下面默认按<strong>手机实际显示</strong>预览：容器 421×631 + <code>object-cover</code>（真机实测）。看到被裁掉的样子是<strong>对的</strong>——就是用户看到的画面。出图尺寸现为 <strong>960×1280（竖版 3:4）</strong>。</p>
+<p class="cropnote">📱 下面默认按<strong>手机实际显示</strong>预览：容器 421×631 + <code>object-cover</code>（真机实测）。看到被裁掉的样子是<strong>对的</strong>，就是用户看到的画面。出图尺寸现为 <strong>960×1280（竖版 3:4）</strong>。</p>
 <div class="toc">${[...byScenario.keys()].map((sid) => `<a href="#s-${esc(sid)}">${esc(titles.get(sid) || sid)}</a>`).join('')}${[...poolByWv.keys()].map((wv) => `<a href="#p-${esc(wv)}">池·${esc(wv)}</a>`).join('')}</div>
 ${sections}
 ${poolSections}

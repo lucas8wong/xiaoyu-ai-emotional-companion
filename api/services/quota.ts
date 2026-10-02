@@ -15,13 +15,13 @@ import { referralEventStore } from './referralEvents.js';
 const USERS_FILE = dataFile('users.json');
 
 const FREE_QUOTA = Number(process.env.FREE_QUOTA || 5); // 兼容旧字段
-// —— 分池额度：理一理(结构化深度分析)按「次」，对话(聊一聊+角色扮演)共用按「条」 ——
+// 【分池额度：理一理(结构化深度分析)按「次」，对话(聊一聊+角色扮演)共用按「条」】
 const FREE_STRUCT = Number(process.env.FREE_STRUCT || 3); // 理一理 免费次数
 const FREE_CHAT = Number(process.env.FREE_CHAT || 5);     // 对话 免费条数（聊一聊/角色扮演共用）
 const UNLOCK_DAYS = Number(process.env.UNLOCK_DAYS || 30);
 const INVITE_BONUS = Number(process.env.INVITE_BONUS || 50); // 邀请人每成功邀请 1 人得的额外额度（次）
 export const INVITE_MAX = Number(process.env.INVITE_MAX || 20); // 单个邀请码最多可成功邀请人数（防刷）
-// —— 引荐（referral）推广规则：买一送一 + 被邀人加赠 ——
+// 【引荐（referral）推广规则：买一送一 + 被邀人加赠】
 /**
  * 邀请人须注册满 N 天（防「新号自邀」套利）。**默认 0 = 不设年龄门槛**（2026-09-19 用户拍板 B 方案）。
  * 为什么取消：门槛挡在最愿意分享的新用户身上，而业内普遍把门槛装在被邀人侧（完成激活/消费）；
@@ -31,7 +31,7 @@ export const INVITE_MAX = Number(process.env.INVITE_MAX || 20); // 单个邀请�
 export const REFERRAL_INVITER_MIN_DAYS = Number(process.env.INVITE_INVITER_MIN_DAYS || 0);
 /**
  * 新账号加成：邀请人注册 ≤ INVITE_NEW_ACCOUNT_BOOST_DAYS 天时，邀请成功奖励 ×INVITE_NEW_ACCOUNT_BOOST
- * （2026-09-19 用户拍板：把「7 天」从门槛改成**加成窗口**——同一笔防刷预算，奖励早期口碑传播者）。
+ * （2026-09-19 用户拍板：把「7 天」从门槛改成**加成窗口**，同一笔防刷预算，奖励早期口碑传播者）。
  * 只作用于**邀请人**那一侧；被邀人（朋友）的额度不变。
  */
 export const REFERRAL_NEW_ACCOUNT_BOOST = Number(process.env.INVITE_NEW_ACCOUNT_BOOST || 1.5);
@@ -43,7 +43,7 @@ const REGISTER_CHAT_BONUS = Number(process.env.REGISTER_CHAT_BONUS || 20); // �
 const FEEDBACK_REWARD_CHAT = Number(process.env.FEEDBACK_REWARD_CHAT || 3); // 已注册用户「提交反馈」每日一次获得的对话额度（条），用于「额度用完可反馈获得额度」
 const CHAT_BONUS_START = process.env.CHAT_BONUS_START || ''; // 活动开始日期 YYYY-MM-DD（空=不限）
 const CHAT_BONUS_END = process.env.CHAT_BONUS_END || '';     // 活动结束日期 YYYY-MM-DD（空=不限）
-// —— 预设邀请码（注册时输入，匹配即额外送对话额度）：格式 "CODE:bonus,CODE2:bonus2"，小写匹配 ——
+// 【预设邀请码（注册时输入，匹配即额外送对话额度）：格式 "CODE:bonus,CODE2:bonus2"，小写匹配】
 const PRESET_INVITE_CODES: Record<string, number> = (() => {
   const raw = process.env.INVITE_CODES || '';
   const out: Record<string, number> = {};
@@ -83,7 +83,7 @@ const MEMORY_PRO = Number(process.env.MEMORY_PRO || 120);
 // 合并为批量异步写，避免每个 AI 请求都同步整表序列化 + 原子写盘；内存 Map 始终是权威（最终一致）。
 const QUOTA_SAVE_DEBOUNCE_MS = 300;
 
-// —— 统一点数（credit）：按预计/真实 token 成本折算的额度，1 credit ≈ 1/CREDIT_PER_YUAN 元 ——
+// 【统一点数（credit）：按预计/真实 token 成本折算的额度，1 credit ≈ 1/CREDIT_PER_YUAN 元】
 // 覆盖所有要用 AI 额度的功能（聊一聊/理一理/角色扮演/文游回合/托管/AI生成剧本/自定义草稿）。
 // 后端记账用点数；前端换算成用户熟悉的「≈ 约还能聊 N 条」（见 UNIT_CREDIT）。
 /**
@@ -104,7 +104,7 @@ export const UNIT_CREDIT = Number(process.env.UNIT_CREDIT || 2); // 1 标准单�
 
 /**
  * 「累计获得赠送点数」这个字段从哪天开始记（运营端口径说明用）。
- * 之前只存余额、不存累计，所以**老记录算不出「赠送已用」**——控制台对老记录显示「—」并标注这个起点，
+ * 之前只存余额、不存累计，所以**老记录算不出「赠送已用」**，控制台对老记录显示「—」并标注这个起点，
  * 不用 0 冒充（0 会被读成「一次都没用过」，是错的）。改口径只改这一行。
  */
 export const CREDIT_GRANT_TRACKING_SINCE = '2026-09-29';
@@ -116,7 +116,7 @@ export const CREDIT_GRANT_TRACKING_SINCE = '2026-09-29';
  * （`REGISTER_CHAT_BONUS`，活动期内由注册流程 `addChatBonus` 发到 `creditBonus`）。
  *
  * 为什么必须把游客单列一档：游客身份 = `sha256(设备指纹 :: IP)`（见 `identify()`），
- * **换 IP 就等于换一个全新的人**、重新领一份满额日额度——线上真实案例：同一台设备两天里出现
+ * **换 IP 就等于换一个全新的人**、重新领一份满额日额度，线上真实案例：同一台设备两天里出现
  * 3 个游客身份、各领 200 点（= 每天 20 条），控制台看到"游客一直能玩下去"。
  * 把游客档压到 5 条，让「注册」成为拿到 20 条/天与赠送额度的唯一途径（IP 轮换仍能重置，
  * 但每次重置只值 5 条；彻底堵住需要按 `deviceKey` 合并计数，见 quota.ts 的 identify/listByDeviceKey）。
@@ -130,7 +130,7 @@ export const GUEST_DAILY_CREDIT = Number(process.env.GUEST_DAILY_TIAO || 5) * UN
  * ── Pro「无限」的内部公平使用阀（2026-09-17 加，用真实数据定的）────────────────
  *
  * 为什么必须有：校准报告（`temp/quota-calibration.mjs`）显示 Pro 的 **P90 = 280 条/天**（≈ ¥2.8/天），
- * 而 Pro 月费 $9.99 ≈ **¥2.4/天** —— 一个重度用户**一天就能吃掉一个月的收入**。这是「无限」唯一真实的成本敞口。
+ * 而 Pro 月费 $9.99 ≈ **¥2.4/天**，一个重度用户**一天就能吃掉一个月的收入**。这是「无限」唯一真实的成本敞口。
  *
  * 设计原则（与方案文档 §4.4「内部安全阀不对外展示」一致）：
  *  - **不改变对外的「无限」承诺**：`getCreditQuota()` 仍返回 `unlimited: true`、界面仍显示「无限」；
@@ -188,7 +188,7 @@ function thinkingFactor(level?: string): number {
 export function estimateCreditFromTokens(promptTokens: number, completionTokens: number): number {
   // ⚠️ 刻意**不传** `at`：点数按 off-peak 基准价折算，**不随时段波动**。
   // 分时定价（peak ×2）只作用于运营端的成本记账（usage.ts 的 record 会传调用发起时刻），
-  // 否则同一个动作在港澳白天（正好是 UTC peak 窗口）要多扣一倍额度——
+  // 否则同一个动作在港澳白天（正好是 UTC peak 窗口）要多扣一倍额度
   // 那是产品体验决策，不是账单口径（还会让 Pro 的每日点数安全阀提前触发）。
   const cost = costFromUsage({ prompt_tokens: promptTokens, completion_tokens: completionTokens });
   return Math.max(1, Math.round(cost * CREDIT_PER_YUAN));
@@ -236,7 +236,7 @@ export function estimateFeatureCredit(feature: string, opts: { inputText?: strin
  *
  * 口径：**账本、显示、价目表全是整数**，一个动作 = 固定 N 条，不再按 token 逐次折算。
  * 为什么：按 token 折算会让「剩余条数」出现小数（用户看不到，但推荐器/后台/对账都要换算），
- * 而且用户无法预期"发一条会掉多少"。**不同功能单价不同**（越耗 token 越贵）这条仍然成立——
+ * 而且用户无法预期"发一条会掉多少"。**不同功能单价不同**（越耗 token 越贵）这条仍然成立
  * 只是价格**事前定好**，不再逐次估算。
  *
  * 定价依据（2026-09-17 真实路由实测，详见 `统一点数账本…doc` §4.5）：
@@ -263,7 +263,7 @@ export const ACTION_PRICE_POINTS: Record<string, number> = {
 };
 
 /**
- * 取某个动作的**整数价**（点）。未知动作回落到 1 条——宁可少收也不要把用户挡在门外，
+ * 取某个动作的**整数价**（点）。未知动作回落到 1 条，宁可少收也不要把用户挡在门外，
  * 同时 `console.warn` 提醒补价目表（防止新增功能悄悄免费）。
  */
 /** AI 狼人杀一局价（条）。放在这里做**单源**：狼人杀路由与会员页推荐器都读它。 */
@@ -271,7 +271,7 @@ export const WEREWOLF_GAME_TIAO = 40;
 
 /**
  * 推荐器用的「每模式一次动作 = 多少条」（全部整数，来源就是上面的价目表）。
- * 前端**不写死**任何数字——改价目表/改单价，会员页的推荐器自动跟随。
+ * 前端**不写死**任何数字，改价目表/改单价，会员页的推荐器自动跟随。
  *  - chat：聊天或剧情扮演一句/一回合（同价，合并成一条滑块）
  *  - textgame：AI 文游一回合
  *  - structure：理一理**一整条流程**（分析→问题→详细→故事→追问，五步各自 2 条）
@@ -290,7 +290,7 @@ export function featureCostTiao(): Record<string, number> {
 export function actionPricePoints(action: string): number {
   const p = ACTION_PRICE_POINTS[action];
   if (typeof p === 'number' && p > 0) return p;
-  console.warn('[Quota] 价目表缺少动作「' + action + '」，按 1 条计费——请补 ACTION_PRICE_POINTS');
+  console.warn('[Quota] 价目表缺少动作「' + action + '」，按 1 条计费，请补 ACTION_PRICE_POINTS');
   return UNIT_CREDIT;
 }
 
@@ -301,7 +301,7 @@ export function actionPricePoints(action: string): number {
  * 那一刻起「剩余条数」就是小数，前端只能 `floor` 并把文案写成「**≈** 还能聊 N 条」
  * （2026-09-17 那次「還能聊 Infinity 條」就是同一类显示层裂缝）。
  *
- * 少数动作（狼人杀）仍然**按真实 token 用量多退少补**，但**结算金额四舍五入到整条**——
+ * 少数动作（狼人杀）仍然**按真实 token 用量多退少补**，但**结算金额四舍五入到整条**
  * 这样既保留"用得多扣得多、用得少退得多"，又保证余量恒为整条。
  */
 export function roundCreditToTiao(points: number): number {
@@ -346,7 +346,7 @@ export interface UserRecord {
   inviteDeviceKey?: string;         // 被邀人注册时的设备指纹哈希（供「设备/IP 不同」反套利）
   inviteIp?: string;                // 被邀人注册时的 IP（供「设备/IP 不同」反套利）
   inviteeRewardedInviter?: boolean; // 该用户首次付费后是否已奖励过邀请人（只奖一次）
-  // —— 邀请结算状态（2026-09-19 B 方案：门槛装在被邀人侧）——
+  // 【邀请结算状态（2026-09-19 B 方案：门槛装在被邀人侧）】
   invitePending?: boolean;          // 该用户经推广链接注册且已通过注册期反套利，正在等「首次真实使用」结算
   invitePendingAt?: number;         // 进入待激活的时间（审计/区间统计用）
   inviteQualifiedAt?: number;       // 首次真实使用触发了结算的时间（幂等标记：结算过就不再重试）
@@ -362,20 +362,20 @@ export interface UserRecord {
   charGiftGranted?: boolean;        // 是否已发过「首次创建角色的 AI 剧本额度」
   /**
    * 运营账号功能覆盖（2026-09-18，控制台「🛠 运营账号」面板）：**只对该账号自身生效**。
-   * 开启后 `getPlan()` 直接返回 `opsPlan`、`isUnlocked()` 视为会员中——即「档位锁定 + 永不到期」，
+   * 开启后 `getPlan()` 直接返回 `opsPlan`、`isUnlocked()` 视为会员中，即「档位锁定 + 永不到期」，
    * 因此不受 `unlockUntil` 到期影响，也不需要反复手动续费；关闭即恢复账号原本的 plan/unlockUntil 记录。
    * 只由控制台 `POST /api/payment/admin/ops-account` 写入（其它路径一律不碰这两个字段）。
    */
   opsMode?: boolean;                // 是否开启「全功能开放（不过期）」
   opsPlan?: 'free' | 'plus' | 'pro'; // 覆盖档位（默认 pro）
   opsSince?: number;                // 开启时间（审计）
-  // —— 统一点数（credit）账本：按预计/真实 token 折算，跨所有 AI 功能 ——
+  // 【统一点数（credit）账本：按预计/真实 token 折算，跨所有 AI 功能】
   creditDate?: string;              // 每日记账日期 YYYY-MM-DD
   creditUsedToday?: number;         // 今日已用点数（对每日上限）
   creditBonus?: number;             // 持久赠送点数（注册/邀请/反馈/打卡），先于每日上限消耗
   /**
    * **累计获得**的赠送点数（只统计、不参与扣减）。为什么要单独一个字段：`creditBonus` 是**余额**，
-   * 扣减直接做减法，账本里既没有「累计获得」也没有「累计已用」——运营端想问「他赠送的额度用了多少」
+   * 扣减直接做减法，账本里既没有「累计获得」也没有「累计已用」，运营端想问「他赠送的额度用了多少」
    * 就算不出来（2026-09-29 用户提问：「赠送余额为什么没用已用的记录？」）。
    * 从现在起每次发放都累加，`已用 = 累计获得 − 当前余额`。
    * ⚠️ 历史发放无法回算 → 老记录该字段为 `undefined`，运营端显示「—」并标注起点。
@@ -461,7 +461,7 @@ class QuotaStore {
    *
    * ⚠️ `deviceId` 为空时**不打标签**（2026-09-27）：`identifyByDevice('')` 恒等于 `sha256('dev:anon')`，
    * 若照打标签，**所有没带 `X-Device-Id` 的客户端会共用同一个「设备」桶**（心跳 `sendBeacon` 就打不了
-   * 自定义头，线上历史上有 259 个这种身份）——那等于把全站这些人并成一个额度池，真人反而被饿死。
+   * 自定义头，线上历史上有 259 个这种身份），那等于把全站这些人并成一个额度池，真人反而被饿死。
    * 不打标签 = 这条记录不参与设备合并，退化为原来的「设备指纹 + IP」口径（与改造前一致）。
    */
   setDeviceKey(userId: string, deviceId: string): void {
@@ -596,7 +596,7 @@ class QuotaStore {
    *
    * 为什么不写 trialProGrantedAt：那个标记是「新人 7 天试用已领」的判据（`isNewcomerEligible`）；
    * 节日礼通常只有 1 天，若也打上该标记，会把当天新注册的用户**永久排除**在之后的 7 天新人礼之外
-   * ——小礼吃掉大礼。故节日礼只加时间、不打标记；谁领过由节日礼自己的 marker 记（见 holidayGift.ts）。
+   *。小礼吃掉大礼。故节日礼只加时间、不打标记；谁领过由节日礼自己的 marker 记（见 holidayGift.ts）。
    * 与 `grantProTrial` 一致：从「当前更晚的日期」起算，可叠加/延长。
    */
   grantProGift(userId: string, days: number): UserRecord {
@@ -697,7 +697,7 @@ class QuotaStore {
       registerChatBonus: this.isChatBonusActive() ? REGISTER_CHAT_BONUS : 0, // 活动期内注册可送的对话额度（前端提示用）
       registerProPromoActive: proPromoActive, // 新人 Pro 限时活动是否进行中（前端注册页优先提示用）
       registerProDays: proPromoDays,          // 新人注册即送的 Pro 天数（0=未开启）
-      // 运营账号覆盖：对外表现得像「永久会员」——否则接口返回 unlocked=true 而 App 侧仍可能显示「已过期」
+      // 运营账号覆盖：对外表现得像「永久会员」，否则接口返回 unlocked=true 而 App 侧仍可能显示「已过期」
       // （opsMode 只对运营账号自身生效，且关掉即恢复原样，见 UserRecord.opsMode）
       unlockUntil: (user.opsMode && plan !== 'free')
         ? Math.max(Number(user.unlockUntil) || 0, Date.now() + 3650 * 24 * 60 * 60 * 1000)
@@ -716,7 +716,7 @@ class QuotaStore {
       creditUnlimited: cq.unlimited,          // 统一口径下的 Pro：无限（前端据此显示「无限」，而不是把 null 当成 0）
       creditRemain: cq.creditRemain,
       creditDailyCap: cq.dailyCap,
-      // 分档日额度（点数）：前端文案的**唯一来源**——「游客 N 条 / 注册 M 条」的数字都从这里取，
+      // 分档日额度（点数）：前端文案的**唯一来源**，「游客 N 条 / 注册 M 条」的数字都从这里取，
       // 前端任何地方都不许写死 5 / 20（改 .env 就全局跟着变）。
       guestDailyCredit: GUEST_DAILY_CREDIT,
       freeDailyCredit: FREE_DAILY_CREDIT,
@@ -755,7 +755,7 @@ class QuotaStore {
    * 把该用户的**所有额度池**归一成同一形状、一次给全，控制台不再各处自己拼口径：
    *  - `struct`：理一理池（免费 3 + 邀请/打卡等奖励）
    *  - `chat`：对话池（聊一聊/角色扮演共用，旧「条」口径）
-   *  - `credit`：统一点数池（点数制开启时**这才是真正的可用额度**）—— 点数已按 `unitCredit` 换算成「条」
+   *  - `credit`：统一点数池（点数制开启时**这才是真正的可用额度**），点数已按 `unitCredit` 换算成「条」
    *  - `plus`：Plus 每日额度（仅 plus 档；旧口径表）
    *  - `genCredit`：AI 生成额度（文游/剧本生成）
    *  - `pendingReward`：还没弹给用户看的奖励
@@ -811,9 +811,9 @@ class QuotaStore {
 
   /**
    * 每日点数上限。**两种口径，靠 `CREDIT_QUOTA_ENABLED` 切换**：
-   * - 统一口径（开关打开）：Pro = **无限**（`Infinity`）——「无限」就写无限，不再"有的无限、有的上限"；
+   * - 统一口径（开关打开）：Pro = **无限**（`Infinity`）：「无限」就写无限，不再"有的无限、有的上限"；
    *   成本靠内部安全阀兜（AI 托管 / 生成剧本硬顶 + 异常用量告警），不占对外权益行。
-   * - 旧口径（开关关闭）：Pro 仍按 `PRO_DAILY_CREDIT` 兜底——**线上狼人杀旁路此刻在用这套值**，
+   * - 旧口径（开关关闭）：Pro 仍按 `PRO_DAILY_CREDIT` 兜底，**线上狼人杀旁路此刻在用这套值**，
    *   保持原样，避免在正式切换前改变线上行为。
    */
   private creditDailyCap(user: UserRecord): number {
@@ -899,7 +899,7 @@ class QuotaStore {
    * 结算（多退少补）：用真实 usage 折算的 actualCredit 与预扣 reserved 比较，
    * 少扣则退还，多扣补收。失败/内容被拒时走 rollbackCredit 全额退还。
    */
-  /** 告警去重：`${userId}:${date}` —— 当天只报一次，避免刷日志 */
+  /** 告警去重：`${userId}:${date}`，当天只报一次，避免刷日志 */
   private heavyUsageAlerted = new Set<string>();
 
   /**
@@ -953,7 +953,7 @@ class QuotaStore {
     this.saveToDisk();
   }
 
-  /** 结算：保留预扣的点数（按预计值计费，不校正）——适用于「估算值足够」的功能，清理预留令牌即可 */
+  /** 结算：保留预扣的点数（按预计值计费，不校正），适用于「估算值足够」的功能，清理预留令牌即可 */
   commitCredit(userId: string, token: string): void {
     const res = this.creditReservations.get(token);
     if (!res) return;
@@ -980,7 +980,7 @@ class QuotaStore {
    */
   private warnIfNotTiao(points: number, where: string): void {
     if (!Number.isFinite(points) || points % UNIT_CREDIT === 0) return;
-    console.warn(`⚠️ [Quota] 非整条点数进出账本：${where} ${points} 点（UNIT_CREDIT=${UNIT_CREDIT}）——请用 roundCreditToTiao / ceilCreditToTiao / floorCreditToTiao 对齐`);
+    console.warn(`⚠️ [Quota] 非整条点数进出账本：${where} ${points} 点（UNIT_CREDIT=${UNIT_CREDIT}），请用 roundCreditToTiao / ceilCreditToTiao / floorCreditToTiao 对齐`);
   }
 
   /** 给用户增加持久点数（注册/邀请/反馈/打卡），先于每日上限消耗 */
@@ -1001,7 +1001,7 @@ class QuotaStore {
    * 只把点数退回余额、**不计入「累计获得」**（退款 / 补偿专用）。
    *
    * 为什么必须与 `addCreditBonus` 分开：控制台的「赠送已用」= 累计获得 − 余额。
-   * 退款若被当成「发放」，累计就虚高、已用虚低 —— 运营端会以为用户几乎没消耗（2026-09-29 修）。
+   * 退款若被当成「发放」，累计就虚高、已用虚低，运营端会以为用户几乎没消耗（2026-09-29 修）。
    * 典型场景：狼人杀局账的预留令牌随进程重启丢失，结算时只能直接退余额（`wolfchaCompat`）。
    * 另外它**不写 pendingReward**：退款不是奖励，不该给用户弹「恭喜获得额度」。
    */
@@ -1131,7 +1131,7 @@ class QuotaStore {
   /**
    * 奖励入账的唯一出口（注册 / 邀请 / 反馈 / 打卡）。
    *
-   * **统一口径下只发点数**（`creditBonus`），不再往「条」池里加——否则同一个用户会同时持有
+   * **统一口径下只发点数**（`creditBonus`），不再往「条」池里加，否则同一个用户会同时持有
    * 点数余额与旧的条数余额，正是本次要消灭的两套账。
    * `count` 的口径始终是「条」：换算 = `count × UNIT_CREDIT`，用户拿到的当量不变。
    */
@@ -1329,7 +1329,7 @@ class QuotaStore {
 
   /**
    * 记一条「推广链接注册但**没发奖励**」的台账（只记录，不发放）。
-   * 用途：控制台「📣 邀请推广」下钻明细要能回答「人来了为什么没给邀请人算奖励」——
+   * 用途：控制台「📣 邀请推广」下钻明细要能回答「人来了为什么没给邀请人算奖励」
    * 这个判定依赖**当时**的设备/IP 环境，事后无法可靠还原，所以必须在判定当刻留痕。
    * @param reason same-device / same-ip / inviter-too-new / inviter-not-account / inviter-cap-reached / self-invite
    */
@@ -1537,7 +1537,7 @@ class QuotaStore {
    * 引荐是否有效（反套利）。每次处理时实时校验，`now` 可注入便于测试。
    * 1) 邀请人 ≠ 被邀人（有邀请归属）
    * 2) 邀请人须为注册账号（游客分享的链接不计）
-   * 3) 邀请人注册满 REFERRAL_INVITER_MIN_DAYS 天——**默认 0 = 不设年龄门槛**（2026-09-19 B 方案改由被邀人侧门槛承担防刷）
+   * 3) 邀请人注册满 REFERRAL_INVITER_MIN_DAYS 天，**默认 0 = 不设年龄门槛**（2026-09-19 B 方案改由被邀人侧门槛承担防刷）
    * 4) 设备/IP 不同：被邀人注册设备/IP 不得与邀请人最近设备/IP 相同（任一相同即视为自邀）
    */
   isReferralValid(inviteeUserId: string, now: number = Date.now()): { valid: boolean; reason?: string } {
@@ -1595,7 +1595,7 @@ class QuotaStore {
     // 被邀人月付：引荐有效 → 送半月
     const friendBonusDays = valid && purchase === 'monthly' ? REFERRAL_MONTHLY_BONUS_DAYS : 0;
 
-    // —— 推广台账（只记录，不发放）：邀请人获得的会员天数 + 被邀人月付加赠天数 ——
+    // 【推广台账（只记录，不发放）：邀请人获得的会员天数 + 被邀人月付加赠天数】
     // 放在这里而不是各个调用点（Stripe 单次/订阅、微信人工确认），保证「谁发的奖励谁记账」，
     // 将来新增第三条支付路径也不会漏记。
     if (inviter || friendBonusDays > 0) {

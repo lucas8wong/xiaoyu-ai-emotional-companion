@@ -236,7 +236,7 @@ export default function Home() {
   /**
    * ⚠️ 移植适配：上游在对局结束时 `setAiVoiceEnabled(false)`，
    * 这会把 false **持久化**到本地设置，导致用户下一局完全没语音（且找不到原因）。
-   * 小愈不做这件事——语音开关只由用户在设置里决定。
+   * 小愈不做这件事，语音开关只由用户在设置里决定。
    */
   useEffect(() => {
     if (gameState.phase !== "GAME_END") return;
@@ -1192,7 +1192,7 @@ export default function Home() {
   /**
    * 移动端底部玩家条的列数 = ceil(人数 / 2) → 永远排成整齐的**两行**（8 人 4 列 / 10 人 5 列 / 12 人 6 列）。
    * 为什么：它原来是横向滚动的 flex 轨道，10 张卡总宽 1002px 塞进 360~430px 的框里，
-   * 真机实测只有 3~4 张能完整看到、其余被右边缘裁掉——这正是用户报的「底部玩家头像看不全、名字看不到」。
+   * 真机实测只有 3~4 张能完整看到、其余被右边缘裁掉：这正是用户报的「底部玩家头像看不全、名字看不到」。
    * 现在由 public/wolfcha-overrides.css 修 5.3 把它改成 grid，列数在这里按人数算好。
    */
   const mobilePlayerBarColumns = useMemo(
@@ -1316,7 +1316,7 @@ export default function Home() {
               setHumanName={setHumanName}
               onStart={(options) => {
                 // ⚠️ 移植适配：上游在开局时**主动关闭 AI 语音**（setAiVoiceEnabled(false)），
-                // 并因此把 false 写进本地设置 —— 下一局读到的还是 false，
+                // 并因此把 false 写进本地设置，下一局读到的还是 false，
                 // 于是「旁边语音」永远不响（实测定位：进入对局后设置由 true 变 false）。
                 // 小愈需要语音可用，这里不再关闭；用户仍可在设置里自行关掉。
                 // 原神模式在移植版里已移除入口，这里强制关闭，避免历史持久化的 true 残留生效

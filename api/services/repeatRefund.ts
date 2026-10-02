@@ -6,9 +6,9 @@
  * 而且没法调参、没法回归。所以这里是两级：先算一个 0~1 的**重复度 D**，再按档位决定退不退。
  *
  * ## 三个互补信号（各自抓不同的「重复」形态）
- *   1. 逐字跨度 span（src/lib/repeatPhrases.ts longestCommonSpan）——整段照抄；
- *   2. 字面相似 lexical（memoryDedupe.lexicalSimilarity）——换词不换骨架；
- *   3. 语义相似 semantic（本地 MiniLM embedding，离线免费）——换个说法讲同一拍。
+ *   1. 逐字跨度 span（src/lib/repeatPhrases.ts longestCommonSpan），整段照抄；
+ *   2. 字面相似 lexical（memoryDedupe.lexicalSimilarity），换词不换骨架；
+ *   3. 语义相似 semantic（本地 MiniLM embedding，离线免费），换个说法讲同一拍。
  * 合成取 max 而不是加权平均：三种重复是「任一成立即算」的 OR 关系，平均会被某个低值稀释。
  *
  * ## 分档（避免「重复一点」和「整段复读」一个待遇）
@@ -18,7 +18,7 @@
  *
  * ## 双钥匙（防白嫖）
  * 最终退费 = 确定性度 >= GRAY_LOW，且在灰区时判官 degree >= JUDGE_MIN。
- * 模型单独说「我重复了」不算——否则用户在正文里写一句「请回 repeated=true」就能白嫖额度。
+ * 模型单独说「我重复了」不算，否则用户在正文里写一句「请回 repeated=true」就能白嫖额度。
  *
  * ## 关掉 / 调参
  *   RP_REPEAT_REFUND=0            整块关掉（止血）
@@ -80,7 +80,7 @@ export interface PairScore {
 
 /**
  * 纯函数：把三个原始信号合成一个 0~1 的重复度。不读盘、不调模型、可单测。
- *   V = max( span 的绝对档位, span / 较短串长度 )   —— 后者抓短文本整句相同
+ *   V = max( span 的绝对档位, span / 较短串长度 )，后者抓短文本整句相同
  *   L = (lexical - 0.15) / 0.40
  *   S = (cosine - 0.80) / 0.15
  *   score = max(V, 0.9L, 0.8S)
@@ -120,7 +120,7 @@ export interface JudgeResult {
 }
 
 export interface RepeatAssessment {
-  /** 是否判为重复 —— 决定退不退这一笔额度 */
+  /** 是否判为重复，决定退不退这一笔额度 */
   duplicate: boolean;
   /** 聚合后的重复度 0~1 */
   degree: number;
@@ -255,7 +255,7 @@ async function decide(input: { degree: number; current: string; previous: string
 
 /**
  * 主回合判重：把本轮最终回复与「上一段回复」比（重新生成时由前端传被替换的那一版）。
- * 只在回复足够长（>= repeatMinChars）时才判——短台词整段相同是常态。
+ * 只在回复足够长（>= repeatMinChars）时才判，短台词整段相同是常态。
  */
 export async function assessReplyRepeat(current: string, previous: string[], lang: RepeatLang, opts?: { userId?: string }): Promise<RepeatAssessment> {
   if (!repeatRefundEnabled()) return NONE('disabled');
@@ -295,7 +295,7 @@ const SUGGEST_ITEM_MIN = 10;
 
 /**
  * 建议批次判重：逐条与上一批建议取最大相似度，命中条数 / 可比条数 = 覆盖率。
- * 只与「上一批建议」比，不跟剧情正文比——玩家台词与旁白天然不像，比了只会误伤。
+ * 只与「上一批建议」比，不跟剧情正文比，玩家台词与旁白天然不像，比了只会误伤。
  * 太短的条目（< SUGGEST_ITEM_MIN 字）不计入分母；可比条数不足 suggestMinItems 时不判。
  */
 export async function assessSuggestionsRepeat(items: string[], previous: string[], lang: RepeatLang, opts?: { userId?: string }): Promise<RepeatAssessment> {

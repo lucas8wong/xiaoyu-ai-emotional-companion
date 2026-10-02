@@ -49,7 +49,7 @@ test('validateSceneArtRequest：剧本 id 格式不合法 / 不存在 → 拒绝
   assert.strictEqual(empty.ok, false);
 });
 
-// —— 会员分档（② 的"会员"要求）：Pro > Plus > Free，且上限是单卡保护 ——
+// 【会员分档（② 的"会员"要求）：Pro > Plus > Free，且上限是单卡保护】
 test('sceneArtCapForPlan：会员分档上限（Pro 最多、Free 最少）；未知档按 Free', () => {
   const pro = sceneArtCapForPlan('pro');
   const plus = sceneArtCapForPlan('plus');
@@ -61,7 +61,7 @@ test('sceneArtCapForPlan：会员分档上限（Pro 最多、Free 最少）；�
   assert.strictEqual(sceneArtCapForPlan(''), free);
 });
 
-// —— 「关键时刻自动画面」四道闸门 ——
+// 【「关键时刻自动画面」四道闸门】
 test('isKeyMomentTheme：只认高压/亲密/承诺/和好/离别这几幕', () => {
   for (const t of KEY_MOMENT_THEMES) assert.strictEqual(isKeyMomentTheme(t), true, t);
   for (const t of ['daily', 'rain', 'night', 'meet', 'flutter', 'memory', 'alone', 'cold', 'conflict']) {
@@ -91,7 +91,7 @@ test('autoSceneArtAllowed：用户开关关闭 / 非关键时刻 → 拦', () =>
   assert.strictEqual(notKey.code, 'NOT_KEY_MOMENT');
 });
 
-test('autoSceneArtAllowed：冷却（护单卡）——间隔内不放行，过了就放行', () => {
+test('autoSceneArtAllowed：冷却（护单卡），间隔内不放行，过了就放行', () => {
   const now = 1_000_000;
   const tooSoon = autoSceneArtAllowed({ plan: 'pro', prefEnabled: true, theme: 'crisis', lastAutoAt: now - 5000, now });
   assert.strictEqual(tooSoon.ok, false);
@@ -111,7 +111,7 @@ test('红线：用户文本进不了 prompt（注入串必须被丢弃，不是�
   // ② 当剧本 id 注入
   const byId = validateSceneArtRequest({ scenarioId: INJECT, theme: 'rain' });
   assert.strictEqual(byId.ok, false);
-  // ③ 合法请求里塞额外字段（模拟前端乱传）——额外字段不得出现在 prompt 里
+  // ③ 合法请求里塞额外字段（模拟前端乱传），额外字段不得出现在 prompt 里
   const extra = validateSceneArtRequest({ scenarioId: MODERN, theme: 'rain', prompt: INJECT, title: INJECT } as never);
   assert.strictEqual(extra.ok, true);
   if (!extra.ok) return;

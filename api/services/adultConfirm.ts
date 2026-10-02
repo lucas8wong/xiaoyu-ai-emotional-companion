@@ -8,7 +8,7 @@
  *   3. 偏好走 reassignUser 等归并逻辑，合规记录不该跟着偏好一起被合并覆盖。
  *
  * 与内容安全阀的关系：`roleplayUnlimited`（剧情「无限制模式」）默认关，是产品侧的安全阀；
- * 本模块是它的**前置条件**——没确认成年，服务端一律按未开启处理（见 roleplay.ts prefAllowedFor
+ * 本模块是它的**前置条件**，没确认成年，服务端一律按未开启处理（见 roleplay.ts prefAllowedFor
  * 与 routes/user.ts 的写入闸），这样即使有人在客户端把偏好改成 true 也不会真的切到去限制模型。
  *
  * 数据文件：data/adult-confirm.json（新增文件，不修改任何既有数据）
@@ -97,7 +97,7 @@ class AdultConfirmStore {
    * 游客确认并入账号（注册成功后调用）；账号已有记录则以账号的为准。
    *
    * 与 preferenceStore.reassignUser 的差别：这里**删掉游客侧记录**。偏好留在游客 id 下无害，
-   * 但「已确认成年」留在设备指纹下会留下一个洞——同一台设备换个人当游客用，
+   * 但「已确认成年」留在设备指纹下会留下一个洞，同一台设备换个人当游客用，
    * 会直接继承上一个人的成年声明。合规记录不该跨人继承。
    */
   reassignUser(oldId: string, newId: string): void {

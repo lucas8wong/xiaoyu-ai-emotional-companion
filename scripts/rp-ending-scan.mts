@@ -3,11 +3,11 @@
  *
  * 为什么要它（2026-09-18 用户口径）：「好多条 AI 的消息在最后都会问『想跟我多说点？』之类的回答，
  * 太多余了……要考虑用户使用的叙事模式还有所有人使用情况，避免 overfit」。
- * 改提示词之前必须先知道**真实比例与分布**，否则只能照着一个用户看到的几句话去改 —— 那正是 overfit。
+ * 改提示词之前必须先知道**真实比例与分布**，否则只能照着一个用户看到的几句话去改，那正是 overfit。
  * 这个脚本给出三件事，全部来自线上真实数据：
  *   ① 基线：AI 回复里「问句收尾 / 征询继续收尾」各占多少（按来源 / 叙事模式 / 模型 / 日期分档）；
  *   ② 分布：**按用户**的 p50 / p90 / 最高，用来判断这是「某一个人的口味」还是「普遍习惯」；
- *   ③ 形态榜：模型到底在写哪几句（归一化后按次数排序）—— 用实测代替我对说法的猜测。
+ *   ③ 形态榜：模型到底在写哪几句（归一化后按次数排序），用实测代替我对说法的猜测。
  * 改完之后再跑一次同一命令，两份 JSON 一比就是前后对比。
  *
  * 用法：
@@ -24,7 +24,7 @@
  *
  * 判据：`src/lib/rpEnding.ts`（与线上提示词的「形态刹车」共用同一份实现，避免两套口径）。
  * 它分两层，可信度不同：`question`（句末标点含问号，硬判据）与 `continuation_ask`
- * （「征询继续」的元话语，启发式 —— 会把剧情里问第三人的正常台词也算进来，见该文件 JSDoc）。
+ * （「征询继续」的元话语，启发式。会把剧情里问第三人的正常台词也算进来，见该文件 JSDoc）。
  *
  * 隐私：默认**只打印聚合数字**。`--shapes` 打印的是「收尾那一句」的归一化形态榜（不含任何身份、
  * 不关联到人），仅用于看清模型的说法族；把它设成 0 即可完全关闭。JSON 里不含 userId。
@@ -64,7 +64,7 @@ const kv = <T>(key: string): T | null => {
 };
 
 /**
- * 「这条身份是不是测试/开发」——**复用既有判据**，不在这里另写一份正则
+ * 「这条身份是不是测试/开发」，**复用既有判据**，不在这里另写一份正则
  *（`accountFilters.ts` 开篇写明要避免「两处各写一份、日后口径漂移」；设备级的 `test-` 前缀
  * 规则来自 `activity.ts: isTestRequest`，用动态 import 取，避免为了一个纯函数把行为 store 一起拉起来）。
  */
@@ -91,7 +91,7 @@ const isTestIdentity = await makeIsTestIdentity();
 /**
  * 毫秒时间戳归一化。
  *
- * 为什么不能直接当数字用（2026-09-18 实测踩到）：真实数据里时间戳**两种形态混存**——
+ * 为什么不能直接当数字用（2026-09-18 实测踩到）：真实数据里时间戳**两种形态混存**
  * 剧情消息是毫秒数（`number`），而聊一聊的历史消息是 ISO 字符串（`"2026-08-20T13:28:27.698Z"`），
  * 会话级的 `updatedAt/createdAt` 也可能一边是数字一边是字符串。直接做 `ms + 8*3600000` 会得到
  * `"2026-09-18"+82800000` 这种字符串 → `new Date()` 变 Invalid Date → 脚本当场抛错。
@@ -121,11 +121,11 @@ interface Turn {
   ending: RpEndingKind;
   noTerminal: boolean;
   tail: string;
-  /** 剧本开场白（会话第一条 assistant）——**剧本作者写的**，不是模型行为，不能算进模型习惯 */
+  /** 剧本开场白（会话第一条 assistant），**剧本作者写的**，不是模型行为，不能算进模型习惯 */
   opening: boolean;
   /**
    * 上游退化/重复输出（2026-09-18 首次跑真实数据时发现，必须单列）：
-   *   实测两种形态——① 整条正文就是「/」这类 1~3 个字符的残渣（有一段会话 22 轮都是这样）；
+   *   实测两种形态，① 整条正文就是「/」这类 1~3 个字符的残渣（有一段会话 22 轮都是这样）；
    *   ② 模型自己循环复读，正文是 `放下杯子，100「我听着呢。」他放下杯子，100…` 反复（另一段 100 轮）。
    * 这类样本的「收尾」根本不是收尾，混进统计里既会抬高「无句末标点」也会把形态榜冲成一堆噪音
    * （首跑时 `#` 100 次、`/` 22 次两个桶全是它们）。**剔除并把数量报出来**，不作静默丢弃。
@@ -167,7 +167,7 @@ function pushSeq(key: string, ending: RpEndingKind): void {
   sessionSeq.set(key, arr);
 }
 
-// —— 剧情会话 ——
+// 【剧情会话】
 if (kinds.includes('roleplay')) {
   const records = kv<any[]>('roleplay-sessions.json') || [];
   for (const r of records) {
@@ -190,7 +190,7 @@ if (kinds.includes('roleplay')) {
   }
 }
 
-// —— 聊一聊会话 ——
+// 【聊一聊会话】
 if (kinds.includes('chat')) {
   const sessions = kv<any[]>('sessions.json') || [];
   for (const s of sessions) {
@@ -229,7 +229,7 @@ if (!kept.length) {
   process.exit(0);
 }
 
-// ———————————————— 聚合 ————————————————
+// 【聚合】
 interface Bucket { total: number; q: number; ask: number; noTerm: number }
 const empty = (): Bucket => ({ total: 0, q: 0, ask: 0, noTerm: 0 });
 function add(b: Bucket, t: Turn): void {
@@ -308,7 +308,7 @@ const shapes = [...shapeMap.entries()]
   .slice(0, Math.max(0, shapeCount))
   .map(([shape, v]) => ({ shape, count: v.n, continuationAsk: v.ask }));
 
-// ———————————————— 输出 ————————————————
+// 【输出】
 const days = [...byDay.keys()].filter((d) => d !== '未知日期').sort();
 const unknownDay = byDay.get('未知日期')?.total || 0;
 console.log('\n=== 剧情 / 聊一聊「收尾形态」扫描（只读 ' + DB_PATH + '）===');
@@ -317,7 +317,7 @@ console.log('范围：' + (includeTest ? '含测试/开发身份' : '仅真实�
   + '｜原始 AI 回复 ' + turns.length + ' 条（剔除开场白 ' + excluded.opening + ' + 上游退化 ' + excluded.degenerate
   + ' → 统计 ' + totals.total + ' 条）｜日期 ' + (days[0] || '—') + ' ~ ' + (days[days.length - 1] || '—')
   + '｜会话 ' + sessionSeq.size + ' 段' + (unknownDay ? '｜无时间戳 ' + unknownDay + ' 条' : ''));
-console.log('口径：剔除的**不是模型收尾**——开场白是剧本作者写的（同一剧本每段会话各一条），'
+console.log('口径：剔除的**不是模型收尾**，开场白是剧本作者写的（同一剧本每段会话各一条），'
   + '退化输出是上游自循环复读（正文本身就不是一句话）。二者混进来会把形态榜冲成噪音，实测踩到过。');
 
 console.log('\n【总览】');
@@ -338,7 +338,7 @@ const table = (title: string, map: Map<string, Bucket>, sortByTotal = true): voi
   }
 };
 table('按来源（剧情 / 聊一聊）', bySource);
-table('按叙事模式（老数据一律「未记录」——模式原先只存在浏览器 localStorage）', byStyle);
+table('按叙事模式（老数据一律「未记录」，模式原先只存在浏览器 localStorage）', byStyle);
 table('按模型', byModel);
 // 日期表只打最近 21 天，避免刷屏（全量在 JSON 里）
 const recentDays = new Map([...byDay.entries()].sort((a, b) => a[0].localeCompare(b[0])).slice(-21));
@@ -365,7 +365,7 @@ if (shapeCount > 0) {
  * 【按会话：谁是总量的来源】
  *
  * 为什么必须有这一节：**按条数加权**的平均会被少数超长会话带偏。实测（2026-09-18 首次跑）
- * 全站「问句收尾 20.9%」，而形态榜上「玩够了没有」一个收尾就占了 100 次 —— 那是**同一个会话里
+ * 全站「问句收尾 20.9%」，而形态榜上「玩够了没有」一个收尾就占了 100 次，那是**同一个会话里
  * 反复用同一句收尾**（跨轮复读，另一类问题），不是「很多用户在问要不要继续」。
  * 不做这一节，就会把一个会话的毛病说成「所有用户的习惯」（正是用户叮嘱要避免的 overfit）。
  */
@@ -382,7 +382,7 @@ for (const t of kept) {
 const sessionRates = [...perSessionAgg.values()].filter((s) => s.turns >= 5).map((s) => 100 * s.q / s.turns).sort((a, b) => a - b);
 console.log('\n【按会话】共 ' + perSessionAgg.size + ' 段（≥5 轮的 ' + sessionRates.length + ' 段参与分位）');
 console.log('  会话等权的问句收尾率：p50 ' + quantile(sessionRates, 0.5).toFixed(1) + '%   p90 ' + quantile(sessionRates, 0.9).toFixed(1) + '%'
-  + '   （对比：按条数加权的全站值 ' + pct(totals.q + totals.ask, totals.total) + ' —— 两者差得越多，说明总量被少数超长会话带偏得越厉害）');
+  + '   （对比：按条数加权的全站值 ' + pct(totals.q + totals.ask, totals.total) + '，两者差得越多，说明总量被少数超长会话带偏得越厉害）');
 console.log('  轮数最多的 8 段（会话 · 轮数 · 问句率 · 最高频收尾形态 × 次数）：');
 const topSessions = [...perSessionAgg.entries()].sort((a, b) => b[1].turns - a[1].turns).slice(0, 8);
 for (const [k, s] of topSessions) {

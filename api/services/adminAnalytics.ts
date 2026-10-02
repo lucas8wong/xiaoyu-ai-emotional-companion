@@ -1,7 +1,7 @@
 /**
  * 控制台 AI 商业分析：数据聚合 + 分析提示词
  *
- * 只输出聚合指标（计数/分布/合计），**绝不包含 PII**（邮箱、IP、昵称、对话内容、反馈正文都不外发）——
+ * 只输出聚合指标（计数/分布/合计），**绝不包含 PII**（邮箱、IP、昵称、对话内容、反馈正文都不外发）
  * 与 geo「IP 不外发」的红线一致：外发到 DeepSeek 的只有数字。
  */
 
@@ -44,7 +44,7 @@ export interface AdminAnalyticsBundle {
     /** 用户已点「我已付款」、待管理员确认的瞬时状态数（paid 状态） */
     awaitingConfirm: number;
     unlocked: number;
-    /** 已解锁且真实付费（source=paid）的订单数——累计口径 */
+    /** 已解锁且真实付费（source=paid）的订单数，累计口径 */
     unlockedPaid: number;
     /** 已解锁但为免费开通/试用/赠送（source=free）的订单数 */
     unlockedFree: number;
@@ -72,7 +72,7 @@ export function buildAdminAnalyticsBundle(): AdminAnalyticsBundle {
   const accountIds = new Set(accounts.map((a) => a.userId));
   const excluded = new Set(accounts.filter(looksLikeTestAccount).map((a) => a.userId));
 
-  // —— 用户 ——
+  // 【用户】
   const planDistribution: Record<string, number> = {};
   let unlockedNow = 0;
   for (const q of quotaRecs) {
@@ -86,7 +86,7 @@ export function buildAdminAnalyticsBundle(): AdminAnalyticsBundle {
   const active7dRegistered = active7dItems.filter((a) => accountIds.has(a.userId)).length;
   const active7dGuest = active7d - active7dRegistered;
 
-  // —— 使用（近 30 天）——
+  // 【使用（近 30 天）】
   const usage30d = { chat: 0, structure: 0, roleplay: 0 };
   for (const a of activity) {
     if (excluded.has(a.userId)) continue;
@@ -95,7 +95,7 @@ export function buildAdminAnalyticsBundle(): AdminAnalyticsBundle {
     }
   }
 
-  // —— 支付 ——
+  // 【支付】
   let pending = 0, paid = 0, unlocked = 0, unlockedPaid = 0, unlockedFree = 0, revenueCny = 0;
   const payingUserIds = new Set<string>();
   const byPlan: Record<string, { count: number; revenueCny: number }> = {};
@@ -128,7 +128,7 @@ export function buildAdminAnalyticsBundle(): AdminAnalyticsBundle {
     else subscriptions.active += 1;
   }
 
-  // —— 地区（与 /geo 同口径，取 top 10）——
+  // 【地区（与 /geo 同口径，取 top 10）】
   const countryMap = new Map<string, number>();
   let unknown = 0;
   for (const a of activity) {
@@ -145,7 +145,7 @@ export function buildAdminAnalyticsBundle(): AdminAnalyticsBundle {
   const byCountry = [...countryMap.entries()].map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count).slice(0, 10);
 
-  // —— 访问 ——
+  // 【访问】
   const daily = visitStore.getDailyVisits(30);
   const hourly = visitStore.getHourlyVisits(30);
   const avgDaily30 = daily.length ? Math.round((daily.reduce((s, d) => s + d.count, 0) / daily.length) * 10) / 10 : 0;
@@ -153,7 +153,7 @@ export function buildAdminAnalyticsBundle(): AdminAnalyticsBundle {
     ? hourly.reduce((p, h) => (h.count > (p?.count || 0) ? h : p), hourly[0])
     : null;
 
-  // —— 反馈（只计数，不传正文）——
+  // 【反馈（只计数，不传正文）】
   const byType: Record<string, number> = {};
   for (const f of feedbacks) byType[f.type] = (byType[f.type] || 0) + 1;
 

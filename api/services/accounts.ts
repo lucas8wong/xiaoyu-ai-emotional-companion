@@ -25,7 +25,7 @@ export interface Account {
   username?: string;
   phone?: string;
   email: string;
-  /** 密码散列。**Google 等第三方登录建的账号为空串**（没有密码）——见 hasPassword() */
+  /** 密码散列。**Google 等第三方登录建的账号为空串**（没有密码），见 hasPassword() */
   passwordHash: string;
   salt: string;
   iterations?: number; // 散列迭代次数（旧账户缺失时按 LEGACY_ITERATIONS 校验并自动升级）

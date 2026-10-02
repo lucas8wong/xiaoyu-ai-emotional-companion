@@ -1,5 +1,5 @@
 /**
- * FAQ 公开页（/faq）—— SEO 内容页
+ * FAQ 公开页（/faq），SEO 内容页
  * - 路由在隐私同意门之外（公开可访问，利于搜索引擎抓取）
  * - 三语渲染（跟随界面语言），语言切换即时刷新
  * - 注入 FAQPage JSON-LD（按当前语言全量 17 条），title/meta description 随语言更新

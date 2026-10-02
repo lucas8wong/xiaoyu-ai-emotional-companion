@@ -2,13 +2,13 @@
  * 剧情标题统一解析（角色扮演自建剧本 / 官方剧本 / 千世书自建书与内置书）
  *
  * 为什么单独成模块：同一个诉求此前在三个地方各写了一遍（「与你的旅程」、控制台「用户记录」、
- * 控制台「用户行为」），三份口径还不一致——自建剧本在有的地方**原样露出内部 id**
+ * 控制台「用户行为」），三份口径还不一致，自建剧本在有的地方**原样露出内部 id**
  * （`custom_mtqy8099ib3dmt` / 千世书 `custom-ab12cd`），在另一处退化成「自定义剧情」占位。
  * 产品口径（2026-09-17 用户拍板）：一律显示**用户自己起的剧名**，另给一个「自建」标志区分来源。
  * 所以解析集中到这一个模块，谁要标题谁来调，别再各写一份。
  *
  * 解析链（自建）：本人 > 已公开 > 全库 findById > 会话标题快照 > 空串（由调用方决定兜底文案）
- * 千世书自建多一层：存档里内嵌的 `scenario.title`——剧本被删/换设备后仍能显示真名。
+ * 千世书自建多一层：存档里内嵌的 `scenario.title`，剧本被删/换设备后仍能显示真名。
  *
  * 约定：解析不到真名时返回 `title: ''`（**不回退成内部 id，也不在服务端写三语占位文案**），
  * custom=true 由调用方渲染「自建」标志 + 自己的兜底文案。
@@ -54,7 +54,7 @@ function normLang(lang?: string): TitleLang {
 
 /**
  * 历史遗留的「用户没起名」占位标题（`customRoleplay.create()` 在标题留空时的默认值等）。
- * 这类值不是用户起的剧名，**不能当成真名显示**——否则界面上又会出现「自定义剧情」（正是用户不想看到的）。
+ * 这类值不是用户起的剧名，**不能当成真名显示**，否则界面上又会出现「自定义剧情」（正是用户不想看到的）。
  * 命中即视为「没有名字」，交给调用方的兜底文案（前端/控制台显示「自建剧情」）。
  */
 const PLACEHOLDER_TITLES = new Set(['自定义剧情', '自訂劇情', 'Custom story', '未命名剧情', '未命名', '无标题']);
@@ -68,7 +68,7 @@ function realTitle(t?: string): string {
  * 自建剧本**没起名**时的显示名：用 AI 角色名兜底（「与沈辞的故事」）。
  *
  * 来路（2026-09-17 真实数据核对）：线上 27 个自建剧本里有 5 个标题就是 create() 的默认值
- * 「自定义剧情」——用户建剧本时「剧本标题（选填）」留空、AI 草稿也没给标题，于是剧本压根没有名字。
+ * 「自定义剧情」：用户建剧本时「剧本标题（选填）」留空、AI 草稿也没给标题，于是剧本压根没有名字。
  * 这种时候显示占位文案（正是用户不想看到的「自定义剧情」）毫无用处；用户真正认得出这个故事的是
  * 「和谁的故事」，所以拿 aiName 生成一个可读名（不是伪造标题：标题栏仍然是空的，用户随时能自己起名）。
  * 连 aiName 都没有 → 返回空串，交回调用方的兜底文案。
@@ -101,7 +101,7 @@ export function resolveRoleplayTitle(
   const snap = realTitle(snapshot);
   if (isCustomScenarioId(id)) {
     // 自建剧本：本人 > 已公开（别人投稿后我也能玩）> 跨用户兜底 > 会话快照 > 用 AI 角色名兜出的可读名。
-    // 跨用户兜底覆盖「游客建好自建剧本、注册并入账号」等归属错位——数据层 id 全局唯一，解析标题无害。
+    // 跨用户兜底覆盖「游客建好自建剧本、注册并入账号」等归属错位，数据层 id 全局唯一，解析标题无害。
     const rec = customRoleplayStore.get(userId, id)
       || customRoleplayStore.getPublished(id)
       || customRoleplayStore.findById(id);
@@ -115,7 +115,7 @@ export function resolveRoleplayTitle(
   return { title: (localized && localized.title) || snap || id, custom: false, deleted: false };
 }
 
-/** 从千世书存档里取剧本内嵌标题（进行中局优先，其次回看点）——剧本被删后唯一真名来源 */
+/** 从千世书存档里取剧本内嵌标题（进行中局优先，其次回看点），剧本被删后唯一真名来源 */
 function embeddedWenyouTitle(userId: string, scenarioId: string): string {
   try {
     const p = wenyouSavesStore.get(userId);

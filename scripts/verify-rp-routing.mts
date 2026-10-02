@@ -44,5 +44,5 @@ const active = s.zh !== 'deepseek(default)' || s.en !== 'deepseek(default)';
 console.log('\n结论：' + (active ? '已切换（第三方模型生效中）' : '未切换（剧情链路走 DeepSeek）'));
 console.log('切回/恢复：RP_PROVIDER=deepseek 一键切回；RP_ZH_PROVIDER / RP_EN_PROVIDER 按分支；值改 custom 恢复第三方。');
 if (active) {
-  console.log('提示：并发受托管档位限制——Featherless $25 档 4 个并发单元，27B 模型 concurrency_cost=2，即约 2 路并发。');
+  console.log('提示：并发受托管档位限制，Featherless $25 档 4 个并发单元，27B 模型 concurrency_cost=2，即约 2 路并发。');
 }

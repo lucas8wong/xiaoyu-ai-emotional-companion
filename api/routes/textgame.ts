@@ -1,5 +1,5 @@
 /**
- * AI 文游（人生模拟器）API —— 千世书引擎回合代理
+ * AI 文游（人生模拟器）API，千世书引擎回合代理
  * POST /api/textgame/chat  { messages: [{role:'user'|'assistant', content}], lang?, json? } → { reply }
  * POST /api/textgame/generate-scenario  { theme, target?, existingIds?, lang? } → { scenario }
  *   ?stream=1 → SSE：进度事件（骨架完成 / 支线 n/total）+ 每 10s `: ping` 心跳 + 收尾 done/error。
@@ -9,7 +9,7 @@
  *
  * json=true（文游回合）时：
  *   · 强制 DeepSeek 输出合法 JSON 对象（response_format），从源头消除「输出中没有完整的 JSON 对象」
- *   · 若返回仍缺完整 JSON，在同一请求内带纠错消息重试一次 —— 重试不重复扣额度，
+ *   · 若返回仍缺完整 JSON，在同一请求内带纠错消息重试一次，重试不重复扣额度，
  *     避免客户端解析失败再发一次请求造成的双倍/三倍扣费
  * json 缺省/为 false（结局生成等纯文本场景）时按普通文本回复。
  *
@@ -290,7 +290,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
 
     // 非流式（缺省/旧调用）：返回整段 JSON
     // 请求一次；若 json 回合返回的文本不含完整 JSON，在同一请求内带纠错消息重试一次
-    // （重试不重复 consumeChat —— 只在调用真正失败时回滚，见 catch）。
+    // （重试不重复 consumeChat，只在调用真正失败时回滚，见 catch）。
     const runOnce = async (msgs: typeof contents) => {
       const result = await client.models.generateContent({ contents: msgs, userId, jsonMode, thinkingLevel, feature: 'wenyou' });
       return result.candidates?.[0]?.content?.parts?.[0]?.text || '';
@@ -340,7 +340,7 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
 router.post('/generate-scenario', async (req: Request, res: Response): Promise<void> => {
   let userId: string | null = null;
   let creditToken: string | null = null;
-  // —— SSE（?stream=1）状态：声明在 handler 作用域，catch 里也要用（开流后出错改以 error 事件下发）
+  // SSE（?stream=1）状态：声明在 handler 作用域，catch 里也要用（开流后出错改以 error 事件下发）
   const streamMode = String(req.query.stream || '') === '1';
   let heartbeat: ReturnType<typeof setInterval> | null = null;
   const streamAbort = new AbortController();
@@ -405,7 +405,7 @@ router.post('/generate-scenario', async (req: Request, res: Response): Promise<v
       creditToken = reserve.token!;
     }
 
-    // —— SSE 开流（?stream=1）：放在全部校验/门控之后，因此 401/400/402 仍是普通 JSON
+    // SSE 开流（?stream=1）：放在全部校验/门控之后，因此 401/400/402 仍是普通 JSON
     // （前端靠 code 精确识别 LOGIN_REQUIRED / CONTENT_REJECTED / GEN_PRO_ONLY / GEN_LIMIT / 额度不足）。
     // 为什么要流式：整份剧本是多段高思考 DeepSeek 调用，总耗时远超 100s；线上经 Cloudflare 回源，
     // 单请求约 100s 无数据即回 524（用户侧「HTTP错误: 524」）。一直有数据就不会 524。

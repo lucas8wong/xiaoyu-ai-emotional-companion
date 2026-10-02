@@ -40,9 +40,9 @@ export interface CustomScenario {
   /**
    * **创建时**是否用「无限制模式（成人模型）」辅助生成（剧情生成那个开关）。仅创建那一刻记录一次。
    *
-   * 来路：客户端自述（方案 A2，与角色扮演会话打标一致）——管理端核对够用，不作取证。
+   * 来路：客户端自述（方案 A2，与角色扮演会话打标一致），管理端核对够用，不作取证。
    * 缺省 undefined = 未记录（老数据 / 手写而非 AI 生成），**不要当作 false**。
-   * 注意：更新剧本（update）**不改变**这个字段——它描述的是「创建方式」这个历史事实。
+   * 注意：更新剧本（update）**不改变**这个字段，它描述的是「创建方式」这个历史事实。
    */
   createdWithUnlimited?: boolean;
   /** 创建时辅助生成所用的模型名 */
@@ -141,7 +141,7 @@ class CustomRoleplayStore {
 
   /**
    * 编辑自建剧本内容（仅本人；归属校验在路由层做）。
-   * 内容变更即复位为草稿（清投稿/精选/驳回反馈）——防止「已公开副本」在运营挑选后被创作者悄悄改写，
+   * 内容变更即复位为草稿（清投稿/精选/驳回反馈），防止「已公开副本」在运营挑选后被创作者悄悄改写，
    * 也保证已驳回剧本在改稿后重新投稿才会再次进入运营挑选。
    */
   update(userId: string, id: string, data: { title?: string; aiName?: string; aiPersona?: string; background?: string; opening?: string; avatar?: string; chatBackground?: string }): CustomScenario | undefined {

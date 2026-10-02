@@ -20,7 +20,7 @@ describe('PRESETS', () => {
     }
   })
 
-  it('providerOptions 里同组的选项连续 —— SearchSelect 的组标题靠这个前提', () => {
+  it('providerOptions 里同组的选项连续，SearchSelect 的组标题靠这个前提', () => {
     // 组标题是「遍历中组名一变就插一行」生成的；同组不连续会渲染出重复标题。
     const seen = new Set<string>()
     let prev: string | undefined
@@ -89,7 +89,7 @@ describe('PRESETS', () => {
 
   // 上游把某家并进自定义项之后，老存档里的 presetId 会指向一个不存在的预设。
   // 这条回退链是它唯一的保险：落到自定义项、地址原样保留，用户开局即可继续用。
-  // 没有它，界面会停在一个解析不出的预设上 —— 表现为服务商那一栏凭空消失。
+  // 没有它，界面会停在一个解析不出的预设上，表现为服务商那一栏凭空消失。
   it('已被并走的 presetId 回退到自定义项，地址原样保留', () => {
     const p = matchPreset('openai', 'http://127.0.0.1:4000/v1', 'litellm')
     expect(p.id, '停在解析不出的预设上会让服务商那一栏消失').toBe('llm')
@@ -108,12 +108,12 @@ describe('PRESETS', () => {
 })
 
 describe('思考参数', () => {
-  it('逐 SKU 取形态 —— 同一家可以不同（Kimi K3 vs K2.x）', () => {
+  it('逐 SKU 取形态，同一家可以不同（Kimi K3 vs K2.x）', () => {
     expect(thinkingWireFor('moonshot', 'kimi-k3', 'off')).toEqual({ reasoning_effort: 'low' })
     expect(thinkingWireFor('moonshot', 'kimi-k2.6', 'off')).toEqual({ thinking: { type: 'disabled' } })
   })
 
-  it('关闭态发显式 disable —— 服务端默认开着思考时，省略等于按推理静默计费', () => {
+  it('关闭态发显式 disable，服务端默认开着思考时，省略等于按推理静默计费', () => {
     expect(thinkingWireFor('qwen', 'qwen3.8-max', 'off')).toEqual({ enable_thinking: false })
     expect(thinkingWireFor('cohere', 'command-a-reasoning-08-2025', 'off')).toEqual({ reasoning_effort: 'none' })
   })
@@ -131,7 +131,7 @@ describe('思考参数', () => {
     expect(thinkingWireFor('minimax', 'MiniMax-M2.7', 'high')).toBeUndefined()
   })
 
-  it('Claude / Gemini 走原生协议，目录按原生形态给 —— 与兼容层的形状不同', () => {
+  it('Claude / Gemini 走原生协议，目录按原生形态给，与兼容层的形状不同', () => {
     // Claude 分两代：adaptive 世代用 output_config，旧世代用 budget_tokens
     expect(thinkingWireFor('claude', 'claude-opus-5', 'high')).toEqual({
       thinking: { type: 'adaptive' },
@@ -145,7 +145,7 @@ describe('思考参数', () => {
     // adaptive 世代服务端可能默认开 → 关闭态必须显式关
     expect(thinkingWireFor('claude', 'claude-opus-5', 'off')).toEqual({ thinking: { type: 'disabled' } })
     // ……但同代里还有【关不掉】的一支（官方逐模型表标 Always on，连关闭值都回 400），
-    // 它们的关闭档就该是空的 —— 一律按「同代同形态」发会每请求 400。
+    // 它们的关闭档就该是空的，一律按「同代同形态」发会每请求 400。
     expect(thinkingWireFor('claude', 'claude-fable-5', 'off')).toBeUndefined()
     expect(thinkingWireFor('claude', 'claude-fable-5', 'high')).toEqual({
       thinking: { type: 'adaptive' },
@@ -169,7 +169,7 @@ describe('思考参数', () => {
 })
 
 describe('预填模型', () => {
-  it('目录指定的 defaultModel 排首位 —— models[0] 就是界面填进去的那个', () => {
+  it('目录指定的 defaultModel 排首位，models[0] 就是界面填进去的那个', () => {
     for (const p of PROVIDER_CATALOG) {
       const preset = findPreset(p.key)
       if (!preset || !p.defaultModel) continue
@@ -189,7 +189,7 @@ describe('未列出 SKU 的思考形态', () => {
     })
   })
 
-  it('官方标 Always on 的手填变体不发关闭值 —— 发 disabled 是每请求 400', () => {
+  it('官方标 Always on 的手填变体不发关闭值，发 disabled 是每请求 400', () => {
     // 在册的 claude-fable-5 走 models[] 早就对了；坏的是【带日期的手填变体】：
     // 它同时命中两条规则（always-on 的正则是 adaptive 那条的子集），取错一条就把
     // 被官方拒收的关闭值发出去。目录按窄的在前排序，这里取首个匹配。
@@ -203,7 +203,7 @@ describe('未列出 SKU 的思考形态', () => {
   })
 
   // 取首个匹配 ⇒ 没有「向宽规则继承」这回事：少一个档位就是那一档什么都不发。
-  // 上游在生成时断言了这条，但这边拿到的只是产物 —— 坏的同步该在 CI 炸，而不是
+  // 上游在生成时断言了这条，但这边拿到的只是产物，坏的同步该在 CI 炸，而不是
   // 等到用户选了「中」却发现模型压根没想。
   it('thinkingWireIf 各条规则的非 off 档位集合必须恒等', () => {
     const withRules = PROVIDER_CATALOG.filter((p) => p.thinkingWireIf?.length)
@@ -233,7 +233,7 @@ describe('未列出 SKU 的思考形态', () => {
 
 describe('Claude 的 budget_tokens 与输出上限配套', () => {
   it('每一档预算都低于开思考时的 max_tokens，且留足可见回复的余量', () => {
-    // budget_tokens 是绝对整数、必须小于 max_tokens —— 目录里的数值是按上游
+    // budget_tokens 是绝对整数、必须小于 max_tokens，目录里的数值是按上游
     // max_tokens=16384 反推的，本 app 用同一个值所以能直接照搬。哪天任一边改了
     // 而另一边没跟，这条会先炸，而不是等到线上 400。
     const claude = PROVIDER_CATALOG.find((p) => p.key === 'claude')!
@@ -250,7 +250,7 @@ describe('Claude 的 budget_tokens 与输出上限配套', () => {
 })
 
 describe('直连已坏的 provider', () => {
-  it('照常收录，但默认开着中转 —— 不开就发不出请求', () => {
+  it('照常收录，但默认开着中转，不开就发不出请求', () => {
     const blocked = PROVIDER_CATALOG.filter((p) => p.directBlocked).map((p) => p.key)
     expect(blocked.length).toBeGreaterThan(0) // 目录里确实有这类，否则本测试空转
     for (const key of blocked) {
@@ -284,7 +284,7 @@ describe('地址即凭据的服务商', () => {
   })
 })
 
-/** 手写的「这就是真关闭」形态表 —— 新形态出现时这条会先红，提醒去核 isRealOff。 */
+/** 手写的「这就是真关闭」形态表，新形态出现时这条会先红，提醒去核 isRealOff。 */
 const KNOWN_DISABLE_SHAPES = [
   '{"reasoning_effort":"none"}',
   '{"thinking":{"type":"disabled"}}',
@@ -293,7 +293,7 @@ const KNOWN_DISABLE_SHAPES = [
 ]
 
 describe('没有「关闭」这一档的服务商', () => {
-  // 选「关」时它们发的是自己的最低档 —— 模型仍在推理、仍在计费。界面若照旧写
+  // 选「关」时它们发的是自己的最低档：模型仍在推理、仍在计费。界面若照旧写
   // 「关闭（更快更省）」就是在撒谎：用户以为省下了推理的钱，账单上并没有。
   // 这条把「目录说关不掉」与「关闭档确实不是真关闭」钉在一起，两边不一致就红。
   it('目录标了关不掉的，其关闭档确实仍在思考', () => {
@@ -303,13 +303,13 @@ describe('没有「关闭」这一档的服务商', () => {
       if (!findPreset(p.key)) continue
       expect(canDisableThinking(p.key), `${p.key} 应被判为不能关闭`).toBe(false)
       // 至少有一个 SKU 的关闭档发的是「仍在思考」的值（而不是缺省或真关闭）。
-      // ⚠ 这里必须【独立于】production 的 isRealOff 判断 —— 上一版把同一段字符串
+      // ⚠ 这里必须【独立于】production 的 isRealOff 判断，上一版把同一段字符串
       // 嗅探抄了过来，于是 {enable_thinking:false} 这种布尔关法两边一起漏，测试全绿。
       const stillThinks = p.models.some((m) => {
         const off = m.thinkingWire?.off
         return Boolean(off) && !KNOWN_DISABLE_SHAPES.includes(JSON.stringify(off))
       })
-      expect(stillThinks, `${p.key} 被标成关不掉，但没有任何 SKU 的关闭档在思考 —— 标记或形态有一个是错的`).toBe(true)
+      expect(stillThinks, `${p.key} 被标成关不掉，但没有任何 SKU 的关闭档在思考，标记或形态有一个是错的`).toBe(true)
     }
   })
 
@@ -324,7 +324,7 @@ describe('没有「关闭」这一档的服务商', () => {
     expect(canDisableThinking('minimax', 'MiniMax-M2.7')).toBe(true)
   })
 
-  it('布尔关法也算真关 —— 只认字符串会对着真能关的服务商喊「仍会计费」', () => {
+  it('布尔关法也算真关，只认字符串会对着真能关的服务商喊「仍会计费」', () => {
     // 用未列出的型号，走 provider 级形态：形状固定，不随目录改型号清单而漂
     expect(canDisableThinking('qwen', 'my-self-hosted')).toBe(true) // {enable_thinking:false}
     expect(canDisableThinking('qianfan', 'my-self-hosted')).toBe(true) // 同上

@@ -49,7 +49,7 @@ export default function EmojiPicker({ onPick, onPickSticker, onClose, lang = 'zh
     ? 'flex flex-col w-full rounded-t-2xl overflow-hidden border-t border-clay-border'
     : 'flex flex-col w-[340px] max-w-[calc(100vw-16px)] rounded-2xl overflow-hidden shadow-xl border border-clay-border';
 
-  // —— 表情包（贴纸）搜索 ——
+  // 【表情包（贴纸）搜索】
   const [mode, setMode] = useState<'emoji' | 'sticker'>('emoji');
   const [stickerQ, setStickerQ] = useState('');
   const [stickerLoading, setStickerLoading] = useState(false);
@@ -90,7 +90,7 @@ export default function EmojiPicker({ onPick, onPickSticker, onClose, lang = 'zh
     runStickerSearch();
   };
 
-  // —— 把「搜索」并入分类 Tab：在分类导航最前面插入搜索 Tab + "|" 分隔，并精简尺寸 ——
+  // 【把「搜索」并入分类 Tab：在分类导航最前面插入搜索 Tab + "|" 分隔，并精简尺寸】
   useEffect(() => {
     if (mode !== 'emoji') return;
     const wrap = searchWrapRef.current;

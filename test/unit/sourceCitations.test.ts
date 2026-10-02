@@ -15,7 +15,7 @@ test('extractCitations：剥掉标记并给出编号 + 它在正文里的偏移'
 });
 
 test('extractCitations：英文里不吞空格（只认中文标记前的空格）', () => {
-  // 英文的「hello [[1]] world」两边空格都是正文，剥标记后是两个空格 —— 这是刻意的：
+  // 英文的「hello [[1]] world」两边空格都是正文，剥标记后是两个空格，这是刻意的：
   // 中文规则照搬到英文会把「hello」和「world」粘起来，比多一个空格糟得多。
   const r = extractCitations('hello [[1]] world');
   assert.equal(r.text, 'hello  world');

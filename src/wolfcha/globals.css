@@ -395,7 +395,7 @@ input[type="submit"]:not(:disabled),
 }
 
 /* 英文标题（Xiaoyu · AI Werewolf）比中文长，且 0.26em 字距是给中日韩字形留的呼吸感，
-   拉丁字母这样排会松到折行 —— 英文界面收紧字号与字距，保持单行且不显松散。
+   拉丁字母这样排会松到折行，英文界面收紧字号与字距，保持单行且不显松散。
    html[lang] 由 I18nProvider 与语言同步设置（见 src/wolfcha/i18n/I18nProvider.tsx）。 */
 html[lang="en"] .wc-contract-title {
   font-size: 26px;

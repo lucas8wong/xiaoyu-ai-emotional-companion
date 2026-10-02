@@ -3,18 +3,18 @@
  * 设计稿：`剧情引流聊一聊-B方案设计稿.md`
  *
  * 本文件只做三件事，全部为纯逻辑（无 DOM、无请求、可单测）：
- *  1) 判定「卡壳」与「出戏元话语」——**高精度优先**：误判会让用户拿不到本该有的回复，
+ *  1) 判定「卡壳」与「出戏元话语」，**高精度优先**：误判会让用户拿不到本该有的回复，
  *     代价比漏判高，所以宁可少判（与 api/services/chatRedirect.ts 同口径）。
  *  2) 频次预算：跨模式引导（含 chatRedirect 的正向卡）同一用户 72h 内最多 1 次，累计 2 次拒绝后永久静默。
  *  3) 构造交接草稿：上下文**放进用户自己的输入框**（可改可删），绝不自动发送
- *     —— 红线 6：桥的文案绝不写进 messages / chatMessages。
+ *     红线 6：桥的文案绝不写进 messages / chatMessages。
  */
 
 /**
  * 触发方式：
  * - `stuck` / `ooc` / `scene_end` / `ending` = **系统主动提示**（受 72h 冷却 + 单次会话 1 次 + 2 次拒绝永久静默约束）
  * - `pull` = **用户自己走进去**（剧情输入栏那个常显入口）。它不是「提醒」，因此**不消耗也不受**上述预算约束
- *   —— 用户点了「以后不用提醒」只是不要被提醒，不代表这扇门要焊死。
+ *   用户点了「以后不用提醒」只是不要被提醒，不代表这扇门要焊死。
  */
 export type BridgeTrigger = 'stuck' | 'ooc' | 'scene_end' | 'ending' | 'pull';
 
@@ -46,7 +46,7 @@ const STATS_KEY = 'cure_bridge_stats';
  * 漏斗账本（本地计数）。
  * 为什么先做本地：服务端埋点需要新端点/新事件类型（属于后端 + 控制台的一批改动），
  * 在没定端点之前**不擅自改核心路由**。本账本已能回答「桥展示了多少次、点了多少次、落地后真的发了第一条消息吗」
- * ——在任意设备打开 devtools 跑 `JSON.parse(localStorage.getItem('cure_bridge_stats'))` 即可读。
+ *。在任意设备打开 devtools 跑 `JSON.parse(localStorage.getItem('cure_bridge_stats'))` 即可读。
  */
 export interface BridgeStats {
   shown: Partial<Record<BridgeTrigger, number>>;
@@ -54,7 +54,7 @@ export interface BridgeStats {
   dismissed: number;
   /** 落地到聊一聊（草稿已预填）次数 */
   landed: number;
-  /** 落地的草稿被真正**发出去**的次数 —— 这才是我们要的转化 */
+  /** 落地的草稿被真正**发出去**的次数，这才是我们要的转化 */
   firstMessage: number;
 }
 
@@ -96,7 +96,7 @@ export function recordBridgeEvent(
 
 /**
  * 灰度开关：默认开；`localStorage.setItem('cure_bridge_enabled','0')` 可一键关停（不用发版）。
- * 读不到 localStorage（隐私模式/SSR）时按**关**处理——安全默认，宁可不展示。
+ * 读不到 localStorage（隐私模式/SSR）时按**关**处理，安全默认，宁可不展示。
  */
 export function bridgeEnabled(): boolean {
   if (!hasStorage()) return false;
@@ -107,7 +107,7 @@ export function bridgeEnabled(): boolean {
   }
 }
 
-// —— 归一化：去空白（含全角）、小写；繁简都在正则里显式列出，不引入依赖 ——
+// 【归一化：去空白（含全角）、小写；繁简都在正则里显式列出，不引入依赖】
 function norm(text: string): string {
   return (text || '').replace(/[\s\u3000]+/g, '').toLowerCase();
 }
@@ -121,7 +121,7 @@ const STUCK_NEGATIVE = [
 /** 「我卡住了」：只认高精度的求助表达 */
 const STUCK_PATTERNS = [
   /(不知道|不晓得|不曉得)(该|該|要)?(说|說|写|寫|回|怎么|怎麼|如何)/,
-  /(想不(出|到))/, // 想不出（+来/來）——「想不到你也在」由下面的排除项兜住
+  /(想不(出|到))/, // 想不出（+来/來），「想不到你也在」由下面的排除项兜住
   /我(卡住|卡了|卡壳|卡殼|卡文)/,
   /^(卡住|卡了|卡壳|卡殼|卡文|卡死)(了|啦|啊)?[。.！!…~\s]*$/,
   /(接不下去|接不上|接下来呢|接下來呢|然后呢|然後呢)/,
@@ -165,7 +165,7 @@ const OOC_PATTERNS = [
   /這(是|是我)現實/,
   /我(的)?(现实|現實)(里|裡)/,
 ];
-/** 独立成句的暂停请求：「暂停一下」「先停一下」——避免误伤戏里的对白「停一下！」 */
+/** 独立成句的暂停请求：「暂停一下」「先停一下」，避免误伤戏里的对白「停一下！」 */
 const OOC_STANDALONE = [
   /^[（(]?(先)?(暂停|暫停|停)[一下]*[)）]?[。.！!…~\s]*$/,
 ];
@@ -200,7 +200,7 @@ export function isIdleEnough(input: {
   return input.now - input.lastActivityAt >= BRIDGE_IDLE_MS;
 }
 
-// —— 频次预算 ——
+// 【频次预算】
 
 export interface BridgeBudget {
   lastShownAt: number | null;
@@ -218,7 +218,7 @@ function hasStorage(): boolean {
   }
 }
 
-/** 读取预算（无 localStorage 环境——如 node 单测/SSR——返回空预算，不抛错） */
+/** 读取预算（无 localStorage 环境，如 node 单测/SSR，返回空预算，不抛错） */
 export function readBridgeBudget(): BridgeBudget {
   if (!hasStorage()) return { ...EMPTY_BUDGET };
   try {
@@ -277,19 +277,19 @@ export function canShowBridge(input: {
   return { show: true, reason: 'ok' };
 }
 
-// —— 交接草稿 ——
+// 【交接草稿】
 
 /**
  * 构造填进聊一聊输入框的草稿。
  *
  * **只放一句「我从哪来」的上下文，不带任何剧情正文**（2026-09-17 用户实测反馈后改）：
- * - 曾经把「最近一幕」原文摘要 + 「我想说的是我自己的事——」一起塞进来，两个后果都被用户抓到了：
+ * - 曾经把「最近一幕」原文摘要 + 「我想说的是我自己的事，」一起塞进来，两个后果都被用户抓到了：
  *   ① 剧情原文（含亲密/成人桥段）被复制进**另一个模式**的会话里，既是语境串味也是隐私复制；
- *   ② 尾句替用户立了个"我要聊自己的事"的意图，小愈于是回「剧情我先放一边，你说你自己的」——很怪。
+ *   ② 尾句替用户立了个"我要聊自己的事"的意图，小愈于是回「剧情我先放一边，你说你自己的」，很怪。
  * - 现在只留一句中性的「我刚从一段剧情里出来（剧名/我的角色/对面是谁）」；
  *   用户想说什么由他自己写，小愈要接上下文就开口问。
  *
- * 注意：调用方**不得**自动发送——草稿是用户自己的话，这也是上下文能合法过去的原因。
+ * 注意：调用方**不得**自动发送，草稿是用户自己的话，这也是上下文能合法过去的原因。
  */
 export function buildBridgeDraft(preface: string): string {
   return (preface || '').trim();

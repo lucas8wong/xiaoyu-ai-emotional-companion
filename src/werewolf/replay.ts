@@ -2,12 +2,12 @@
  * AI 狼人杀 · 复盘卡数据（纯函数，便于单测）
  *
  * 局终后服务端会**亮出全部底牌与全部事件**（`viewFor` 在 `status === 'ended'` 时 revealAll），
- * 所以这里能把「**这局谁在骗你**」还原出来——包括此前只对狼人 / 预言家 / 女巫可见的夜间动作。
+ * 所以这里能把「**这局谁在骗你**」还原出来，包括此前只对狼人 / 预言家 / 女巫可见的夜间动作。
  *
  * 两条设计约束：
  *  1. **不拼文案**：只产出结构化事实，三语由组件用 `wwT` 渲染（与服务端事件同一套哲学）。
  *  2. **不越过视角**：本函数只读 `view`，所以局中途调用时它天然算不出狼人名单
- *     （因为 view 里没有别人的底牌）——有单测钉住这一点，防止「复盘卡变成提前开天眼」。
+ *     （因为 view 里没有别人的底牌），有单测钉住这一点，防止「复盘卡变成提前开天眼」。
  */
 
 import type { GameEvent } from './engine/types';
@@ -59,7 +59,7 @@ export interface ReplayData {
 
 /**
  * 从「局终视图」构建复盘数据。
- * 传入局中途的视图也可以调用，但不会泄漏——它只能看到 view 里已有的东西。
+ * 传入局中途的视图也可以调用，但不会泄漏，它只能看到 view 里已有的东西。
  */
 export function buildReplay(view: WerewolfView): ReplayData {
   const playerOf = (seat?: number) => view.players.find((p) => p.seat === seat);
@@ -68,7 +68,7 @@ export function buildReplay(view: WerewolfView): ReplayData {
 
   const iAmWolf = view.myCamp === 'wolf';
 
-  // 骗你的人 = 全部狼人阵营（含白狼王！——不能只判断 role === 'werewolf'）
+  // 骗你的人 = 全部狼人阵营（含白狼王！，不能只判断 role === 'werewolf'）
   const liars: ReplayPerson[] = view.players
     .filter((p) => p.camp === 'wolf' && !p.isYou)
     .map((p) => ({ seat: p.seat, name: p.name, role: p.role as string }));
@@ -145,7 +145,7 @@ export function buildReplay(view: WerewolfView): ReplayData {
 }
 
 /**
- * 复盘卡要展示的「你的角色们」——把局内角色与它们的身份对上，
+ * 复盘卡要展示的「你的角色们」，把局内角色与它们的身份对上，
  * 供卡面显示「谁陪你玩了、它是什么身份」。
  */
 export function replayCast(view: WerewolfView): ReplayPerson[] {

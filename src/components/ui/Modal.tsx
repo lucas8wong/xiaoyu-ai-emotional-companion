@@ -3,7 +3,7 @@
  *
  * 为什么要有这个文件（2026-09-17 立，用户口径「能复用的就复用去改，而不是每个单独改，
  * 这样以后如果其中一个有改动的话，都可以同时保持一致」）：
- *   盘点 `temp/modal-inventory.mjs` 的结论——全站 **49 处浮层里有 28 处**是同一套壳，
+ *   盘点 `temp/modal-inventory.mjs` 的结论，全站 **49 处浮层里有 28 处**是同一套壳，
  *   原文逐字重复（遮罩 `fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4`、
  *   面板 `bg-white rounded-2xl shadow-2xl max-w-md w-full p-4 sm:p-6 relative max-h-[92vh] overflow-y-auto`、
  *   关闭按钮 `absolute top-4 right-4 …`）。改一处观感要在 28 个文件里各改一遍，必然漂移
@@ -11,11 +11,11 @@
  *   → 本文件是那条**唯一口径**，并提供 `role="dialog" aria-modal="true"` 与关闭按钮的可访问名。
  *
  * ⚠️ 两条纪律（踩过再写下来）：
- *   ① **不要用 `panelClassName` 覆盖 padding/宽度/圆角/最大高度**——Tailwind 的同类工具类
+ *   ① **不要用 `panelClassName` 覆盖 padding/宽度/圆角/最大高度**，Tailwind 的同类工具类
  *      谁生效取决于它在生成 CSS 里的次序，**不取决于 class 书写顺序**，两套 `p-*` 一起出现必然有一个
  *      静默失效。所以这些一律走下面登记的 props（`width`/`padding`/`radius`/`maxHeight`/`layout`）。
  *   ② 底部抽屉（`items-end`）、全屏浮层、气泡/工具条不在本壳范围内（21 处「非标准壳」就是它们），
- *      它们各有各的手势与安全区处理——要套也得先用 `overlayClassName` 明确写出来。
+ *      它们各有各的手势与安全区处理，要套也得先用 `overlayClassName` 明确写出来。
  */
 import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -62,7 +62,7 @@ export interface ModalProps {
   closeLabel?: string;
   /** 是否渲染右上 ✕（默认 true）。迁移时**与原状一致**：原来没有 ✕ 的传 false */
   showClose?: boolean;
-  /** 面板追加 class —— **只放不与 width/padding/radius/maxHeight 冲突的东西**（见文件头纪律①） */
+  /** 面板追加 class，**只放不与 width/padding/radius/maxHeight 冲突的东西**（见文件头纪律①） */
   panelClassName?: string;
   /** 头部区追加 class（如 `mb-3` 收紧间距） */
   headerClassName?: string;

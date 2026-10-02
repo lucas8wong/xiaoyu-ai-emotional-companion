@@ -68,7 +68,7 @@ export function nodeImage(scenarioId: string, summary?: string): string | undefi
   return themeImage(scenarioId, themeOf(summary)) ?? covers[scenarioId]
 }
 
-// 是否有比「回退封面」更贴合的图（专属图或主题图）——决定是否展示节点缩略图
+// 是否有比「回退封面」更贴合的图（专属图或主题图），决定是否展示节点缩略图
 export function hasNodeArt(scenarioId: string, summary?: string): boolean {
   if (!summary) return false
   if (`../assets/nodes/${nodeImageName(scenarioId, summary)}.webp` in art) return true

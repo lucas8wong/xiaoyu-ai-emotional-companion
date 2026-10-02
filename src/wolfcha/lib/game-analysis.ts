@@ -1095,7 +1095,7 @@ function buildTimeline(state: GameState, aiSummaries?: AISpeechSummaryResult): T
       const idiotName = idiotPlayer?.displayName || "";
       dayEvents.push({
         type: "idiot_reveal",
-        target: `${idiotReveal.seat + 1}号${idiotName}翻牌——白痴，免疫放逐`,
+        target: `${idiotReveal.seat + 1}号${idiotName}翻牌，白痴，免疫放逐`,
       });
     }
 

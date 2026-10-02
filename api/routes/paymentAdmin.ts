@@ -104,9 +104,9 @@ function backupDataToTemp(prefix: string = 'newcomer-trial-backup'): string {
 
 /**
  * 订单来源口径（唯一判据，三处共用：列表 / 小结 / 前端徽章）
- *  - 'paid'    用户扫码付款 → 运营确认到账后解锁 —— **这才是订单，计入收入**
- *  - 'free'    运营在后台手动开通（试用/赠送）—— 也是 unlocked，但**不是订单、不计收入**
- *  - 'unknown' 早期数据没有 source 字段 —— 一律如实标注「未标注」，**不再静默当付费**展示
+ *  - 'paid'    用户扫码付款 → 运营确认到账后解锁，**这才是订单，计入收入**
+ *  - 'free'    运营在后台手动开通（试用/赠送）：也是 unlocked，但**不是订单、不计收入**
+ *  - 'unknown' 早期数据没有 source 字段，一律如实标注「未标注」，**不再静默当付费**展示
  *    （注意：收入统计 paymentStore.revenueStats() 的历史口径是 `source !== 'free'` 即计入，
  *     所以 unknown 仍计在收入里；展示层不撒谎，口径差异在界面上写明。）
  */
@@ -119,7 +119,7 @@ function orderSourceKind(o: { source?: string }): 'paid' | 'free' | 'unknown' {
  * GET /api/payment/admin/orders?token=xxx&status=all|pending|unpaid|unlocked|expired&source=all|paid|free
  *
  * 两个筛选维度互相独立、可叠加：status 管生命周期，source 管「谁付的钱 / 谁开的通」。
- * 响应额外带 summary（全库口径小结，不受筛选影响）——控制台据此把
+ * 响应额外带 summary（全库口径小结，不受筛选影响），控制台据此把
  * 「真实付费订单 / 我免费帮他开通的 / 用户下单没付款的」三件事分开显示，
  * 避免把免费开通当成订单（2026-09-18 用户指出：「订单 tab 看到好多项，实际一个订单都没有」）。
  */
@@ -166,7 +166,7 @@ router.get('/orders', async (req: Request, res: Response): Promise<void> => {
     };
   });
 
-  // —— 全库口径小结：把「真订单」与「我开的通」「没付的下单」分开 ——
+  // 【全库口径小结：把「真订单」与「我开的通」「没付的下单」分开】
   // 付费数/收入直接取 revenueStats()（单一口径，避免第二份实现漂移）
   const all = paymentStore.listAll();
   const rev = paymentStore.revenueStats();
@@ -217,13 +217,13 @@ router.get('/werewolf-stats', async (req: Request, res: Response): Promise<void>
  * GET /api/payment/admin/stats?token=xxx
  */
 /**
- * GET /api/payment/admin/rp-prompt —— 剧情模式 system prompt 全文监控
+ * GET /api/payment/admin/rp-prompt，剧情模式 system prompt 全文监控
  *
  * 返回中英双份 **实际会发给模型的 system prompt**（含成人块、craft 规则、语料库），
  * 以及开/关无限制模式两种版本的字符数，供管理端实时查看「改了之后模型到底收到什么」。
  *
  * 安全：沿用本路由的 isAdmin（fail-closed，未配 ADMIN_TOKEN 时整个路由禁用）。
- *   返回内容**含成人向提示词与露骨语料**，属敏感内容——不得加入任何公开缓存、不得写入日志。
+ *   返回内容**含成人向提示词与露骨语料**，属敏感内容：不得加入任何公开缓存、不得写入日志。
  *   为便于对比，固定使用同一个代表剧本，不按请求方传入的 id 渲染（避免被当成读取任意剧本的通道）。
  */
 router.get('/rp-prompt', async (req: Request, res: Response): Promise<void> => {
@@ -259,13 +259,13 @@ router.get('/rp-prompt', async (req: Request, res: Response): Promise<void> => {
 });
 
 /**
- * GET /api/payment/admin/prompts —— 控制台「📝 提示词」页数据源（2026-09-26 新增）
+ * GET /api/payment/admin/prompts，控制台「📝 提示词」页数据源（2026-09-26 新增）
  *
  * 分两级，避免一次吐出 200KB：
  *   · 不带参数 → 模式清单（每组模式的字数、块数、指纹；不含正文）
  *   · ?mode=<id> → 该模式全文（变体 + 分块），可带 ?lang=zh|zh-TW|en、?scenario=<剧本id>、?style=immersive|classic
  *
- * 文本来自 api/services/promptCatalog.ts —— 那是**真实调用点同源的**常量/builder，不是另一份拷贝，
+ * 文本来自 api/services/promptCatalog.ts，那是**真实调用点同源的**常量/builder，不是另一份拷贝，
  * 所以这里看到的即线上模型收到的。安全：沿用本路由 isAdmin（fail-closed，未配 ADMIN_TOKEN 时整个路由禁用）；
  * 返回内容含成人向提示词与情欲引导原文，**不得加入公开缓存、不得写入日志**。
  */
@@ -383,13 +383,13 @@ router.get('/referrals', async (req: Request, res: Response): Promise<void> => {
 /**
  * 邀请**归因**口径（与「📣 邀请推广」榜同源，2026-09-29 加）。
  *
- * 为什么列表页需要它：`quota.inviteCount` 只统计**已结算**的邀请——按 2026-09-19 的 B 方案，
+ * 为什么列表页需要它：`quota.inviteCount` 只统计**已结算**的邀请，按 2026-09-19 的 B 方案，
  * 被邀人**真的开口用过**才算数（防薅羊毛）。所以只看 `inviteCount` 会把「有人经他链接注册了、
  * 还在等首次使用」的邀请人显示成「没邀请到人」，这是**假阴性**，运营据此联系人就错了。
  * 返回：
  *  - `attributed`：台账里归到他名下的注册人数（`signup` + `signup_pending`）；
  *  - `rejected`：人来了但被反套利拦下（同设备/IP、邀请人太新、超上限…）的记录数，供详情解释。
- * 调用方用 `max(inviteCount, attributed)` 得当期归因总数——台账（2026-09-19）之前的历史只存在于
+ * 调用方用 `max(inviteCount, attributed)` 得当期归因总数，台账（2026-09-19）之前的历史只存在于
  * `inviteCount` 里，取下限会把老邀请人算少。
  */
 function inviteAttributionMap(): { attributed: Map<string, number>; rejected: Map<string, number> } {
@@ -543,7 +543,7 @@ router.get('/users/:userId/chat', async (req: Request, res: Response): Promise<v
         messageCount: r.messages.length,
         updatedAt: r.updatedAt,
         // 🚨 这里是**逐字段重建**消息（只挑 role/content/timestamp），所以审计字段必须显式带上，
-        // 否则管理端永远看不到「这条是谁写的」——同一类静默丢字段的坑在本项目已出现三次。
+        // 否则管理端永远看不到「这条是谁写的」，同一类静默丢字段的坑在本项目已出现三次。
         messages: r.messages.map(m => ({
           role: m.role,
           content: m.content,
@@ -692,7 +692,7 @@ router.get('/usage-trend', async (req: Request, res: Response): Promise<void> =>
 });
 
 /**
- * 运营端：API 成本构成（**谁花的钱**）——按功能细分
+ * 运营端：API 成本构成（**谁花的钱**），按功能细分
  * GET /api/payment/admin/cost-breakdown?token=xxx&days=30
  *
  * 口径（2026-09-17 新增「功能细分」）：
@@ -936,7 +936,7 @@ router.get('/export', async (req: Request, res: Response): Promise<void> => {
     const orders = paymentStore.listAll().sort((a, b) => b.createdAt - a.createdAt);
     filename = `cure-orders-${Date.now()}.csv`;
     // 类型/计入收入两列（2026-09-18）：免费开通单也有 price（那是档位标价，不是收款），
-    // 只在「计入收入=是」上求和才是真实收入——否则 Excel 一拉就把免费开通算成营收。
+    // 只在「计入收入=是」上求和才是真实收入，否则 Excel 一拉就把免费开通算成营收。
     csv = '订单号,类型,计入收入,金额(标价),状态,付款凭证,用户ID,创建时间,确认时间,解锁到期\n';
     for (const o of orders) {
       const kind = orderSourceKind(o);
@@ -1008,7 +1008,7 @@ router.post('/orders/:orderId/confirm', async (req: Request, res: Response): Pro
  * POST /api/payment/admin/orders/:orderId/mark-free?token=xxx&remark=原因
  *
  * 用途：运营自测单 / 赠送单被记成了付费单（付款页自测、给朋友开），
- * 改记后它就从「付费订单 / 收入」移出，归到「免费开通（不计收入）」——口径回到事实。
+ * 改记后它就从「付费订单 / 收入」移出，归到「免费开通（不计收入）」，口径回到事实。
  * 幂等：已是 free 只补备注；真实收款单不要用这个接口（这是运营的判断，不是系统能判的）。
  */
 router.post('/orders/:orderId/mark-free', async (req: Request, res: Response): Promise<void> => {
@@ -1047,7 +1047,7 @@ router.post('/orders/:orderId/mark-free', async (req: Request, res: Response): P
  *
  * 用途：用户没走站内通道付款（微信单独转账等）或按实收价结算时，
  * 让控制台里的金额与「收入」口径回到**实际到账金额**。
- * 只改 price（+ 追加备注）；status / source 不变 —— 解锁走 /confirm，改记免费走 /mark-free。
+ * 只改 price（+ 追加备注）；status / source 不变，解锁走 /confirm，改记免费走 /mark-free。
  */
 router.post('/orders/:orderId/amount', async (req: Request, res: Response): Promise<void> => {
   if (!isAdmin(req)) {
@@ -1336,7 +1336,7 @@ function rpModesOf(act: any, total: number): { roleplay: number; wenyou: number;
 }
 
 /**
- * 今日（服务端本地日）各用户的剧情轮次 —— 运营端 🎭 徽章「今日/累计」双数字里的「今日」。
+ * 今日（服务端本地日）各用户的剧情轮次，运营端 🎭 徽章「今日/累计」双数字里的「今日」。
  *
  * 背景（2026-09-18 用户提案 C）：徽章以前**跟着视图走**（今日视图=今日轮次、累计视图=累计轮次），
  * 同一格换个视图就变数，运营端拿它和「用户记录」里的剧情条数一对就对不上。
@@ -1405,7 +1405,7 @@ router.get('/activity', async (req: Request, res: Response): Promise<void> => {
     const accounts = allAccounts.filter(a => !isDeveloperAccount(a));
     const now = Date.now();
 
-    // —— 区间参数（可选，控制台「用户行为」按时间整页联动用）：from/to 成对，或单个 + days 兜底（仿 /usage-time）——
+    // 【区间参数（可选，控制台「用户行为」按时间整页联动用）：from/to 成对，或单个 + days 兜底（仿 /usage-time）】
     let from = String(req.query?.from || '');
     let to = String(req.query?.to || '');
     const rangeRequested = !!(from || to);
@@ -1427,7 +1427,7 @@ router.get('/activity', async (req: Request, res: Response): Promise<void> => {
       }
     }
 
-    // —— 每日打卡统计（跟随整页时间跨度：全部时间=不限，区间=from~to 内发生量）——
+    // 【每日打卡统计（跟随整页时间跨度：全部时间=不限，区间=from~to 内发生量）】
     // 口径与「用户行为」主表一致：排除测试/开发者账号；游客设备若有打卡同样计入「打卡用户」。
     const { diaryStore } = await import('../services/diary.js');
     const excludedAccountIds = new Set(
@@ -1566,7 +1566,7 @@ router.get('/activity', async (req: Request, res: Response): Promise<void> => {
         plan: q ? quotaStore.getPlan(q) : 'free',
         unlocked: !!q?.unlockUntil && q.unlockUntil > Date.now(),
         // 🎫 会员状态（2026-09-28）：控制台「统计卡下钻」列表与「用户行为」详情卡要一眼看出
-        //   「这个人是不是会员」——口径与「用户」页/CSV 导出**同源**（expiryFieldsOf）：
+        //   「这个人是不是会员」，口径与「用户」页/CSV 导出**同源**（expiryFieldsOf）：
         //   expiryKind = lifetime 永久 / membership 在期 / trial 仅 Pro 体验 / expired 已过期 / none 从未开通。
         //   注意：`trial` 必须与「Pro 会员」区分开（用户页早就这么分，见 admin.html 的会员徽章注释）。
         ...expiryFieldsOf(q, now),
@@ -1577,7 +1577,7 @@ router.get('/activity', async (req: Request, res: Response): Promise<void> => {
         chatCount: (act?.chatCount ?? 0) > 0 ? (act?.chatCount ?? 0) : (chatUserByUser.get(acc.userId) || 0),
         structureCount: (act?.structureCount ?? 0) > 0 ? (act?.structureCount ?? 0) : (structByUser.get(acc.userId) || 0),
         roleplayCount: rpTotal,
-        // 剧情演绎的模式明细（角色剧情扮演 / AI 文游 / AI 狼人杀）——「玩的是哪一个」看这三项
+        // 剧情演绎的模式明细（角色剧情扮演 / AI 文游 / AI 狼人杀），「玩的是哪一个」看这三项
         rpModes: rpModesOf(act, rpTotal),
         // 🎭 徽章「今日/累计」双口径（C 方案，2026-09-18）：累计=rpTotal，今日=behavior-daily 当天桶。
         // 两个字段固定不变，行上的数字不再跟着「今日/区间/累计」视图跳（区间值仍在上面的 roleplayCount 里）。
@@ -1589,14 +1589,14 @@ router.get('/activity', async (req: Request, res: Response): Promise<void> => {
         // 邀请信息：注册时用的预设邀请码（q.inviteCodeUsed）+ 邀请人（ref= 分享链接，q.invitedBy）
         inviteCode: q?.inviteCodeUsed || null,
         invitedBy: q?.invitedBy || null,
-        // 📣 邀请推广（2026-09-18）：详情卡要能直接读出「是谁的链接带进来的」+「本人拉了多少人、赚了多少额度」——
+        // 📣 邀请推广（2026-09-18）：详情卡要能直接读出「是谁的链接带进来的」+「本人拉了多少人、赚了多少额度」
         // 此前只显示一串 userId，看不出是哪个用户；`inviteCount` 为 0 表示没成功邀请过（归因 ≠ 已发放奖励）。
         inviterName: inviteeInviterAcc ? (inviteeInviterAcc.username || (inviteeInviterAcc.email || '').split('@')[0]) : null,
         inviterEmail: inviteeInviterAcc?.email || null,
         inviteCount: q?.inviteCount || 0,
         inviteCredits: (q?.inviteCount || 0) * INVITE_BONUS_COUNT,
         inviteBonus: INVITE_BONUS_COUNT,
-        // 📣 归因人数（含「已注册、还在等首次使用」）与「被反套利拦下」的记录数——
+        // 📣 归因人数（含「已注册、还在等首次使用」）与「被反套利拦下」的记录数
         // 只看 inviteCount（已结算）会把「有人注册但还没开口」的邀请人显示成「没邀请到人」
         inviteAttributed: Math.max(q?.inviteCount || 0, inviterAttr.attributed.get(acc.userId) || 0),
         inviteRejected: inviterAttr.rejected.get(acc.userId) || 0,
@@ -1714,7 +1714,7 @@ router.get('/activity', async (req: Request, res: Response): Promise<void> => {
       likes: [...users, ...guests].reduce((s, u) => s + (u.likeCount || 0), 0),
     };
 
-    // —— 经典全量口径（不带 from/to）：保持原结构（buckets + 全量 totals + 全量行）——
+    // 【经典全量口径（不带 from/to）：保持原结构（buckets + 全量 totals + 全量行）】
     if (!rangeRequested) {
       res.json({
         success: true,
@@ -1723,7 +1723,7 @@ router.get('/activity', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // —— 区间口径（from/to 给定）：整页统计按「区间内发生量」；行内附 cum=全量对象供详情弹窗 ——
+    // 【区间口径（from/to 给定）：整页统计按「区间内发生量」；行内附 cum=全量对象供详情弹窗】
     const { behaviorDailyStore } = await import('../services/behaviorDaily.js');
     const fromTs = new Date(from + 'T00:00:00').getTime();
     const toEndTs = new Date(to + 'T23:59:59.999').getTime();
@@ -1759,7 +1759,7 @@ router.get('/activity', async (req: Request, res: Response): Promise<void> => {
       if (!createdIn && !hasAct) return null; // 既非区间注册、又无区间活跃 → 不在区间视图出现
       return {
         ...row,
-        // —— 区间计数（表格「行为/登录/点赞/下载」列与统计卡）——
+        // 【区间计数（表格「行为/登录/点赞/下载」列与统计卡）】
         chatCount: bd?.chat || 0,
         structureCount: bd?.structure || 0,
         roleplayCount: bd?.roleplay || 0,
@@ -1949,10 +1949,10 @@ router.post('/users/:userId/unlock', async (req: Request, res: Response): Promis
   auditStore.log('manual_unlock', `手动开通：${who} + ${days} 天`, req.ip || '');
 
   /*
-   * 会员开通邮件（2026-09-18）：手动开通以前是静默的——用户那边一封邮件都没有，只能自己登录才发现。
+   * 会员开通邮件（2026-09-18）：手动开通以前是静默的，用户那边一封邮件都没有，只能自己登录才发现。
    * 这里给用户本人发一封；sendEmail 的 MAIL_BCC（本机 .env = myxiaoyu2026@gmail.com）会**自动抄送一份给运营**，
    * 所以运营每次手动开通都能在自己邮箱看到这封邮件。
-   * fire-and-forget：SMTP 慢/挂掉都**不能**卡住开通接口，也不能影响开通结果——发信结果写审计日志（控制台「审计」页可见）。
+   * fire-and-forget：SMTP 慢/挂掉都**不能**卡住开通接口，也不能影响开通结果，发信结果写审计日志（控制台「审计」页可见）。
    */
   void (async () => {
     try {
@@ -2107,7 +2107,7 @@ router.get('/ai-failures', async (req: Request, res: Response): Promise<void> =>
  * `api/services/reviewArchive.ts` 顶部注释（含「为什么会漏记录」的三条根因）。
  *
  * 用途：审阅真实对话来发现 AI 的回复质量问题（如「用户想要更亲密的表达，AI 却回避」），
- * 这是**替代「翻某个用户的聊天记录」的通道**——不需要先知道是谁，也不可能知道是谁。
+ * 这是**替代「翻某个用户的聊天记录」的通道**，不需要先知道是谁，也不可能知道是谁。
  *
  * 隔离度（本接口存在的全部理由）：
  *   - 只带随机代号 `rv_xxxx`，**无 userId / sessionId / scenarioId**（这三条都能反查到人：
@@ -2122,12 +2122,12 @@ router.get('/ai-failures', async (req: Request, res: Response): Promise<void> =>
  *   - 正文里用户自报的身份（手机号/姓名/机构等）生成时已洗掉，`scrubbed` 字段说明洗了什么
  *   - 「允许用于改进服务」(dataEnhance) 关闭的用户**不进队列**
  *   - **测试 / 开发身份默认整条排除**（`test-` 前缀设备、@test.com、TEST_ACCOUNTS、
- *     内置开发者邮箱、DEV_ACCOUNTS）——审阅队列是用来照**真实用户**的行为改模型的，
+ *     内置开发者邮箱、DEV_ACCOUNTS），审阅队列是用来照**真实用户**的行为改模型的，
  *     自测对话混进来会把结论带偏。复用 `accountFilters` 与 `activity.isTestRequest`
  *     的既有判据，不另写一份。`?include-test=1` 可收进来（条目带 `test:true`），仅自测用。
  *
  * ⚠️ 对外措辞：这是「去除账号关联后的人工审阅」，**不是匿名**。自由文本里的身份
- * （如「我在氹仔那家茶餐厅打工」）正则洗不干净——别把这里的隔离度说成匿名，那个词法律上过满。
+ * （如「我在氹仔那家茶餐厅打工」）正则洗不干净，别把这里的隔离度说成匿名，那个词法律上过满。
  *
  * 生成走 POST build（后台按钮），或命令行 `npx tsx scripts/build-review-queue.mts`。
  * 两条路都**并进**同一份档案（按对话身份键去重），不再整体覆盖。
@@ -2137,7 +2137,7 @@ router.get('/review-queue', async (req: Request, res: Response): Promise<void> =
 
   /**
    * ⚠️ 2026-09-25 起这里是**增量档案**（不再是一次生成整体覆盖的快照）：分页 / 日期范围 /
-   * 筛选 / 搜索全部在服务端做，列表只回**当前页的摘要（不含正文）**——正文由
+   * 筛选 / 搜索全部在服务端做，列表只回**当前页的摘要（不含正文）**，正文由
    * `/review-queue/item?key=` 按需单取。这么改的原因见 reviewArchive.ts 顶部注释。
    */
   const { loadArchive } = await import('../services/reviewArchive.js');
@@ -2207,7 +2207,7 @@ router.get('/review-queue', async (req: Request, res: Response): Promise<void> =
  * GET /api/payment/admin/review-queue/item?token=xxx&key=sk_xxxx
  *
  * 为什么要单独一条接口：档案是累积的（几百上千条），列表接口如果照旧把每条正文都带上，
- * 一页就是几百 KB —— 管理员主要在手机上看，那是不可用的。所以列表只给摘要，
+ * 一页就是几百 KB，管理员主要在手机上看，那是不可用的。所以列表只给摘要，
  * 展开哪条才取哪条的正文。`key` = 条目的 `sampleKey`（对话身份指纹，不是 reviewId）。
  */
 router.get('/review-queue/item', async (req: Request, res: Response): Promise<void> => {
@@ -2229,7 +2229,7 @@ router.post('/review-queue/build', async (req: Request, res: Response): Promise<
 
   /**
    * ⚠️ 默认从 50 提到 500（2026-09-25）：limit 的含义是「本次最多把多少条有资格的对话
-   * **并进档案**」，不是「页面显示多少」。原来 50 会把有资格的都截掉——实测 09-20 那次
+   * **并进档案**」，不是「页面显示多少」。原来 50 会把有资格的都截掉，实测 09-20 那次
    * 386 条候选里筛出 105 条有资格，只进了 50 条，另外 55 条从视图里消失。
    * 档案的意义就是不再丢记录，所以默认取满（上限 2000）。
    *
@@ -3044,7 +3044,7 @@ router.delete('/expenses/:id', async (req: Request, res: Response): Promise<void
 /**
  * 运营端：商业审查看板（定价 / 盈利能力 / 商业模型三合一，纯计算，实时）
  * GET /api/payment/admin/business-review?token=xxx
- * 不依赖 AI API —— 与 dsh-business 插件同源算法，读实时价格/订单/用量数据计算
+ * 不依赖 AI API，与 dsh-business 插件同源算法，读实时价格/订单/用量数据计算
  */
 router.get('/business-review', async (req: Request, res: Response): Promise<void> => {
   if (!isAdmin(req)) {
@@ -3271,7 +3271,7 @@ router.post('/ugc/:id/withdraw', (req: Request, res: Response): void => {
 });
 
 /**
- * 运营端：新人福利——给当前无会员的注册用户开通 7 天 Pro 试用 + 按其 IP 地区语言发恭喜邮件。
+ * 运营端：新人福利，给当前无会员的注册用户开通 7 天 Pro 试用 + 按其 IP 地区语言发恭喜邮件。
  * POST /api/payment/admin/newcomer-pro-trial
  *   ?apply=1    真实执行（缺省即 dry-run：只统计、不发信、不改数据）
  *   &force=1    忽略已有 marker 重新处理全部符合者（新一轮/重跑用；普通重跑不加）
@@ -3313,7 +3313,7 @@ router.post('/newcomer-pro-trial', async (req: Request, res: Response): Promise<
 });
 
 /**
- * 运营端：节日礼——给「所有注册用户」赠送 N 天完整 Pro（含活动窗口内新注册的用户）。
+ * 运营端：节日礼。给「所有注册用户」赠送 N 天完整 Pro（含活动窗口内新注册的用户）。
  * POST /api/payment/admin/holiday-gift
  *   ?apply=1    真实执行（缺省即 dry-run：只统计、不改数据）
  *   &force=1    忽略 marker 重新处理全部候选（⚠️ 会重复延长时间，仅特殊情况下用）
@@ -3414,7 +3414,7 @@ router.post('/holiday-gift/mail', async (req: Request, res: Response): Promise<v
 });
 
 /**
- * 运营端：补发「注册即送对话额度」——限时活动窗口（CHAT_BONUS_START/END）漏发的一次性补齐（2026-09-25）。
+ * 运营端：补发「注册即送对话额度」，限时活动窗口（CHAT_BONUS_START/END）漏发的一次性补齐（2026-09-25）。
  * POST /api/payment/admin/register-bonus-backfill
  *   ?apply=1    真实执行（缺省即 dry-run：只统计候选，不补发、不发信）
  *   &force=1    忽略已有 marker 重新处理全部候选（⚠️ 会重复补发，仅特殊情况下用）
@@ -3478,7 +3478,7 @@ router.post('/register-bonus-backfill', async (req: Request, res: Response): Pro
 
 /**
  * 运营账号（「🛠 运营账号」面板，2026-09-18 用户要求）：
- * 「在控制台可以单独控制这个账号的所有功能」——默认 Pro、可切 Plus/Free、且不过期。
+ * 「在控制台可以单独控制这个账号的所有功能」：默认 Pro、可切 Plus/Free、且不过期。
  *
  * 口径：
  *  - 只认**运营账号**（`isDeveloperAccount`，邮箱由 .env 的 DEV_ACCOUNTS 配置）。它一直是
@@ -3557,7 +3557,7 @@ router.post('/ops-account', async (req: Request, res: Response): Promise<void> =
   const userId = String(req.query?.userId || '').trim();
   const acc = userId ? accountStore.getById(userId) : (accountStore.listAll() || []).find(a => isDeveloperAccount(a));
   if (!acc) { res.status(404).json({ success: false, error: '运营账号不存在' }); return; }
-  // 兜底：只允许改运营账号（避免误伤真实用户）——想给普通用户开会员请用「开通 Plus/Pro」
+  // 兜底：只允许改运营账号（避免误伤真实用户），想给普通用户开会员请用「开通 Plus/Pro」
   if (!isDeveloperAccount(acc)) { res.status(400).json({ success: false, error: '该账号不是运营账号（此接口只用于运营账号）' }); return; }
   const enabled = String(req.query?.enabled ?? '1') !== '0';
   const rawPlan = String(req.query?.plan || 'pro');

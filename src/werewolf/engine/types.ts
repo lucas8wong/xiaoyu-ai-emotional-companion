@@ -4,7 +4,7 @@
  * 设计红线（见《AI狼人杀-调研与实施方案.md》）：
  *  1. **服务端是唯一权威**：LLM 只负责「发言 / 决策倾向」，输赢一律由本引擎裁决，绝不交给模型判。
  *  2. **事件自带可见范围（audience）**：狼人刀谁、预言家验出什么，只能下发给该看的人。
- *     视角隔离由 `view.ts` 单一出口实现——这是防作弊的地基。
+ *     视角隔离由 `view.ts` 单一出口实现，这是防作弊的地基。
  *  3. **文案与语言解耦**：事件只存结构化参数（seat/target/role/camp），不下发中文句子，
  *     由前端按 zh-CN / zh-TW / en 渲染。
  */
@@ -114,7 +114,7 @@ export type EventType =
 
 /**
  * 对局事件。
- * 只存结构化参数、不存成句文案——三语渲染是前端的事。
+ * 只存结构化参数、不存成句文案，三语渲染是前端的事。
  * `text` 仅用于承载玩家/AI 的发言原文（用户内容，不翻译）。
  */
 export interface GameEvent {
@@ -221,7 +221,7 @@ export interface WerewolfState {
   pendingAction?: PendingAction;
   /** 本日已被投票放逐者（等待遗言/猎人开枪） */
   exiledSeat?: number;
-  /** 女巫本夜是否已做决定（每夜开始重置）——「不用药」也是一次决定 */
+  /** 女巫本夜是否已做决定（每夜开始重置），「不用药」也是一次决定 */
   witchDecided?: boolean;
   /** 猎人待开枪的座位（有值 = 卡在开枪这一步等决定；处理完清空） */
   pendingHunterSeat?: number;
@@ -239,7 +239,7 @@ export interface WerewolfState {
   boomSeat?: number;
   /** 已给出遗言的座位（避免重复要遗言） */
   lastWordsSeat?: number;
-  // —— 警长竞选 / 警徽流（移植自 wolfcha 的 DAY_BADGE_* 与 BADGE_TRANSFER）——
+  // 【警长竞选 / 警徽流（移植自 wolfcha 的 DAY_BADGE_* 与 BADGE_TRANSFER）】
   /** 当前警长座位（空 = 本局还没有警长） */
   badgeSeat?: number;
   /** 上警报名：座位 → 是否上警 */
@@ -367,7 +367,7 @@ export const ROLES: Record<WerewolfRole, RoleSpec> = {
 export const ROSTERS: Record<GameSize, Record<WerewolfRole, number>> = {
   // 6 人局：新手 / 快速局（我们自己的配置，成本最低，作为默认）
   6: { werewolf: 2, whiteWolfKing: 0, seer: 1, witch: 1, hunter: 0, guard: 0, idiot: 0, villager: 2 },
-  // —— 以下 8~12 人移植自 wolfcha ——
+  // 【以下 8~12 人移植自 wolfcha】
   8: { werewolf: 3, whiteWolfKing: 0, seer: 1, witch: 1, hunter: 1, guard: 0, idiot: 0, villager: 2 },
   9: { werewolf: 3, whiteWolfKing: 0, seer: 1, witch: 1, hunter: 1, guard: 0, idiot: 0, villager: 3 },
   10: { werewolf: 2, whiteWolfKing: 1, seer: 1, witch: 1, hunter: 1, guard: 1, idiot: 0, villager: 3 },

@@ -42,7 +42,7 @@ interface AuthModalProps {
 type Tab = 'login' | 'register' | 'reset';
 
 /**
- * 自报来源选项（「你怎么知道我们的」）——值存服务端 attribution.heardFrom，
+ * 自报来源选项（「你怎么知道我们的」），值存服务端 attribution.heardFrom，
  * 与 UTM 归因是两种口径（basis: self-report vs journey），报表里分开看。
  * 顺序按我们的实际渠道优先级排，最后一项兜底。
  */
@@ -242,7 +242,7 @@ export default function AuthModal({ open, onClose, onLoginSuccess, onRegistered,
   const emailOk = emailRe.test(rEmail.trim()) && !/\.\./.test(rEmail.trim()) && !/\.$/.test(rEmail.trim());
   const pwdOk = rPassword.length >= 6;
   // 昵称不在注册主流程收集：由系统自动生成默认昵称（满足后端「username 或 phone 至少填一个」），用户可在「我的」修改。
-  // 默认昵称统一为「小愈的朋友 / Yu's friend」，不再带随机后缀——昵称仅作展示名，不承担唯一标识（唯一标识是 userId）。
+  // 默认昵称统一为「小愈的朋友 / Yu's friend」，不再带随机后缀，昵称仅作展示名，不承担唯一标识（唯一标识是 userId）。
   const genDefaultName = () => t('nicknameDefault');
 
   return (
@@ -382,7 +382,7 @@ export default function AuthModal({ open, onClose, onLoginSuccess, onRegistered,
                 : <p className="text-[11px] text-red-500 mt-1 leading-snug">{t('errPwdMin')}</p>)}
             </div>
             {/* 自报来源（可选）：补 tracking 看不见的口口相传 / 暗社交（DM、群聊、截图）
-                —— 归因技能里最被低估的信号，也是 direct 黑洞唯一的出路 */}
+，归因技能里最被低估的信号，也是 direct 黑洞唯一的出路 */}
             <div>
               <label className={labelCls} htmlFor="auth-heard-from-label">{t('heardFromLabel')}</label>
               <div className="relative">

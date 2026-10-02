@@ -1,7 +1,7 @@
 import type { Provider, ThinkingLevel } from './types'
 import { findProvider, PROVIDER_CATALOG, type CatalogProvider } from './providerCatalog.generated'
 
-/** 下拉里的分组。目录只分 llm / aggregator 两类，国内/国外的区分是本 app 加的 —— 中文用户按这个找服务商更快。 */
+/** 下拉里的分组。目录只分 llm / aggregator 两类，国内/国外的区分是本 app 加的，中文用户按这个找服务商更快。 */
 export type PresetGroup = 'china' | 'international' | 'aggregator' | 'custom'
 
 export const PRESET_GROUPS: ReadonlyArray<{ id: PresetGroup; label: string }> = [
@@ -31,17 +31,17 @@ export interface ProviderPreset {
 
 // ────────────────────────────────────────────────────────────────────────────
 // 厂商事实（模型 id / 区域端点 / 文档与控制台链接）来自 providerCatalog.generated.ts
-// —— 那份文件由同步脚本整份重写，别手改它，也别把这些事实抄回本文件。
+// 那份文件由同步脚本整份重写，别手改它，也别把这些事实抄回本文件。
 // 以前这些是手抄的，结果长期滞后：腾讯改名 TokenHub 之后这里还写着 hunyuan，
 // 火山/千问/智谱的型号也都停在上一代。
 //
 // 本文件只留【本 app 自己的东西】：
-//   · 收录哪几家（PICKED）——目录是超集，不是全都要
+//   · 收录哪几家（PICKED），目录是超集，不是全都要
 //   · 中文界面用的显示名与端点标签（目录的 label 一律英文，且禁止中文）
 //   · 兜底的自定义项（CUSTOM_PRESET）
 // 【顺序不在本文件定】：PRESETS 按目录顺序生成，上游怎么排这边就怎么排。
 //
-// ⚠ preset id 【就是】目录 key，不另起本地别名 —— 一处命名，省掉一张只会漂的
+// ⚠ preset id 【就是】目录 key，不另起本地别名，一处命名，省掉一张只会漂的
 // 对照表。id 同时是【存档键】（storage 按它分存各家 API key），所以这次改名会让
 // 旧存档失联：kimi→moonshot、ernie→qianfan、anthropic→claude、hunyuan→tokenhub、
 // custom→llm。腾讯那条本来也非改不可（换了域名与模型 id，旧 key 打不通新端点）。
@@ -60,7 +60,7 @@ const EP_LABEL: Record<string, string> = {
 }
 
 /**
- * 各协议的 base 约定不同 —— adapters.ts 里 openai 拼 `/chat/completions`、
+ * 各协议的 base 约定不同：adapters.ts 里 openai 拼 `/chat/completions`、
  * anthropic 拼 `/v1/messages`、gemini 拼 `/v1beta/models/...`。目录给的 baseUrl
  * 统一到「版本路径为止」，所以 anthropic 要再退一级，否则拼出 /v1/v1/messages。
  */
@@ -69,12 +69,12 @@ function baseFor(protocol: string, baseUrl: string): string {
 }
 
 /**
- * 收录目录里的一家。preset id 【就是】目录 key —— 不另起本地别名，这样
+ * 收录目录里的一家。preset id 【就是】目录 key，不另起本地别名，这样
  * 「以目录为准」由结构强制，不靠人记一张对照表。
  */
 function fromCatalog(key: string, pick: Pick): ProviderPreset {
   const p = findProvider(key)
-  if (!p) throw new Error(`providerCatalog 里没有 ${key} —— 上游可能已删除该 provider`)
+  if (!p) throw new Error(`providerCatalog 里没有 ${key}，上游可能已删除该 provider`)
   const eps = p.endpoints.map((e) => ({ label: EP_LABEL[e.label] ?? e.label, url: baseFor(p.protocol, e.baseUrl) }))
   if (!eps.length) throw new Error(`providerCatalog 的 ${key} 没有端点，无法作为预设`)
   return {
@@ -88,7 +88,7 @@ function fromCatalog(key: string, pick: Pick): ProviderPreset {
     baseURL: eps[0].url,
     // 只有一个端点时不出下拉（沿用原有约定：endpoints 表示"有别的选择"）
     ...(eps.length > 1 ? { endpoints: eps } : {}),
-    // 目录指定了 defaultModel 就把它排首位 —— models[0] 是界面的预填值，让上游的
+    // 目录指定了 defaultModel 就把它排首位，models[0] 是界面的预填值，让上游的
     // 排序来决定它，用户不动手就可能按 Opus 5 计费（目录默认给的是 Sonnet 5）。
     models: orderedModels(p),
   }
@@ -106,7 +106,7 @@ function orderedModels(p: CatalogProvider): string[] {
  * 通用兜底项。目录里它就叫 llm / Custom (OpenAI-compatible)。
  *
  * baseURL 留空表示「用户自己填」，`endpoints` 是**起步地址建议**而不是同一服务
- * 的区域变体 —— 所以这一项刻意不满足「默认 baseURL 必在端点列表中」那条约定
+ * 的区域变体，所以这一项刻意不满足「默认 baseURL 必在端点列表中」那条约定
  * （presets.test.ts 对它豁免）。Ollama / LM Studio / llama.cpp / LiteLLM /
  * Together AI / Fireworks AI 都在这里，不再各占一个预设：它们只是地址不同的
  * OpenAI 兼容端点，单列出来就得各自维护一份模型清单，而那正是要消灭的手工活。
@@ -126,14 +126,14 @@ const CUSTOM_PRESET: ProviderPreset = {
 /**
  * 收录清单：目录 key → 中文显示名（省略则用目录的名字）。
  *
- * ⚠ 这里【只管收录，不管顺序】—— PRESETS 按目录顺序生成。上游调整排序或在中间
+ * ⚠ 这里【只管收录，不管顺序】，PRESETS 按目录顺序生成。上游调整排序或在中间
  * 插入一家时，这边自动跟上，不用再手工挪位置（手工排序正是上一版每次同步都要
  * 重来一遍的活）。
  *
  * 未收录的两家不是漏了：
- *   · yandex —— model 必须是 gpt://<folderId>/<model> 这种 URI，本 app 没有
+ *   · yandex，model 必须是 gpt://<folderId>/<model> 这种 URI，本 app 没有
  *     folderId 字段，列上短模型名会每请求 400
- *   · azureopenai —— 认证头是 api-key 而非 Bearer，URL 还要拼
+ *   · azureopenai，认证头是 api-key 而非 Bearer，URL 还要拼
  *     /openai/deployments/<部署名>?api-version=…，与本 app 的 OpenAI 适配器不兼容
  * llm 不在表里：它是兜底项，由 CUSTOM_PRESET 单独给，永远排最后。
  */
@@ -172,7 +172,7 @@ const PICKED: Record<string, Pick> = {
 /**
  * 本 app 有 adapter 的协议。目录是超集（azure-openai 之类也在里面），收录到一个
  * 没有 adapter 的协议时，chatOnce 那个三分支 switch 会直接落空返回 undefined，
- * 而报错要到 parseTurnResult 才冒出来 —— 离真正的原因十万八千里。启动时就拦。
+ * 而报错要到 parseTurnResult 才冒出来，离真正的原因十万八千里。启动时就拦。
  */
 const SUPPORTED_PROTOCOLS: readonly string[] = ['openai', 'anthropic', 'gemini']
 
@@ -180,9 +180,9 @@ const SUPPORTED_PROTOCOLS: readonly string[] = ['openai', 'anthropic', 'gemini']
 // （静默的后果是某天下拉里少了一项，而没有任何地方提示过）。
 for (const key of Object.keys(PICKED)) {
   const p = findProvider(key)
-  if (!p) throw new Error(`PICKED 收录了 ${key}，但 providerCatalog 里没有 —— 上游已删除该 provider，请更新 PICKED`)
+  if (!p) throw new Error(`PICKED 收录了 ${key}，但 providerCatalog 里没有，上游已删除该 provider，请更新 PICKED`)
   if (!SUPPORTED_PROTOCOLS.includes(p.protocol)) {
-    throw new Error(`PICKED 收录的 ${key} 是 ${p.protocol} 协议，本 app 没有对应的 adapter —— 上游改了 protocol，请更新 PICKED`)
+    throw new Error(`PICKED 收录的 ${key} 是 ${p.protocol} 协议，本 app 没有对应的 adapter，上游改了 protocol，请更新 PICKED`)
   }
 }
 
@@ -190,7 +190,7 @@ for (const key of Object.keys(PICKED)) {
 export const DEFAULT_PROXY = 'https://cors.api2026.workers.dev'
 
 /**
- * 该服务商是否【必须】走中转 —— 目录的 directBlocked 说明上游不给浏览器发
+ * 该服务商是否【必须】走中转，目录的 directBlocked 说明上游不给浏览器发
  * CORS 头（预检 404 之类），与用户网络无关，直连在浏览器里根本发不出去。
  * 用它给这几家把中转默认打开，而不是让用户配好 key 才发现用不了。
  *
@@ -203,7 +203,7 @@ export function needsProxy(presetId: string | undefined): boolean {
 
 /**
  * 该服务商的【地址才是凭据】，key 可选甚至根本不存在（自建网关、局域网里的本地
- * 推理）。别拿「没填 key」拦住开局 —— LM Studio / Ollama / llama.cpp 这类本地服务
+ * 推理）。别拿「没填 key」拦住开局，LM Studio / Ollama / llama.cpp 这类本地服务
  * 没有 key 这个概念，拦住只会逼用户随便编一个字符串糊弄过去。
  * 同样由目录下发（keyOptional），不在这里按 id 列名单。
  */
@@ -214,7 +214,7 @@ export function keyOptional(presetId: string | undefined): boolean {
 /**
  * 关闭形态是不是【明确的关】而不是「发最低档」。
  *
- * 按叶子值判，不按字段名 —— 各家的关法形状差得很远，而且不止字符串一种：
+ * 按叶子值判，不按字段名，各家的关法形状差得很远，而且不止字符串一种：
  *   真关：{reasoning_effort:"none"} · {thinking:{type:"disabled"}} ·
  *         {enable_thinking:false} · {reasoning:{enabled:false}}
  *   仍在想：{reasoning_effort:"low"} · {generationConfig:{thinkingConfig:{thinkingLevel:"low"}}}
@@ -236,7 +236,7 @@ function isRealOff(wire: Record<string, unknown>): boolean {
  *
  * 逐 SKU 判，因为同一家里两种都有：moonshot 的 kimi-k3 关闭档发
  * `reasoning_effort:"low"`（还在想），k2.6 发 `thinking:{type:"disabled"}`
- * （真关了）—— 拿 provider 级的一个布尔值说话，两个方向都会说错。
+ * （真关了），拿 provider 级的一个布尔值说话，两个方向都会说错。
  * 不给 model 时（只知道服务商）退回 provider 级判据。
  */
 export function canDisableThinking(presetId: string | undefined, model?: string): boolean {
@@ -245,10 +245,10 @@ export function canDisableThinking(presetId: string | undefined, model?: string)
   if (model === undefined) return p.canDisableThinking !== false
   if (!supportsThinking(presetId, model)) return true // 压根不思考，无所谓关不关
   const off = thinkingWireFor(presetId, model, 'off')
-  // 有关闭形态：形态本身说了算 —— 是「明确的关」还是「发最低档」
+  // 有关闭形态：形态本身说了算，是「明确的关」还是「发最低档」
   if (off) return isRealOff(off)
   // ponytail: 没有关闭形态 = 关闭态什么都不发，这既可能是「服务端默认就关」
-  // （claude-haiku-4-5），也可能是「关不掉」（claude-fable-5）—— 目录当前不区分。
+  // （claude-haiku-4-5），也可能是「关不掉」（claude-fable-5），目录当前不区分。
   // 从严算作还在思考：多留一点 max_tokens、界面多一句提醒，都不伤人；反过来说成
   // 「关闭更省」而账单照跑才是真坑。等目录下发 alwaysOnThinking 之类再收紧。
   return false
@@ -262,7 +262,7 @@ export const PRESETS: ProviderPreset[] = [
 /**
  * 下拉用的选项：先按 PRESET_GROUPS 分组，组内保持目录顺序。
  * 两个调用点（Setup / GenerateModal）以前各写一份逐字相同的构建代码，
- * 加分组时就要改两处 —— 收成一份。
+ * 加分组时就要改两处，收成一份。
  */
 export const providerOptions: ReadonlyArray<{ value: string; label: string; hint: string; group: string }> = PRESET_GROUPS.flatMap((g) =>
   PRESETS.filter((p) => p.group === g.id).map((p) => ({
@@ -285,13 +285,13 @@ export function findPreset(id: string | undefined): ProviderPreset | undefined {
  * K2.x 收 thinking:{type}）。用户手填的未列出型号能力未知，退到 provider 级形态。
  *
  * ⚠ 目录只给 OpenAI 兼容协议那批的形态。Claude 与 Gemini 我们走的是各自的原生
- * 接口（/v1/messages、:streamGenerateContent），形态不同且目录不带 —— 所以这两家
+ * 接口（/v1/messages、:streamGenerateContent），形态不同且目录不带，所以这两家
  * 拿不到条目，思考控件也不该显示（见 supportsThinking）。
  */
 /**
  * 未列出的 SKU 命中的【条件形态】规则（目前只有 Claude 有，按模型名判代）。
  *
- * ⚠ 取【首个】匹配，不是任意一个：规则之间会互相包含 —— 官方标 Always on 的那几支
+ * ⚠ 取【首个】匹配，不是任意一个：规则之间会互相包含，官方标 Always on 的那几支
  * 同属新世代，正则是新世代那条的子集，形态却差在关闭档（它们连 disabled 都回 400，
  * 所以那条规则没有 off 键）。目录已按「窄的在前」排好，照顺序取第一条即可。
  */
@@ -309,7 +309,7 @@ export function thinkingWireFor(
   const listed = p.models.find((m) => m.id === model)
   if (listed) return listed.thinkingWire?.[level]
   // 未列出的 SKU：先看目录的【条件形态】。Claude 的形态取决于模型属于哪一代
-  // （adaptive 世代发 output_config，旧世代发 budget_tokens），只能按模型名判 ——
+  // （adaptive 世代发 output_config，旧世代发 budget_tokens），只能按模型名判
   // 这条判代规则由目录统一下发，正是为了不让每个 app 各写一份（各写一份必然漂：
   // 上游注释里记着已经漂过一次，手填 opus-4-8 就 400）。
   const rule = wireIfFor(p, model)
@@ -320,7 +320,7 @@ export function thinkingWireFor(
   return p.thinkingWire?.[level]
 }
 
-/** 该服务商 + 型号有没有已知的思考线格式 —— 没有就别显示思考控件（点了也不会有任何效果）。 */
+/** 该服务商 + 型号有没有已知的思考线格式，没有就别显示思考控件（点了也不会有任何效果）。 */
 export function supportsThinking(presetId: string | undefined, model: string): boolean {
   const p = presetId ? findProvider(presetId) : undefined
   if (!p) return false

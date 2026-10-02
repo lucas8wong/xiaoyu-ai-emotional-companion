@@ -46,7 +46,7 @@ async function chatXiaoyuImpl(messages: ChatMessage[], json: boolean, auto = fal
   throw new AIError(500, msg)
 }
 
-/** 不重试的一次调用。连接测试用它 —— 那里的意义就是把失败原样报出来。 */
+/** 不重试的一次调用。连接测试用它，那里的意义就是把失败原样报出来。 */
 export const chatOnce: ChatFn = (cfg, messages, onDelta, signal) => {
   switch (cfg.provider) {
     case 'openai':
@@ -65,9 +65,9 @@ export const chatOnce: ChatFn = (cfg, messages, onDelta, signal) => {
  * 判据抄自上游（408/425 是代理与负载均衡会吐的两个「可重试 4xx」）。
  *
  * 明确【不】重试的：
- *   · 401/403 —— key 不对，再试一次还是不对，只是让用户多等
- *   · abort —— 用户自己取消的
- *   · 其余 4xx —— 请求本身有问题（模型名错、参数不收），重试必然同样失败
+ *   · 401/403，key 不对，再试一次还是不对，只是让用户多等
+ *   · abort，用户自己取消的
+ *   · 其余 4xx：请求本身有问题（模型名错、参数不收），重试必然同样失败
  */
 function worthRetrying(e: unknown): boolean {
   if (isAbortError(e)) return false
@@ -144,14 +144,14 @@ export function friendlyError(e: unknown): string {
   if (e instanceof AIError) {
     if (e.status === 401) return 'API Key 无效或无权限（401），请检查配置'
     // 403 不一定是 key 的事：开着 CORS 中转时，那台按 host 白名单转发，自建 /
-    // 局域网地址不在名单里回的就是 403 —— 只说「检查 Key」会把人支到错的方向。
+    // 局域网地址不在名单里回的就是 403，只说「检查 Key」会把人支到错的方向。
     if (e.status === 403) return 'API Key 无效或无权限（403）；若开着 CORS 中转，也可能是它不转发这个地址'
     if (e.status === 429) return '请求过于频繁或额度不足（429），请稍候重试'
     if (e.status >= 500) return `AI 服务端错误（${e.status}）：${(e.message || '').replace(/\s+/g, ' ').slice(0, 200)} 请稍候重试`
     return `请求失败（${e.status}）：${e.message.slice(0, 200)}`
   }
   if (e instanceof TypeError) {
-    // 修法就在同一个面板里：打开「CORS 中转」。原来这句让人改用别家服务 —— 那是
+    // 修法就在同一个面板里：打开「CORS 中转」。原来这句让人改用别家服务，那是
     // 还没有中转时的建议，留着等于把用户从一个勾选框支去换服务商。
     return '网络错误，或该服务不支持浏览器直连（CORS）。可在配置里打开「CORS 中转」再试一次。'
   }

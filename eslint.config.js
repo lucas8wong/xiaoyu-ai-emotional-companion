@@ -50,7 +50,7 @@ export default tseslint.config(
     // 上游移植子系统（狼人杀 / 千世书）：**供应商代码**，不做样式与清理类改造，
     // 否则每次同步上游都会打架。这里只保留「能用工具查出来的真问题」，
     // 把两条在供应商代码里噪音极大的规则降级为 warn（含已知的 rules-of-hooks 存量，
-    // 逐条改需要重构上游组件，风险高于收益——按 backlog 处理，不再让它把门禁拖红）。
+    // 逐条改需要重构上游组件，风险高于收益，按 backlog 处理，不再让它把门禁拖红）。
     files: ['src/wolfcha/**/*.{ts,tsx}', 'src/wenyou/**/*.{ts,tsx}'],
     rules: {
       '@typescript-eslint/no-unused-vars': 'warn',

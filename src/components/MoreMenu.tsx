@@ -17,7 +17,7 @@ interface MoreMenuProps {
   onSkin: () => void;
   onProfile: () => void;
   onJourney: () => void;
-  /** 「我的记录」（我的陪伴记录）——理一理的记录：**不传即不渲染该项**（主页不传 → 主页 ⋯ 里没有它） */
+  /** 「我的记录」（我的陪伴记录），理一理的记录：**不传即不渲染该项**（主页不传 → 主页 ⋯ 里没有它） */
   onHistory?: () => void;
   onFeedback: () => void;
   onFaq: () => void;

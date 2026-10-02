@@ -1,5 +1,5 @@
 /**
- * 审阅队列构建 —— 「去除账号关联后的人工审阅」的结构层。
+ * 审阅队列构建，「去除账号关联后的人工审阅」的结构层。
  *
  * 目的：让运营/开发**不需要知道是谁**也能审阅对话质量（找 bug、看 AI 回复是否满足
  * 用户意图），从而替代「直接翻某个用户的聊天记录」这种既贵又越界的做法。
@@ -13,7 +13,7 @@
  *       （2026-09-20 口径变更：原来只给「日粒度 date」，审阅时无法和日志/别处的记录对时间）。
  *       秒级锚点它才够格当唯一键；分钟级配不出唯一性，而「对话内部」的节奏由逐条的
  *       相对偏移 offsetMs 保证（审阅「AI 这条回了多久」靠它，不靠墙上时钟）。
- *   另有 `assertDeidentified()` 在写出前做最后一道断言——宁可不出文件，也不出带身份的队列。
+ *   另有 `assertDeidentified()` 在写出前做最后一道断言，宁可不出文件，也不出带身份的队列。
  *
  * 本模块**纯函数、零 I/O**：数据由调用方传入（脚本读真实文件、单测传假数据），
  * 所以单测绝不会碰到真实用户数据（AGENTS.md 红线 3）。
@@ -63,7 +63,7 @@ export interface RawRoleplayRecord {
 /**
  * 审阅界面要显示的「这个用户当时的基础设置」（**白名单**）。
  *
- * 为什么要有：同一条 AI 回复在不同设置下的「好坏」标准完全不同——深度思考档位是
+ * 为什么要有：同一条 AI 回复在不同设置下的「好坏」标准完全不同，深度思考档位是
  * off 还是 max、聊一聊用的是哪种陪伴方式、剧情走的是经典还是沉浸叙事，决定了
  * 「这条回复该长什么样」。没有这一层，审阅者会把「设置本来就要求这样」误判成
  * 「模型变差了」（2026-09-20 用户要求：所有样本都要能一眼看到基础设置）。
@@ -87,7 +87,7 @@ export interface ReviewSettings {
   proactiveFrequency?: string;// 主动找我频率
 }
 
-/** 允许进队列的设置键（字符串型）——白名单：新增设置项必须显式加进来 */
+/** 允许进队列的设置键（字符串型），白名单：新增设置项必须显式加进来 */
 const SETTINGS_STRING_KEYS: readonly string[] = [
   'mode', 'tone', 'storyStyle', 'region', 'intensity', 'language', 'thinkingLevel', 'proactiveFrequency',
 ];
@@ -132,13 +132,13 @@ export interface ReviewItemMeta {
   /**
    * 这段剧情里每条 assistant 回复带的叙事模式计数（如 { immersive: 8 }）。
    * 为什么在条目级再聚一次：叙事模式是**逐条**记的，而审阅者扫列表时要一眼看到
-   * 「这段是沉浸档还是经典档」——不然得把每条回复逐条点开才能拼出来。
+   * 「这段是沉浸档还是经典档」，不然得把每条回复逐条点开才能拼出来。
    */
   styleCounts: Record<string, number>;
 }
 
 export interface ReviewItem {
-  /** 随机代号。与账号无任何映射关系，且**不落任何映射表**——从队列回不到用户 */
+  /** 随机代号。与账号无任何映射关系，且**不落任何映射表**，从队列回不到用户 */
   reviewId: string;
   kind: 'chat' | 'roleplay';
   /** 只到「日」粒度 */
@@ -149,7 +149,7 @@ export interface ReviewItem {
   userTurns: number;
   /**
    * 仅当调用方显式 `includeTest: true` 时才出现（默认不带）。
-   * 用来说明「这条来自测试/开发身份，不是真实用户」——队列默认已经把这类整个排除掉了。
+   * 用来说明「这条来自测试/开发身份，不是真实用户」，队列默认已经把这类整个排除掉了。
    */
   test?: boolean;
   meta: ReviewItemMeta;
@@ -158,10 +158,10 @@ export interface ReviewItem {
   scrubbed: string[];
   droppedAttachments: number;
   /**
-   * 稳定指纹：**「同一条对话」的身份** —— 已读/未读追踪靠它，增量档案的去重也靠它。
+   * 稳定指纹：**「同一条对话」的身份**，已读/未读追踪靠它，增量档案的去重也靠它。
    *
    * 为什么不能用 reviewId：代号每次重建都重新随机（随机 = 不可反推 = 去标识化的前提），
-   * 拿它当已读键的话，重建一次全部样本就集体变回未读——那这个功能等于没有。
+   * 拿它当已读键的话，重建一次全部样本就集体变回未读，那这个功能等于没有。
    * 指纹取「类型 + 首条时刻（分钟）+ **前两条用户发言**」的加盐哈希；加了固定盐则无法用
    * 彩虹表反查某句话；**不含 userId**，所以它连不回账号。
    *
@@ -184,7 +184,7 @@ export interface ReviewItem {
    * 前端就算不出线索了。放在这里算还顺带消除了「前后端各写一份阈值」的漂移风险。
    */
   signals: ReviewSignal[];
-  /** 折叠行上的首句预览（首条非空用户发言，已脱敏，最多 80 字）——列表不带正文时靠它扫 */
+  /** 折叠行上的首句预览（首条非空用户发言，已脱敏，最多 80 字），列表不带正文时靠它扫 */
   preview: string;
   /** 首次进入档案的时刻（毫秒）。增量档案里「这条什么时候开始被我看到的」 */
   archivedAt?: number;
@@ -194,7 +194,7 @@ export interface ReviewItem {
    * 该对话首条消息的**绝对时刻，截断到分钟**（秒与毫秒一律丢掉，取整到 60000 的倍数）。
    *
    * 口径变更（2026-09-20，用户要求「时间戳精确到分钟」）：原来是「只有日粒度的 date」。
-   * 保留的隔离度是「秒不出现」——秒级锚点配上别的日志才能唯一定位到某一次请求；
+   * 保留的隔离度是「秒不出现」，秒级锚点配上别的日志才能唯一定位到某一次请求；
    * 对话**内部**的节奏仍由 offsetMs 保证（审阅「AI 回了多久」靠它，不靠绝对时刻）。
    * 配套：隐私政策第 7 条与审阅页说明同步改成「时间只保留到分钟」。
    */
@@ -210,13 +210,13 @@ export interface BuildReviewQueueOptions {
   roleplayRecords?: readonly RawRoleplayRecord[];
   /**
    * 返回 false 的用户不进队列。调用方传入 `preferenceStore.get(id).dataEnhance !== false`
-   * ——这是「允许用于改进服务」开关第一次真正生效的地方。
+   *。这是「允许用于改进服务」开关第一次真正生效的地方。
    */
   shouldInclude?: (userId: string) => boolean;
   /**
    * 判为**测试 / 开发身份**的用户不进队列（默认行为）。
    *
-   * 为什么必须分开一档、而不是并进 shouldInclude：两者的含义完全不同——
+   * 为什么必须分开一档、而不是并进 shouldInclude：两者的含义完全不同
    * 一个是「用户是否授权」，一个是「这条数据是不是真实用户的」。混在一起会让
    * 统计口径说不清（「跳过的 30 条里多少是没授权的、多少是自测的？」），
    * 更实际的是：审阅的目的是**照真实用户的行为改模型**，自测对话混进来会把结论带偏。
@@ -228,7 +228,7 @@ export interface BuildReviewQueueOptions {
   isTestUser?: (userId: string) => boolean;
   /**
    * true = 也把测试身份收进队列，并在条目上标 `test: true`。
-   * 默认 false。仅自测/回归调试用——正常审阅不该开。
+   * 默认 false。仅自测/回归调试用，正常审阅不该开。
    */
   includeTest?: boolean;
   /** 最多产出多少条（按最近优先截取），默认 50 */
@@ -347,7 +347,7 @@ function buildMessages(rawMessages: unknown): BuiltMessages {
   }
 
   // 相对时间轴：以首条为 0。绝对锚点只留条目级的 startedAt（且截断到分钟），
-  // 逐条保持精确偏移——「AI 这条回了 8 秒」是审阅最需要的信号，不能被分钟粒度抹平。
+  // 逐条保持精确偏移，「AI 这条回了 8 秒」是审阅最需要的信号，不能被分钟粒度抹平。
   // at 为 0（时间不可解析）时一律给 0，别造出负数偏移。
   const base = scrubbed.messages[0]?.at ?? 0;
   const styleCounts: Record<string, number> = {};
@@ -408,7 +408,7 @@ export const SAMPLE_KEY_VERSION = 3;
  *   · 前两条（v3）：对话续写不会改前两条（队列本身要求 ≥2 轮用户发言），锚点却强了一倍。
  *     若开头被裁掉（剧情只留最近 200 条），靠档案层的「用户发言重叠」兜底认回同一条。
  * 加固定盐是为了让「同一句话」在不同语料里也拿不到可比的哈希（挡彩虹表）；
- * 全程不含 userId / sessionId，所以它指不回任何账号——**这也是它只能靠内容的原因**：
+ * 全程不含 userId / sessionId，所以它指不回任何账号，**这也是它只能靠内容的原因**：
  * 任何既稳定又唯一标识对话的 id（连 sessionId 的哈希也算）都会带来一条能被反查/穷举的回溯路径。
  */
 function sampleKeyOf(kind: string, startMinute: number, messages: readonly ReviewMessage[]): string {
@@ -466,7 +466,7 @@ export function signalsOf(messages: readonly ReviewMessage[]): ReviewSignal[] {
   return out;
 }
 
-/** 折叠行上的首句预览（首条非空用户发言，已脱敏）——列表不带正文时靠它扫 */
+/** 折叠行上的首句预览（首条非空用户发言，已脱敏），列表不带正文时靠它扫 */
 export function previewOf(messages: readonly ReviewMessage[], max = 80): string {
   for (const m of messages) {
     if (m.role !== 'user') continue;
@@ -575,7 +575,7 @@ export function buildReviewQueue(opts: BuildReviewQueueOptions = {}): BuildRevie
         item: {
           reviewId: idFactory(),
           kind: 'chat',
-          // 只有 includeTest 时才可能出现——默认整类已被排除
+          // 只有 includeTest 时才可能出现，默认整类已被排除
           ...(pre.test ? { test: true } : {}),
           date: dayOf(lastAt || Date.now()),
           turnCount: b.messages.length - userTurns,
@@ -671,7 +671,7 @@ export function buildReviewQueue(opts: BuildReviewQueueOptions = {}): BuildRevie
  * 两道检查：
  *   ① 结构：出现 FORBIDDEN_KEYS 里任何键（含嵌套）。
  *   ② 取值：`knownValues`（各来源用户的 userId / 邮箱 / 手机号）出现在任何字符串里。
- *      只查结构不够——userId 可能被拼进正文或标题。
+ *      只查结构不够，userId 可能被拼进正文或标题。
  *
  * 用法：构建脚本在写盘前调用，**非空就拒绝写文件**；单测用它做回归断言。
  */
@@ -680,7 +680,7 @@ export function findIdentityLeaks(items: unknown, knownValues: readonly string[]
   const seenKeys = new Set<string>();
   // 长度阈值 8：后台展示用户名/游客标签时一律取 userId 前 8 位（见 paymentAdmin 的
   // `userId.slice(0, 8)`），说明真实 userId ≥ 8 位。阈值取小了会把正文里的普通短词
-  // 误判成身份值，进而让整个队列 fail-closed 生成不出来——那是不可用的护栏。
+  // 误判成身份值，进而让整个队列 fail-closed 生成不出来，那是不可用的护栏。
   const needles = knownValues.filter((v) => typeof v === 'string' && v.length >= 8);
 
   const walk = (node: unknown, path: string): void => {

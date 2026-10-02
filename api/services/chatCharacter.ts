@@ -4,15 +4,15 @@
  * 数据持久化到 data/chat-characters.json，进程重启不丢失。
  *
  * 角色模型借鉴 Everthine 的三层人格（灵魂框架）：
- *   identity   —— 他是谁（身份/经历）
- *   boundaries —— 他的底线（价值观/边界）
- *   voice      —— 口吻/说话习惯
- *   opening    —— 开场/当下（可选）
+ *   identity，他是谁（身份/经历）
+ *   boundaries，他的底线（价值观/边界）
+ *   voice，口吻/说话习惯
+ *   opening，开场/当下（可选）
  * 小愈为内置默认角色（isDefault=true），不可删除、排第一位；用户可在此基础上创建其它角色。
  */
 
 import { dataFile, readJson, writeJson } from '../storage/persistence.js';
-// 关系档（2026-09-21）：朋友 / 损友 / 家人 / 恋人 —— 每角色一档，缺省 friend。
+// 关系档（2026-09-21）：朋友 / 损友 / 家人 / 恋人，每角色一档，缺省 friend。
 // 只存枚举，不存提示词：口吻文案全部由 `chatRelation.ts` 按当前语言现算（三语单一来源）。
 import { isRelationKind, type RelationKind } from './chatRelation.js';
 
@@ -38,7 +38,7 @@ export interface StoryBinding {
   kind: 'official' | 'custom';
   /** 导入时解析到的角色名（含用户在剧情里的改名，空则用剧本人设名） */
   aiName: string;
-  /** 剧内"你"的名字 —— 不带这个，TA 就会喊错人（剧情里用户可能改过名） */
+  /** 剧内"你"的名字，不带这个，TA 就会喊错人（剧情里用户可能改过名） */
   userName: string;
   importedAt: number;
   /** 已提炼进记忆的消息条数（增量同步游标；只在提炼成功后前移） */
@@ -47,7 +47,7 @@ export interface StoryBinding {
   /**
    * **上一次由系统写入的人设快照**（2026-09-20 补）。
    *
-   * 为什么需要：重复导入（或用户再点一次「把 TA 加到聊一聊」）会重新生成人设并覆盖角色 ——
+   * 为什么需要：重复导入（或用户再点一次「把 TA 加到聊一聊」）会重新生成人设并覆盖角色
    * 如果用户在这之前手改过 identity/voice/opening，他改的东西会被**静默冲掉**。
    * 有了快照就能判断"这个字段还是系统上次写的那份"（=没被动过，可以刷新）还是"用户改过"（保留用户的）。
    */
@@ -62,7 +62,7 @@ export interface StoryDigest {
   summary: string;
   /** 逐条关键事件（每条 ≤80 字，带日期 → 写进 longMemory 时不会被当成"时间不详"） */
   keyEvents: { text: string; date?: string }[];
-  /** 未完成的线：没说完的话、约定、悬念 —— 让"续得上" */
+  /** 未完成的线：没说完的话、约定、悬念。让"续得上" */
   openThreads: string[];
   /** 从剧情里提炼的口吻特征（补进 voice） */
   voiceTraits?: string;
@@ -91,7 +91,7 @@ export interface ChatCharacter {
   /** 双态（仅剧情角色有意义；缺省 'in' 入戏） */
   storyMode?: StoryMode;
   /**
-   * 是否套用「陪伴方式」（Q4=A：剧情角色恒为 false —— 它是"小愈怎么陪你"的用户级偏好，
+   * 是否套用「陪伴方式」（Q4=A：剧情角色恒为 false，它是"小愈怎么陪你"的用户级偏好，
    * 套到剧本人设上会立刻把角色变回"小愈味"）。缺省 undefined = 自定义角色沿用现状（本就不注入）。
    */
   useCompanionMode?: boolean;
@@ -133,7 +133,7 @@ const FILE = dataFile('chat-characters.json');
 const MAX_FIELD = 2000;
 /**
  * 人设类字段（identity / voice）的上限：比通用字段宽一倍。
- * 为什么单独放宽：剧情角色的人设来自剧本（外貌/性格/背景/语言习惯），2000 字装不下会被**静默截断**——
+ * 为什么单独放宽：剧情角色的人设来自剧本（外貌/性格/背景/语言习惯），2000 字装不下会被**静默截断**
  * 那正是 2026-09-16「字符串被提前截断 → 三节提示词无声消失」那类事故的形态。
  * 长背景故事另走 `story.digest.summary`（不占人设字段）。
  */
@@ -167,7 +167,7 @@ export interface ChatCharacterInput {
 
 /**
  * 归一化剧情摘要（落盘前兜底）：只认字符串、逐字段截断、丢掉空项。
- * 调用方（storyBridge）已经算过一遍，这里是**服务端最后一道**——防止任何客户端把超大/畸形结构写进库。
+ * 调用方（storyBridge）已经算过一遍，这里是**服务端最后一道**，防止任何客户端把超大/畸形结构写进库。
  */
 function normalizeDigest(d?: StoryDigest): StoryDigest | undefined {
   if (!d || typeof d !== 'object') return undefined;
@@ -298,7 +298,7 @@ class ChatCharacterStore {
   /**
    * 写入剧情摘要（导入时一次性 / 增量同步）+ 前移同步游标。
    * 只在提炼成功后调用：`syncedMsgCount` 落后于实际进度是可恢复的（下次重算），
-   * 前移过头则那一段剧情永远进不了记忆 —— 所以宁慢勿快。
+   * 前移过头则那一段剧情永远进不了记忆，所以宁慢勿快。
    */
   setStoryDigest(userId: string, id: string, digest: StoryDigest, syncedMsgCount: number): ChatCharacter | undefined {
     const rec = this.items.find((i) => i.userId === userId && i.id === id);
@@ -324,7 +324,7 @@ class ChatCharacterStore {
     if (typeof data.opening === 'string') rec.opening = clamp(data.opening);
     // 双态（入戏/出戏）：只认这两个取值；剧情以外没有该语义，不做任何事
     if (data.storyMode === 'in' || data.storyMode === 'out') rec.storyMode = data.storyMode;
-    // 关系档：同样只认白名单四档。注意这里**不做**"清空"——传 null/'' 视为"没改"，
+    // 关系档：同样只认白名单四档。注意这里**不做**"清空"，传 null/'' 视为"没改"，
     // 因为前端偏好面板是字段级提交，把"没选中"当成"改回默认"会让用户手滑丢设置。
     if (isRelationKind(data.relation)) rec.relation = data.relation;
     // 剧情绑定：只在原本就是剧情角色时才更新（不能让一次 PUT 把自建角色变成剧情角色，反之亦然）

@@ -68,7 +68,7 @@ export default function MembershipModal({ open, onClose, onOpenPay, onOpenRenew,
     return mainPrice(config, proP.usd * r, proP.hkd * r, proP.cny * r);
   };
   /**
-   * 续费档位的**原价**（同样按天比例）——2026-09-29 用户截图指出「续费这里还是看不到是折扣价」：
+   * 续费档位的**原价**（同样按天比例），2026-09-29 用户截图指出「续费这里还是看不到是折扣价」：
    * 续费价是按**折后**月价 × 天数折算的（服务端实扣同源），但界面只印了价格、没提优惠，
    * 于是看起来像原价。原价用 `originalUsd/Hkd/Cny` × 同一比例，与服务端 `getPriceIn` 的口径一致。
    */
@@ -106,7 +106,7 @@ export default function MembershipModal({ open, onClose, onOpenPay, onOpenRenew,
       {userPlan === 'pro' ? (
         /* ===== Pro：续费 / 延长（30/60/90 天） ===== */
         <div className="space-y-4">
-          {/* 当前档位卡：皮肤强调色（与首页会员横幅一致）——外观走 ui/PlanCard 的皮肤强调色档 */}
+          {/* 当前档位卡：皮肤强调色（与首页会员横幅一致），外观走 ui/PlanCard 的皮肤强调色档 */}
           <PlanCard
             plan="pro"
             name={t('memBadgePro')}
@@ -156,7 +156,7 @@ export default function MembershipModal({ open, onClose, onOpenPay, onOpenRenew,
           </button>
           <p className="text-[11px] text-ink-soft text-center">{t('membershipPayNote')}</p>
 
-          {/* 已订阅 Pro 的人**不该只看到"续费"** —— 完整权益对比放在下面：
+          {/* 已订阅 Pro 的人**不该只看到"续费"**，完整权益对比放在下面：
               ① 自己能核对自己买了什么（透明）；② 各档差别本身就是"Pro 值不值"的说服材料（续费理由）。 */}
           <details className="rounded-2xl border border-clay-border bg-white">
             <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-gray-700 flex items-center justify-between">
@@ -180,7 +180,7 @@ export default function MembershipModal({ open, onClose, onOpenPay, onOpenRenew,
             topRight={<span className="text-[10px] font-medium text-primary-text bg-primary-lighter rounded-full px-2 py-0.5">{t('memCurrentPlan')}</span>}
           />
 
-          {/* 期限切换：月付 / 年付（省 3 个月）/ 买断 —— 与 Free 视图同一控件 */}
+          {/* 期限切换：月付 / 年付（省 3 个月）/ 买断，与 Free 视图同一控件 */}
           <SegmentedControl
             value={upgradeTerm}
             onChange={setUpgradeTerm}
@@ -201,7 +201,7 @@ export default function MembershipModal({ open, onClose, onOpenPay, onOpenRenew,
             originalPrice={launch && upgradeTerm === 'monthly' && proP?.originalUsd
               ? mainPrice(config, proP.originalUsd, proP.originalHkd, proP.originalCny)
               : null}
-            /* 折扣标注：这张「Plus→Pro 升级卡」此前只显示划线原价、**没有折扣标注**——
+            /* 折扣标注：这张「Plus→Pro 升级卡」此前只显示划线原价、**没有折扣标注**
                同一个价格在「免费档三卡」里带标记、在这里不带，正是用户说的「所有情况都要标」的漏网处（2026-09-29） */
             badge={launch && upgradeTerm === 'monthly' && proP?.originalUsd
               ? <span className="inline-flex flex-col items-start gap-0.5">
@@ -211,7 +211,7 @@ export default function MembershipModal({ open, onClose, onOpenPay, onOpenRenew,
               : null}
             recommended
             recommendedLabel={t('membershipRecommended')}
-            /* 权益四项用对比表「Pro 專屬」那套键（`memProOnly*`，三语齐全）——
+            /* 权益四项用对比表「Pro 專屬」那套键（`memProOnly*`，三语齐全）
                原来写的是 t('mProB1')…t('mProB4')，而这四个键**从未存在过**：界面把键名
                直接当文案渲染（截图复核时抓到「mProB1 mProB2 mProB3 mProB4」）。 */
             bullets={[t('memProOnlyAutoPlay'), t('memProOnlyGen'), t('memProOnlyAutoArt'), t('memProOnlyThink')]}

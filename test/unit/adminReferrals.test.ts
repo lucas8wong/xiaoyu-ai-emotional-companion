@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert';
 import { setupTempCwd } from './setup.js';
 
-// 预设邀请码来自 .env 的 INVITE_CODES，且 quota.ts 在**模块加载时**解析它 —— 必须在 import 之前设好
+// 预设邀请码来自 .env 的 INVITE_CODES，且 quota.ts 在**模块加载时**解析它，必须在 import 之前设好
 // （测试 cwd 是临时目录，没有 .env；dotenv 也不会覆盖已存在的环境变量）
 process.env.INVITE_CODES = 'refselftest:20';
 setupTempCwd();
@@ -44,7 +44,7 @@ function rowOf(rep: any, userId: string) {
   return (rep.inviters || []).find((r: any) => r.userId === userId);
 }
 
-// —— ① 回算（必须最先跑：此时台账还没有任何事件，模拟「台账上线前」的历史）——
+// 【① 回算（必须最先跑：此时台账还没有任何事件，模拟「台账上线前」的历史）】
 test('回算：无台账时，按 inviteCount 取最早的被邀人推定发放，并标「近似」', () => {
   const inviter = registerAccount('inv-est');
   const early = registerAccount('est-early', 1);
@@ -67,7 +67,7 @@ test('回算：无台账时，按 inviteCount 取最早的被邀人推定发放�
   assert.strictEqual(rep.approximate, true, '含回算 → 报告标「近似」');
 });
 
-// —— ①b 邀请码回算（同样要跑在台账之前）——
+// 【①b 邀请码回算（同样要跑在台账之前）】
 test('邀请码回算：台账上线前的用码注册，按当前码额度估算并标「近似」', () => {
   const uid = registerAccount('code-est', 1);
   quotaStore.setInviteCodeUsed(uid, 'RefSelfTest'); // 大小写混写 → 报告里统一小写
@@ -88,7 +88,7 @@ test('邀请码回算：台账上线前的用码注册，按当前码额度估�
   assert.strictEqual(old.totals.codesRange, 0);
 });
 
-// —— ② 台账（精确）——
+// 【② 台账（精确）】
 test('台账：logSignupInvite 记一条，报告按它出额度与来源', () => {
   const inviter = registerAccount('inv-led');
   const invitee = registerAccount('led-e1', 1);
@@ -136,7 +136,7 @@ test('邀请码台账：logInviteCodeUse 记一条，码行按它出额度与来
   assert.ok(today.totals.codeRegistrationsRange >= 1, '区间内用码注册人数');
 });
 
-// —— ②b 注册后补填（2026-09）：与注册路径同源发放、一人一次、无效码不落状态 ——
+// 【②b 注册后补填（2026-09）：与注册路径同源发放、一人一次、无效码不落状态】
 test('补填邀请码：applyInviteCode 同源发放 + 一人一次 + 无效码拒绝', () => {
   const uid = registerAccount('code-late', 1);
   const before = buildReferralReport();
@@ -159,7 +159,7 @@ test('补填邀请码：applyInviteCode 同源发放 + 一人一次 + 无效码�
   assert.strictEqual(after.totals.codeRegistrationsAll, before.totals.codeRegistrationsAll + 1, '用码人数 +1（无效/重复不算）');
 });
 
-// —— ③ 区间 vs 累计 ——
+// 【③ 区间 vs 累计】
 test('区间：只统计区间内发生的事件；更早区间为 0', () => {
   const today = buildReferralReport({ from: ymdDaysAgo(2), to: ymd(new Date()) });
   const old = buildReferralReport({ from: '2020-01-01', to: '2020-01-31' });
@@ -170,7 +170,7 @@ test('区间：只统计区间内发生的事件；更早区间为 0', () => {
   assert.ok(old.totals.creditsAll >= today.totals.creditsRange, '累计口径 ≥ 区间口径');
 });
 
-// —— ④ 首购 → 邀请人同档会员（封顶年付）+ 被邀人月付送半月 ——
+// 【④ 首购 → 邀请人同档会员（封顶年付）+ 被邀人月付送半月】
 test('台账：被邀人首购 → 邀请人获得同档天数，月付再加赠半月；天数只记一次', () => {
   const inviter = registerAccount('inv-buy');
   quotaStore.noteDevice(inviter, 'dev-inv-buy', '5.6.7.8');
@@ -211,7 +211,7 @@ test('回算：无台账天数时，用被邀人首笔已解锁订单回算（�
   assert.strictEqual(row.invitees[0].purchase.source, 'estimate');
 });
 
-// —— ⑤ 边界：测试账号不计入；游客推广人照常列出 ——
+// 【⑤ 边界：测试账号不计入；游客推广人照常列出】
 test('边界：测试账号不计入统计；游客推广人（无账号）仍列出', () => {
   const inviter = registerAccount('inv-edge');
   const tester = accountStore.register({ username: 'ref_tester', email: 'tester@test.com', password: 'secret1' });
@@ -242,7 +242,7 @@ test('台账户均写盘：referral-events.json 内容与内存一致（重启�
   assert.ok(onDisk.every(e => ['signup', 'purchase', 'code', 'signup_rejected'].includes(e.kind)), '每条都有 kind（signup=推广链接注册 / signup_rejected=没发奖励 / purchase=首购会员天数 / code=预设邀请码）');
 });
 
-// —— ⑥ 未发放原因（「人来了为什么没算」）——
+// 【⑥ 未发放原因（「人来了为什么没算」）】
 test('未发放原因：台账留痕优先（当时判定），无留痕的历史按现有数据有限推定', () => {
   // (a) 台账留痕：注册当刻判定的原因（同设备自邀）
   const inviterA = registerAccount('rej-a');
@@ -261,7 +261,7 @@ test('未发放原因：台账留痕优先（当时判定），无留痕的历�
   assert.strictEqual(rowB.invitees[0].rejectReason, 'inviter-not-account');
   assert.strictEqual(rowB.invitees[0].rejectReasonSource, 'estimate');
 
-  // (c) 2026-09-19 B 方案后：邀请人账号年龄**不再是**拒绝原因（默认 minDays=0）——
+  // (c) 2026-09-19 B 方案后：邀请人账号年龄**不再是**拒绝原因（默认 minDays=0）
   //     没有台账留痕、又推不出别的原因时，如实标 unknown（不编「邀请人太新」）
   const inviterC = registerAccount('rej-c', 2); // 注册才 2 天
   const inviteeC = registerAccount('rej-c1', 1);
@@ -285,7 +285,7 @@ test('未发放原因：台账留痕优先（当时判定），无留痕的历�
   assert.ok(rep.totals.rejectedRange >= 4, '都是近两天注册的 → 区间口径同样计入');
 });
 
-// —— ⑦ 用户侧「我的邀请记录」——
+// 【⑦ 用户侧「我的邀请记录」】
 test('用户侧邀请记录：只给自己那一行 + 邮箱打码 + 资格判定', () => {
   const inviter = registerAccount('my-inv');
   quotaStore.noteDevice(inviter, 'dev-my-inv', '6.6.7.8');
@@ -334,7 +334,7 @@ test('邮箱打码：保留前 2 位 + 域名，非法输入返回 null', () => 
   assert.strictEqual(maskInviteeEmail(null), null);
 });
 
-// —— ⑧ B 方案：待激活 → 首次真实使用才结算（含新账号 ×1.5）——
+// 【⑧ B 方案：待激活 → 首次真实使用才结算（含新账号 ×1.5）】
 test('B 方案：注册只进「待激活」（未计入原因是 invitee-inactive），被邀人开口后才结算并按 ×1.5 加成', () => {
   const inviter = registerAccount('b-new', 1); // 刚注册 1 天 → 落在加成窗口内
   quotaStore.noteDevice(inviter, 'dev-b-inv', '5.5.1.1');

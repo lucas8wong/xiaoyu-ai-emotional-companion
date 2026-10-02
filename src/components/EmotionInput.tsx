@@ -184,7 +184,7 @@ export default function EmotionInput() {
               <span className="inline-block bg-primary-lighter border border-clay-border text-primary-text text-xs px-3 py-1 rounded-full">
                 {!isLoggedIn()
                   // 2026-09-27 分档：游客条必须给出「游客 N 条 / 注册后 M 条」（与首页、聊一聊逐字一致）；
-                  // ⚠️ 原来这里写死 `b: 3`（旧理一理口径），既不真实也与后端奖励数字不符——已改用后端下发数字
+                  // ⚠️ 原来这里写死 `b: 3`（旧理一理口径），既不真实也与后端奖励数字不符，已改用后端下发数字
                   ? (guestQuotaLineText(t, quota, null, quotaChatRemain(quota)) ?? t('remaining', { n: remainFree }))
                   : t('remaining', { n: remainFree })}
               </span>

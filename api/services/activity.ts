@@ -6,7 +6,7 @@
 
 import { dataFile, readJson, writeJson } from '../storage/persistence.js';
 import { behaviorDailyStore } from './behaviorDaily.js';
-// 邀请结算（B 方案·2026-09-19）：被邀人「首次真实使用」才给邀请人发奖——所有功能成功路径都收口在这里，
+// 邀请结算（B 方案·2026-09-19）：被邀人「首次真实使用」才给邀请人发奖，所有功能成功路径都收口在这里，
 // 所以挂在这个函数上最省事、也不会漏路径。依赖方向 activity → inviteQualify → quota 是单向的
 // （quota 链上没有任何模块反向 import activity），所以这里用静态 import 是安全的。
 import { onUserFirstRealUse } from './inviteQualify.js';
@@ -30,7 +30,7 @@ export type FeatureKey = 'chat' | 'structure' | 'roleplay';
  *  - `werewolf`  AI 狼人杀（**按局**计，一次开局记一次，不按轮）
  *
  * 口径：`roleplayCount`（及按日的 `roleplay` 桶）仍是**三者合计**，数值口径不变、老数据不断层；
- * 本字段只回答「这堆总轮次里，用户玩的是哪一种模式」。明细自 2026-09-16 起累计——
+ * 本字段只回答「这堆总轮次里，用户玩的是哪一种模式」。明细自 2026-09-16 起累计
  * 早于该日的历史只有合计，`rpModes` 全 0（**不做历史回溯**）。
  */
 export type RoleplayMode = 'roleplay' | 'wenyou' | 'werewolf';
@@ -95,7 +95,7 @@ export interface UserActivity {
   installedAt?: number | null;
   /**
    * 复制自己专属邀请链接的次数（2026-09-29 加）。
-   * 为什么值得记：运营要区分「只是看了眼邀请入口」和「真的把链接复制出去了」——
+   * 为什么值得记：运营要区分「只是看了眼邀请入口」和「真的把链接复制出去了」
    * 复制了但没人注册 = 该给话术/激励的人群；一次都没复制 = 根本不知道有邀请这回事。
    * ⚠️ 这是**行为计数**，与邀请结果（`quotaStore` 的 `inviteCount`：真的拉来几个人）是两个口径，别混。
    */
@@ -143,7 +143,7 @@ class ActivityStore {
 
   /**
    * 记录一次功能使用（成功路径调用）；detail 为对象级信息（如剧情扮演的剧本标题）；ip 为来源地址（游客与注册用户都记，供 IP 分布统计）；country 为 ISO 国家码。
-   * `mode` 仅对 feature === 'roleplay' 有意义（剧情扮演 / AI 文游 / AI 狼人杀），缺省按「剧情扮演」——老的三个调用点因此无需改动。
+   * `mode` 仅对 feature === 'roleplay' 有意义（剧情扮演 / AI 文游 / AI 狼人杀），缺省按「剧情扮演」，老的三个调用点因此无需改动。
    */
   trackFeature(userId: string, feature: FeatureKey, opts?: { detail?: string; ip?: string; country?: string; mode?: RoleplayMode }): void {
     if (!userId) return;
@@ -158,7 +158,7 @@ class ActivityStore {
     else if (feature === 'roleplay') cur.roleplayCount += 1;
     /**
      * 剧情演绎的模式明细：只在 feature === 'roleplay' 时累加。
-     * ⚠️ 这里**不改** roleplayCount 的语义（仍是三模式合计），所以明细之和恒等于它——
+     * ⚠️ 这里**不改** roleplayCount 的语义（仍是三模式合计），所以明细之和恒等于它
      * 运营端可以放心用「合计 − 文游 − 狼人杀」得到剧情扮演轮次，不会出现负数。
      * `rpModes` 对所有记录都补齐三键（控制台与接口不必到处判空）。
      */
@@ -276,7 +276,7 @@ class ActivityStore {
     const toModes = normRoleplayModes(to.rpModes);
     for (const m of ROLEPLAY_MODES) toModes[m] += fromModes[m];
     to.rpModes = toModes;
-    // 最近模式取「两个身份里更近活跃的那一个」——与 lastFeature 的合并方向保持一致
+    // 最近模式取「两个身份里更近活跃的那一个」，与 lastFeature 的合并方向保持一致
     if ((from.lastMode && (from.lastActiveAt || 0) >= toWasActiveAt) || (!to.lastMode && from.lastMode)) {
       to.lastMode = from.lastMode;
     }

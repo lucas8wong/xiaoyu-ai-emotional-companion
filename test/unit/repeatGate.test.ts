@@ -1,12 +1,12 @@
 /**
- * A 方案（生成后重复闸）回归网 —— 2026-09-24
+ * A 方案（生成后重复闸）回归网，2026-09-24
  *
  * 为什么必须钉死这些断言：
  * 前三轮（提示词 / 采样参数 / 换模型）用真实数据证明「模型行为不可控、上游噪声大于效应」，
  * 所以这一层是**唯一确定性**的护栏。它有两种失效方式，都要挡住：
- *   ① 判据失灵（该抓的不抓）—— 被投诉那位用户的逐字跨度只有 45 字，纯 severe 判据抓不到他，
+ *   ① 判据失灵（该抓的不抓），被投诉那位用户的逐字跨度只有 45 字，纯 severe 判据抓不到他，
  *      所以必须有 circulating 这一路；
- *   ② 采纳策略失灵（把"少写"当成"不复读"）—— GLM-4-32B 的教训：回复短一半，重复指标立刻好看。
+ *   ② 采纳策略失灵（把"少写"当成"不复读"），GLM-4-32B 的教训：回复短一半，重复指标立刻好看。
  *
  * ⚠️ 样本长度本身也是断言的一部分：所有"回复"样本都 ≥ RP_REPEAT_MIN_CHARS(80)，
  *    否则测的就不是判据而是"短回复被跳过"这条早退分支。
@@ -19,7 +19,7 @@ setupTempCwd();
 const gate: any = await import('../../api/services/repeatGate.js');
 const rp: any = await import('../../api/services/roleplay.js');
 
-/** 26 字：够 circulating 阈值（20），远不到 severe（80）—— 正是被投诉用户那句「掌心热度」的形态 */
+/** 26 字：够 circulating 阈值（20），远不到 severe（80），正是被投诉用户那句「掌心热度」的形态 */
 const CIRC = '周既白的手指在你腰窝处轻轻按揉了一圈，动作连贯而有力。';
 /** ≥100 字的连续片段（severe 判据用） */
 const LONG = '（他垂着眼，把外袍的下摆拢好，动作不急不缓。）“先把这碗汤喝了，凉了就没用了。”'
@@ -45,7 +45,7 @@ const CIRC_REPLY = F7 + CIRC + F4;
 const REP_HISTORY = [H(CIRC_PREV1), H(CIRC_PREV2)];
 
 test('样本自身够长（否则下面的断言测的是"短回复早退"而不是判据）', () => {
-  // ⚠️ 别写成 `len(s) >= X ?? 80`——`>=` 比 `??` 结合得更紧，会变成 `(len>=X) ?? 80` 恒为 false。
+  // ⚠️ 别写成 `len(s) >= X ?? 80`，`>=` 比 `??` 结合得更紧，会变成 `(len>=X) ?? 80` 恒为 false。
   for (const [name, s] of [['SEV_REPLY', SEV_REPLY], ['SEV_PREV', SEV_PREV], ['CIRC_REPLY', CIRC_REPLY], ['CIRC_PREV1', CIRC_PREV1], ['CIRC_PREV2', CIRC_PREV2]] as [string, string][]) {
     assert.ok(len(s) >= 80, name + ' 太短：' + len(s));
   }
@@ -72,7 +72,7 @@ test('⭐ circulating：同一 ≥20 字片段出现在 2 条前文 → 命中�
   assert.ok(f.longestSpan < 80, '本例刻意不超过 severe 阈值（要证明循环这一路自己抓得住）：' + f.longestSpan);
   assert.equal(f.circulating, 2);
   assert.equal(f.spans.length, 1, '只该点名一条：' + JSON.stringify(f.spans));
-  // 公共片段可能带上紧邻的句号（`F7` 与 `F1` 都以「。」结尾）——断言其包含那句循环原文即可
+  // 公共片段可能带上紧邻的句号（`F7` 与 `F1` 都以「。」结尾），断言其包含那句循环原文即可
   assert.ok(f.spans.some((s: string) => s.includes('周既白的手指在你腰窝处轻轻按揉了一圈')), '点名片段应当是那句循环的原文：' + JSON.stringify(f.spans));
 });
 
@@ -170,7 +170,7 @@ test('开关：RP_REPEAT_GATE=0 → 完全不评估，也不重写', async () =>
   });
 });
 
-test('范围：默认 adult —— 没走去限制模型的回合不评估；scope=all 才评估', async () => {
+test('范围：默认 adult，没走去限制模型的回合不评估；scope=all 才评估', async () => {
   await withEnv({ RP_REPEAT_GATE_SCOPE: undefined }, async () => {
     let calls = 0;
     const r = await gate.runRepeatGate({ reply: CIRC_REPLY, history: REP_HISTORY, lang: 'zh', adult: false, regenerate: async () => { calls += 1; return { reply: 'x', payload: 'x' }; } });

@@ -19,7 +19,7 @@ interface MembershipCompareProps {
   onClose?: () => void;
   config?: PayConfig | null;
   /**
-   * 只渲染「权益对比表」那一块（+全档说明与脚注）——给**已订阅用户**的续费弹窗用：
+   * 只渲染「权益对比表」那一块（+全档说明与脚注），给**已订阅用户**的续费弹窗用：
    * 他们不需要再被推一次价格卡，但应该看到自己买了什么、以及各档差别（也是续费的价值说明）。
    */
   tableOnly?: boolean;
@@ -40,7 +40,7 @@ function moneyOthers(config: MembershipCompareProps['config'], usd?: number, hkd
 export default function MembershipCompare({ onOpenPay, onClose, config, tableOnly = false, currentPlan }: MembershipCompareProps) {
   /**
    * 分模式用量推荐器（2026-09-17 替换掉「你一天大概会聊多少句？」单滑块）。
-   * 为什么必须分模式：各模式单价差很多——聊天/剧情 1 条、文游 2 条、理一理整条流程 10 条、狼人杀一局 40 条。
+   * 为什么必须分模式：各模式单价差很多：聊天/剧情 1 条、文游 2 条、理一理整条流程 10 条、狼人杀一局 40 条。
    * 单滑块只能按"句"估，狼人杀这种 40 倍的单价比它算不出来（还会把人低估到免费档）。
    * 权重全部来自后端 `quota.featureCostTiao`（单源 = 价目表），前端不写死。
    */
@@ -71,7 +71,7 @@ export default function MembershipCompare({ onOpenPay, onClose, config, tableOnl
 
   /**
    * 统一口径（一个池）：所有走 AI 的功能共用一个每日额度，展示单位统一为「条」。
-   * 条数换算**复用后端同一条公式**（剩余/上限点数 ÷ `unitCredit`）——与 `quotaChatRemain()`、
+   * 条数换算**复用后端同一条公式**（剩余/上限点数 ÷ `unitCredit`）：与 `quotaChatRemain()`、
    * 狼人杀顶栏 `creditsToUses()` 完全一致，避免前端另立一套换算。
    */
   const unified = !!q?.creditEnabled;
@@ -91,7 +91,7 @@ export default function MembershipCompare({ onOpenPay, onClose, config, tableOnl
   const plusTiao = unified ? (Number(aiQuotaPlus) || 0) : chatDaily;
   const recByUse = daily <= freeTiao ? 'free' : daily <= plusTiao ? 'plus' : 'pro';
 
-  // —— 分模式用量 → 一天总条数 → 推荐档位（整数，全部来自后端单价）——
+  // 【分模式用量 → 一天总条数 → 推荐档位（整数，全部来自后端单价）】
   const cost = {
     chat: q?.featureCostTiao?.chat ?? 1,
     textgame: q?.featureCostTiao?.textgame ?? 2,
@@ -116,7 +116,7 @@ export default function MembershipCompare({ onOpenPay, onClose, config, tableOnl
 
   /**
    * 用量刻度几何（2026-09-17 新增）：把「你落在哪一档」从一行灰字变成一条看得见的尺。
-   * 主轴 = 0 → Plus 日额（`plusTiao`），右侧固定留出 22% 宽的 **Pro ∞ 尾段** ——
+   * 主轴 = 0 → Plus 日额（`plusTiao`），右侧固定留出 22% 宽的 **Pro ∞ 尾段**
    * Pro 是「无限」，线性轴画不出来，所以给它一块固定地盘：用量超出 Plus 越多、游标越靠右
    * （到右端即饱和），既诚实又能一眼看出「已经越过 Plus 了」。
    * 边界：`plusTiao = 0`（后端配置缺失）时主轴退到 100；所有百分比都过 pctClamp()，
@@ -127,7 +127,7 @@ export default function MembershipCompare({ onOpenPay, onClose, config, tableOnl
   const perTiaoPct = (100 - PRO_TAIL_PCT) / meterAxisMax;
   const pctClamp = (n: number) => (Number.isFinite(n) ? Math.max(0, Math.min(100, n)) : 0);
   /** 0–1 的比例夹紧（**别和上面的 0–100 夹紧混用**：混了就是把比例再除一次 100，
-   *  游标挪进 ∞ 尾段只有 0.06%——首轮实渲 DOM 里抓到过这个 bug，肉眼完全看不出来） */
+   *  游标挪进 ∞ 尾段只有 0.06%，首轮实渲 DOM 里抓到过这个 bug，肉眼完全看不出来） */
   const ratioClamp = (n: number) => (Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0);
   const freeTickPct = pctClamp(freeTiao * perTiaoPct);
   const plusTickPct = pctClamp(meterAxisMax * perTiaoPct);
@@ -206,7 +206,7 @@ export default function MembershipCompare({ onOpenPay, onClose, config, tableOnl
   const fmtPerDay = (n: number) => n + ' ' + t('memUnitPerDay');
 
   /**
-   * 三张价格卡的数据（**外观令牌已抽到 `ui/PlanCard.tsx` 的 `PLAN_THEME`**——2026-09-17：
+   * 三张价格卡的数据（**外观令牌已抽到 `ui/PlanCard.tsx` 的 `PLAN_THEME`**，2026-09-17：
    * 原来这套 surface/icon/ring/ribbon/price/cta 令牌只服务这一处，续费视图另写了一份就掉队了；
    * 现在档位观感（含琥珀=Pro）是单一口径，会员弹窗三个视图共用）。
    */
@@ -225,7 +225,7 @@ export default function MembershipCompare({ onOpenPay, onClose, config, tableOnl
   /**
    * 表格行。**Pro 专属四项也进表**（用户要求：一眼看出「免费/Plus 没有、Pro 有」），
    * 每组前面插一条分组行（`section`），每行都带 ℹ️ 展开说明。
-   * 不写每日上限——上限属内部用量保护，写进权益行会让「无限」自相矛盾。
+   * 不写每日上限，上限属内部用量保护，写进权益行会让「无限」自相矛盾。
    */
   type Row = { key: string; label: string; cells?: string[]; hint?: string; section?: boolean; highlight?: boolean };
   const proOnlyRows: Row[] = [
@@ -237,7 +237,7 @@ export default function MembershipCompare({ onOpenPay, onClose, config, tableOnl
 
   const tableRows: Row[] = unified
     ? [
-      // 顺序（商业判断）：**先讲额度、后讲 Pro 独占**——多数读者是免费/Plus，先回答「我每天能用多少」，
+      // 顺序（商业判断）：**先讲额度、后讲 Pro 独占**，多数读者是免费/Plus，先回答「我每天能用多少」，
       // 收尾落在「只有 Pro 有这四件事」，读完的最后一个念头就是升级动机。
       { key: 'sec-quota', label: t('memSectionQuota'), section: true },
       { key: 'ai', label: t('memFeatureAiQuota'), cells: [aiQuotaFree + ' ' + t('memUnitPerDay'), aiQuotaPlus + ' ' + t('memUnitPerDay'), UNL()], hint: aiTierHint },
@@ -267,7 +267,7 @@ export default function MembershipCompare({ onOpenPay, onClose, config, tableOnl
       {tableOnly ? null : unified ? (
         <SectionCard tint="mint" className="p-4 space-y-3">
           {/* 头部：图标 + 标题 + 总量徽标。
-              图标与标题**合成一个 flex item**（图标不做外层兄弟节点）——否则 320px 下来时
+              图标与标题**合成一个 flex item**（图标不做外层兄弟节点），否则 320px 下来时
               图标会被单独挤到第一行（basis 判定只看未收缩宽度，实测截图确认）；
               这个组合用 `grow shrink basis-48`（**不用 flex-1**：flex-1 的 basis 是 0%，
               换行判定拿不到真实宽度，英文标题会被挤成 4 行）。 */}
@@ -331,7 +331,7 @@ export default function MembershipCompare({ onOpenPay, onClose, config, tableOnl
                 <span className="absolute inset-y-0 w-px bg-white/75" style={{ left: freeTickPct + '%' }} />
                 <span className="absolute inset-y-0 w-px bg-white/75" style={{ left: plusTickPct + '%' }} />
               </div>
-              {/* 游标：越过 Plus 后描边转琥珀（与「Pro=琥珀」同语言，颜色不是唯一通道——位置本身也在变） */}
+              {/* 游标：越过 Plus 后描边转琥珀（与「Pro=琥珀」同语言，颜色不是唯一通道，位置本身也在变） */}
               <span
                 className={'absolute top-1/2 w-3.5 h-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white border-[2.5px] shadow-sm ' + (overPlus ? 'border-amber-500' : 'border-primary-strong')}
                 style={{ left: knobPct + '%' }}
@@ -368,7 +368,7 @@ export default function MembershipCompare({ onOpenPay, onClose, config, tableOnl
         </div>
       )}
 
-      {/* 期限切换：月付 / 年付（省 3 个月）/ 买断（永久）——分段控件（与 Pro 续费视图的 30/60/90 同源） */}
+      {/* 期限切换：月付 / 年付（省 3 个月）/ 买断（永久），分段控件（与 Pro 续费视图的 30/60/90 同源） */}
       {tableOnly ? null : (
         <SegmentedControl
           value={term}
@@ -388,7 +388,7 @@ export default function MembershipCompare({ onOpenPay, onClose, config, tableOnl
           const isFree = c.key === 'free';
           // 折扣标注统一走 ui/DiscountBadge（2026-09-29）：填充色块 + 实测达标的 token 配色。
           // 旧写法是三段各自手写的 10px 小胶囊（琥珀/薄荷），与首页、付费弹窗各一套。
-          // 限时优惠下面再跟一行期限（OfferDeadline）——服务端配了 DISCOUNT_END 才显示。
+          // 限时优惠下面再跟一行期限（OfferDeadline），服务端配了 DISCOUNT_END 才显示。
           const badge = isFree ? null
             : term === 'monthly' && launch
               ? <span className="inline-flex flex-col items-start gap-0.5">
@@ -420,7 +420,7 @@ export default function MembershipCompare({ onOpenPay, onClose, config, tableOnl
         })}
       </div>}
 
-      {/* 紧凑对比表（三档并排，手机宽度可容纳）——Pro 列整列淡琥珀底：一眼看出「多出来的都在哪一列」 */}
+      {/* 紧凑对比表（三档并排，手机宽度可容纳），Pro 列整列淡琥珀底：一眼看出「多出来的都在哪一列」 */}
       <SectionCard header={t('membershipSeeAll')}>
         <table className="w-full text-[12px]">
           <thead>
@@ -448,7 +448,7 @@ export default function MembershipCompare({ onOpenPay, onClose, config, tableOnl
                 <tr className={"border-b border-gray-100 last:border-0 " + (row.highlight ? 'bg-amber-50/40' : '')}>
                   <td className="text-left text-ink-soft px-3 py-2">
                     {/* ℹ️ 走**普通行内流**（不是 inline-flex）：inline-flex 会把标签文字变成一个不可分割的
-                        flex item，图标固定贴在那个块的第一行右侧——长标签（「AI 額度（對話 · 劇情 · …）」）
+                        flex item，图标固定贴在那个块的第一行右侧，长标签（「AI 額度（對話 · 劇情 · …）」）
                         折行后看起来像「图标插在句子中间」。行内流下图标总是跟在**最后一行**文字后面，读序正确。 */}
                     <span>{row.label}
                       {row.hint && (
@@ -483,7 +483,7 @@ export default function MembershipCompare({ onOpenPay, onClose, config, tableOnl
       </SectionCard>
 
       {/* 全档都包含（含免费版）+ 三条脚注：口径说清 = 少一半客诉（一个池 / 按消耗扣 / 公平使用）。
-          收进一个安静的小字块（而不是散在卡片流里 4 行）——它们是一组说明，不是一个卖点。 */}
+          收进一个安静的小字块（而不是散在卡片流里 4 行），它们是一组说明，不是一个卖点。 */}
       <div className="rounded-xl bg-clay-muted/40 px-3 py-2.5 space-y-1">
         <p className="text-[11px] leading-relaxed text-gray-600">{t('memAllPlansLine')}</p>
         <div className="text-[11px] leading-relaxed text-ink-soft space-y-0.5">

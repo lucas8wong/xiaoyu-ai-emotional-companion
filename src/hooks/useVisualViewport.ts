@@ -1,5 +1,5 @@
 /**
- * useVisualViewport —— 监听 browser / embedded webview 的 visualViewport，
+ * useVisualViewport，监听 browser / embedded webview 的 visualViewport，
  * 返回 { height, inset, offsetTop, offsetLeft }，用「可视视口」而不是 CSS 的 `100dvh` 来约束聊天容器高度。
  *
  * 背景：聊一聊底部输入栏在 Instagram 等应用内浏览器里会跑到软键盘后面消失。
@@ -17,7 +17,7 @@
  * 取 `min(visualViewport.height, window.innerHeight)`：覆盖式键盘下 visualViewport.height 更小；
  * 布局压缩式下两者相等（都缩小）。个别 webview 只缩其中一者时也能取到较小值，避免输入栏被键盘盖住。
  *
- * —— 关于 offsetTop（Instagram 等 webview 的「平移漂移」）——
+ * 【关于 offsetTop（Instagram 等 webview 的「平移漂移」）】
  * 即使 `overflow:hidden` + `body{position:fixed}`，iOS WKWebView 的软键盘仍会**平移 visual viewport**
  * （`visualViewport.offsetTop > 0`，见 WebKit bug 311821）。此时一个 `position:fixed; top:0` 的容器
  * 仍锚在「布局视口」顶部，会随平移一起被推出可视区 → 输入框消失。因此这里把 offsetTop/offsetLeft 一并暴露，
@@ -29,7 +29,7 @@
 import { useEffect, useState } from 'react';
 
 /** 可视视口高度（CSS px）。取 visualViewport.height 与 window.innerHeight 的较小者；
- *  并 clamp 到 `innerHeight - offsetTop`——部分 iOS/WKWebView 在键盘弹起时**只平移**
+ *  并 clamp 到 `innerHeight - offsetTop`，部分 iOS/WKWebView 在键盘弹起时**只平移**
  *  （visualViewport.offsetTop > 0）而不缩 visualViewport.height，此时真正可见（键盘上方）的高度
  *  最多为 `innerHeight - offsetTop`。取两者较小值，避免「top=offsetTop + 全高容器」把输入栏推出可视区。 */
 function visibleHeight(): number {

@@ -1,7 +1,7 @@
 /**
  * 复刻：用**某个用户本人的自建剧本 + 本人一模一样的输入序列**，跑**当前**的生产链路，看观感差异。
  *
- * 为什么要这样复刻：模型行为没法单测，跨轮复读/推进是否跟人走更是「同一段输入下才显现」的现象——
+ * 为什么要这样复刻：模型行为没法单测，跨轮复读/推进是否跟人走更是「同一段输入下才显现」的现象
  * 唯一的诚实做法是**同样的输入、同样的剧本、同样的偏好、同样的模型**，只换代码/配置，看输出差异。
  *
  * 保真度说明（哪些与线上一致、哪些拿不到）：
@@ -18,11 +18,11 @@
  *   环境变量：
  *     RP_REPLAY_USER / RP_REPLAY_SCENARIO   换复刻对象（默认是 2026-09-17 反馈里那位用户的自建剧本）
  *     RP_REPLAY_FROM=<第几条用户消息起>（1 起）**种子式复刻**：之前的轮次用**她的真实记录**当历史，
- *       只从这一轮开始重新生成 —— 会话很长（60+ 轮）时用它，几分钟就能看到后段效果。
+ *       只从这一轮开始重新生成，会话很长（60+ 轮）时用它，几分钟就能看到后段效果。
  *     RP_REPLAY_MAX=<只跑前 N 轮>             冒烟用
  *     RP_REPLAY_DIR=<产物目录>                默认 temp/rp-replay（换用户时建议换目录，别混在一起）
  * 产物：<dir>/<臂名>-run<n>.json（含逐轮 user/reply 全文 + 对应的真实回复 realReplies）
- *       —— 再用 scripts/rp-replay-report.mjs 出指标表，或 temp/make-replay-compare.mjs 出可读并列文档。
+ *       再用 scripts/rp-replay-report.mjs 出指标表，或 temp/make-replay-compare.mjs 出可读并列文档。
  */
 import path from 'node:path';
 import fs from 'node:fs';
@@ -43,7 +43,7 @@ if (arm === 'nopenalty') {
   process.env.RP_ZH_EXTRA_BODY = JSON.stringify({ chat_template_kwargs: { enable_thinking: false } });
 }
 
-// —— 读数必须在 chdir 之前 ——
+// 【读数必须在 chdir 之前】
 const db = new Database(path.join(ROOT, 'data', 'xiaoyu.sqlite'), { readonly: true });
 const kv = (k) => { const r = db.prepare('select value from kv where key = ?').get(k); return r ? JSON.parse(r.value) : null; };
 const custom = (kv('custom-roleplay.json') || []).find((c) => c && c.id === SID);

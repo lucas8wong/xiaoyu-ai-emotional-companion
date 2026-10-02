@@ -41,7 +41,7 @@ export interface AppState {
   payTerm: PayTerm; // 购买方式：月付 / 年付 / 买断
   payDays?: number; // 续费延长天数（Pro 续费场景 30/60/90）
   feedbackOpen: boolean; // 意见反馈弹窗（全局，各功能页均可打开）
-  /** 界面外观弹窗（皮肤/卡片不透明度）——提到全局，好让剧情聊天页也能直接打开它调透明度 */
+  /** 界面外观弹窗（皮肤/卡片不透明度），提到全局，好让剧情聊天页也能直接打开它调透明度 */
   appearanceOpen: boolean;
   feedbackContext: string | null; // 反馈附带上下文（AI 回答 / 最近对话）
   feedbackType: string; // 反馈初始类型（如 issue / suggest）
@@ -61,7 +61,7 @@ export interface AppState {
   structureCharacterId: string | null;
   /**
    * 剧情 → 聊一聊 的交接（B 方案跨模式桥）：角色扮演页写好草稿放进这里，
-   * 聊一聊挂载时读一次即清空。**只走 UI 层**——绝不写进 messages / chatMessages（红线 6）。
+   * 聊一聊挂载时读一次即清空。**只走 UI 层**，绝不写进 messages / chatMessages（红线 6）。
    */
   pendingChatSeed: BridgeSeed | null;
   /**

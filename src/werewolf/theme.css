@@ -8,7 +8,7 @@
  *   身份色：wolf #8a1c1c · seer #2c5282 · witch #6b46c1 · hunter #c05621 · guard #276749 · villager #5c4a3d
  *
  * ⚠️ 品牌红线 #4 的放宽范围：**仅限本玩法这一屏**（`.ww-theme` 作用域内）。
- * 全站品牌色（主绿 #1FA46B / 奶油底 #FBF6EE）不变——这是用户 2026-09-15 明确的决定（选项 B）。
+ * 全站品牌色（主绿 #1FA46B / 奶油底 #FBF6EE）不变，这是用户 2026-09-15 明确的决定（选项 B）。
  *
  * 为什么用变量重映射而不是改类名：项目 Tailwind 的颜色全部引用 CSS 变量
  * （见 tailwind.config.js 注释「全部引用 CSS 变量，切换皮肤即可全局重着色」），
@@ -23,7 +23,7 @@
      从「一层淡金纱」变成「实心金块」；合成色在深底上观感等价。
      换算：rgba(197,160,89,.14) over #1a1614(26,22,20) → #32291e；rgba(138,28,28,.2) → #301716；rgba(140,115,53,.38) → #453921 */
 
-  /* —— 主色：陈金（CTA / 强调） —— */
+  /* 【主色：陈金（CTA / 强调）】 */
   --color-primary: #c5a059;
   --color-primary-rgb: 197 160 89;
   --color-primary-strong: #d4b06a;
@@ -33,13 +33,13 @@
   --color-primary-lighter: #32291e;
   --color-primary-lighter-rgb: 50 41 30;
 
-  /* —— 点缀：血色（警示 / 狼阵营） —— */
+  /* 【点缀：血色（警示 / 狼阵营）】 */
   --color-accent: #8a1c1c;
   --color-accent-rgb: 138 28 28;
   --color-accent-soft: #301716;
   --color-accent-soft-rgb: 48 23 22;
 
-  /* —— 底与面：夜渐层 —— */
+  /* 【底与面：夜渐层】 */
   --color-bg: #0d0a08; /* 页面底（night-to） */
   --color-bg-rgb: 13 10 8;
   --color-surface: #1a1614; /* 卡片面（bg-dark） */
@@ -51,13 +51,13 @@
   --color-ring: #c5a059;
   --color-ring-rgb: 197 160 89;
 
-  /* —— 文字：羊皮纸 —— */
+  /* 【文字：羊皮纸】 */
   --color-fg: #f0e6d2; /* paper */
   --color-fg-rgb: 240 230 210;
   --color-muted-fg: #9c8570; /* text-muted */
   --color-muted-fg-rgb: 156 133 112;
 
-  /* —— 字体：衬线复古。Cinzel 未自托管，用项目已有的书法体兜住「古」的味道 —— */
+  /* 【字体：衬线复古。Cinzel 未自托管，用项目已有的书法体兜住「古」的味道】 */
   --skin-display-font: 'Cinzel', 'Ma Shan Zheng', 'Songti SC', 'SimSun', serif;
 
   font-family: 'Cinzel', 'Ma Shan Zheng', 'Noto Serif SC', 'Songti SC', 'SimSun', serif;

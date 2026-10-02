@@ -6,7 +6,7 @@
  * 用户就会看到「我刚演的多角色线不见了」。
  *
  * 取值只有两个：`solo`（只有主角 AI，原有行为）/ `multi`（cast 同场，逐角色气泡）。
- * 认不出的一律回落 `solo` —— 与「老数据没有 mode ⇒ 当 solo」同一条口径。
+ * 认不出的一律回落 `solo`，与「老数据没有 mode ⇒ 当 solo」同一条口径。
  */
 export type RoleplayMode = 'solo' | 'multi';
 

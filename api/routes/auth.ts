@@ -15,7 +15,7 @@ import { bindGuestAndTrack, grantSignupRewards } from '../services/onboardNewAcc
 
 const router = Router();
 
-// —— 登录/注册/验证码/改密等敏感接口限流（防爆破与轰炸）——
+// 【登录/注册/验证码/改密等敏感接口限流（防爆破与轰炸）】
 const limitLogin = rateLimit({ windowMs: 10 * 60 * 1000, max: 10, message: '登录尝试过于频繁，请 10 分钟后再试' });
 const limitRegister = rateLimit({ windowMs: 60 * 60 * 1000, max: 15, message: '注册过于频繁，请稍后再试' });
 const limitReset = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, message: '操作过于频繁，请稍后再试' });
@@ -38,7 +38,7 @@ router.post('/register', limitRegister, async (req: Request, res: Response): Pro
   const { username, phone, email, password, ref, code, inviteCode } = req.body || {};
   const regEmail = String(email || '').trim().toLowerCase();
   const regCode = String(code || '').trim();
-  // 邮箱验证码校验：先校验（不消费），注册成功后再消费——
+  // 邮箱验证码校验：先校验（不消费），注册成功后再消费
   // 避免注册失败（用户名/邮箱已占用、密码过短等）把验证码白白烧掉，用户需重新获取。
   if (!regCode || !emailCodeStore.peek(regEmail, 'register', regCode)) {
     res.status(400).json({ success: false, error: '邮箱验证码不正确，请先获取验证码并正确填写' });
@@ -52,7 +52,7 @@ router.post('/register', limitRegister, async (req: Request, res: Response): Pro
   // 注册成功才消费验证码（一次性）
   emailCodeStore.verify(regEmail, 'register', regCode);
 
-  // 新账号奖励（限时对话额度 / 新人 Pro / 节日礼）——与 Google 建号**共用**同一实现，
+  // 新账号奖励（限时对话额度 / 新人 Pro / 节日礼），与 Google 建号**共用**同一实现，
   // 见 services/onboardNewAccount.ts；两条入口各写一份是「活动只发一半用户」的事故源头。
   await grantSignupRewards(result.user.userId);
 
@@ -105,7 +105,7 @@ router.post('/register', limitRegister, async (req: Request, res: Response): Pro
       }
       const invite = quotaStore.isReferralValid(result.user.userId);
       if (inviterUserId !== result.user.userId && invite.valid && quotaStore.canInviteMore(inviterUserId)) {
-        // 被邀人（朋友）经链接注册立刻多得 +INVITE_BONUS（叠加在注册奖励上）——朋友侧不设门槛
+        // 被邀人（朋友）经链接注册立刻多得 +INVITE_BONUS（叠加在注册奖励上），朋友侧不设门槛
         quotaStore.addChatBonus(result.user.userId, INVITE_BONUS_COUNT, 'invite');
         const { notifyRewardByEmail } = await import('../services/rewardNotifier.js');
         notifyRewardByEmail(result.user.userId, INVITE_BONUS_COUNT, 'invite');
@@ -127,7 +127,7 @@ router.post('/register', limitRegister, async (req: Request, res: Response): Pro
     }
   }
 
-  // 设备/IP 记录 + 游客数据并入 + 行为追踪 + 来源归因 —— 与 Google 建号**共用**同一实现
+  // 设备/IP 记录 + 游客数据并入 + 行为追踪 + 来源归因，与 Google 建号**共用**同一实现
   // （见 services/onboardNewAccount.ts）。抽出来是为了「两台入口天生一致」。
   await bindGuestAndTrack(req, result.user.userId, 'register');
 
@@ -423,7 +423,7 @@ router.delete('/account', async (req: Request, res: Response): Promise<void> => 
     /**
      * 5c1. 删除聊一聊角色 + 角色成长档案 + 剧情角色的剧情档案副本（2026-09-20 补）
      *
-     * 为什么补这三样：它们此前**不在注销清单里** —— 自建角色的身份/底线/口吻、成长档案里的
+     * 为什么补这三样：它们此前**不在注销清单里**：自建角色的身份/底线/口吻、成长档案里的
      * 关系记忆/私人日记/反思/自画像、以及剧情角色从剧情模式迁移过来的场面片段，都是不折不扣的个人数据，
      * 注销后仍然留在 data/ 里（与 2026-09-18 补 usageTime 的那条同类）。
      * ⚠️ 三样必须一起清：只清 storyArchive 而留着 chatCharacter，角色记录里的 `story.digest`
@@ -440,7 +440,7 @@ router.delete('/account', async (req: Request, res: Response): Promise<void> => 
     wenyouScenariosStore.deleteByUser(userId);
     /**
      * 5c3. 注销清理（2026-09-28 审查 P1-8）：以下 6 个 per-user 存储此前**不在注销清单里**，
-     * 而注销接口明确回复「所有个人信息已永久删除」——千世书存档（进行中的局 + 命名存档 + 结局）、
+     * 而注销接口明确回复「所有个人信息已永久删除」：千世书存档（进行中的局 + 命名存档 + 结局）、
      * 浏览器推送订阅（endpoint/keys/UA）、配乐偏好、皮肤记录、召回记录（lastContextRef = 会话/剧本标题）、
      * 狼人杀开局台账，全部属于个人数据，必须一起清。
      */

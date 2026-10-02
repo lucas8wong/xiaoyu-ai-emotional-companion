@@ -10,7 +10,7 @@
  *
  * ── 数据来源与「精确 / 近似」的分界（2026-09-18 落地时用户拍板口径 B）──
  *  · **台账（精确）**：`data/referral-events.json`（referralEvents.ts），从本功能上线起逐条记录真实发放
- *    （时间 / 邀请人 / 被邀人 / 额度 / 天数）——区间统计首选它。
+ *    （时间 / 邀请人 / 被邀人 / 额度 / 天数），区间统计首选它。
  *  · **回算（近似）**：台账之前的历史只有「累计 inviteCount」与「被邀人注册时间」可用，于是：
  *      - 注册邀请：把**台账上线前**注册的被邀人按注册时间升序取前 `inviteCount − 台账已记数` 个，
  *        视为当时真正发了奖励的邀请（时间=被邀人注册时间，额度=INVITE_BONUS）；
@@ -49,7 +49,7 @@ export interface ReferralInviteeRow {
   /**
    * 未给邀请人发奖励的原因（只在 rewarded=false 时有值）：
    * 'same-device' / 'same-ip' / 'inviter-not-account' / 'inviter-cap-reached' / 'self-invite' / 'unknown'
-   * / 'invitee-inactive'（待激活：被邀人注册了但还没开始用 —— B 方案的门槛就卡在这里）
+   * / 'invitee-inactive'（待激活：被邀人注册了但还没开始用，B 方案的门槛就卡在这里）
    * `reasonSource`：'ledger' = 发放当刻判定留痕（精确）；'estimate' = 事后按现有数据推定；null = 无法判定
    */
   rejectReason?: string | null;
@@ -67,7 +67,7 @@ export interface ReferralInviterRow {
   name: string;
   email: string | null;
   createdAt: number | null;
-  /** 链接被多少人用过（有归因）——累计 / 区间内新归因 */
+  /** 链接被多少人用过（有归因），累计 / 区间内新归因 */
   invitedAll: number;
   invitedRange: number;
   /** 注册了但还没开始用（待激活，B 方案的门槛）的人数 */
@@ -231,7 +231,7 @@ export function buildReferralReport(opts: { from?: string; to?: string } = {}): 
   const quotaUsers = quotaStore.listAll();
   const quotaById = new Map<string, UserRecord>(quotaUsers.map(u => [u.userId, u]));
 
-  // —— 被邀人按邀请人归并（排除测试/运营账号：他们不是真实推广）——
+  // 【被邀人按邀请人归并（排除测试/运营账号：他们不是真实推广）】
   const inviteesByInviter = new Map<string, UserRecord[]>();
   const inviterIdSet = new Set<string>();
   for (const u of quotaUsers) {
@@ -247,7 +247,7 @@ export function buildReferralReport(opts: { from?: string; to?: string } = {}): 
     if ((u.inviteCount || 0) > 0 && !excluded.has(u.userId)) inviterIdSet.add(u.userId);
   }
 
-  // —— 订单：某用户最早一笔「已解锁」订单（回算首购会员天数用）——
+  // 【订单：某用户最早一笔「已解锁」订单（回算首购会员天数用）】
   const ordersByUser = new Map<string, Order[]>();
   for (const o of paymentStore.listAll()) {
     if (o.status !== 'unlocked') continue;
@@ -259,7 +259,7 @@ export function buildReferralReport(opts: { from?: string; to?: string } = {}): 
   const hasPaidOrder = (userId: string): boolean =>
     (ordersByUser.get(userId) || []).some(o => o.source === 'paid');
 
-  // —— 台账索引 ——
+  // 【台账索引】
   const events = referralEventStore.listAll();
   const ledgerSince = referralEventStore.earliestAt();
   const signupEventKey = (inviterId: string, inviteeId: string) => inviterId + '|' + inviteeId;
@@ -364,7 +364,7 @@ export function buildReferralReport(opts: { from?: string; to?: string } = {}): 
         }
       }
 
-      // —— 未发放原因（只在没发奖励时给）：台账留痕优先；没有留痕的历史只能做**有限**推定 ——
+      // 【未发放原因（只在没发奖励时给）：台账留痕优先；没有留痕的历史只能做**有限**推定】
       // 说明：判定依赖「邀请人当时的设备/IP」，而 lastDeviceKey/lastIp 会随后变化 → 事后**不可**可靠还原，
       // 所以只能推三种与时间无关/可由现有数据算出的原因，其余如实标 unknown（界面写明「历史未记原因」）。
       let rejectReason: string | null = null;
@@ -372,7 +372,7 @@ export function buildReferralReport(opts: { from?: string; to?: string } = {}): 
       if (credits <= 0) {
         const rej = rejectedEvents.get(key);
         if (pending) {
-          // 待激活：不是「不发」，是「还没到时候」（被邀人还没开始用）——B 方案的门槛就在这里
+          // 待激活：不是「不发」，是「还没到时候」（被邀人还没开始用），B 方案的门槛就在这里
           rejectReason = 'invitee-inactive';
           rejectReasonSource = 'ledger';
         } else if (rej?.reason) {
@@ -479,7 +479,7 @@ export function buildReferralReport(opts: { from?: string; to?: string } = {}): 
     ? inviters.some(r => r.invitees.some(i => inRange(i.at) && (i.source === 'estimate' || (i.purchase && i.purchase.source === 'estimate' && inRange(i.purchase.at)))))
     : inviters.some(r => r.invitees.some(i => i.source === 'estimate'));
 
-  // —— 🎫 预设邀请码（并入同一张榜：码没有推广人，所以单列一块）——
+  // 【🎫 预设邀请码（并入同一张榜：码没有推广人，所以单列一块）】
   // 口径与推广人一致：台账（自 2026-09-18 起每次用码逐条精确记录）优先；更早的历史按「用到该码的用户注册时间」
   // × 当前配置额度回算并标「近似」；码已从 .env 的 INVITE_CODES 下线时 bonus=null（额度未知，只统计人数）。
   const codeUsers = new Map<string, UserRecord[]>();

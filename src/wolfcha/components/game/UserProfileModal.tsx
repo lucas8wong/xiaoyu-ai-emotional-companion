@@ -4,7 +4,7 @@
  * 账号面板（小愈版）
  *
  * ⚠️ 这里是**重写**，不是上游原文件：上游这个弹窗里除了「邮箱 / 剩余次数 / 改密码 / 退出登录」，
- * 其余全是 **wolfcha 自己的东西**——自带 API Key（Zenmux / 百炼 Dashscope / TokenDance / MiniMax）、
+ * 其余全是 **wolfcha 自己的东西**：自带 API Key（Zenmux / 百炼 Dashscope / TokenDance / MiniMax）、
  * 模型选择器、TokenPay 充值、WatchaPay 购买、兑换码、邀请码、新春活动额度。
  * 那些功能在小愈里**根本不可用**（`/api/validate-key`、`/api/tokenpay/balance`、
  * `/api/credits/{redeem,referral,spring-login-bonus}` 在 `api/` 里都不存在），

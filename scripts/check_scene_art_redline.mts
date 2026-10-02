@@ -3,7 +3,7 @@
  * 场景图**全库红线复核**（事后独立抽检，不信"跑批时的自我抽检"）。
  *
  * 为什么要有它：
- *   ① 跑批时的抽检会因为"视觉模型没吐合法 JSON"而**按设计放行**（实测 6 张）——那些图没有被真正判过；
+ *   ① 跑批时的抽检会因为"视觉模型没吐合法 JSON"而**按设计放行**（实测 6 张），那些图没有被真正判过；
  *   ② 抽检是**逐张独立判断**，全库跑一遍才能说"110+480 张全部无人无文字"；
  *   ③ 用户在意的是**线上看到什么**，所以结论必须来自对**磁盘上真实文件**的判定。
  *
@@ -28,7 +28,7 @@ const onlyList = only ? only.split(',').map((s) => s.trim()).filter(Boolean) : [
 const concurrency = Math.max(1, Number(valOf('--concurrency', '3')) || 3);
 
 const env = auditEnv(ROOT);
-if (!env.key) { console.error('❌ 缺少 DEEPSEEK_API_KEY（.env）——红线复核需要视觉模型'); process.exit(2); }
+if (!env.key) { console.error('❌ 缺少 DEEPSEEK_API_KEY（.env），红线复核需要视觉模型'); process.exit(2); }
 void AUDIT_Q;
 
 let files = fs.readdirSync(DIR).filter((f) => /\.(webp|png|jpe?g)$/i.test(f)).sort();

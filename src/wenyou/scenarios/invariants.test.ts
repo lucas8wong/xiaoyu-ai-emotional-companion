@@ -95,7 +95,7 @@ describe('内容逻辑审查：跨剧本引用完整性与可达性', () => {
 
     // ── D.（已退役）结局排序遮蔽校验。
     // checkEnding 已改为「满足的结局中取最具体者」（用 conditionImplies 择优，不再按数组顺序首中），
-    // 过宽的结局不再遮蔽更具体的，作者也无须再为防遮蔽手工排序——故此校验取消。
+    // 过宽的结局不再遮蔽更具体的，作者也无须再为防遮蔽手工排序，故此校验取消。
     // isDeathEnding 保留供 E 节使用。
     const isDeathEnding = (cond: Condition): boolean => {
       const cs = clausesOf(cond)

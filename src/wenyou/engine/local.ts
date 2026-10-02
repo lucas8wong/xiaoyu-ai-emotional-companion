@@ -47,7 +47,7 @@ export function pickLocalEvent(sc: Scenario, st: GameState, rng: Rng = Math.rand
   if (pool.length === 0) pool = events.filter(onceOk)
   if (pool.length === 0) pool = events
 
-  // 事件「分量」：选项里最大的单项效应绝对值——越大越是改变命运的大事件。
+  // 事件「分量」：选项里最大的单项效应绝对值，越大越是改变命运的大事件。
   const magOf = (e: LocalEvent) => {
     let m = 0
     for (const c of e.choices) for (const v of Object.values(c.effects)) m = Math.max(m, Math.abs(v))
@@ -104,7 +104,7 @@ export function localTurn(sc: Scenario, st: GameState, rng: Rng = Math.random): 
 }
 
 // 本地模式的结局尾声（无 AI）：优先用该结局的专属 epilogue，叠加曾立下的目标，拼一段收束文字。
-// 本地模式提示与关键抉择不在此拼入——前者由 UI 单独呈现（不污染可分享文案），后者见结局页的文字版分享卡。
+// 本地模式提示与关键抉择不在此拼入，前者由 UI 单独呈现（不污染可分享文案），后者见结局页的文字版分享卡。
 export function localEnding(sc: Scenario, st: GameState): string {
   const tone = st.ended?.tone ?? '落幕'
   // 优先使用该结局的专属尾声；缺省时回退到通用模板
@@ -114,7 +114,7 @@ export function localEnding(sc: Scenario, st: GameState): string {
   const lines = [
     matched?.epilogue ??
       `历经 ${st.history.length} ${sc.turnUnit}，你的故事走向了「${tone}」。`,
-    st.ambition ? `你曾立下的目标——${st.ambition}——成败留与后人评说。` : '',
+    st.ambition ? `你曾立下的目标，${st.ambition}，成败留与后人评说。` : '',
   ].filter(Boolean)
   return lines.join('\n')
 }

@@ -136,7 +136,7 @@ Ranked by existing likes and by how naturally a second character already exists 
 # 多角色剧情扮演方案（多说话人回合 · 逐角色气泡 · 开场流式）
 
 > 状态：**调研稿，未改任何代码**；需要拍板三件事（见 §7）
-> 范围：小愈剧情扮演——`api/services/roleplay.ts`、`api/routes/roleplay.ts`、`src/components/RoleplayPage.tsx`、`roleplaySessions`
+> 范围：小愈剧情扮演：`api/services/roleplay.ts`、`api/routes/roleplay.ts`、`src/components/RoleplayPage.tsx`、`roleplaySessions`
 > 相关：`docs/roleplay-immersion-plan.md` §4.1（那里就把「多角色切分」列为 S1 最难的一项）、`docs/roleplay-bgm-plan.md`
 > 英文在前，中文原文见下。
 
@@ -144,12 +144,12 @@ Ranked by existing likes and by how naturally a second character already exists 
 
 ## 1. 结论先说（TL;DR）
 
-1. **多角色不是一套新的生成管线。** 剧情 system prompt **本来就允许**模型一次演多人——`_COMMON_RULES_TEXT_ZH` 第 8 条（「合理安排每个角色的出场时间和顺序……可以一次扮演一人或多人对话」）与 `CLASSIC_RULES_TEXT_ZH` §二「NPC 调度规则」。**真正缺的只有两件**：(a) 「谁在说」的标记协议；(b) 按说话人拆分的气泡渲染。
+1. **多角色不是一套新的生成管线。** 剧情 system prompt **本来就允许**模型一次演多人，`_COMMON_RULES_TEXT_ZH` 第 8 条（「合理安排每个角色的出场时间和顺序……可以一次扮演一人或多人对话」）与 `CLASSIC_RULES_TEXT_ZH` §二「NPC 调度规则」。**真正缺的只有两件**：(a) 「谁在说」的标记协议；(b) 按说话人拆分的气泡渲染。
 2. **流式基建已经完整。** `?stream=1` 的 SSE（delta / queue / meta / continue / rewrite / done）+ `roleplayChatStream` 已能逐 token 撒进一个气泡。
 3. **推荐 A 路线**：**一次流式调用**，每个说话人的段落以 `【名字】` 开头，前端解析成段。成本与延迟仍是 **1×**，下游所有吃文本的环节都不动。
-4. **逐气泡流式在 delta 链路上不需要改服务端。** 前端本来就是「每一帧拿到累积全文再重渲染」（`RoleplayPage.tsx:1960-1966`：`full += delta`），所以一个「流式容错」的解析器可以实时拆段——A 角色的气泡先长出来，`【B】` 一到 B 的气泡再出现、再长。
+4. **逐气泡流式在 delta 链路上不需要改服务端。** 前端本来就是「每一帧拿到累积全文再重渲染」（`RoleplayPage.tsx:1960-1966`：`full += delta`），所以一个「流式容错」的解析器可以实时拆段：A 角色的气泡先长出来，`【B】` 一到 B 的气泡再出现、再长。
 5. **开场白目前是静态的。** `openingAssistant` 是作者写死的数据，由 `pickInitialMessages`（`src/lib/rpInitialMessages.ts`）整段注入 → 瞬间全出。要让「第一条信息是流式的」，走 **O1**（给开场白也写标记 + 前端打字机，便宜、推荐）或 **O2**（开场白改由 AI 生成，动态但要耗一条额度、且在进入剧情这一最脆弱的位置新增了一条生成失败路径）。
-6. **额外收益**：显式的说话人标记顺带解掉 S1-c（多角色配音切分）——`roleplay-immersion-plan.md` §4.1 里被称为「本层最难的点」的那条。
+6. **额外收益**：显式的说话人标记顺带解掉 S1-c（多角色配音切分），`roleplay-immersion-plan.md` §4.1 里被称为「本层最难的点」的那条。
 
 ---
 
@@ -177,7 +177,7 @@ Ranked by existing likes and by how naturally a second character already exists 
 | 形态 | 一次流式调用，每段以 `【名字】` 开头 | 返回 `[{speaker,text}]` | 每回合每个角色各调一次 |
 | 成本/延迟 | 1×（不变） | 1× | **N×**（还要串行） |
 | 逐气泡流式 | 天然（解析实时文本即可） | 差（得缓冲/半解析 JSON） | 天然 |
-| 回归风险 | 低（只加一个解析器 + 一段提示词） | **高**——引号归一、一拍计划剥离、反重复、自动续写、重复闸、安全兜底、会话落盘、长图分享、TTS 全部踩到 | 高——额度模型要重做；同一回合内角色互相看不到台词 |
+| 回归风险 | 低（只加一个解析器 + 一段提示词） | **高**：引号归一、一拍计划剥离、反重复、自动续写、重复闸、安全兜底、会话落盘、长图分享、TTS 全部踩到 | 高，额度模型要重做；同一回合内角色互相看不到台词 |
 | 结论 | **做这个** | 不做 | 不做（至少试水阶段不做） |
 
 ---
@@ -212,7 +212,7 @@ const SCENARIO_CAST: Record<string, CastMember[]> = { /* ... */ };
 ### 4.5 流式
 **delta 链路不需要改服务端。** 前端继续累积带标记的全文、每帧重解析；收尾仍由 `done.reply` 覆盖。重新生成 / 编辑重发 / 版本切换 / 重复闸 / 会话落盘，全部继续作用在「整条带标记的回合」上。
 
-*可选加固*：额外发一个 `{type:'speaker'}` SSE 事件，让气泡边界在「标记被拆到两个 delta」时也干脆——v1 不做也行。
+*可选加固*：额外发一个 `{type:'speaker'}` SSE 事件，让气泡边界在「标记被拆到两个 delta」时也干脆，v1 不做也行。
 
 ### 4.6 开场白（「第一条信息流式」）
 - **O1（推荐）**：把改造的那一两部剧本的 `openingAssistant` 也用 `【名字】` 写好，进入**新会话**时用前端打字机逐段揭示。零 AI 成本、确定性、不新增失败路径。
@@ -242,7 +242,7 @@ const SCENARIO_CAST: Record<string, CastMember[]> = { /* ... */ };
 - **引号归一**：分语言的对话引号映射绝不能碰到标记。
 - **模型不遵守**：格式没照做就回退单气泡。铺开之前先量「标记遵循率」。
 - **一拍计划过滤器**：兼容（只有角色名以「本」开头才会撞；过滤器对认不出的 `【…】` 本来就走放行）。
-- **成本/延迟/额度**：不变——一回合一次调用。
+- **成本/延迟/额度**：不变。一回合一次调用。
 
 ---
 

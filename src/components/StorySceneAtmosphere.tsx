@@ -9,7 +9,7 @@
  *   ② 极低端设备（`navigator.hardwareConcurrency <= 2`）
  *   ③ `enabled=false`（调用方显式关，例如自建剧本自带上传背景图时）
  *
- * 粒子数有硬预算（`FX_BUDGET.maxParticles`），且位置/时长用**稳定伪随机**（同 index 恒定）——
+ * 粒子数有硬预算（`FX_BUDGET.maxParticles`），且位置/时长用**稳定伪随机**（同 index 恒定）
  * 避免每帧跳动，也让端到端测试可预期。
  */
 import { useEffect, useMemo, useState } from 'react';

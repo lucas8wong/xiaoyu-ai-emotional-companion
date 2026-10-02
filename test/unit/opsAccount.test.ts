@@ -36,7 +36,7 @@ function reg(tag: string): string {
   return r.user!.userId;
 }
 
-test('运营账号覆盖：默认档位 pro —— 全功能开放且不看到期时间', () => {
+test('运营账号覆盖：默认档位 pro，全功能开放且不看到期时间', () => {
   const uid = reg('ops_pro');
   // 先造成一个「已过期」的普通账号：plan=plus + 到期在过去
   quotaStore.setPlan(uid, 'plus');

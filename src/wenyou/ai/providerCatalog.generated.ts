@@ -1,4 +1,4 @@
-// ⚠ 自动生成，请勿手改 —— 手改会在下次同步时被整份覆盖。
+// ⚠ 自动生成，请勿手改，手改会在下次同步时被整份覆盖。
 // 更新模型清单 / 端点 / 链接：跑 provider 目录同步脚本重新生成本文件。
 //
 // 这里只有【厂商事实】：模型 id、区域端点、文档与控制台链接、逐 SKU 思考能力，
@@ -16,7 +16,7 @@ export interface CatalogEndpoint {
   baseUrl: string;
   /**
    * 该端点【自己】的文档。只出现在「一个端点就是一个独立产品」的场合
-   * （Custom 底下的 LM Studio / Ollama / LiteLLM…）—— provider 级的 docs 对
+   * （Custom 底下的 LM Studio / Ollama / LiteLLM…），provider 级的 docs 对
    * 它们没有意义，而这恰恰是最需要先读上游文档的一条路。同一服务的地域/计费
    * 变体共用 provider 级 docs，不带这个字段。
    */
@@ -32,11 +32,11 @@ export interface CatalogModel {
   thinkingLevels?: readonly string[];
   /**
    * 各档位该往请求体里合并的字段。缺省 = 这个 SKU 不发任何思考参数
-   * （已知不思考，或该 provider 没有已知的线格式 —— 两种都不该乱发）。
+   * （已知不思考，或该 provider 没有已知的线格式，两种都不该乱发）。
    * 缺 off 键 = 关闭态也不发（厂商没有关闭值时由最低档承担，见 thinkingLevels）。
    *
    * ⚠ 形态是按该 provider 的 protocol 字段给的。claude / gemini 这里给的是【原生
-   * 协议】的形状（/v1/messages、:streamGenerateContent）—— 你要是改走 OpenAI
+   * 协议】的形状（/v1/messages、:streamGenerateContent），你要是改走 OpenAI
    * 兼容层，这份不适用。
    */
   thinkingWire?: {
@@ -60,26 +60,26 @@ export interface CatalogProvider {
   canDisableThinking: boolean;
   /**
    * true = 该 provider 当前【浏览器直连是坏的】（CORS 缺头 / 预检 404 / 按 origin
-   * 拦截），必须经代理或中转。是实测得出的当前事实，不是永恒属性 —— 上游修好后
+   * 拦截），必须经代理或中转。是实测得出的当前事实，不是永恒属性，上游修好后
    * 会在下次同步里变回 false，所以别把它硬编码进业务分支，跟着这个字段走。
    */
   directBlocked: boolean;
   /**
    * true = 这家的【地址才是凭据】，apiKey 可选甚至根本不存在（自建网关、局域网
-   * 里的本地推理服务）。界面不该拿「没填 key」拦住开跑 —— 那会让本地模型完全用
+   * 里的本地推理服务）。界面不该拿「没填 key」拦住开跑，那会让本地模型完全用
    * 不了，而用户只能随便编一个字符串糊弄过去。
    */
   keyOptional?: boolean;
   /**
    * 用户手填的、不在 models 清单里的 SKU 该发的思考参数（能力未知，按本 provider
-   * 的通用形态走）。清单内的 SKU 用它自己的 thinkingWire —— 有的 provider 逐 SKU
+   * 的通用形态走）。清单内的 SKU 用它自己的 thinkingWire，有的 provider 逐 SKU
    * 形态不同（moonshot 的 kimi-k3 收顶层 reasoning_effort，K2.x 收 thinking:{type}），
    * 拿 provider 级形态套上去会 4xx。
    */
   thinkingWire?: CatalogModel["thinkingWire"];
   /**
    * 未列出 SKU 的【条件】形态：取【第一条】pattern 匹配上的 wire，都不匹配才用
-   * 上面的 thinkingWire。目前只有 Claude 有 —— 它的思考协议分两代，而属于哪一代
+   * 上面的 thinkingWire。目前只有 Claude 有，它的思考协议分两代，而属于哪一代
    * 取决于模型名（官方：4.7 及以后【拒收】budget_tokens，用了直接 400），手填的
    * SKU 不在任何清单里，只能按名字判。
    *

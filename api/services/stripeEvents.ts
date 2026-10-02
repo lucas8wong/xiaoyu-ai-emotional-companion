@@ -1,7 +1,7 @@
 /**
  * Stripe Webhook 已处理事件去重（幂等）
  * 持久化到 data/stripe-events.json；进程内 Set + 同步落盘，重启不丢。
- * Stripe 官方对未确认成功的 webhook 会重试投递（最长约 3 天）——重复事件必须跳过，
+ * Stripe 官方对未确认成功的 webhook 会重试投递（最长约 3 天），重复事件必须跳过，
  * 否则会重复解锁/重复建单。
  */
 

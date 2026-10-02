@@ -6,7 +6,7 @@
  *  - LLM 只负责「发言」与「决策倾向」（刀谁 / 验谁 / 用药 / 投谁），由 `api/services/werewolf.ts`
  *    收集后调用这里的 `apply*` 写回状态。
  *  - 每次状态变动都要能被 `tickOnce` 推动：`runSystemSteps()` 反复调用 `tickOnce`，
- *    直到「没有可自动推进的步骤」（返回 false）——此时 `actorsNeeded()` 告诉编排层该问谁。
+ *    直到「没有可自动推进的步骤」（返回 false），此时 `actorsNeeded()` 告诉编排层该问谁。
  *
  * 规则简化（已写进《AI狼人杀-调研与实施方案.md》，不是遗漏）：
  *  - 女巫解药不能自救；同一夜只能用一瓶药（解药或毒药）。
@@ -370,7 +370,7 @@ export function tallyVotes(state: WerewolfState): {
 
 /**
  * 把本轮所有已投出的票补写成**公开**事件。
- * 只在 `resolveVote()` 里调用——本轮投票在结算前对所有人保密（理由见 `applyVote` 的注释）。
+ * 只在 `resolveVote()` 里调用，本轮投票在结算前对所有人保密（理由见 `applyVote` 的注释）。
  */
 function emitVoteRecord(state: WerewolfState): void {
   for (const p of state.players) {
@@ -439,7 +439,7 @@ export function resolveVote(state: WerewolfState): { exiled?: number; tie: boole
 /**
  * 某一轮模型失败 / 输出不可用：**不替角色编话**，只把这一轮记为「没能开口」并推进进度。
  *
- * 依据项目红线（见 `src/lib/fallbackBubbles.ts`）：失败兜底文案绝不能变成角色台词——
+ * 依据项目红线（见 `src/lib/fallbackBubbles.ts`）：失败兜底文案绝不能变成角色台词
  * 一旦写进对局事件流，它会被当成「这个角色说过的话」显示、落盘，并回灌给其他玩家当上下文。
  * 所以这里**只发一个中性事件、不带任何台词**；对局该推进照样推进，不能因为模型抽风停住。
  */
@@ -916,7 +916,7 @@ export function applyVote(state: WerewolfState, seat: number, target: number): A
   }
   state.votes[seat] = to;
   // ⚠️ 刻意**不**在这里写公开事件：本轮投票在结算前对所有人保密。
-  // 否则后投的人（尤其是 AI）会看到先投的人投了谁 —— 真人先投、AI 后投，
+  // 否则后投的人（尤其是 AI）会看到先投的人投了谁：真人先投、AI 后投，
   // AI 就能跟票，既泄漏信息又改变对局手感。公开记录统一由 resolveVote() 的 emitVoteRecord() 补写。
   return { ok: true };
 }

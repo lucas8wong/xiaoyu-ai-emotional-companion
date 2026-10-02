@@ -22,7 +22,7 @@ test('聊一聊空回复旧兜底也被登记（2026-09-20：伪造台词已改�
 });
 
 test('额度/付费文案也算兜底（2026-09-18：线上真实数据里已留 3 处，繁体带句号那句就是它）', () => {
-  // 四种写法都要收：简/繁 × 带/不带句号 —— 漏一个写法，整串匹配就等于没收
+  // 四种写法都要收：简/繁 × 带/不带句号，漏一个写法，整串匹配就等于没收
   assert.equal(isFallbackBubble('免费次数已用完，请付费解锁后继续使用'), true);
   assert.equal(isFallbackBubble('免费次数已用完，请付费解锁后继续使用。'), true);
   assert.equal(isFallbackBubble('免費次數已用完，請付費解鎖後繼續使用'), true);
@@ -30,7 +30,7 @@ test('额度/付费文案也算兜底（2026-09-18：线上真实数据里已留
   assert.equal(isFallbackBubble('You have used up your free chats. Unlock more with membership to continue.'), true);
   // 仍然只做整串匹配：角色在剧情里聊到额度、或这句被包进台词，都不该被当成兜底删掉
   assert.equal(isFallbackBubble('他停了停：「额度的事明天再说。」'), false);
-  assert.equal(isFallbackBubble('（你的免费次数已用完，请付费解锁后继续使用——他念了一遍手机上的提示）'), false);
+  assert.equal(isFallbackBubble('（你的免费次数已用完，请付费解锁后继续使用，他念了一遍手机上的提示）'), false);
 });
 
 test('额度文案会被写盘前/读历史时剔除（assistant 侧）', () => {
@@ -48,7 +48,7 @@ test('只做整串匹配：台词里出现「没听清」等字样不被误删',
   assert.equal(isFallbackBubble('他没听清，又靠近了半步。'), false);
   assert.equal(isFallbackBubble('你说的网络好像断了一下，那件事我们接着说。'), false);
   // 兜底串加了前后缀（真的在演故事）也不动
-  assert.equal(isFallbackBubble('（网络好像开小差了，稍后再试试好猜——他笑着说）'), false);
+  assert.equal(isFallbackBubble('（网络好像开小差了，稍后再试试好猜，他笑着说）'), false);
   assert.equal(isFallbackBubble(''), false);
   assert.equal(isFallbackBubble('   '), false);
   assert.equal(isFallbackBubble(null), false);

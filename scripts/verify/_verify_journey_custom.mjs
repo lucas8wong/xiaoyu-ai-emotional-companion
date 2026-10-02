@@ -1,5 +1,5 @@
 /**
- * 「与你的旅程」自建剧情显示 —— 实机验证（mock /api/journey）
+ * 「与你的旅程」自建剧情显示，实机验证（mock /api/journey）
  *
  * 需求：AI 创建／用户自建的剧情，在「与你的旅程」里**必须显示用户自己起的剧名 + 一个「自建」标志**，
  * 不再出现「自定义剧情」占位，也绝不出现 custom_xxx 内部 id。
@@ -109,7 +109,7 @@ await page.waitForFunction(() => Array.from(document.querySelectorAll('h2'))
   .some((h) => h.textContent && h.textContent.includes('与你的旅程')), { timeout: 30000 });
 await sleep(1200);
 
-// —— 收集「你去过的剧情」那一块的每枚 chip ——
+// 【收集「你去过的剧情」那一块的每枚 chip】
 const info = await page.evaluate(() => {
   const h3 = Array.from(document.querySelectorAll('h3')).find((h) => h.textContent.includes('你去过的剧情'));
   const card = h3 ? h3.parentElement : null;
@@ -143,7 +143,7 @@ check(!info.bodyText.includes('自定义剧情'), '「你去过的剧情」里�
 check(!/custom[_-][a-z0-9]/i.test(info.bodyText), '没有任何 custom_xxx / custom-xxx 内部 id 露出');
 check(!info.fullBody.includes('自定义剧情'), '整个旅程弹窗里没有「自定义剧情」字样');
 
-// —— 截图（供 read_image 人工复核）——
+// 【截图（供 read_image 人工复核）】
 const cardEl = await page.evaluateHandle(() => {
   const h3 = Array.from(document.querySelectorAll('h3')).find((h) => h.textContent.includes('你去过的剧情'));
   return h3 ? h3.parentElement : document.body;

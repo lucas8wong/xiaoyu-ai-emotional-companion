@@ -79,7 +79,7 @@ export function ambienceForTheme(theme: string | undefined | null): AmbienceSpec
 
 /**
  * 剧情文本 → 触发的一次性音效。
- * 只认**明确的声音事件**（雷/轰），不认情绪词——避免"每轮都在响"的廉价感。
+ * 只认**明确的声音事件**（雷/轰），不认情绪词，避免"每轮都在响"的廉价感。
  */
 export function oneShotsForText(text: string | undefined | null): string[] {
   const s = String(text || '');

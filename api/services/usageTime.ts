@@ -39,7 +39,7 @@ export interface RangeSummary {
   users: { userId: string; seconds: number; lifetimeSeconds: number; daily: Record<string, number> }[];
 }
 
-/** 本地日期键（YYYY-MM-DD）——与 usage.ts 的 getDailyTrend 口径保持一致 */
+/** 本地日期键（YYYY-MM-DD），与 usage.ts 的 getDailyTrend 口径保持一致 */
 function todayLocalKey(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -193,7 +193,7 @@ class UsageTimeStore {
  *   ② 客户端活跃门要求 `document.hasFocus()`，而内嵌浏览器/WebView（WKWebView 等）里它可能恒为 false
  *      → 整段访问一秒都不计，而且因为 accum=0 连一次上报都没有，线上完全看不见。
  * 所以这里加一组**只计数、不带任何内容**的诊断：每次上报附带 vis/focus/interaction 三个布尔，
- * 以及「0 秒兜底诊断」（diagOnly）——让「门是不是一直关着」在数据里可见。
+ * 以及「0 秒兜底诊断」（diagOnly），让「门是不是一直关着」在数据里可见。
  *
  * 测试/内网/运营自查流量一律不计数（与主账本同一道门，见 routes/usageTime.ts）。
  */

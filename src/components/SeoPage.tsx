@@ -6,7 +6,7 @@
  *
  * 设计要点：
  *  - 页面内所有文案都按**页面自己的语言**（`def.lang`）取，不依赖全局 UI 语言
- *    —— 这样预渲染出的静态 HTML 与 URL 一一对应，不会出现「中文 URL 里混英文界面」；
+ *    这样预渲染出的静态 HTML 与 URL 一一对应，不会出现「中文 URL 里混英文界面」；
  *  - 进页时把界面语言也切到该页语言（`setLang`，只在 /zh/ 页做），让后续浏览的 App 界面跟随 URL；
  *  - JSON-LD 用 @id 挂到首页已有的 `#website` / `#organization` 实体上，不重复定义；
  *  - 每页底部固定合规免责句（红线：陪伴非治疗）。
@@ -70,7 +70,7 @@ function setMeta(attr: 'name' | 'property', key: string, content: string): void 
 }
 
 export default function SeoPage({ path: pagePath }: { path: string }) {
-  // 按「完整路径」查页（而不是只按 slug）——否则 /zh/<slug> 会命中注册表里先出现的英文页
+  // 按「完整路径」查页（而不是只按 slug），否则 /zh/<slug> 会命中注册表里先出现的英文页
   const def = findSeoPageByPath(pagePath);
 
   useEffect(() => {

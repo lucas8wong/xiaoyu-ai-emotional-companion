@@ -63,7 +63,7 @@ for (const [n, d] of [['zh off', zhOff], ['zh on', zhOn], ['en off', enOff], ['e
   console.log(`${n.padEnd(8)} ${String(d.sys.length).padStart(5)} 字  → ${path.relative(PROJECT_ROOT, d.file)}`);
 }
 
-// —— 规则块是从哪一段开始的，便于对照阅读 ——
+// 【规则块是从哪一段开始的，便于对照阅读】
 const MARK = { zh: '【写作与交互要求】', en: '[Writing & interaction rules]' };
 for (const [lang, d] of [['zh', zhOn], ['en', enOn]] as const) {
   const i = d.sys.indexOf(MARK[lang as 'zh' | 'en']);
@@ -72,7 +72,7 @@ for (const [lang, d] of [['zh', zhOn], ['en', enOn]] as const) {
   console.log(`  规则块+边界句+无限制块+任务指令: ${i} ~ ${d.sys.length} 字`);
 }
 
-// —— 无限制模式块的原文（这是你要改的那一段）——
+// 【无限制模式块的原文（这是你要改的那一段）】
 console.log('\n' + '='.repeat(70));
 console.log('【无限制模式块 · 中文原文】');
 console.log('='.repeat(70));

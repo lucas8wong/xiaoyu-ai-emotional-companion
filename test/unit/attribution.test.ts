@@ -2,7 +2,7 @@
  * 来源归因单元测试
  *
  * 覆盖两条链路：
- *  ① 客户端纯函数（referrer 分类 / 触点解析 / 触点路径去重截断）——归因最容易脏的地方
+ *  ① 客户端纯函数（referrer 分类 / 触点解析 / 触点路径去重截断），归因最容易脏的地方
  *  ② 服务端 store（first-touch 不被覆盖 / 注册时按设备 stitch 到账号 / 聚合口径 / 不写假数据）
  * 数据隔离遵循仓库约定：先 setupTempCwd() 再动态 import store（store 在 import 时按 cwd 定位 data/）。
  */
@@ -105,7 +105,7 @@ test('serve：注册时把设备 first-touch stitch 到账号（客户端 first 
   assert.strictEqual(attributionStore.getByUser('user-nothing'), null);
 });
 
-test('serve：聚合口径 —— 注册/付费按 first-touch 归因，付费集由订单传入', () => {
+test('serve：聚合口径，注册/付费按 first-touch 归因，付费集由订单传入', () => {
   const agg = attributionStore.aggregates(new Set(['user-beta']));
   assert.strictEqual(agg.totals.devices >= 2, true);
   const xhs = agg.rows.find((r) => r.source === 'xhs');
@@ -121,7 +121,7 @@ test('serve：聚合口径 —— 注册/付费按 first-touch 归因，付费�
   if (firstNoSignup !== -1) assert.ok(lastWithSignup < firstNoSignup, '有注册的行应排在无注册行之前');
 });
 
-test('serve：清洗 —— 注入字符/超长字段被剥离，且不存任何 PII 字段', () => {
+test('serve：清洗。注入字符/超长字段被剥离，且不存任何 PII 字段', () => {
   attributionStore.recordTouch('dev-dirty', {
     source: '<script>alert(1)</script>IG',
     medium: 'x'.repeat(200),
@@ -142,7 +142,7 @@ test('serve：清洗 —— 注入字符/超长字段被剥离，且不存任何
   assert.ok(!raw.includes('1.2.3.4'), '不应存 IP');
 });
 
-test('serve：四维度 —— first-touch / last-touch / 首次落地页（并排看，差额即结论）', () => {
+test('serve：四维度。first-touch / last-touch / 首次落地页（并排看，差额即结论）', () => {
   const dev = 'dev-dim';
   attributionStore.recordTouch(dev, { source: 'ig', medium: 'social', campaign: 'reel-1', path: '/ai-roleplay', at: 1 });
   attributionStore.recordTouch(dev, { source: 'google', medium: 'organic', campaign: '', path: '/can-ai-be-a-therapist', at: 2 });

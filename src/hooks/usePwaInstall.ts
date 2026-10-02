@@ -54,7 +54,7 @@ function isQQBrowser(): boolean {
 }
 
 // 是否 Chromium 内核浏览器（Chrome/Edge/Opera 等）：UA 都带 "Chrome/xx"；Firefox / (iOS·macOS)Safari 不带。
-// 用于区分「真不支持 PWA 的浏览器」与「支持但暂未触发安装提示（如 Chrome 隐私模式）——后者不该给手动快捷方式引导」。
+// 用于区分「真不支持 PWA 的浏览器」与「支持但暂未触发安装提示（如 Chrome 隐私模式），后者不该给手动快捷方式引导」。
 function isChromiumBrowser(): boolean {
   if (typeof navigator === 'undefined') return false;
   return /Chrome\//i.test(navigator.userAgent || '');

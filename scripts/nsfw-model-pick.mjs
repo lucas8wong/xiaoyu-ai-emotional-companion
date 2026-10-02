@@ -44,7 +44,7 @@ function parseCsv(text) {
   return rows;
 }
 
-// —— UGI ——
+// — UGI —
 const ugiRows = parseCsv(fs.readFileSync(UGI_CSV, 'utf8'));
 const H = ugiRows[0];
 const col = (n) => { const i = H.indexOf(n); if (i < 0) throw new Error('UGI 缺列 ' + n); return i; };
@@ -60,7 +60,7 @@ for (const r of ugiRows.slice(1)) {
   });
 }
 
-// —— Featherless ——
+// — Featherless —
 const fl = (JSON.parse(fs.readFileSync(FL_JSON, 'utf8')).data || []);
 const flById = new Map(fl.map((m) => [m.id.toLowerCase(), m]));
 
@@ -98,7 +98,7 @@ show('B. 可用候选 × 按「文笔」降序（仅看 NSFW≥6）', usable.fil
 show('C. 可用候选 × 按「指令遵循 Adherence」降序（NSFW≥6）', usable.filter((x) => x.nsfw >= 6).sort((a, b) => b.adh - a.adh));
 show('D. 中文底座 + 可用 + NSFW≥5（中英文双适配的关键交集）', usable.filter((x) => isZh(x.id) && x.nsfw >= 5).sort((a, b) => b.nsfw - a.nsfw));
 
-// —— Featherless 上有、但 UGI 未收录的 NSFW 命名模型 ——
+// 【Featherless 上有、但 UGI 未收录的 NSFW 命名模型】
 const NAMED = ['nsfw', 'unslop', 'cydonia', 'magnum', 'rocinante', 'euryale', 'hanami', 'behemoth', 'sapphira', 'shakudo', 'stylizer', 'unbound', 'lumimaid', 'midnight', 'amethyst', 'fimbul', 'mytho', 'psyfighter', 'heresy', 'tainted'];
 const flOnly = fl
   .filter((m) => m.context_length >= MIN_CTX && m.concurrency_cost <= MAX_CONC)
@@ -106,7 +106,7 @@ const flOnly = fl
   .filter((m) => !ugi.has(m.id.toLowerCase()))
   .map((m) => ({ id: m.id, fl: m }));
 console.log('\n=== E. Featherless 有、UGI 未收录（NSFW 命名惯例）的可用模型，共 ' + flOnly.length + ' 个，前 25 ===');
-console.log('  注：UGI 未收录不代表差，只是没被测过——**必须自己实测**。');
+console.log('  注：UGI 未收录不代表差，只是没被测过，**必须自己实测**。');
 flOnly.slice(0, 25).forEach((x) =>
   console.log('  ' + x.id.slice(0, 58).padEnd(59) + 'ctx=' + String(x.fl.context_length).padStart(6) + ' conc=' + x.fl.concurrency_cost + (isZh(x.id) ? '  ✅中文底座' : '')),
 );

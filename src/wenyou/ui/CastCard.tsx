@@ -3,7 +3,7 @@ import type { CastMember } from '../engine/types'
 import { useModalA11y } from './useModalA11y'
 
 // 人物卡：正文里点一下人名（或人物志里点一行）就开这张卡。
-// 内容是「预设身份」——AI 在该人首次登场时登记的身份/关系/背景，一经登记只增不改（引擎侧 applyCast 保证）。
+// 内容是「预设身份」，AI 在该人首次登场时登记的身份/关系/背景，一经登记只增不改（引擎侧 applyCast 保证）。
 export function CastCard({
   member,
   scenario,

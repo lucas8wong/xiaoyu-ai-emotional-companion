@@ -88,7 +88,7 @@ async function fetchWeibo(): Promise<SnapshotItem[]> {
       .filter(Boolean)
       // 每条热搜的落点＝它的微博搜索页（话题格式 %23词%23）。这是**真实可打开的**链接，
       // 不是编的：拿不到就不放来源（界面回落到没有来源行），绝不猜一个网址出来。
-      // 落点用**手机版搜索页**（m.weibo.cn）：2026-09-29 用没登录过的干净浏览器实测——
+      // 落点用**手机版搜索页**（m.weibo.cn）：2026-09-29 用没登录过的干净浏览器实测
       // s.weibo.com 的搜索页对未登录用户**只有登录墙**（整页 77 字、连关键词都不出现），
       // 而 m.weibo.cn 的搜索结果不登录就能看到该话题的真实帖子（2708 字、关键词命中）。
       // 「要登录才看得到的来源」等于没有来源。这个地址是实测出来的，不是照文档猜的。
@@ -118,7 +118,7 @@ async function buildSnapshot(): Promise<{ text: string; items: SnapshotItem[] }>
   lines.push('（更新于 ' + (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + '）');
   // ⚠️ 注入给模型的文本**只有标题、不含网址**（加网址既会撑长 prompt，又可能让模型把一长串跳转地址写进聊天）。
   // 但每条前面要带**编号**：模型转述某一条时用 `[[n]]` 声明引用谁，服务端据此把出处挂到那条气泡下。
-  // 这是 2026-09-29 第三轮定下的做法 —— 归属必须由模型显式声明，不能靠文字匹配（意译就全落空）。
+  // 这是 2026-09-29 第三轮定下的做法，归属必须由模型显式声明，不能靠文字匹配（意译就全落空）。
   const items = [...weibo, ...news];
   if (weibo.length) {
     lines.push('微博热搜：');
@@ -141,7 +141,7 @@ async function refresh(): Promise<void> {
   }
 }
 
-/** 获取实时资讯快照（优先缓存；过期/无缓存时刷新，失败返回空串）——只要文本的旧调用口。 */
+/** 获取实时资讯快照（优先缓存；过期/无缓存时刷新，失败返回空串），只要文本的旧调用口。 */
 export async function getNewsSnapshot(): Promise<string> {
   return (await getNewsSnapshotDetailed()).text;
 }
@@ -167,7 +167,7 @@ function normalizeForMatch(s: string): string {
 
 /**
  * 回复的**段落拆分口径**（2026-09-29）：段＝气泡。
- * ⚠️ 这是**三边共用**的规则 —— 服务端（来源按段归属）、前端分段发送器（ChatPage runReveal）、
+ * ⚠️ 这是**三边共用**的规则：服务端（来源按段归属）、前端分段发送器（ChatPage runReveal）、
  * 前端历史还原（src/lib/chatServerMessages.ts）。改任何一边都必须同时改另外两边，
  * 否则来源会挂到错误的气泡上（或整条来源行错位一条）。
  */
@@ -177,7 +177,7 @@ export function splitReplySegments(reply: string): string[] {
 
 /**
  * 标题是否出现在这段文字里（归一化后比较）：短标题（<8 字）要求整串，长标题按 4 字滑窗（命中 ≥2 且覆盖 ≥50%）。
- * 判据刻意保守 —— 宁可少给，也不把出处挂到错误的那条气泡上。
+ * 判据刻意保守，宁可少给，也不把出处挂到错误的那条气泡上。
  */
 function titleMatchesSegment(normSeg: string, title: string): boolean {
   const t = normalizeForMatch(title);
@@ -196,7 +196,7 @@ function titleMatchesSegment(normSeg: string, title: string): boolean {
  * 从回复里**认出它真正引用了快照里的哪几条**（2026-09-29）。
  *
  * 为什么不能整份快照都当来源：newsBlock 是**每一轮**都注入的固定背景，若「有快照就挂来源」，
- * 那么「我今天很难过」这种跟新闻毫无关系的回复下面也会挂一排新闻链接 —— 挂错出处比不挂更伤。
+ * 那么「我今天很难过」这种跟新闻毫无关系的回复下面也会挂一排新闻链接，挂错出处比不挂更伤。
  * 只认 http(s) 公网链接（与 pickSources 同一把尺子）。
  */
 export function matchSnapshotSources(reply: string, items: SnapshotItem[], max = 3): WebResult[] {
@@ -263,7 +263,7 @@ export function mapCitesToSegments(text: string, cites: { n: number; at: number 
  * 把**一组来源**（web_search 的命中）按段落归位（2026-09-29 第三轮）：
  * 一条来源只挂到**提到它的那条气泡**上。
  *
- * 为什么需要：搜索命中原先整组挂在最后一条气泡上 —— 模型常常在前面几条气泡里分别讲了不同的新闻，
+ * 为什么需要：搜索命中原先整组挂在最后一条气泡上，模型常常在前面几条气泡里分别讲了不同的新闻，
  * 结果最后一条下面挤着一排和它无关的出处（用户实测反馈）。
  *
  * 归属证据（从硬到软）：
@@ -301,7 +301,7 @@ export function attributeSourcesBySegment(reply: string, sources: WebResult[], m
 
 /**
  * 合并两条「按段来源」通道（搜索命中 / 快照引用）：段下标对齐、同一段按 URL 去重。
- * ⚠️ 长度取两者较长者并保留 null 占位 —— 位置就是气泡序号，压缩会把来源挂错气泡。
+ * ⚠️ 长度取两者较长者并保留 null 占位，位置就是气泡序号，压缩会把来源挂错气泡。
  */
 export function mergeSegmentSources(a: (WebResult[] | null)[] | null, b: (WebResult[] | null)[] | null): (WebResult[] | null)[] | null {
   if (!a && !b) return null;
@@ -329,7 +329,7 @@ export interface WebResult {
   snippet: string;
   url: string;
   /**
-   * **展示用**域名（发布方），与 `url` 的域名可能不同 —— 见 rssPublisherHost。
+   * **展示用**域名（发布方），与 `url` 的域名可能不同，见 rssPublisherHost。
    * 为什么需要：Google News 的 `<link>` 是 news.google.com 的跳转地址（点开仍会到原文，但域名不是发布方），
    * 直接拿 url 的域名做「来源」会渲染成一排 news.google.com，看着像坏了。缺省 = 认不出发布方，界面回落到 url 的域名。
    */
@@ -663,7 +663,7 @@ export interface WebSearchGroup { label: string; results: WebResult[]; }
  * 搜索的**结构化**结果（2026-09-29 抽出）。
  *
  * 为什么要把「给模型的文本」和「给界面的来源」一起返回：聊一聊的 `web_search` 一直只把格式化文本喂给模型，
- * 前端只收到一个布尔 `search` 事件 —— 于是「链接」能不能出现，全看模型愿不愿意在正文里写 URL，
+ * 前端只收到一个布尔 `search` 事件，于是「链接」能不能出现，全看模型愿不愿意在正文里写 URL，
  * 用户不问就常常没有。这里把**命中的原始结果**一并交出来：调用方照旧喂模型文本，同时可把来源结构化下发前端
  * （气泡下的「来源」行），不必再从格式化文本里反解 URL。
  *

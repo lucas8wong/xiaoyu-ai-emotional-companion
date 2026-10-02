@@ -94,7 +94,7 @@
       }
     </script>
     <!-- 首屏关键图 preload：读当前皮肤，在 JS 解析前预载 hero（LCP 关键、视口无关），减少首屏等待。
-         氛围背景 bg / bgPortrait 走 CSS 低优先级，不等它绘制首屏——避免手机竖版/桌面横版双拉背景，
+         氛围背景 bg / bgPortrait 走 CSS 低优先级，不等它绘制首屏，避免手机竖版/桌面横版双拉背景，
          把关键带宽让给 hero / 入口图 / 正文字体。 -->
     <script>
       (function () {
@@ -205,7 +205,7 @@
           if (themeMeta) themeMeta.setAttribute('content', themeColor);
           // 浏览器标签页图标 / iOS 主屏图标 / PWA manifest 随皮肤（用该皮肤 hero 正方形的 app-icon）。
           // ⚠️ 三处都要 builtinSkin 守卫：`default`（原版）皮肤**没有** public/skins/default 目录，
-          // 按 /skins/<id>/... 改写会 404（图标空掉），manifest 更糟——Express 会把 SPA 的 index.html
+          // 按 /skins/<id>/... 改写会 404（图标空掉），manifest 更糟，Express 会把 SPA 的 index.html
           // 回落给这个请求，浏览器按 manifest 解析 HTML → 控制台 "Manifest: Line: 1, column: 1, Syntax error."
           // 没有自家资源就**保持 index.html 的站点默认**（healing 图标 + 公共 manifest）。
           var builtinSkin = { healing: 1, zen: 1, star: 1, candy: 1 }[skin] === 1;

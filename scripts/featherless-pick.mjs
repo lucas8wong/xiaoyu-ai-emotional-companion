@@ -5,9 +5,9 @@
  *   每条含 id / context_length / concurrency_cost / is_gated / pricing
  *
  * 三个硬指标（本项目特有）：
- *  1. context_length ≥ 32768 —— 自建剧本最坏情况 ≈3.7K token + 多轮 history
- *  2. concurrency_cost —— $25 Chat 档只有 **4 个并发单元**；cost=4 的模型一个请求就吃光并发
- *  3. 底座要中文强 —— UGI 是纯英文基准，中文只能靠底座判断（Qwen/GLM/Yi/InternLM/Hunyuan/MiniMax）
+ *  1. context_length ≥ 32768，自建剧本最坏情况 ≈3.7K token + 多轮 history
+ *  2. concurrency_cost，$25 Chat 档只有 **4 个并发单元**；cost=4 的模型一个请求就吃光并发
+ *  3. 底座要中文强，UGI 是纯英文基准，中文只能靠底座判断（Qwen/GLM/Yi/InternLM/Hunyuan/MiniMax）
  *
  * 用法：node scripts/featherless-pick.mjs
  */
@@ -60,7 +60,7 @@ console.log('id'.padEnd(52) + 'context'.padStart(9) + 'conc'.padStart(7));
 console.log('\n=== A. 点名候选详查（context / concurrency_cost）===');
 for (const want of CAND_WATCH) {
   const hit = list.find((m) => m.id === want) || list.find((m) => m.id.toLowerCase() === want.toLowerCase());
-  console.log(hit ? fmt(hit) : want.padEnd(52) + '  —— 目录中未找到');
+  console.log(hit ? fmt(hit) : want.padEnd(52) + '，目录中未找到');
 }
 
 // B. 中文底座 × 去限制

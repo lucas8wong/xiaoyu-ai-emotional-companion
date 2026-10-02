@@ -1,7 +1,7 @@
 /**
  * 首页底部「推广类」浮层的排队规则（2026-09-21 真机走查 F4 修复）
  *
- * 背景：手机首屏曾经**同时**堆出多个底部浮层——安装/保存卡（`InstallAppBanner`，自带皮肤预览行）
+ * 背景：手机首屏曾经**同时**堆出多个底部浮层，安装/保存卡（`InstallAppBanner`，自带皮肤预览行）
  * 与今日打卡条（`MoodRewardBanner`）竖着叠在一起，再加上全局的隐私同意横幅（`PrivacyBanner`，
  * fixed bottom-0）和顶部/中部其他条，互相压住对方的正文（截图 `temp/bsk-qa/01-home-mobile.png`）。
  *
@@ -10,7 +10,7 @@
  * - 隐私同意横幅**不参与**排队：它是合规提示，任何时候都要可见；推广浮层改为叠在它**上方**
  *   （由 Home 用 store 里的 `privacyBannerH` 抬 `bottom` 偏移），谁都不压谁。
  *
- * 抽成纯函数是为了能单测（见 `test/unit/bottomPromo.test.ts`）——之前这段优先级直接写在 JSX 里，
+ * 抽成纯函数是为了能单测（见 `test/unit/bottomPromo.test.ts`），之前这段优先级直接写在 JSX 里，
  * 既测不到、也没人说得清「到底几条能同时出现」。
  */
 

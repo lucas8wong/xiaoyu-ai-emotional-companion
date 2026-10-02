@@ -21,7 +21,7 @@ export interface StoryBubble {
   content: string;
   image?: string; // 用户发送的图片（base64 data URL）
   /** 引用回复：这条消息在回复哪一句（name=被引用那条的发言人，text=已收口好的引用正文）。
-   *  由调用方（如 ChatPage）解析好再传进来——分享卡只管画，不重复实现定位/占位词逻辑。 */
+   *  由调用方（如 ChatPage）解析好再传进来，分享卡只管画，不重复实现定位/占位词逻辑。 */
   quote?: { name: string; text: string };
 }
 
@@ -71,7 +71,7 @@ export default function StoryShareModal({ open, onClose, title, subtitle, bubble
   const [qrSite, setQrSite] = useState('');
   const [qrIg, setQrIg] = useState('');
 
-  // —— 选择要分享的条目 ——
+  // 【选择要分享的条目】
   const [selecting, setSelecting] = useState(false); // 当前是否在「选择中」（列出条目打勾）
   const [selected, setSelected] = useState<number[]>([]);
   const prevOpen = useRef(false);
@@ -169,7 +169,7 @@ export default function StoryShareModal({ open, onClose, title, subtitle, bubble
     } catch { /* 忽略 */ }
   };
 
-  // —— 社交平台分享（混合形态：系统分享面板为主 + 平台直达为辅 + 复制/保存兜底） ——
+  // 【社交平台分享（混合形态：系统分享面板为主 + 平台直达为辅 + 复制/保存兜底）】
   const capturePng = async (): Promise<File | null> => {
     const node = cardRef.current;
     if (!node || empty) return null;
@@ -211,7 +211,7 @@ export default function StoryShareModal({ open, onClose, title, subtitle, bubble
     }
   };
 
-  // 分享卡片内容（预览用 100%，导出用隐藏宽卡 SHARE_W）——更宽让气泡文字更短、整图更均衡
+  // 分享卡片内容（预览用 100%，导出用隐藏宽卡 SHARE_W）：更宽让气泡文字更短、整图更均衡
   const renderShareCard = (width: string, items: StoryBubble[]) => {
     const bgAmbient = meta.bgPortrait || meta.bg || '/skins/healing/bg-portrait.webp?v=3';
     const bgHero = meta.hero || '/skins/healing/hero.webp?v=3';

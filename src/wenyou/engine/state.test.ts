@@ -281,7 +281,7 @@ describe('initState', () => {
     const st = initState(sc, { name: '商人', prompt: '精明的商人' })
     expect(st.attributes).toEqual({ hp: 80, gold: 50 })
     expect(st.history).toEqual([])
-    expect(st.opening).toBe('商人——精明的商人')
+    expect(st.opening).toBe('商人：精明的商人')
     expect(initState(sc).opening).toBeUndefined()
   })
   it('按 opening.flag 写入身份印记，无 flag 则为空', () => {

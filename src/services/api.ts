@@ -123,7 +123,7 @@ export function setCachedPlan(plan: 'free' | 'plus' | 'pro', unlockUntil: number
 }
 
 export function clearAuth(): void {
-  // 偏好缓存随登录态一起清（2026-09-28 审查 B5）：api ⇄ prefsCache 的静态循环是安全的——
+  // 偏好缓存随登录态一起清（2026-09-28 审查 B5）：api ⇄ prefsCache 的静态循环是安全的
   // 两边都只在函数体内引用对方（不在模块初始化期调用），所以这里同步调用不会炸。
   try { resetPreferencesCache(); } catch { /* 忽略 */ }
   try {
@@ -232,7 +232,7 @@ export function getTimezoneHeader(): string {
  * zh-CN 或未收录的串原样返回（避免误翻/漏翻）。
  */
 const BACKEND_ERROR_EN: Record<string, string> = {
-  // —— auth ——
+  // — auth —
   '邮箱验证码不正确，请先获取验证码并正确填写': 'The email code is incorrect. Please request a code and enter it correctly.',
   '请输入账号和密码': 'Please enter your email and password.',
   '账号或密码错误': 'Incorrect email or password.',
@@ -246,7 +246,7 @@ const BACKEND_ERROR_EN: Record<string, string> = {
   '原密码不正确': 'Your current password is incorrect.',
   '未登录': 'Not logged in.',
   '注销失败，请稍后重试': 'Account deletion failed. Please try again later.',
-  // —— analysis / chat / structure ——
+  // — analysis / chat / structure —
   '请提供有效的情绪描述': 'Please describe how you feel.',
   '未找到会话': 'Session not found.',
   '免费次数已用完，请付费解锁后继续使用': 'You have used up your free chats. Unlock more with membership to continue.',
@@ -270,7 +270,7 @@ const BACKEND_ERROR_EN: Record<string, string> = {
   '缺少会话ID或问题': 'Session ID or question is required.',
   '回答失败，请稍后重试': 'Failed to answer. Please try again later.',
   '获取会话信息失败': 'Failed to load session info.',
-  // —— roleplay ——
+  // — roleplay —
   '剧本不存在': 'Story not found.',
   '缺少对话内容': 'Message content is missing.',
   '请先输入你想说的话': 'Please type what you want to say first.',
@@ -279,19 +279,19 @@ const BACKEND_ERROR_EN: Record<string, string> = {
   '人设、背景、开场均为必填': 'Persona, background and opening are all required.',
   '内容过长': 'Content is too long.',
   '内容包含不当信息，无法创建': 'Content was flagged as inappropriate. Unable to create.',
-  // —— payment ——
+  // — payment —
   '缺少订单号': 'Order ID is required.',
   '订单无效或已过期，请重新下单': 'The order is invalid or has expired. Please place a new order.',
   '订单不存在': 'Order not found.',
   '当前无订阅可管理': 'No active subscription to manage.',
   'Stripe Webhook 未配置': 'Stripe webhook is not configured.',
-  // —— user / diary ——
+  // — user / diary —
   '请填写反馈内容': 'Please enter your feedback.',
   '缺少图片数据': 'Image data is missing.',
   '无效的记忆索引': 'Invalid memory index.',
   '记忆不存在': 'Memory not found.',
   '请选择今天的心情': 'Please pick today\u2019s mood.',
-  // —— 前端本地回退串（也走同一转译） ——
+  // 【前端本地回退串（也走同一转译）】
   'API响应格式错误': 'Invalid API response format.',
 };
 const BACKEND_ERROR_TW: Record<string, string> = {
@@ -365,7 +365,7 @@ function httpErrPrefix(): string {
   return lang === 'en' ? 'HTTP error: ' : lang === 'zh-TW' ? 'HTTP 錯誤: ' : 'HTTP错误: ';
 }
 
-// —— 通用「免费额度用尽」门控：任何接口/流式返回这些 code，都统一触发「注册/获取额度」弹窗 ——
+// 【通用「免费额度用尽」门控：任何接口/流式返回这些 code，都统一触发「注册/获取额度」弹窗】
 const QUOTA_EXHAUSTED_CODES = new Set(['QUOTA_EXCEEDED', 'CHAT_QUOTA_EXCEEDED']);
 function isFreeQuotaExhausted(code?: string): boolean {
   return !!code && QUOTA_EXHAUSTED_CODES.has(code);
@@ -474,7 +474,7 @@ export interface ReplyToRef {
   content: string;
   /** 被引用的是「纯图片/纯语音」消息（本身没有文字）时记下类型，引用卡用占位词而不是空白卡 */
   kind?: 'image' | 'audio';
-  /** 被引用消息的时间戳——回跳定位用它（消息 id 会随刷新而变，时间戳不会） */
+  /** 被引用消息的时间戳，回跳定位用它（消息 id 会随刷新而变，时间戳不会） */
   at?: string;
 }
 
@@ -489,14 +489,14 @@ export interface ChatMessage {
   replyTo?: ReplyToRef;
   /**
    * 这条回复的**来源链接**（2026-09-29）：本轮 `web_search` 命中的结构化结果（服务端收口，最多 5 条）。
-   * 有它才谈得上「用户不必先知道可以要链接」——在这之前前端只收到一个布尔 search 事件，
+   * 有它才谈得上「用户不必先知道可以要链接」，在这之前前端只收到一个布尔 search 事件，
    * 出处全凭模型自觉把 URL 写进正文。缺省 undefined = 这轮没搜索（或历史老数据）；
    * **不要**用 `[]` 回填，那会把「没搜」和「搜了没结果」混成同一件事。
    */
   sources?: ChatSource[];
   /**
    * **按段**的来源（段下标＝气泡下标；null = 该段没有引用）：这条回复按 \n\n 分段发送时，
-   * 每段各自能挂自己的出处。与 `sources`（整轮）并存 —— 渲染时最后一段会把两者合并。
+   * 每段各自能挂自己的出处。与 `sources`（整轮）并存，渲染时最后一段会把两者合并。
    * 拆分口径必须与写入侧一致：split('\n\n') → trim → 丢空段。
    */
   sourceSegments?: (ChatSource[] | null)[];
@@ -546,7 +546,7 @@ export function reportAiFailure(feature: 'chat' | 'roleplay' | 'wenyou' | 'other
  * 流式请求的「空闲超时」守卫。
  *
  * 为什么需要它：浏览器 fetch 只能吃一个 signal，之前写法是 `signal: handlers.signal || controller.signal`
- * ——调用方一旦传了自己的 signal（聊一聊 / 剧情都传），内部的 N 秒超时就**完全失效**了：
+ *。调用方一旦传了自己的 signal（聊一聊 / 剧情都传），内部的 N 秒超时就**完全失效**了：
  * 连接死掉时请求可以一直挂着（2026-09-15 线上：用户 13:02:58 发的消息，13:40:06 才收到失败提示，
  * 中间 37 分钟只有一个转圈）。这里把两者合并：外部取消照样传播，同时**空闲**超过阈值就中断。
  * 用「空闲」而不是「总时长」：正常的长回复/工具轮可能超过阈值，服务端每 12s 有心跳，不会误杀。
@@ -614,7 +614,7 @@ export async function chatSendStream(
    * 「编辑重发」（2026-09）：被改写那条用户消息的**时间戳（毫秒）**。
    *
    * 为什么用时间戳而不是下标/id：消息 id 是前端每次加载现生成的（刷新即变），下标在服务端历史被
-   * 截断（MAX_CHAT_MSGS）后会错位；时间戳落库、跨设备一致 —— 引用回复的 `at` 也用同一套理由。
+   * 截断（MAX_CHAT_MSGS）后会错位；时间戳落库、跨设备一致，引用回复的 `at` 也用同一套理由。
    * 服务端只认「它正好是**最后一条**用户消息」的情况（2A），对不上就当普通新消息处理（绝不清历史）。
    */
   editAt?: number
@@ -709,7 +709,7 @@ export interface ChatSessionMeta {
 /**
  * 获取当前用户的聊一聊对话列表（按最近更新倒序）
  * `opts.timeoutMs` / `opts.retries`：交互式读取用（打开一个聊天不该等满默认 90s×3 次重试
- * —— 2026-09-21 真机走查：服务端抖动时用户会盯着「正在恢复上次对话…」转很久）。
+ * 2026-09-21 真机走查：服务端抖动时用户会盯着「正在恢复上次对话…」转很久）。
  */
 export async function getChatSessions(opts?: { timeoutMs?: number; retries?: number }): Promise<ApiResponse<ChatSessionMeta[]>> {
   return apiRequest('/api/analysis/chats', opts);
@@ -845,7 +845,7 @@ export async function getCharacterStory(id: string): Promise<ApiResponse<StoryVi
 }
 
 /**
- * 微信式消息列表（方案 A2）：**一个角色一行** —— 最后一条 / 时间 / 未读数（跨该角色的多条会话求和）。
+ * 微信式消息列表（方案 A2）：**一个角色一行**，最后一条 / 时间 / 未读数（跨该角色的多条会话求和）。
  * 未读口径：`chatLastReadAt` 之后角色说过的话（老会话没有该字段 = 视为已读，不会一上线全是红点）。
  */
 export interface ChatInboxRow {
@@ -869,7 +869,7 @@ export async function getChatInbox(): Promise<ApiResponse<ChatInboxRow[]>> {
 
 /**
  * 标记已读。
- * `upTo` = 屏幕上最后一条消息的时间戳（ms）——**必须传**，否则流式过程中那次已读会把
+ * `upTo` = 屏幕上最后一条消息的时间戳（ms），**必须传**，否则流式过程中那次已读会把
  * "服务端随后才落库的这条回复"算成未读（用户会看到"有红点、进去却没有新消息"）。
  */
 export async function markChatRead(data: { sessionId?: string; characterId?: string; upTo?: number }): Promise<ApiResponse<{ marked: number }>> {
@@ -891,7 +891,7 @@ export interface MemoryEntryView {
   stale?: boolean;
 }
 
-/** 自定义角色成长档案（关系记忆 / 日记 / 反思 / 自画像）——只读观景窗 */
+/** 自定义角色成长档案（关系记忆 / 日记 / 反思 / 自画像），只读观景窗 */
 export interface ChatCharacterGrowth {
   userId: string;
   characterId: string;
@@ -1032,7 +1032,7 @@ export interface QuotaInfo {
   trialProUntil?: number | null; // 体验到期时间戳
   genCredit?: number; // 额外 AI 剧本生成额度
   userId?: string; // 解析后的用户标识（游客为设备指纹+IP 哈希），用于生成稳定邀请链接
-  // —— 统一点数（credit）：账本用点数，用户可见单位是「条」（整数价目表；真实用量也四舍五入到整条）——
+  // 【统一点数（credit）：账本用点数，用户可见单位是「条」（整数价目表；真实用量也四舍五入到整条）】
   creditEnabled?: boolean; // 是否开启点数计费（决定显示「旧条数」还是「点数折算的条数」）
   creditUnlimited?: boolean; // 统一口径下的 Pro：无限（此时 creditRemain 为 null，**不能**当成 0）
   /** 最近 7 天的分模式日均用量（推荐器预填；从未用过则为 null） */
@@ -1044,13 +1044,13 @@ export interface QuotaInfo {
   unitCredit?: number;      // 1 标准单次 ≈ 普通聊一聊短消息平均点数（默认 2）
   /**
    * 分档日额度（点数）：**文案的唯一数字来源**（游客 5 条/天、注册 20 条/天）。
-   * 前端任何地方都不许写死这两个数字——改 `.env`（`GUEST_DAILY_TIAO` / `FREE_DAILY_CREDIT`）就全局跟着变。
+   * 前端任何地方都不许写死这两个数字，改 `.env`（`GUEST_DAILY_TIAO` / `FREE_DAILY_CREDIT`）就全局跟着变。
    */
   guestDailyCredit?: number; // 游客档（未注册）
   freeDailyCredit?: number;  // 注册免费档
   /**
    * 已填过的预设邀请码（null / undefined = 还没填过）。
-   * 登录账号才有值；「补填邀请码」入口据此显示——填过就隐藏，游客为 null 也不显示。
+   * 登录账号才有值；「补填邀请码」入口据此显示，填过就隐藏，游客为 null 也不显示。
    */
   inviteCode?: string | null;
   /** Google OAuth Client ID（公开值）。服务端未配置时不返回；前端据此决定是否渲染「用 Google 继续」 */
@@ -1061,7 +1061,7 @@ export interface QuotaInfo {
  * 聊天额度换算（「≈ 还能聊 N 条」）+ 无限档判定**只有一处实现** → 见 `src/lib/quotaDisplay.ts`
  * （纯函数，可被 `test/unit/quotaDisplay.test.ts` 直接覆盖；老位置在 api.ts 里测不到）。
  *
- * ⚠️ `quotaChatRemain()` 对**无限档**（Pro / 终身 / 7 天 Pro 体验）返回的是 JS 的 `Infinity`——
+ * ⚠️ `quotaChatRemain()` 对**无限档**（Pro / 终身 / 7 天 Pro 体验）返回的是 JS 的 `Infinity`
  *    它是内部哨兵值，**不能**直接插进 i18n 模板，否则线上会印出英文 `Infinity`
  *    （2026-09-17 真机：「額度剩餘 ≈ 還能聊 Infinity 條」）。渲染前先问 `quotaIsUnlimited()`。
  */
@@ -1112,7 +1112,7 @@ export interface PayConfig {
   payCurrency?: 'HKD' | 'CNY' | 'USD';
   /**
    * 微信收款码 URL（备用通道，2026-09-26 回到用户侧）：服务端按图片内容哈希加了 `?v=`
-   * —— 换图即换 URL，不会让用户看到旧码。付费弹窗据此展示扫码付款（人工确认后开通）。
+   * 换图即换 URL，不会让用户看到旧码。付费弹窗据此展示扫码付款（人工确认后开通）。
    */
   payQrUrl?: string;
   /** 开业优惠开关 */
@@ -1417,7 +1417,7 @@ export interface RoleplayScenarioInfo {
   likes: number; likedByMe: boolean;
   /**
    * 这份剧本当初是不是用「无限制模型」创建的（本人自建剧本才有这个标记）。
-   * 为 true 时，进这个剧本的聊天「无限制模式」默认开——用户仍可手动关，且只关这一个。
+   * 为 true 时，进这个剧本的聊天「无限制模式」默认开，用户仍可手动关，且只关这一个。
    * 缺省 undefined = 未记录，**不是 false**。
    */
   createdWithUnlimited?: boolean;
@@ -1428,7 +1428,7 @@ export interface RoleplayScenarioInfo {
  * `versions` / `vi`：AI 回复的「多条候选版本」（2026-09-15 新增，支持每条回复都能重新生成 + 回看旧版）。
  *   - 只有**被重新生成过**的 assistant 消息才带这两个字段；`versions[vi]` 永远等于 `content`；
  *   - 请求后端时只取 `role`/`content`（`api/routes/roleplay.ts` 会过滤），所以「AI 接着哪一版往下写」
- *     完全由当前选中的那一版决定 —— 切了版本，下一轮上下文就是切后的那一版。
+ *     完全由当前选中的那一版决定，切了版本，下一轮上下文就是切后的那一版。
  */
 export interface RoleplayMessage {
   role: 'user' | 'assistant';
@@ -1449,7 +1449,7 @@ export interface RoleplayMessage {
    * **用户消息**的分支尾巴（仅编辑重发过的用户消息才有；与 `versions` 按下标对齐）。
    *
    * `tails[k]` = 「第 k 版正文之后的对话」被冻结保存的那一段（用户可 ◀/▶ 切回）；
-   * 当前选中那一版对应的位置是 null —— 它的后续就活在主线里。
+   * 当前选中那一版对应的位置是 null，它的后续就活在主线里。
    *
    * ⚠️ 尾巴**不是**正式历史：`toRequestMessages()` 只带 role/content，所以它永远不会进模型上下文；
    * 渲染/分享/配音也一律走主线。它纯粹是给用户的"还能切回去"入口。
@@ -1477,7 +1477,7 @@ export interface RoleplayMessage {
    * 生成这条回复时用户选的**叙事模式**（classic 经典 / immersive 沉浸）。仅 assistant 有。
    *
    * 为什么要有：叙事模式原先只存在浏览器 `localStorage`（`rp_narrative_style`），服务端与落盘数据里
-   * 完全没有这个维度 —— 「经典档和沉浸档的收尾习惯是不是不一样」在真实数据上无法回答。
+   * 完全没有这个维度，「经典档和沉浸档的收尾习惯是不是不一样」在真实数据上无法回答。
    * 保存会话时随消息回传（`assistantMetaOf`），服务端投影落盘，只读扫描脚本按它分档。
    * 缺省 undefined = 老数据未记录（**不要**用默认真值回填，那会把「不知道」伪造成快照值）。
    */
@@ -1517,7 +1517,7 @@ export async function roleplayChat(scenarioId: string, messages: RoleplayMessage
   return apiRequest('/api/roleplay/chat', { method: 'POST', body: JSON.stringify({ scenarioId, messages, lang, aiName, userName, userPreference, narrativeStyle, innerMonologueEnabled, thinkingLevel }) });
 }
 /** 剧情对话流式客户端：逐 token 回调 onDelta，最后回 full reply（与聊一聊 chatSendStream 同构） */
-export async function roleplayChatStream(scenarioId: string, messages: RoleplayMessage[], lang: string = 'zh', aiName?: string, userName?: string, userPreference?: string, narrativeStyle?: string, handlers: { onDelta?: (delta: string) => void; onQueue?: (info: { ahead: number; waiting: number; running: number; maxConcurrent: number }) => void; onMeta?: (info: { adult: boolean; model: string; thinking: boolean }) => void; onContinue?: (attempt: number) => void; /** A 方案：服务端判定本次回复复读了历史片段、正在重写一版（重写期间不发 delta，最终由 done.reply 覆盖） */ onRewrite?: () => void; signal?: AbortSignal } = {}, innerMonologueEnabled?: boolean, thinkingLevel?: ThinkingLevel, continueTurn?: boolean, replacedReply?: string, /** 本回合演哪条线（solo 缺省 / multi 群像）—— 决定服务端是否注入群像 prompt 块 */ mode: RoleplayMode = 'solo'): Promise<ApiResponse<{ reply: string; incomplete?: boolean; finishReason?: string; continued?: number; free?: boolean; repeated?: boolean; repeatDegree?: number }>> {
+export async function roleplayChatStream(scenarioId: string, messages: RoleplayMessage[], lang: string = 'zh', aiName?: string, userName?: string, userPreference?: string, narrativeStyle?: string, handlers: { onDelta?: (delta: string) => void; onQueue?: (info: { ahead: number; waiting: number; running: number; maxConcurrent: number }) => void; onMeta?: (info: { adult: boolean; model: string; thinking: boolean }) => void; onContinue?: (attempt: number) => void; /** A 方案：服务端判定本次回复复读了历史片段、正在重写一版（重写期间不发 delta，最终由 done.reply 覆盖） */ onRewrite?: () => void; signal?: AbortSignal } = {}, innerMonologueEnabled?: boolean, thinkingLevel?: ThinkingLevel, continueTurn?: boolean, replacedReply?: string, /** 本回合演哪条线（solo 缺省 / multi 群像），决定服务端是否注入群像 prompt 块 */ mode: RoleplayMode = 'solo'): Promise<ApiResponse<{ reply: string; incomplete?: boolean; finishReason?: string; continued?: number; free?: boolean; repeated?: boolean; repeatDegree?: number }>> {
   const controller = new AbortController();
   const guard = createIdleGuard(controller, API_TIMEOUT_MS);
   const onExternalAbort = () => controller.abort();
@@ -1572,10 +1572,10 @@ export async function roleplayChatStream(scenarioId: string, messages: RoleplayM
           if (ev.type === 'delta' && typeof ev.content === 'string') handlers.onDelta?.(ev.content);
           else if (ev.type === 'queue') handlers.onQueue?.({ ahead: Number(ev.ahead) || 0, waiting: Number(ev.waiting) || 0, running: Number(ev.running) || 0, maxConcurrent: Number(ev.maxConcurrent) || 0 });
           // 审计元信息：服务端在选定 provider 后、开始生成前下发一次。前端存下并随会话保存回传。
-          // thinking：本回合是否开着思考模式（成人档灰度 / 官方深度思考档位）——
+          // thinking：本回合是否开着思考模式（成人档灰度 / 官方深度思考档位）
           // 思考期不会有任何 delta（成人档实测首个字要等 70s），前端据此显示「正在深度思考…」。
           else if (ev.type === 'meta') handlers.onMeta?.({ adult: ev.adult === true, model: String(ev.model || ''), thinking: ev.thinking === true });
-          // C 方案：服务端开始自动续写（把断掉的那半句接着写完）——前端据此显示"正在续写"
+          // C 方案：服务端开始自动续写（把断掉的那半句接着写完），前端据此显示"正在续写"
           else if (ev.type === 'continue') handlers.onContinue?.(Number(ev.attempt) || 1);
           // A 方案（生成后重复闸）：服务端判到复读，正在重写一版。重写期间不会有 delta，
           // 前端据此显示「正在重写」；最终文本由随后的 done.reply 一次性覆盖。
@@ -1604,7 +1604,7 @@ export async function roleplayChatStream(scenarioId: string, messages: RoleplayM
 export async function roleplayModelConfig(): Promise<ApiResponse<{ available: boolean; zh: string | null; en: string | null; adultConfirmed?: boolean; unlimitedActive?: boolean; routing?: { zh: string; en: string } }>> {
   return apiRequest('/api/roleplay/model-config');
 }
-// —— 剧情「按需出图」（S5）：给某剧本生成该主题的专属场景图（服务端白名单拼 prompt，用户文本不进 prompt）——
+// 【剧情「按需出图」（S5）：给某剧本生成该主题的专属场景图（服务端白名单拼 prompt，用户文本不进 prompt）】
 export interface SceneArtInfo {
   url: string | null;
   masterUrl?: string | null;
@@ -1638,7 +1638,7 @@ export async function generateSceneArt(scenarioId: string, theme: string, opts: 
 
 /**
  * 会话读写一律带 \`mode\`（2026-10-01 双模式）：solo = 单角色线，multi = 多角色线，**各一份存档**。
- * 缺省 solo —— 与服务端 / 本地键的默认口径一致。
+ * 缺省 solo，与服务端 / 本地键的默认口径一致。
  */
 export async function getRoleplaySession(scenarioId: string, mode: RoleplayMode = 'solo'): Promise<ApiResponse<{ messages: RoleplayMessage[] | null; userPreference?: string; mode?: RoleplayMode }>> {  return apiRequest('/api/roleplay/session?scenarioId=' + encodeURIComponent(scenarioId) + '&mode=' + encodeURIComponent(mode));
 }
@@ -1700,7 +1700,7 @@ export async function listCustomRoleplay(lang: string = 'zh'): Promise<ApiRespon
  * 把「无限制模式（成人模型）」的开关**只**改在某个自建剧本上。
  *
  * 用途：本人用无限制模型创建的剧本，进聊天时成人模式默认开；用户在那个剧本里关掉时，
- * 关的必须只是这一个剧本——写全局偏好会把他所有剧本的成人模式一起关掉。
+ * 关的必须只是这一个剧本，写全局偏好会把他所有剧本的成人模式一起关掉。
  *
  * 只有「本人的、且 createdWithUnlimited === true 的自建剧本」受理（其余 400
  * SCENARIO_NOT_ADULT_DEFAULT）；未过 18+ 成年确认时服务端会把 true 降级为 false 落盘，
@@ -1754,7 +1754,7 @@ export async function textgameChat(
 }
 
 /** AI 文游「AI 生成剧本」：给主题，后端 DeepSeek 生成整份剧本（Pro 专属 + 每日限量，走小愈额度）。
- *  注意：整份生成耗时远超 100s，经 Cloudflare 回源时同步请求会被边缘以 524 掐断——
+ *  注意：整份生成耗时远超 100s，经 Cloudflare 回源时同步请求会被边缘以 524 掐断
  *  正常入口请用 `generateWenyouScenarioStream`（SSE 进度流）；本函数保留作兼容/降级。 */
 export async function generateWenyouScenario(opts: { theme: string; target: number; existingIds: string[] }): Promise<ApiResponse<{ scenario: unknown }>> {
   return apiRequest('/api/textgame/generate-scenario', {
@@ -2076,7 +2076,7 @@ export async function renameUser(username: string): Promise<ApiResponse<{ messag
  * 上报网站访问（独立访客统计）
  */
 export async function reportVisit(): Promise<void> {
-  // 顺带带上来源归因（本次落地的触点 + first-touch + 触点路径）——服务端按设备 id 记 first-touch，
+  // 顺带带上来源归因（本次落地的触点 + first-touch + 触点路径），服务端按设备 id 记 first-touch，
   // 注册时再落到账号上；这样「哪个渠道带来的访问/注册」才有答案
   const attr = getAttribution();
   try { await apiRequest('/api/analysis/visit', { method: 'POST', body: JSON.stringify({ attr: { ...attr, current: attr.path[attr.path.length - 1] || attr.first } }) }); } catch { /* 忽略 */ }
@@ -2084,7 +2084,7 @@ export async function reportVisit(): Promise<void> {
 
 /**
  * 上报活跃时长（秒）：用户端前台+聚焦期间的心跳，供控制台「用户使用时长」统计。
- * `extra` 用于附带**身份兜底**（deviceId / token）与活跃门诊断（vis / focus / interaction / beacon）——
+ * `extra` 用于附带**身份兜底**（deviceId / token）与活跃门诊断（vis / focus / interaction / beacon）
  * 因为兜底 flush 走 `sendBeacon`，它带不了自定义请求头，只能靠 body 认人（见 src/services/usageTime.ts）。
  * POST 不自动重试；fire-and-forget，失败静默忽略。
  */
@@ -2117,10 +2117,10 @@ export async function reportPwaInstall(): Promise<void> {
 /**
  * 上报一次「复制了我的专属邀请链接」（2026-09-29）。
  *
- * 为什么要有：运营端要能区分「压根没复制过链接」和「复制了但没人注册」——前者是不知道有这个入口，
+ * 为什么要有：运营端要能区分「压根没复制过链接」和「复制了但没人注册」，前者是不知道有这个入口，
  * 后者是该给话术/激励的人群。此前只有结果口径（拉来几个人），没有动作口径。
  * 每个复制入口都调一次（关于页 / 聊一聊 / 邀请弹窗 / 付费弹窗 / 个人资料 / 额度用尽弹窗）；
- * 失败静默忽略——复制本身已经成功，埋点绝不能反过来打断用户。
+ * 失败静默忽略，复制本身已经成功，埋点绝不能反过来打断用户。
  */
 export async function trackInviteCopy(): Promise<void> {
   try {

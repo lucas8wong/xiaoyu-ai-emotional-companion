@@ -1,5 +1,5 @@
 /**
- * 朗读声音设置弹窗（VoxCPM2 音色/语气/语速/语种可调）——受控组件
+ * 朗读声音设置弹窗（VoxCPM2 音色/语气/语速/语种可调），受控组件
  * 每次改选项实时写回上层 voiceCfg（朗读立即用它），保证「设置=听到的声音」；
  * 「保存到本机」才持久化。按界面语言自动推荐语种。
  */
@@ -98,7 +98,7 @@ const LS_KEY = 'xiaoyu_voice_config_v1';
 export function composeVoice(cfg: VoiceConfig): string {
   const ageWord = cfg.age === 'young' ? 'young adult' : cfg.age === 'adult' ? 'adult' : 'mature';
   const genderWord = cfg.gender === 'female' ? 'female voice' : cfg.gender === 'male' ? 'male voice' : 'voice';
-  // 语言/口音：'' 中文（不加语言词，VoxCPM 按文本语言读——普通话文本读普通话、粤港文本读粤语）；
+  // 语言/口音：'' 中文（不加语言词，VoxCPM 按文本语言读：普通话文本读普通话、粤港文本读粤语）；
   // en-US=American English；en-GB=British English。
   // 兼容旧值：English→英文；Cantonese/Taiwanese Mandarin→中文（跟随文本）。
   const dialectWord = cfg.dialect === 'en-US' ? 'American English'
@@ -128,7 +128,7 @@ export function saveVoiceConfig(cfg: VoiceConfig): void {
   try { localStorage.setItem(LS_KEY, JSON.stringify(cfg)); } catch { /* ignore */ }
 }
 
-// —— 小愈朗读开关：控制「回复下方语音气泡 + 提前合成声音」。关闭后不再预加载 TTS、也不显示气泡，省服务端负载。 ——
+// 【小愈朗读开关：控制「回复下方语音气泡 + 提前合成声音」。关闭后不再预加载 TTS、也不显示气泡，省服务端负载。】
 const VOICE_ENABLED_KEY = 'xiaoyu_voice_enabled_v1';
 export function loadVoiceEnabled(): boolean {
   try {

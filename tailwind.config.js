@@ -7,7 +7,7 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
     // ⚠️ wolfcha 子应用由 **Tailwind v4 单独编译**成 public/wolfcha.css，
     // 不能让项目自己的 v3 再为它生成一遍工具类：同一个 class 被 v3 与 v4 各生成一次，
-    // 例如 translate-x-[-50%] —— v3 产出 transform、v4 产出 translate 属性，
+    // 例如 translate-x-[-50%]：v3 产出 transform、v4 产出 translate 属性，
     // 两者叠加会把弹窗平移两次、推出屏幕（手机端实测左边缘 -172px）。
     "!./src/wolfcha/**",
   ],
@@ -17,7 +17,7 @@ export default {
     },
     extend: {
       colors: {
-        // —— 混合主题：黏土风 × 有机自然 × 活力撞色 ——
+        // 【混合主题：黏土风 × 有机自然 × 活力撞色】
         // 全部引用 CSS 变量（RGB 三通道版），切换皮肤（<html data-skin>）即可全局重着色。
         //
         // ⚠️ 为什么必须是 `rgb(var(--color-x-rgb) / <alpha-value>)` 而不是 `var(--color-x)`（2026-09-17 定案）：
@@ -25,7 +25,7 @@ export default {
         //    裸 `var()` 解析不出来 → 该 class **静默丢弃**（`border-primary/30`、`bg-primary/10` 全都不生成，
         //    构建产物里搜不到；只有真颜色如 bg-white/70 才有）。全仓曾因此有 ~117 处描边/底色凭空消失。
         //    现在 hex 变量（--color-x）与通道变量（--color-x-rgb）**成对定义**在每个皮肤块里（src/index.css），
-        //    并有单测 `themeTokens.test.ts` 守着两行同步——改色时两个都要改。
+        //    并有单测 `themeTokens.test.ts` 守着两行同步，改色时两个都要改。
         primary: {
           DEFAULT: "rgb(var(--color-primary-rgb) / <alpha-value>)",   // 草木绿（主色/CTA）
           strong: "rgb(var(--color-primary-strong-rgb) / <alpha-value>)",    // 深绿

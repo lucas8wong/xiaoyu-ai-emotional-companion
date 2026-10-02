@@ -27,11 +27,11 @@ import {
 } from './quota.js';
 import { CAP_BY_PLAN as SCENE_ART_CAP_BY_PLAN } from './sceneArt.js';
 
-/** 专属画面每日上限（免费 / Plus）——与 sceneArt.ts 的 CAP_BY_PLAN 同源，避免两处各写一份数字 */
+/** 专属画面每日上限（免费 / Plus），与 sceneArt.ts 的 CAP_BY_PLAN 同源，避免两处各写一份数字 */
 const SCENE_ART_CAP_FREE = SCENE_ART_CAP_BY_PLAN.free;
 const SCENE_ART_CAP_PLUS = SCENE_ART_CAP_BY_PLAN.plus;
 
-// —— 收款码静态文件候选目录（解析顺序与 api/app.ts 静态托管一致：dist 优先，其次 public）——
+// 【收款码静态文件候选目录（解析顺序与 api/app.ts 静态托管一致：dist 优先，其次 public）】
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.join(__dirname, '..', '..');
@@ -39,7 +39,7 @@ const QR_CANDIDATE_DIRS = [path.join(PROJECT_ROOT, 'dist'), path.join(PROJECT_RO
 
 const ORDERS_FILE = dataFile('orders.json');
 
-// —— 会员档位价格（可经 .env 覆盖）——
+// 【会员档位价格（可经 .env 覆盖）】
 export const PLAN_KEYS = ['plus', 'pro'] as const;
 export type PlanKey = (typeof PLAN_KEYS)[number];
 
@@ -57,7 +57,7 @@ export const PLUS_PRICE_CNY = Number(process.env.PLUS_PRICE_CNY || 35);
 export const PRO_PRICE_CNY = Number(process.env.PRO_PRICE_CNY || 71);
 // HKD 展示汇率
 export const FX_USD_HKD = Number(process.env.FX_USD_HKD || 7.8);
-// 开业优惠：原价（划线价）——现价为开业折扣价，默认 5 折（原价 = 现价 × 2），可经 .env 覆盖
+// 开业优惠：原价（划线价），现价为开业折扣价，默认 5 折（原价 = 现价 × 2），可经 .env 覆盖
 export const PLUS_PRICE_USD_ORIG = Number(process.env.PLUS_PRICE_USD_ORIG || 9.99);
 export const PRO_PRICE_USD_ORIG = Number(process.env.PRO_PRICE_USD_ORIG || 19.99);
 export const PLUS_PRICE_CNY_ORIG = Number(process.env.PLUS_PRICE_CNY_ORIG || 70);
@@ -67,7 +67,7 @@ export const DISCOUNT_PCT = Number(process.env.DISCOUNT_PCT || 50); // 开业优
 const DISCOUNT_START = process.env.DISCOUNT_START || '';
 const DISCOUNT_END = process.env.DISCOUNT_END || '';
 
-// —— 年付（≈省 3 个月）与买断·终身（限量）价格 ——
+// 【年付（≈省 3 个月）与买断·终身（限量）价格】
 // USD（Stripe）· CNY（标价参照）；HKD 按 FX_USD_HKD 展示
 export const PLUS_PRICE_USD_YEARLY = Number(process.env.PLUS_PRICE_USD_YEARLY || 39.99);
 export const PRO_PRICE_USD_YEARLY = Number(process.env.PRO_PRICE_USD_YEARLY || 79.99);
@@ -137,7 +137,7 @@ let payQrUrlCache: string | null = null;
 /**
  * 收款码 URL 版本化：按实际图片内容哈希加 ?v=（如 /pay-qr.jpg?v=ab12cd34ef56）。
  * 换图即换 URL → 自动击穿浏览器/CDN 对静态资源的 7 天缓存（maxAge '7d'），
- * 避免「收款码已更换、用户仍看到旧二维码」——这是真金白银的坑（2026-08-26 踩过）。
+ * 避免「收款码已更换、用户仍看到旧二维码」，这是真金白银的坑（2026-08-26 踩过）。
  * 文件解析顺序与 api/app.ts 一致：dist → public。
  * 仅对站内相对路径生效；外链 URL 或文件读取失败时退化为原样（可用 PAY_QR_VERSION 手动兜底）。
  */
@@ -175,7 +175,7 @@ export function isPlanKey(v: unknown): v is PlanKey {
   return v === 'plus' || v === 'pro';
 }
 
-/* ——————————————————————————————————————————————————————————————
+/* ──────────────────────────────────────────────────────────────
  * 结算币种（2026-09-24 起按访客地区分流）
  *   港澳（香港/澳门）→ HKD · 中国大陆 → CNY · 其余海外 → USD
  * 为什么必须按地区换币种（实测，不是偏好）：Stripe 账户为香港主体，
@@ -183,7 +183,7 @@ export function isPlanKey(v: unknown): v is PlanKey {
  * （显式用 usd 会报 `Sessions with wechat_pay support the following currencies: hkd, cny`），
  * 所以港澳/内地访客若继续用 USD 结账，微信支付根本不会出现在结账页。
  * 币种由**服务端按 IP 判定**（前端只展示），保证「页面显示价 = Stripe 实扣价」。
- * —————————————————————————————————————————————————————————————— */
+ * ────────────────────────────────────────────────────────────── */
 export type PayCurrency = 'usd' | 'hkd' | 'cny';
 
 /** 展示用币种代码（大写）：HKD / CNY / USD */
@@ -397,7 +397,7 @@ class PaymentStore {
 
   /**
    * 收入统计（已确认解锁的订单）
-   * ordersCount = 已解锁**且真实付费**（source !== 'free'）——即"真订单"笔数，别拿来当"会员人数"
+   * ordersCount = 已解锁**且真实付费**（source !== 'free'），即"真订单"笔数，别拿来当"会员人数"
    * freeOrdersCount = 已解锁但由运营免费开通（试用/赠送）的笔数，单列出来，避免被当订单读
    */
   revenueStats() {

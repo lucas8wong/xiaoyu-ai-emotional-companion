@@ -6,7 +6,7 @@
  * 这里给完整三语（简 / 繁 / 英），不依赖运行时转换，行为可预测。
  *
  * ⚠️ 只放**界面文案**。对局内的发言与叙事由后端按用户语言生成（服务端不写死语言），
- * 事件也只下发结构化参数（seat/target/role），文案在这里拼——见 `renderEvent`。
+ * 事件也只下发结构化参数（seat/target/role），文案在这里拼，见 `renderEvent`。
  */
 
 import { getLang, type Lang } from '../i18n';
@@ -16,11 +16,11 @@ type Dict = Record<string, string>;
 const ZH: Dict = {
   // 标题 / 入口
   tab: 'AI狼人杀',
-  // —— 入口闸门：功能未上线时（见 RoleplayPage 的 werewolfUnlocked）点 tab 只提示，不进入 ——
+  // 【入口闸门：功能未上线时（见 RoleplayPage 的 werewolfUnlocked）点 tab 只提示，不进入】
   wipBadge: '开发中',
   wipToast: '狼人杀正在开发中，敬请期待',
   title: '和你的角色玩一局狼人杀',
-  subtitle: '桌上坐的是你在「聊一聊」里养的角色——它们用自己的口吻说话，也记得你。',
+  subtitle: '桌上坐的是你在「聊一聊」里养的角色，它们用自己的口吻说话，也记得你。',
   // 开局设置
   setup: '开一局',
   sizeLabel: '玩几人局',
@@ -28,7 +28,7 @@ const ZH: Dict = {
   size9: '9 人 · 经典',
   size12: '12 人 · 进阶',
   rosterLabel: '拉谁入局',
-  rosterHint: '默认全选。不选也没关系——直接开局，会用默认的陪玩角色陪你玩。',
+  rosterHint: '默认全选。不选也没关系，直接开局，会用默认的陪玩角色陪你玩。',
   rosterAll: '全选',
   rosterNone: '都不拉',
   rosterYou: '你（1 号座位）',
@@ -128,11 +128,11 @@ const ZH: Dict = {
   roleHunterDesc: '出局时（被毒杀除外）可以开枪带走一个人。',
   roleVillagerDesc: '没有特殊能力，靠发言和投票找出狼人。',
   roundOf: '第 {n} / {max} 轮',
-  // —— 复盘卡「这局谁在骗你」 ——
+  // 【复盘卡「这局谁在骗你」】
   replayOpen: '看复盘卡',
   replayTitle: '这局谁在骗你',
-  replayHeadlineWolfWin: '狼人赢了——包括那几个你以为是好人的',
-  replayHeadlineVillageWin: '好人赢了——你看穿了他们',
+  replayHeadlineWolfWin: '狼人赢了，包括那几个你以为是好人的',
+  replayHeadlineVillageWin: '好人赢了，你看穿了他们',
   replayYourRole: '你的身份',
   replayLiars: '骗你的人',
   replayPack: '跟你一起骗人的同伙',
@@ -155,7 +155,7 @@ const ZH: Dict = {
   replayClose: '关闭',
   replayShareHint: '不支持分享的浏览器：先保存图片再上传',
   replayFail: '生成图片失败，请重试',
-  // —— 续局（断线 / 刷新后接着打） ——
+  // 【续局（断线 / 刷新后接着打）】
   resumeTitle: '你还有一局没打完',
   resumeDesc: '{size} 人局 · 第 {round} 轮',
   resumeBtn: '继续这一局',
@@ -168,14 +168,14 @@ const ZH_TW: Dict = {
   wipBadge: '開發中',
   wipToast: '狼人殺正在開發中，敬請期待',
   title: '和你的角色玩一局狼人殺',
-  subtitle: '桌上坐的是你在「聊一聊」裡養的角色——它們用自己的口吻說話，也記得你。',
+  subtitle: '桌上坐的是你在「聊一聊」裡養的角色，它們用自己的口吻說話，也記得你。',
   setup: '開一局',
   sizeLabel: '玩幾人局',
   size6: '6 人 · 快速',
   size9: '9 人 · 經典',
   size12: '12 人 · 進階',
   rosterLabel: '拉誰入局',
-  rosterHint: '預設全選。不選也沒關係——直接開局，會用預設的陪玩角色陪你玩。',
+  rosterHint: '預設全選。不選也沒關係，直接開局，會用預設的陪玩角色陪你玩。',
   rosterAll: '全選',
   rosterNone: '都不拉',
   rosterYou: '你（1 號座位）',
@@ -270,8 +270,8 @@ const ZH_TW: Dict = {
   roundOf: '第 {n} / {max} 輪',
   replayOpen: '看復盤卡',
   replayTitle: '這局誰在騙你',
-  replayHeadlineWolfWin: '狼人贏了——包括那幾個你以為是好人的',
-  replayHeadlineVillageWin: '好人贏了——你看穿了他們',
+  replayHeadlineWolfWin: '狼人贏了，包括那幾個你以為是好人的',
+  replayHeadlineVillageWin: '好人贏了，你看穿了他們',
   replayYourRole: '你的身份',
   replayLiars: '騙你的人',
   replayPack: '跟你一起騙人的同夥',

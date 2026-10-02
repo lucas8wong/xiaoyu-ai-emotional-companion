@@ -21,7 +21,7 @@ export function gradeRun(sc: Scenario, st: GameState): RunGrade {
   const rating: RunGrade['rating'] =
     score >= 0.82 ? 'S' : score >= 0.66 ? 'A' : score >= 0.5 ? 'B' : score >= 0.34 ? 'C' : 'D'
 
-  // 称号直接用结局基调本身——它本就是完整称谓（如「权倾朝野·一手遮天」），
+  // 称号直接用结局基调本身，它本就是完整称谓（如「权倾朝野·一手遮天」），
   // 不再叠加属性档位前缀，避免出现三段式或与基调重复的怪称号
   return { rating, title: tone }
 }

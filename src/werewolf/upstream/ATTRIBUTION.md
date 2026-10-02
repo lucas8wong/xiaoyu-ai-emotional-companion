@@ -21,7 +21,7 @@
 - **商标**：Apache-2.0 §6 **不授予商标权**。因此本项目**不使用**「Wolfcha」「猹杀」名称、logo 或任何品牌素材；
   对外使用小愈自己的玩法名，把「狼人杀」仅作为玩法类型描述。
 - **未移植的部分**：上游的 Supabase 鉴权、tokenpay / Watcha 支付、OAuth、转介绍与福利 campaign、
-  以及其 Next.js 应用外壳**一律未移植**——本玩法使用小愈自己的账号体系（`api/services/accounts.ts`）与
+  以及其 Next.js 应用外壳**一律未移植**，本玩法使用小愈自己的账号体系（`api/services/accounts.ts`）与
   自己的模型密钥通道（`api/services/deepseek.ts`，服务端持有）。
 
 ## 我们做了什么改动（Apache-2.0 §4(b) 要求标注）
@@ -51,4 +51,4 @@
 | DeepSeek 前缀缓存稳定前缀 | `src/lib/deepseek-prompt-scope.ts` | `ai/prompt.ts`（见下） |
 | 白狼王自爆 / 守卫 / 白痴 / PK 加赛 / 遗言 / 警长竞选 | `src/game/phases/*`、`src/types/game.ts` | `engine/rules.ts`（按我们的状态机重写） |
 
-> 说明：本表会随移植推进持续更新。**每一行的状态以对应单测为准**——「写了」不等于「验过」。
+> 说明：本表会随移植推进持续更新。**每一行的状态以对应单测为准**，「写了」不等于「验过」。

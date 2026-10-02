@@ -20,7 +20,7 @@
  *                    `inviteeCredits` 是**注册当刻已发给被邀人**的那份（朋友侧承诺不变）。
  *  - kind='signup_rejected'：推广链接注册但**没有**给邀请人发奖励 → 只记 `reason`
  *                    （同设备 / 同 IP / 邀请人不是账号 / 已达邀请上限 / 自邀；结算期新增加
- *                     `invitee-inactive` 不会出现在这里——待激活不是「不发」，是「还没到时候」）。
+ *                     `invitee-inactive` 不会出现在这里，待激活不是「不发」，是「还没到时候」）。
  *
  * 注意：本台账是**运营观测数据**，不参与任何额度/会员发放的计算（发放永远以 quotaStore 为准），
  * 因此即使台账写失败也不会影响用户实际拿到的奖励。
@@ -60,7 +60,7 @@ export interface ReferralEvent {
   /**
    * 未发放/发放判定结果（signup：'valid'；signup_rejected：'same-device' / 'same-ip' /
    * 'inviter-too-new' / 'inviter-not-account' / 'inviter-cap-reached' / 'self-invite'）。
-   * 控制台据此在下钻明细里写明「为什么没给邀请人发奖励」——这是**当时**的判定，事后无法可靠还原。
+   * 控制台据此在下钻明细里写明「为什么没给邀请人发奖励」，这是**当时**的判定，事后无法可靠还原。
    */
   reason?: string;
   /** 记录来源备注（stripe / wechat / register / invite_code 等），便于排查 */
@@ -130,7 +130,7 @@ export class ReferralEventStore {
     return rec;
   }
 
-  /** 该（邀请人, 被邀人）是否已记过「邀请人获得会员天数」——防同一笔首购被记两次 */
+  /** 该（邀请人, 被邀人）是否已记过「邀请人获得会员天数」，防同一笔首购被记两次 */
   private hasInviterDayGrant(kind: ReferralEventKind, inviterId: string, inviteeId: string): boolean {
     return this.items.some(e => e.kind === kind && e.inviterId === inviterId && e.inviteeId === inviteeId && (e.days || 0) > 0);
   }
@@ -140,7 +140,7 @@ export class ReferralEventStore {
     return this.items.slice().sort((a, b) => a.at - b.at);
   }
 
-  /** 台账覆盖起点（除空台账返回 null）——用于判断某事件是否「已有精确记录」 */
+  /** 台账覆盖起点（除空台账返回 null），用于判断某事件是否「已有精确记录」 */
   earliestAt(): number | null {
     if (!this.items.length) return null;
     return this.items.reduce((min, e) => (e.at < min ? e.at : min), this.items[0].at);

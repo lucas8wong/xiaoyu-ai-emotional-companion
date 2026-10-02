@@ -1,5 +1,5 @@
 /**
- * 千世书「AI 生成剧本」—— 服务端剧本生成管线
+ * 千世书「AI 生成剧本」，服务端剧本生成管线
  *
  * 从主题生成一份完整的文字人生模拟器剧本（骨架 + 本地事件池）。
  * 复刻前端 `src/wenyou/ai/generateScenario.ts` 的两阶段分批策略与硬契约校验，
@@ -334,7 +334,7 @@ This batch produces ${n} diverse, non-overlapping events. Only output { "events"
       role: 'system',
       content: `你在为一个文字人生模拟剧本撰写「本地事件池」（无需 AI 即可游玩的分支剧情单元）。只输出一个 JSON 对象 { "events": [ ... ] }，不要任何解释或围栏。
 
-剧本：《${sk.title}》——${sk.intro}
+剧本：《${sk.title}》，${sk.intro}
 回合单位：${sk.turnUnit}，全局共 ${sk.maxTurns} 回合。
 属性（effects 与 requires 只能用这些 key）：
 ${attrLines}
@@ -437,7 +437,7 @@ export interface GenerateScenarioOptions {
   /**
    * 每个「波次」并发的事件批次数（缺省 4，上限 8；1 = 旧串行行为）。
    * 为什么要并发：整份剧本原本是 1 次骨架 + 最多 7 轮支线**串行**调用，单次高思考动辄数十秒，
-   * 总耗时普遍超过 100s —— 而线上经 Cloudflare 回源，超过约 100s 无数据即回 524，
+   * 总耗时普遍超过 100s，而线上经 Cloudflare 回源，超过约 100s 无数据即回 524，
    * 用户侧表现为「HTTP错误: 524」。并发让 4 批支线同时跑，墙钟时间降到约「骨架 + 一批」。
    */
   parallelBatches?: number;

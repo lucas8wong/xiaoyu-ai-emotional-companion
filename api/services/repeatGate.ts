@@ -4,7 +4,7 @@
  * ## 为什么需要它（前三轮尝试都给不出的东西）
  * 2026-09-24 用真实数据把三条路都走完了：
  *   · **提示词**：反重复清单（`buildAntiRepeatBlock`）是唯一被 A/B 证明有效的形式，但它只覆盖
- *     最近 2–3 条（原句/长公共子串）与 12 条（模板），而且**只是告知**——实测同一句原句被点名后
+ *     最近 2–3 条（原句/长公共子串）与 12 条（模板），而且**只是告知**，实测同一句原句被点名后
  *     下一轮照样复用；
  *   · **采样参数**：temperature / top_p / frequency+presence penalty / top_k / repetition_penalty
  *     全部试过，唯一效应大到能看见的是 penalty 0.3→0.6；更糟的是实测**上游 seed 不可复现**
@@ -19,25 +19,25 @@
  * 全库分位：最长逐字复用 p90=21 / p95=39 / p99=150 字；Jaccard p90=0.22。
  * 两个信号：
  *   1. **severe（整段复读）**：本次回复与最近任一条 AI 回复的最长公共子串 ≥ `MIN_SPAN`（默认 80 字，
- *      英文 160）—— 这是用户最直观的"复读"，全库 2.7% 的轮次命中；
+ *      英文 160），这是用户最直观的"复读"，全库 2.7% 的轮次命中；
  *   2. **circulating（片段循环）**：某个 ≥ `CIRC_SPAN`（默认 20 字）的片段在最近 `WINDOW`（默认 8）
- *      条 AI 回复里**至少 2 条**都出现过 —— 这一路专治"换词不换骨架/同一句形容词反复出现"。
+ *      条 AI 回复里**至少 2 条**都出现过，这一路专治"换词不换骨架/同一句形容词反复出现"。
  *      为什么必须有它：被投诉那位用户（230f0f97「与周即白的故事」）的逐字跨度**最大只有 45 字**，
  *      纯看 severe 判据根本抓不到他；而循环片段判据正好命中他出问题的那一轮（span=45, circ=2）。
- * 两路合并后全库触发率 **8.91%**（115/1291）—— 这个代价买的是"每一轮都能拦住 200–280 字整段照抄"。
+ * 两路合并后全库触发率 **8.91%**（115/1291），这个代价买的是"每一轮都能拦住 200–280 字整段照抄"。
  *
  * ## 有界重生成（绝不无限重试）
  * 命中后**最多重写 `MAX_ATTEMPTS`（默认 1）次**，并且把刚被复用的片段**点名**塞进"本轮禁止复现"
  * 段（`roleplay.ts` 的 `extraAvoid`）。重写结果**只有在确实更好时才采纳**：
  *   · 重复严重度必须下降（`repeatSeverity`）；
- *   · **字数不得明显缩水**（≥ 原版的 60%）—— 这条是被 GLM-4-32B 那次实验教出来的：
+ *   · **字数不得明显缩水**（≥ 原版的 60%），这条是被 GLM-4-32B 那次实验教出来的：
  *     "写得短"会让重复指标自动变好看，绝不能把"少写"当成"不复读"；
  *   · 重写失败/超时/为空 → **保留原文**，绝不把用户已经看到的内容弄丢。
  *
  * ## 红线
  * 不改用户可见的**已落盘**内容：闸门跑在服务端返回之前，用户始终只看到最终那一版；
  * 流式路径下第一版已经流出去了，所以路由会先下发 `{type:'rewrite'}` 让前端显示"正在重写"，
- * 随后 `done.reply`（权威文本）覆盖为最终版——前端本来就以 done.reply 定稿（见 `attemptTurn`）。
+ * 随后 `done.reply`（权威文本）覆盖为最终版，前端本来就以 done.reply 定稿（见 `attemptTurn`）。
  *
  * ## 开关
  *   RP_REPEAT_GATE=0        整块关掉（消融/止血）
@@ -82,13 +82,13 @@ export function repeatGateEnabled(): boolean {
   return process.env.RP_REPEAT_GATE !== '0';
 }
 /**
- * 生效范围：默认 `adult`——只在**本轮真的路由到第三方去限制模型**时判。
+ * 生效范围：默认 `adult`，只在**本轮真的路由到第三方去限制模型**时判。
  * 为什么默认窄：退化是那台 abliterated 模型的特性，官方 DeepSeek 链路不该为它多花一次调用与等待。
  */
 export function repeatGateScope(): 'adult' | 'all' {
   return String(process.env.RP_REPEAT_GATE_SCOPE || 'adult').toLowerCase() === 'all' ? 'all' : 'adult';
 }
-/** 重写次数上限（默认 1，硬上限 2——防"越改越坏还一直改"） */
+/** 重写次数上限（默认 1，硬上限 2，防"越改越坏还一直改"） */
 export function repeatGateMaxAttempts(): number {
   return Math.min(2, intOr(process.env.RP_REPEAT_GATE_MAX, 1));
 }
@@ -122,7 +122,7 @@ function pickBanSpans(spans: string[]): string[] {
 }
 
 /**
- * 判一次复读。**纯函数**（不读盘、不写盘、不调模型）——所有阈值来自 env，判据可单测、可回归。
+ * 判一次复读。**纯函数**（不读盘、不写盘、不调模型）：所有阈值来自 env，判据可单测、可回归。
  */
 export function findRepeat(reply: string, history: RepeatHistoryMessage[], lang: RepeatLang = 'zh'): RepeatFinding {
   const text = String(reply || '').trim();
@@ -301,7 +301,7 @@ export async function runRepeatGate<T>(args: {
   /**
    * 采纳条件（缺一不可）：
    *  1. 严重度确实下降（不是"换了个说法但一样重复"）；
-   *  2. **字数没明显缩水**（≥ 原版 60%）—— GLM-4-32B 那次实验的教训：少写会让重复指标自动变好看；
+   *  2. **字数没明显缩水**（≥ 原版 60%），GLM-4-32B 那次实验的教训：少写会让重复指标自动变好看；
    *  3. 新一版仍然是一段可用正文（≥ minChars）。
    */
   const better = repeatSeverity(rewriteFinding) < repeatSeverity(finding);

@@ -160,7 +160,7 @@ test('引荐反套利：设备相同 → 无效；IP 相同 → 无效；邀请�
   assert.strictEqual(vN.valid, false);
   assert.strictEqual(vN.reason, 'inviter-not-account');
 
-  // 邀请人刚注册（1 天）——2026-09-19 B 方案：**不再拦**（门槛改到被邀人侧「首次真实使用」）
+  // 邀请人刚注册（1 天），2026-09-19 B 方案：**不再拦**（门槛改到被邀人侧「首次真实使用」）
   const invT = registerInviter('toonew', 1);
   quotaStore.noteDevice(invT, 'dev-new', '1.1.1.1');
   const eT = 'q-ref-toonew';
@@ -215,7 +215,7 @@ test('首次创建角色礼：pendingReward.count 应 +1，才能触发恭喜提
   assert.strictEqual(quotaStore.getQuota(uid).genCredit, 1);
 });
 
-// —— 统一点数（credit）账本（Phase 1 聊一聊试点）——
+// 【统一点数（credit）账本（Phase 1 聊一聊试点）】
 
 test('统一点数：getCreditQuota 按档位给每日上限（Free/Plus/Pro 均兜底）', () => {
   // 2026-09-27 起免费档再分两种：**非账号 = 游客档（5 条/天）**、注册账号 = 免费档（.env 口径 20 条/天）。
@@ -246,7 +246,7 @@ test('统一口径（CREDIT_QUOTA_ENABLED=1）：Pro = 无限，且「无限」�
 
     /**
      * 但无限**有内部公平使用阀**（`PRO_FAIR_USE_TIAO`，默认 200 条/天）：
-     * 校准报告实测 Pro 的 P90 = 280 条/天（≈¥2.8/天）> 月费日均 ¥2.4 —— 不封顶就是拿月费补贴重度用户。
+     * 校准报告实测 Pro 的 P90 = 280 条/天（≈¥2.8/天）> 月费日均 ¥2.4，不封顶就是拿月费补贴重度用户。
      * 阀值只影响"当天真实消耗"，对外的「无限」展示不变。
      */
     const huge = quotaStore.reserveCredit('q-credit-unlim-pro', 'chat', { credit: 999999 });
@@ -285,7 +285,7 @@ test('统一口径（CREDIT_QUOTA_ENABLED=1）：奖励只发点数，不再往�
 
 test('统一点数：reserve → 结算（多退少补）→ 回滚', () => {
   // 用**注册账号**（免费档）跑这笔账：游客档只有 5 条（2026-09-27 分档），
-  // 本用例要连做 5+4+3 点，落在游客档上会被日额度拦下——那是另一条规则，别混进来测。
+  // 本用例要连做 5+4+3 点，落在游客档上会被日额度拦下，那是另一条规则，别混进来测。
   const uid = registerFree('flow');
   // 预扣 5 点
   const r = quotaStore.reserveCredit(uid, 'chat', { credit: 5 });

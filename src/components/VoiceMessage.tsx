@@ -3,7 +3,7 @@
  * 外层是一个「胶囊形气泡」，配色跟随当前皮肤（--color-primary / --color-primary-strong）。
  * 两种用法：
  *  - 用户录音（accent="light"）：自持 <audio src>，点即播，自己读时长。
- *  - 小愈朗读（accent="brand"）：由父级通过 onToggle 接管播放；音频未就绪时区分两态——
+ *  - 小愈朗读（accent="brand"）：由父级通过 onToggle 接管播放；音频未就绪时区分两态
  *    尚未开始合成：静态「点击生成」入口（不转圈、不写“准备中”，点了才发起合成并播放）；
  *    合成在途（loading=true）：转圈 + 加载提示；就绪后变为可播气泡。
  */

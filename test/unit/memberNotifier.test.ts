@@ -25,9 +25,9 @@ const {
   __resetMembershipMailDedupe,
 } = await import('../../api/services/memberNotifier.js');
 
-/** 2026-10-18 12:00（香港时间）——固定时间戳，断言日期不受机器时区影响 */
+/** 2026-10-18 12:00（香港时间），固定时间戳，断言日期不受机器时区影响 */
 const UNTIL = Date.UTC(2026, 9, 18, 4, 0, 0);
-/** 2026-11-17 12:00（香港时间）——续期后的到期日 */
+/** 2026-11-17 12:00（香港时间），续期后的到期日 */
 const UNTIL_RENEWED = Date.UTC(2026, 10, 17, 4, 0, 0);
 
 let seq = 0;

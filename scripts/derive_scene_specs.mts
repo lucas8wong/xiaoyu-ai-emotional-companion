@@ -1,8 +1,8 @@
 /**
  * 剧情「场景规格」推导（2026-09-14 用户反馈后的架构修正）
  *
- * ❗ 为什么这么做：此前背景图靠**标签猜**（tags → 地点/世界观），结果把《冷峻刑警的年下法医》——
- *   剧本里明明写着「**凶案现场**」「**警戒线外，雨刚停，潮湿的泥土味**」——画成了"暖阳办公/书房"。
+ * ❗ 为什么这么做：此前背景图靠**标签猜**（tags → 地点/世界观），结果把《冷峻刑警的年下法医》
+ *   剧本里明明写着「**凶案现场**」「**警戒线外，雨刚停，潮湿的泥土味**」，画成了"暖阳办公/书房"。
  *   正确做法（用户指正）：**依据剧本自己的背景故事 + 故事发生的场景**来生成画面。
  *
  * 本脚本离线跑一次：对每部**内置**剧本，把它的叙事文本交给文本模型，产出**场景规格**（严格 JSON），
@@ -11,7 +11,7 @@
  * 🔴 红线（在提示词与代码两层强制）：
  *   1. 只画**环境与道具**，不出现人物（含剪影/远景行人）；不出现文字/招牌/标志/水印；
  *   2. 不出现血腥/尸体/武器特写（本产品定位"温和陪伴"，背景只需氛围，不要猎奇）；
- *   3. **只处理内置剧本**（我们的内容）。用户自建剧本的文案是用户内容，**不进任何模型**——
+ *   3. **只处理内置剧本**（我们的内容）。用户自建剧本的文案是用户内容，**不进任何模型**
  *      自建剧本继续走 `src/lib/storyScene.ts` 的白名单表兜底。
  *
  * 用法：
@@ -41,7 +41,7 @@ function loadEnv(): Record<string, string> {
   return out;
 }
 
-// —— 红线关键词（命中即判不合格，重试一次；仍不合格则退回白名单兜底）——
+// 【红线关键词（命中即判不合格，重试一次；仍不合格则退回白名单兜底）】
 const DENY_PERSON = /\b(person|people|man|woman|boy|girl|child|kid|figure|figures|silhouette|silhouettes|crowd|face|faces|hand|hands|hair|eyes|body|bodies|he|she|they|his|her|couple|lover|detective|officer|nurse|doctor|lawyer|assistant|warrior|captain|king|queen|prince|princess)\b/i;
 const DENY_TEXT = /\b(text|letter|letters|lettering|word|words|logo|signage|watermark|billboard|poster)\b/i;
 const DENY_GORE = /\b(blood|bloody|corpse|dead|death|gore|gun|guns|knife|knives|weapon|weapons|drug|drugs|wound|wounds)\b/i;
@@ -91,14 +91,14 @@ const SYSTEM = [
   '硬性要求：',
   '1. 只描述**空间、光线、材质、天气、道具**；**绝对不能出现人物**（也不要人物剪影、远景行人、镜中人），不要出现人的身体部位。',
   '2. 不要出现任何文字、招牌、标语、标志、水印、屏幕上的字。',
-  '3. 不要血腥、尸体、武器、毒品等猎奇元素——这是温和的陪伴类产品，背景只要**氛围**。',
+  '3. 不要血腥、尸体、武器、毒品等猎奇元素，这是温和的陪伴类产品，背景只要**氛围**。',
   '4. 场景必须**依据剧本给的背景故事/开场场景/开场白正文**来定；剧本里写了"雨、积水、警戒线、泥土味"就画这些，不要替换成通用办公室或家居。',
   '5. ⚠️ **必然有人的场面**（游行/婚礼/宴会/案发现场/舞会/人群）→ 请改画**同一场景在"人刚散去/尚未到场"时的样子**：',
   '   同一地点、同一批道具（花轿、红绸、灯笼、警戒线、餐盘…）、同样的光线与天气，但画面里空无一人。例如"婚轿游街"→ 画"游街过后的长街：路边停着的花轿、散落的红绸、湿石板路"。',
   '5. indoor 表示场景主要在室内还是室外（凶案现场/街道/天台 = false）。',
   '6. mood：冷(cool)/暖(warm)/中性(neutral)，按剧情气质定（冷峻、悬疑、雨夜 → cool；温柔、日常、烛光 → warm）。',
   '只输出 JSON：{"basis":"剧本中决定场景的那句话（中文，20字内）","place":"场景短语（中文，10字内）","scene":"English visual description, 14-24 words, comma-separated visual elements ONLY (no full sentences, no colon, no lists of clauses)","mood":"cool|warm|neutral","indoor":true|false}',
-  '⚠️ scene 必须**短**：14-24 个英文单词，用逗号分隔的视觉要素（例如 "wet asphalt, yellow cordon tape, puddles, grey overcast light"），不要写成句子——超长会被图像模型的文本编码器截断。',
+  '⚠️ scene 必须**短**：14-24 个英文单词，用逗号分隔的视觉要素（例如 "wet asphalt, yellow cordon tape, puddles, grey overcast light"），不要写成句子，超长会被图像模型的文本编码器截断。',
 ].join('\n');
 
 async function deriveOne(env: Record<string, string>, s: ReturnType<typeof listScenarios>[number]): Promise<StorySceneSpec> {
@@ -169,7 +169,7 @@ async function main() {
     return;
   }
 
-  // ⚠️ 落盘格式是 { generatedAt, note, items: [...] }（不是裸数组）——这里踩过一次：直接 .map 会炸
+  // ⚠️ 落盘格式是 { generatedAt, note, items: [...] }（不是裸数组），这里踩过一次：直接 .map 会炸
   const existing: StorySceneSpec[] = (() => {
     if (!fs.existsSync(OUT_FILE)) return [];
     try {

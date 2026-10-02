@@ -2,7 +2,7 @@
  * 「收尾形态」判据测试（2026-09-18）
  *
  * 这份测试的定位：它是**度量工具的秤砣**。扫描脚本（`scripts/rp-ending-scan.mts`）与
- * 剧情提示词的「形态刹车」都建在这几个纯函数上——判据错了，前后对比的结论就是假的。
+ * 剧情提示词的「形态刹车」都建在这几个纯函数上，判据错了，前后对比的结论就是假的。
  * 所以这里既测「该命中的命中」，也把**已知误判与刻意保守的取舍显式钉成断言**，
  * 免得日后有人当它是精确分类器（那些取舍是设计，不是 bug）。
  */
@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { rpEndingKind, rpEndsWithQuestion, rpHasTerminalPunctuation, rpIsContinuationAsk, rpLastClause, rpRecentEndingKinds } from '../../src/lib/rpEnding.js';
 
-test('rpLastClause：取「他最后说的那一句」——剥两端装饰、按小句切分、保留句末标点', () => {
+test('rpLastClause：取「他最后说的那一句」：剥两端装饰、按小句切分、保留句末标点', () => {
   // 剧情正文的常见形态是「旁白 + 逗号 + 台词」，必须只取台词那一段（否则形态榜聚不到一起）
   assert.equal(rpLastClause('他顿了顿，“想跟我多说点儿不？”'), '想跟我多说点儿不？');
   assert.equal(rpLastClause('「你先说。」'), '你先说。');
@@ -52,7 +52,7 @@ test('启发式 rpIsContinuationAsk：不误伤普通问句、旁白与指令句
     '他低下头，把杯子放回桌上。',
     '你这是什么意思？',            // 普通疑问句＝情节推进
     '“要不要再喝一杯？”',          // 有「要不要」，但不是在问「要不要继续说话」
-    '“还想听吗？”',                // 反向（它要讲给你听），不在本判据范围内 —— 见模块 JSDoc 的留白说明
+    '“还想听吗？”',                // 反向（它要讲给你听），不在本判据范围内，见模块 JSDoc 的留白说明
     '你想说什么？',                // 刻意保守：不带征询动词 → 只算 question（宁可少算）
     '继续。',                      // 只有动词、没有征询
     '“坐下。”',

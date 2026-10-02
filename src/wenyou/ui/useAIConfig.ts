@@ -42,7 +42,7 @@ export function useAIConfig(onChange?: () => void) {
     presetId: o.presetId,
     thinkingLevel: o.thinkingLevel,
     // 存空串而不是丢字段：丢了的话「特意关掉的」与「从没配过」在切回来时分不开，
-    // changePreset 的 ?? 会把中转重新默认打开 —— Key 与整段 prompt 又开始过中转。
+    // changePreset 的 ?? 会把中转重新默认打开，Key 与整段 prompt 又开始过中转。
     proxy: o.proxy.trim(),
   })
   // 以最新值（覆盖当前 state）落盘，不等开局；随后触发 onChange
@@ -121,17 +121,17 @@ export function useAIConfig(onChange?: () => void) {
     changeModel,
     thinkingLevel,
     changeThinkingLevel,
-    // 该服务商+型号有没有已知的思考线格式 —— 没有就别显示控件（点了不会有效果）
+    // 该服务商+型号有没有已知的思考线格式，没有就别显示控件（点了不会有效果）
     canThink: supportsThinking(presetId, model),
     // 这家的地址才是凭据（本地推理 / 自建网关），界面据此不再把 key 说成必填
     keyOptional: keyOptional(presetId),
-    // 这个型号有没有「关闭」这一档 —— 没有的话最低档仍在推理、仍在计费，界面不能写「关闭」
+    // 这个型号有没有「关闭」这一档：没有的话最低档仍在推理、仍在计费，界面不能写「关闭」
     canDisableThinking: canDisableThinking(presetId, model),
     proxyOn,
     proxyAddr,
     changeProxyOn,
     changeProxyAddr,
-    // 这家直连已坏 —— 关掉中转就发不出请求，UI 据此给出提示
+    // 这家直连已坏，关掉中转就发不出请求，UI 据此给出提示
     proxyRequired: needsProxy(presetId),
     // 自填地址（本地服务 / 自建网关）不该送进中转：那台按 host 白名单转发，
     // 局域网地址它根本够不着，公网自建地址也不在白名单里，只会拿到 400。
@@ -139,7 +139,7 @@ export function useAIConfig(onChange?: () => void) {
     // 「不在这里按 id 列名单」，下一家自建网关预设进来时不该还要回头改 UI 文件。
     proxyApplicable: !keyOptional(presetId),
     proxyAddrInvalid,
-    // 「配好了」= storage 肯存 + 真发得出去。界面自己再写一份必然漂 —— 放行开局却
+    // 「配好了」= storage 肯存 + 真发得出去。界面自己再写一份必然漂，放行开局却
     // 存不下来，玩家刷新后归零，全程没有任何报错（isComplete 那段注释说的就是这个
     // 静默 bug）。地址填错的中转同理：放行了也是每回合死在 viaProxy，而错值已经落盘，
     // 刷新都清不掉。

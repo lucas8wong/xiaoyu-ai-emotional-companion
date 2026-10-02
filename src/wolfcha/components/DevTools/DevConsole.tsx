@@ -1443,7 +1443,7 @@ function PlayersTab({
         setLogsError(String(e));
         setAiLogs([]);
       } finally {
-        // ⚠️ 原来写的是 `if (cancelled) return; setIsLoadingLogs(false);`——finally 里的 return
+        // ⚠️ 原来写的是 `if (cancelled) return; setIsLoadingLogs(false);`，finally 里的 return
         // 会**吞掉** try/catch 里抛出的任何异常（no-unsafe-finally）。改成条件执行，行为不变。
         if (!cancelled) setIsLoadingLogs(false);
       }

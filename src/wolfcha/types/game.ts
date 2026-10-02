@@ -288,7 +288,7 @@ export interface DailySummaryVoteData {
   execution_vote?: { eliminated: number; votes: Record<string, number[]> };
 }
 
-// —— 小愈单模型口径（2026-09-17 重构）——
+// 【小愈单模型口径（2026-09-17 重构）】
 //
 // 上游（wolfcha）在这里维护一张多 provider、二十多个模型的目录
 // （Zenmux / 百炼 Dashscope / TokenDance），由用户自带 API Key 来选择。

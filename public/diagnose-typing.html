@@ -85,7 +85,7 @@
   const bars = (id) => Array.from(document.getElementById(id).children);
   const read = (el) => ({ h: +el.getBoundingClientRect().height.toFixed(2), op: +(+getComputedStyle(el).opacity).toFixed(2) });
 
-  // —— JS 兜底通路：与 src/lib/typingIndicator.ts 同一套公式（相位 = base − i/3，余弦波，峰在 0.5）——
+  // 【JS 兜底通路：与 src/lib/typingIndicator.ts 同一套公式（相位 = base − i/3，余弦波，峰在 0.5）】
   const CYCLE = 900;
   const reduced = (() => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return null; } })();
   const soft = reduced === true;
@@ -103,7 +103,7 @@
   };
   tick();
 
-  // —— 环境读数 ——
+  // 【环境读数】
   const cssHref = (() => { const l = Array.from(document.querySelectorAll('link[rel=stylesheet]')).map(x => x.getAttribute('href')).filter(Boolean); return l[0] || '(本页无外链 CSS)'; })();
   let cssHasWave = '未检查';
   try {
@@ -127,7 +127,7 @@
     'visibilityState: ' + document.visibilityState,
   ].join('\n');
 
-  // —— 逐帧采样 1.5s，比较「CSS 通路」与「JS 通路」各自动没动 ——
+  // 【逐帧采样 1.5s，比较「CSS 通路」与「JS 通路」各自动没动】
   const cssBars = bars('dotsCss');
   const acc = { css: cssBars.map(() => []), js: jsBars.map(() => []) };
   const animsSnap = cssBars.map((el) => el.getAnimations().map((a) => a.animationName + '@' + Number(a.effect.getTiming().duration) + 'ms/' + a.playState).join(',') || '(无)');

@@ -3,9 +3,9 @@
  *
  * 判据（方案 §4.4）：场景图里**不许有人物、不许有文字**。
  * 为什么必须抽检、不能只靠 prompt：实测万相会把霓虹招牌上的字真画出来（"霓虹招牌 'NICGHIT CLUB'"），
- * 而负向词只写 `text/letters/signage` **挡不住**——只能"正向强约束 + 出图后抽检 + 不合格换 seed 重出"闭环。
+ * 而负向词只写 `text/letters/signage` **挡不住**，只能"正向强约束 + 出图后抽检 + 不合格换 seed 重出"闭环。
  *
- * ⚠️ 抽检模型偶发不吐合法 JSON（实测 6 张）——此时**按设计放行**并如实标记 `unavailable`，
+ * ⚠️ 抽检模型偶发不吐合法 JSON（实测 6 张），此时**按设计放行**并如实标记 `unavailable`，
  * 由事后全库复核兜底（`scripts/check_scene_art_redline.mts`）。
  */
 import fs from 'node:fs';

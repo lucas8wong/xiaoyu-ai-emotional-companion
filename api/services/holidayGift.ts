@@ -15,7 +15,7 @@
  *
  * 幂等：`data/holiday-gift.json` 按 `campaignId` 记录已发放的 userId。
  * 「过去注册的」由运营经 admin 接口批量发放（`runHolidayGift`，默认 dry-run）；
- * 「当天新注册的」由注册链路即时发放（`maybeGrantHolidayGiftOnRegister`）——两者共用同一份 marker，
+ * 「当天新注册的」由注册链路即时发放（`maybeGrantHolidayGiftOnRegister`），两者共用同一份 marker，
  * 所以先批量后注册不会重复，先注册后批量也会被 marker 跳过。
  *
  * ⚠️ apply 必须交给运行中的 3001 进程执行（本项目数据在 SQLite，业务 store 是「整逻辑文件读写」，

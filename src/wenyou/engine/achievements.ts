@@ -36,7 +36,7 @@ export interface Achievement {
   progress?: { cur: number; total: number }
 }
 
-// 每剧本的专属成就内容——由「游戏」提供，引擎不内置任何剧本 id（保持通用，可整体复制到系列其他游戏）。
+// 每剧本的专属成就内容，由「游戏」提供，引擎不内置任何剧本 id（保持通用，可整体复制到系列其他游戏）。
 export interface ScenarioAchDefs {
   legend?: { tone: string; name: string; desc: string; icon: string } // 达成该剧本巅峰结局即解锁
   clear?: { name: string; desc: string; icon: string } // 走完该剧本任一结局

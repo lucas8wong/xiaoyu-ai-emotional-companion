@@ -10,7 +10,7 @@ import { isLoggedIn, reportTimezone } from "@/services/api";
 import { startUsageTimeTracking } from "@/services/usageTime";
 import { SEO_PAGES, seoPagePath } from "@/seo";
 // Home 是落地路由（/），静态 import 让它与入口同在初始包，去掉「entry → Home」的 chunk 瀑布，
-// 首屏更快。其余路由（FAQ/SEO/千世书分享）仍懒加载。原注释「先加载极小主包等隐私同意」已不再成立——
+// 首屏更快。其余路由（FAQ/SEO/千世书分享）仍懒加载。原注释「先加载极小主包等隐私同意」已不再成立
 // 现在首页正文始终渲染（利于爬虫），隐私只是底部非阻塞横幅。
 import Home from "@/pages/Home";
 // 隐私同意本地标记：游客首次点同意后写入，之后不再弹；登录用户视为已同意
@@ -58,7 +58,7 @@ export default function App() {
     startUsageTimeTracking();
   }, []);
 
-  // 上报浏览器时区（每个会话一次）：服务端「时间锚」要用它算**用户那边的今天**——
+  // 上报浏览器时区（每个会话一次）：服务端「时间锚」要用它算**用户那边的今天**
   // 海外用户跨日时，"今天是几号"才不会算错一天（记忆的时间语义全靠这个口径）。
   // 失败静默：时区只是优化项，缺失时服务端回退默认时区。
   useEffect(() => {

@@ -185,7 +185,7 @@ export const gameSessionTracker: any = (() => {
        * ⚠️ `start()` 的返回值会被**直接当作对局状态的 `gameSessionId`**：
        *   `sessionId = await gameSessionTracker.start({...})` → `setGameState({ gameSessionId: sessionId })`
        * 而 `hasGameSessionId()` 要求它是**非空字符串**。这里若返回对象，存档会被判为
-       * 「不可恢复」并**被删除** —— 实测后果是**刷新网页就丢局**（排查了很久的根因）。
+       * 「不可恢复」并**被删除**，实测后果是**刷新网页就丢局**（排查了很久的根因）。
        * 因此 start 必须返回字符串 id。
        */
       if (key === 'start') return async () => SESSION_ID;

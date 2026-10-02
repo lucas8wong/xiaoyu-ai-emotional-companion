@@ -5,7 +5,7 @@
  *   1. 匿名阶段：客户端每次落地把触点报上来（`POST /api/analysis/visit` 携带 `attr`），
  *      服务端按 `X-Device-Id` 记住该设备的 **first-touch + 触点路径**；
  *   2. 转化时刻：注册接口（`POST /api/auth/register`）带着同一个设备 id 进来，
- *      把设备上的 first-touch 落到**账号**上 —— 这就是 identify/merge，
+ *      把设备上的 first-touch 落到**账号**上，这就是 identify/merge，
  *      否则「注册用户全都像是凭空出现的」是这类实现最常见的失败模式；
  *   3. 报表：`GET /api/payment/admin/attribution` 按来源聚合 访问设备 / 注册 / 付费用户。
  *
@@ -81,7 +81,7 @@ const EMPTY: AttrFile = { version: 1, devices: {}, users: {} };
 /** 清洗单字段：限长 + 只留安全字符（防止把脚本/换行/超长串写进统计文件） */
 function clean(value: unknown, max = 64): string {
   return String(value ?? '')
-    // 这里**故意**匹配控制字符（\u0000-\u001f）——目的就是把它们剔掉；
+    // 这里**故意**匹配控制字符（\u0000-\u001f），目的就是把它们剔掉；
     // 所以对本行关掉 no-control-regex（不是漏写，是规则与意图相反）。
     // eslint-disable-next-line no-control-regex
     .replace(/[\u0000-\u001f\u007f<>"']/g, '')
@@ -205,7 +205,7 @@ class AttributionStore {
   /**
    * 注册时刻的 identify/merge：把该设备上的 first-touch 落到账号上。
    * 客户端传来的 first 优先（它才是「真正第一次落地的那个来源」，比服务端可能缺失更可靠）；
-   * 同时收下**自报来源**（「你怎么知道我们的」）——它和旅程链路是两种口径，分开存（basis）。
+   * 同时收下**自报来源**（「你怎么知道我们的」），它和旅程链路是两种口径，分开存（basis）。
    */
   recordSignup(userId: string, deviceId: string, clientAttr?: unknown): UserAttr | null {
     const uid = clean(userId, 64);

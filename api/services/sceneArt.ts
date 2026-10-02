@@ -2,7 +2,7 @@
  * 剧情「按需出图」服务（docs/roleplay-immersion-plan.md §4.5 = S5）
  *
  * 用途：给某个剧本按当前「主题」生成一张**该剧本专属**的场景图（共享主题池之外的那一层），
- * 落盘缓存后长期复用 —— 只承受"首次生成"，之后都是静态资源。
+ * 落盘缓存后长期复用，只承受"首次生成"，之后都是静态资源。
  *
  * 出图后端：**云 API**（见 `imageApi.ts`：通义万相 / 豆包 Seedream / CogView / gpt-image-1），
  * 本机 GPU 侧车降级为兜底。换成云 API 的原因：本机只有一张 16GB 卡还要跑 VoxCPM TTS
@@ -15,7 +15,7 @@
  * 1. **prompt 只能由白名单表拼出**（worldview + theme → `scenePrompt`），
  *    **任何用户文本都不进 prompt**：不接自由 prompt、不用剧本标题/简介、不用用户自定义标签
  *    （`worldviewOf` 只认白名单里的标签，未命中即回退现代都市）。
- * 2. 只支持**内置剧本**（自建剧本走共享主题池，不参与按需出图）——避免"用户内容 → 图像模型"的通道。
+ * 2. 只支持**内置剧本**（自建剧本走共享主题池，不参与按需出图），避免"用户内容 → 图像模型"的通道。
  * 3. 出图**不阻塞剧情**：云 API/侧车不可用、超时、欠费 → 返回 degraded，前端继续用共享图库。
  *
  * 单卡保护（保留）：每用户每日上限（默认 Pro20/Plus6/Free2，`SCENE_ART_DAILY_CAP_*` 可调）。
@@ -153,7 +153,7 @@ export function validateSceneArtRequest(input: { scenarioId?: unknown; theme?: u
   };
 }
 
-// —— 每用户每日上限（进程内；重启即清零。上限本身不是安全边界，只是单卡保护）——
+// 【每用户每日上限（进程内；重启即清零。上限本身不是安全边界，只是单卡保护）】
 const usage = new Map<string, { day: string; count: number }>();
 /** 正在出图的预留名额（2026-09-29 审查 A4-P2）：与 usage 一起构成「used + inflight >= cap」 */
 const inFlight = new Map<string, number>();
@@ -191,7 +191,7 @@ export interface SceneArtResult {
 
 /**
  * 缓存文件名带**真实扩展名**：云 API 直出 PNG/JPEG，转码器（sharp/ffmpeg）可用时统一落 webp，
- * 不可用时如实落 `png`/`jpg` —— 不假装是 webp（否则 Express 会按 webp 发 content-type 而图是 PNG）。
+ * 不可用时如实落 `png`/`jpg`，不假装是 webp（否则 Express 会按 webp 发 content-type 而图是 PNG）。
  */
 const CACHE_EXTS = ['webp', 'png', 'jpg'] as const;
 type CacheExt = (typeof CACHE_EXTS)[number];
@@ -275,7 +275,7 @@ export async function generateSceneArt(
 ): Promise<SceneArtResult> {
   // 🔴 2026-09-15 先查**图库**（`public/img/roleplay-scenes/{id}-{theme}.webp`，批量预生成的那 480 张）。
   //    为什么必须放在最前面：以前这一步只查 `findCachedSceneArt`（运行时缓存 `public/scene-art/`，通常为空），
-  //    于是**明明图库里已经有这一幕的图**，POST 还是会真去调云 API 出图 —— 花额度 + 花云成本，
+  //    于是**明明图库里已经有这一幕的图**，POST 还是会真去调云 API 出图，花额度 + 花云成本，
   //    而生成的图因为前端优先用图库的 `ownUrl`，**根本不会显示**（纯浪费）。
   const inLibrary = findOwnThemeArt(scenarioId, theme);
   const cached = inLibrary || findCachedSceneArt(scenarioId, theme);
@@ -300,7 +300,7 @@ export async function generateSceneArt(
     return { ok: false, degraded: true, code: 'DISABLED', message: '按需出图未开启', used: q.used, cap: q.cap, plan: q.plan };
   }
   /**
-   * 并发闸门（2026-09-29 审查 A4-P2）：这里是典型的「检查后动作」——
+   * 并发闸门（2026-09-29 审查 A4-P2）：这里是典型的「检查后动作」
    * 读到 q.remain → await 云端出图（最长 120s）→ 出图成功才 bumpUsage。
    * 期间同一用户的并发请求都各自看到同一个 remain → 一次能出远超上限的**付费**图；
    * 而且计数在进程内存里，重启即清零。所以把「正在出图」的名额也计入配额（used + inflight）。

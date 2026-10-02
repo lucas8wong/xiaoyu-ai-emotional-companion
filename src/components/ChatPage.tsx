@@ -78,14 +78,14 @@ interface ChatPageProps {
   onOpenMembership: () => void;
   /** 游客一键直达注册（注册获得额度） */
   onNeedLogin?: () => void;
-  /** 去「剧情演绎」功能区（stage='custom' 时直接打开「AI 创剧本」表单）——角色扮演指令分流卡片用
+  /** 去「剧情演绎」功能区（stage='custom' 时直接打开「AI 创剧本」表单），角色扮演指令分流卡片用
    *  opts.pref：进去后自动展开「我的偏好」抽屉（邮件深链用，只指路、不改设置）
-   *  opts.adult：成人向引导卡专用——把「打开无限制模式」这份意愿带进剧情页（已过 18+ 直接开；
+   *  opts.adult：成人向引导卡专用，把「打开无限制模式」这份意愿带进剧情页（已过 18+ 直接开；
    *   没过就先弹年龄闸门、确认后自动开。见 RoleplayPage 的 initialAdultIntent） */
   onGoRoleplay?: (stage?: 'list' | 'custom', scenarioId?: string, opts?: { pref?: boolean; adult?: boolean }) => void;
 }
 
-// —— 时间戳与日期分界线 ——
+// 【时间戳与日期分界线】
 function sameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
@@ -146,7 +146,7 @@ function stripMarkdown(text: string): string {
 
 /**
  * 把 AI 回复里的 URL 渲染成微信/QQ 式的可点击「链接卡片」。
- * 识别规则（裸域名、邮箱排除、尾随标点剥离、中文路径）都在 lib/messageLinks——
+ * 识别规则（裸域名、邮箱排除、尾随标点剥离、中文路径）都在 lib/messageLinks
  * 纯函数、可单测；2026-10-03 把「中文路径被截断 → 点开 404」的判据钉在那里。
  * 这里只负责：命中的 URL 换成 LinkCard，周围正文原样留下。
  */
@@ -170,7 +170,7 @@ function renderMessageText(text: string): React.ReactNode[] {
 }
 
 /** 观景窗：一块只读的成长档案分区（可折叠，默认收起）
- *  meta = 这条记忆/成长条目的时间说明（「记住于 2026-09-14（3 天前）」/「时间不详…」）——
+ *  meta = 这条记忆/成长条目的时间说明（「记住于 2026-09-14（3 天前）」/「时间不详…」）
  *  2026-09-17 起带时间轴，用户能看到 TA 记得的事是哪时候的，不再有"把很久以前当今天"的错位。 */
 function GrowthSection({ title, entries, open, onToggle, onDelete }: { title: string; entries: { text: string; meta?: string }[]; open: boolean; onToggle: () => void; onDelete?: (index: number) => void }) {
   if (!entries || entries.length === 0) return null;
@@ -317,7 +317,7 @@ const sessionMsgCache = new Map<string, ChatMessage[]>();
 
 /**
  * 打开一个会话的**交互式**超时。默认 90s（api.ts 的 API_TIMEOUT_MS）是给 AI 长任务留的，
- * 用在「点开一个聊天」上就意味着用户可能对着转圈等一分半 —— 2026-09-21 真机走查实测到过。
+ * 用在「点开一个聊天」上就意味着用户可能对着转圈等一分半，2026-09-21 真机走查实测到过。
  * 15s 足够跨境网络完成一次普通列表/消息读取；超了就走失败态 + 重试。
  */
 const CHAT_OPEN_TIMEOUT_MS = 15000;
@@ -384,7 +384,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
   const [companionStyleOpen, setCompanionStyleOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  // —— 聊一聊自定义角色（灵魂框架：identity/boundaries/voice/opening）——
+  // 【聊一聊自定义角色（灵魂框架：identity/boundaries/voice/opening）】
   const [characters, setCharacters] = useState<ChatCharacterMeta[]>([]);
   const [activeCharacter, setActiveCharacter] = useState<ChatCharacterMeta | null>(() => getLastChatChar());
   /**
@@ -424,20 +424,20 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
   const [charError, setCharError] = useState<string | null>(null);
   const [charAvatar, setCharAvatar] = useState('');
   const charAvatarRef = useRef<HTMLInputElement>(null);
-  // —— 观景窗：只读查看角色的成长档案（关系/反思/日记/自画像）——
+  // 【观景窗：只读查看角色的成长档案（关系/反思/日记/自画像）】
   const [growthOpen, setGrowthOpen] = useState(false);
   const [growthView, setGrowthView] = useState<ChatCharacterGrowth | null>(null);
   const [growthCharName, setGrowthCharName] = useState('');
   const [growthCharId, setGrowthCharId] = useState('');
   // 观景窗各分区的展开状态（A1 分区折叠 / B1 默认全收起）
   const [growthOpenSec, setGrowthOpenSec] = useState<Record<string, boolean>>({});
-  // —— 剧情角色（origin='story'）：「TA 记得的这段剧情」回看 + 入戏/出戏双态 + 增量同步 ——
+  // 【剧情角色（origin='story'）：「TA 记得的这段剧情」回看 + 入戏/出戏双态 + 增量同步】
   const [storyOpen, setStoryOpen] = useState(false);
   const [storyView, setStoryView] = useState<StoryView | null>(null);
   const [storyLoading, setStoryLoading] = useState(false);
   const [storySyncing, setStorySyncing] = useState(false);
   const [storyModeSaving, setStoryModeSaving] = useState(false);
-  // —— 微信式消息列表（方案 A2）：角色列表（谁给我发了消息 / 未读几条）——
+  // 【微信式消息列表（方案 A2）：角色列表（谁给我发了消息 / 未读几条）】
   const [inbox, setInbox] = useState<ChatInboxRow[]>([]);
   /**
    * 消息列表（微信式**第一层首页**，2026-09-20 用户口径「要做成首页」）：
@@ -445,12 +445,12 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
    * 与 inboxOpen 的旧语义差别：它不再是"抽屉/遮罩"，而是这个模块的家。
    */
   const [listOpen, setListOpen] = useState(true);
-  // —— 首次进入 · 功能引导气泡（coach-mark；所有用户首次进入显示，可逐个关闭/跳过）——
+  // 【首次进入 · 功能引导气泡（coach-mark；所有用户首次进入显示，可逐个关闭/跳过）】
   /**
    * ⚠️ 2026-09-21 **按层拆成两套气泡**（用户口径「聊一聊的导航气泡要改进，因为点进去现在是可以聊天的人」）。
    *
    * 事实：消息列表已经是聊一聊的**第一层首页**（进来看到的是“谁给我发了消息”，点一行才进对话），
-   * 而原来的气泡**全部锚在对话窗口**的顶栏 / 输入栏上 —— 人还停在列表层时它们照样在跑：
+   * 而原来的气泡**全部锚在对话窗口**的顶栏 / 输入栏上，人还停在列表层时它们照样在跑：
    * 实测（改前，见 temp/verify-chat-coach/）气泡文案是「这里看所有人的消息、开新对话…」，
    * 而它指的“洞”落在**已被列表整屏盖住**的对话顶栏上（视觉上正好压在列表第 1 行），讲的是用户此刻看不到的东西。
    *
@@ -503,7 +503,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
     { key: 'sort', anchorRef: structureBtnRef, text: t('coachChatSort') },
     { key: 'start', anchorRef: imageBtnRef, text: t('coachChatStart') },
   ], [roleBtnRef, historyGroupRef, imageBtnRef, structureBtnRef, chatSettingsGroupRef, coachLang, t]);
-  // —— 聊天内「理一理」子视图（软合并 A）：从当前角色一键进入结构化深整理 ——
+  // 【聊天内「理一理」子视图（软合并 A）：从当前角色一键进入结构化深整理】
   const [structureOpen, setStructureOpen] = useState(false);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameText, setRenameText] = useState('');
@@ -557,7 +557,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
       return () => clearTimeout(t);
     }
   }, []);
-  // —— 发送位置（轻量：定位→文本消息）提示 ——
+  // 【发送位置（轻量：定位→文本消息）提示】
   const [locMsg, setLocMsg] = useState<string | null>(null);
   const locMsgTimer = useRef<number | null>(null);
   const isMobile = useIsMobile();
@@ -571,11 +571,11 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
   if (vvHeight > maxVvHeightRef.current) maxVvHeightRef.current = vvHeight;
   const keyboardUp = maxVvHeightRef.current > 0 && vvHeight < maxVvHeightRef.current - 1;
 
-  // —— 真机 iOS Safari 键盘处理 ——
+  // 【真机 iOS Safari 键盘处理】
   // iOS Safari 的软键盘是「覆盖式」，且它会在聚焦输入框时自动滚动页面，让输入框保持在键盘上方。
   // 这个页面滚动会让 visualViewport.offsetTop > 0，导致底部输入栏与键盘之间出现大片空白、
   // 甚至键盘弹起瞬间输入栏先消失。聊天页挂载期间锁住 html/body 的滚动（overflow:hidden），
-  // 让页面无法被 Safari 滚动，offsetTop 恒为 0 —— 于是容器高度=可视视口高度时，
+  // 让页面无法被 Safari 滚动，offsetTop 恒为 0，于是容器高度=可视视口高度时，
   // 输入栏底边正好贴住键盘上沿（既有 useVisualViewport 的定位才真正生效）。
   // 真机 iOS 键盘处理（锁滚动 / body fixed / 瞬时回落）抽成共享 hook，聊一聊、剧情对局共用。
   useIosKeyboardLock(true);
@@ -589,7 +589,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
   }, [isMobile]);
   const [, setInputFocused] = useState(false);
   // Android（含 IG 内嵌浏览器）：该环境键盘为纯覆盖层、零视口信号，无法把底部输入栏顶上去。
-  // 方案 B——聚焦时把输入栏整体「钉到屏幕顶部」，键盘只占下半屏，输入框永远不被遮挡（同一个 textarea，焦点不丢）。
+  // 方案 B，聚焦时把输入栏整体「钉到屏幕顶部」，键盘只占下半屏，输入框永远不被遮挡（同一个 textarea，焦点不丢）。
   const [androidComposerTop, setAndroidComposerTop] = useState(false);
   // 键盘让位量（Android）：
   //  - 视口已随键盘收缩（keyboardUp：普通 Android Chrome，interactive-widget=resizes-content）→ 0，
@@ -611,7 +611,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
   /**
    * 「编辑重发」（2026-09，方案 1B + 2A）：正在被改写的那条消息（null = 不在编辑态）。
    *
-   * 2A 口径：只有**最后一条用户消息**能编辑（判据 `canEditLastUser`）。这里不保留旧分支 —— 聊一聊的
+   * 2A 口径：只有**最后一条用户消息**能编辑（判据 `canEditLastUser`）。这里不保留旧分支，聊一聊的
    * 历史归服务端、且是「追加式」，没有剧情模式那套版本/尾巴结构；代价是被作废的那一轮回复不再可切回，
    * 所以入口只在（且只在）最后一轮出现，并明确提示「这条之后的内容会被清掉」。
    */
@@ -622,7 +622,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
   const [flashMsgId, setFlashMsgId] = useState<string | null>(null);
   const flashTimerRef = useRef<number | null>(null);
   useEffect(() => () => { if (flashTimerRef.current) window.clearTimeout(flashTimerRef.current); }, []);
-  // —— 语音输入（MediaRecorder 录音 + 服务端 Whisper 转文字，复用现有文本管线）——
+  // 【语音输入（MediaRecorder 录音 + 服务端 Whisper 转文字，复用现有文本管线）】
   const [recording, setRecording] = useState(false);
   const [voicePending, setVoicePending] = useState(false); // 录音结束、正在服务端转文字
   const [voiceError, setVoiceError] = useState<string | null>(null);
@@ -678,7 +678,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
       if (p && p.xiaoyuRelation) setXiaoyuRelation(p.xiaoyuRelation);
     }).catch(() => { /* 忽略 */ });
   }, []);
-  // 语言自动跟界面语言（简/繁→中文；en→英文口音）——角色音色里存的英文口音在中文界面下也按中文读
+  // 语言自动跟界面语言（简/繁→中文；en→英文口音），角色音色里存的英文口音在中文界面下也按中文读
   const ttsVoice = voiceCfg.mode === 'clone' ? '' : composeVoice({ ...voiceCfg, dialect: effectiveDialect(voiceCfg.dialect, getLang()) });
   // 当前聊天角色的专属音色（未设则跟随全局/小愈默认）
   const activeCharVoice = ((): string | null => {
@@ -706,11 +706,11 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
   // 后台自动预载进行中（只会是最新一条；区别于点击触发的 voiceLoading）。
   // 预载在途的气泡同样显示真实「声音准备中…」加载态，而不是静态「点击生成语音」。
   const [voicePreloadingId, setVoicePreloadingId] = useState<string | null>(null);
-  // —— 小愈朗读音频（TTS）：按消息 id 缓存 object URL + 时长，供文字下方语音气泡展示/播放复用 ——
+  // 【小愈朗读音频（TTS）：按消息 id 缓存 object URL + 时长，供文字下方语音气泡展示/播放复用】
   const [ttsMeta, setTtsMeta] = useState<Record<string, { url: string; duration: number }>>({});
   const ttsUrlRef = useRef(new Map<string, { url: string; duration: number; text: string }>());
 
-  // —— 朗读预加载：AI 回复定稿后先在后台合成音频，用户点喇叭即点即播 ——
+  // 【朗读预加载：AI 回复定稿后先在后台合成音频，用户点喇叭即点即播】
   // 以「消息 id + 音色 + 语言」为 key 复用缓存/在途请求，预加载与点击共用同一份，避免重复合成/重复请求。
   // 关键：把所有真实合成请求「串行化」（并发=1）。一段回复常被拆成多条气泡，若同时并发多个 /api/tts，
   // VoxCPM 侧车可能把音频缓冲串位（表现为「点上一句播的是下一句」）；串行可彻底避免。
@@ -789,7 +789,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
     return meta;
   }, []);
 
-  // —— 角色：当前头像/名称（默认小愈；小愈头像跟随皮肤）——
+  // 【角色：当前头像/名称（默认小愈；小愈头像跟随皮肤）】
   const skinAvatar = meta.companion || '/skins/healing/companion.webp?v=3';
   // 无缓存且角色尚未加载完成时，用占位（…/spinner），避免先闪默认小愈再切换
   const charLoading = !activeCharacter && !charReady;
@@ -809,7 +809,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
     ? (activeCharacter.opening || (getLang() === 'en' ? 'I am ' + activeCharacter.name + '. What would you like to talk about?' : '我是' + activeCharacter.name + '。想聊点什么？'))
     : t('chatGreeting');
   /**
-   * 「正在输入…」小字（2026-09-21 修）：此前写死 `t('chatTyping')` —— 那两串文案里带「小愈」，
+   * 「正在输入…」小字（2026-09-21 修）：此前写死 `t('chatTyping')`，那两串文案里带「小愈」，
    * 于是切到自定义角色（自建 / 剧情角色导入）后，头像和名字都换成了 TA，这行小字却还在说小愈。
    * 规则：内置小愈沿用原文（口吻一致），其他角色一律用 TA 的名字。
    */
@@ -844,9 +844,9 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
 
   // 加载某个角色的会话并自动打开最近一条（每角色独立会话线）
   /**
-   * 打开**指定会话**（2026-09-20 提速）：只要 1 个 RTT 就能把消息铺上屏 ——
+   * 打开**指定会话**（2026-09-20 提速）：只要 1 个 RTT 就能把消息铺上屏
    * 会话列表（第二层抽屉用）**并行**去拉，不再"先拉列表再拉消息"串行等两次往返。
-   * 用户口径：「点聊一聊进去要等至少 2 秒才看到角色对话」——串行请求在跨境网络下就是 2 秒的来源。
+   * 用户口径：「点聊一聊进去要等至少 2 秒才看到角色对话」，串行请求在跨境网络下就是 2 秒的来源。
    */
   const openSession = async (characterId: string, sessionId: string) => {
     if (streamRef.current) streamRef.current.cancel = true;
@@ -857,7 +857,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
       setChatSessionId(sessionId);
       /**
        * 先铺**进程内缓存**的那份（来回"列表 ↔ 对话"时秒开，不用干等一次往返），
-       * 再去服务端刷新 —— 刷新回来会覆盖，所以看到的永远是最新内容。
+       * 再去服务端刷新，刷新回来会覆盖，所以看到的永远是最新内容。
        * 缓存只在内存里、只留在当前标签页，不落盘（隐私与陈旧两头都不占）。
        */
       const cached = sessionMsgCache.get(sessionId);
@@ -890,7 +890,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
   /**
    * 加载某个角色的会话并打开：
    * `preferSessionId`（可选）= 指定先打开哪一条（用于"从消息列表点进来"时打开**真正有未读的那一条**，
-   * 否则用户会看到角标一直在、点进去却什么都没变——列表行的角标可能来自该角色另一条更旧的会话）。
+   * 否则用户会看到角标一直在、点进去却什么都没变，列表行的角标可能来自该角色另一条更旧的会话）。
    */
   const loadSessionsFor = async (characterId: string, preferSessionId?: string | null) => {
     // 已经知道要开哪条会话（从消息列表点进来）→ 直接开，省掉"先拉列表"那一跳
@@ -912,7 +912,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
           if (r.success && r.data) {
             const mapped = mapServerMessages(r.data.messages);
             setChatMessages(mapped);
-            // 打开即已读，但**上限是屏幕上最后一条**（不是 now）——服务端随后才落库的消息不会被提前吞掉
+            // 打开即已读，但**上限是屏幕上最后一条**（不是 now），服务端随后才落库的消息不会被提前吞掉
             void clearUnread(target.sessionId, lastTsOf(mapped));
           } else {
             setSessionLoadFailed(true);
@@ -971,7 +971,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
     setCurrentStep('input');
   };
 
-  // —— 角色编辑（新建/编辑/删除）——
+  // 【角色编辑（新建/编辑/删除）】
   const openNewChar = () => {
     setEditingChar(null);
     setCharForm({ name: '', identity: '', boundaries: '', voice: '', ttsVoice: '', opening: '' });
@@ -1008,7 +1008,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
       setGrowthView(v => v ? { ...v, userFacts: facts, userFactEntries: entries } : v);
     }
   };
-  // —— 剧情角色（origin='story'）：TA 记得的这段剧情 ——
+  // 【剧情角色（origin='story'）：TA 记得的这段剧情】
   const isStoryChar = (c: ChatCharacterMeta | null | undefined): boolean => c?.origin === 'story';
   /**
    * 改「关系类型」（2026-09-21）。写哪儿取决于当前角色：
@@ -1172,7 +1172,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
   const [redirectHint, setRedirectHint] = useState<ChatRedirectHint | null>(null);
   /**
    * 「小愈已经在回复里自己说清楚了」→ 只渲染一个**直达按钮**，不重复整张说明卡（2026-09-25）。
-   * 用户原话：「要有一个直达的按键而不只是信息说明」——戏内升级那条路是模型用自己的话引导的，
+   * 用户原话：「要有一个直达的按键而不只是信息说明」，戏内升级那条路是模型用自己的话引导的，
    * 以前用户看得到"该去哪"却**按不到**；后端据此回传 hintCompact（见 chatRedirect.shouldAttachAdultHint）。
    */
   const [redirectHintCompact, setRedirectHintCompact] = useState(false);
@@ -1215,7 +1215,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
       /**
        * 角色行**先于**消息列表上屏（2026-09-25。用户口径：「点进聊一聊，默认小愈加载很慢，
        * 很多时候都是看到空白页无角色」）。
-       * 两个请求虽然并行发出，但下面原来要等 Promise.all 两个都回来才 setCharacters —— 而消息列表是
+       * 两个请求虽然并行发出，但下面原来要等 Promise.all 两个都回来才 setCharacters，而消息列表是
        * 按该用户全部会话聚合 + 统计未读的，会话一多就明显慢于角色接口，把「小愈」这一行也一起拖住了。
        * 现在：角色一到就先把行画上，消息列表随后到再补预览/未读。
        */
@@ -1258,7 +1258,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
        */
       const wanted = pendingChatCharId ? chars.find(c => c.id === pendingChatCharId) : undefined;
       const chosen = wanted || active;
-      // ⚠️ 角色行现在会**先于**消息列表上屏，用户可能已经自己点过某一行 —— 别把默认挑选盖在他头上
+      // ⚠️ 角色行现在会**先于**消息列表上屏，用户可能已经自己点过某一行，别把默认挑选盖在他头上
       if (!userPickedCharRef.current) {
         setActiveCharacter(chosen);
         setLastChatChar(chosen); // 同步缓存：下次进入免加载直接显示该角色
@@ -1332,7 +1332,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
   /**
    * 用最终正文**重建本轮的助手气泡**（2026-09-29 输出卫生闸专用）。
    *
-   * 为什么需要：流式是边生成边显示的，而「剥掉开头自言自语」与「自言自语重生成」都是**事后**才知道的 ——
+   * 为什么需要：流式是边生成边显示的，而「剥掉开头自言自语」与「自言自语重生成」都是**事后**才知道的
    * 那时原文已经画在屏幕上了（而且前端优先用流式文本，不重建就会**永久留着一个错误版本**）。
    * 所以服务端在 done 里带 revised=true 时，这里按最终正文重排气泡，保证「打字时看到的」
    * 与「最终 / 重进历史看到的」一致。段落口径与分段发送器、服务端完全一致：split('\n\n')→trim→丢空段。
@@ -1360,7 +1360,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
    *  · 最后一条两者都有 → 合并去重。
    *
    * 段↔气泡的对齐：分段发送器把回复按 \n\n 拆成气泡，所以「本轮连续的助手气泡」按顺序就是各段。
-   * 数量对不上（理论上不会）时退回「全部挂最后一条」——绝不因为对齐失败把来源丢掉。
+   * 数量对不上（理论上不会）时退回「全部挂最后一条」，绝不因为对齐失败把来源丢掉。
    * ⚠️ 必须在 cancelStream() 之前调用：那会 ++sendGenRef，之后的迟到逻辑一律作废。
    */
   const attachSourcesBySegment = (turnSources?: ChatSource[], segSources?: (ChatSource[] | null)[]) => {
@@ -1370,7 +1370,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
     if (!ids.length) return;
     /**
      * 先把「段 → 来源」摊成一张与气泡一一对应的表，再统一写回。
-     * ⚠️ 段数比气泡多时（理论上不该发生）把多出来的并到**最后一条**，绝不静默丢弃 ——
+     * ⚠️ 段数比气泡多时（理论上不该发生）把多出来的并到**最后一条**，绝不静默丢弃
      * 2026-09-29 实测踩过：那时 `aligned=false` 会把整批来源直接吞掉，用户看到的就是「一条来源都没有」。
      */
     const perBubble: ChatSource[][] = ids.map(() => []);
@@ -1386,7 +1386,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
     });
   };
 
-  // —— 拟人化分段发送（一个段落 = 一条气泡；段落内容到达即开气泡并逐字浮出，段落间保留「正在输入」）——
+  // 【拟人化分段发送（一个段落 = 一条气泡；段落内容到达即开气泡并逐字浮出，段落间保留「正在输入」）】
   const openBubble = (s: StreamState, text: string): string => {
     const m = newMsg('assistant', text);
     if (!s.firstMsgId) s.firstMsgId = m.id;
@@ -1520,7 +1520,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
     };
   }, []);
 
-  // —— 语音输入：录音（MediaRecorder）→ 上传服务端 Whisper 转文字，回填输入框（不自动发送）——
+  // 【语音输入：录音（MediaRecorder）→ 上传服务端 Whisper 转文字，回填输入框（不自动发送）】
   const showVoiceError = (msg: string) => {
     setVoiceError(msg);
     if (voiceErrorTimer.current) window.clearTimeout(voiceErrorTimer.current);
@@ -1824,7 +1824,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
     const image = imageOverride ?? pendingImage ?? undefined;
     const audio = audioOverride; // 微信式语音气泡：录音 data URL（仅展示/播放；Xiaoyu 靠 content 理解）
     /**
-     * 编辑重发：被改写的那条（服务端用同一把尺子定位 —— 时间戳 + 必须是最后一条用户消息，见
+     * 编辑重发：被改写的那条（服务端用同一把尺子定位，时间戳 + 必须是最后一条用户消息，见
      * `api/routes/analysis.ts` 的 rewindForEdit）。定位不到就退回普通发送（绝不按猜的下标截历史）。
      */
     let editIdx = -1;
@@ -1864,7 +1864,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
       failedTurnRef.current = null;
     } else if (editing) {
       /**
-       * 编辑重发（2026-09）：本地**先截到那条之前**，再插入改写后的这条 ——
+       * 编辑重发（2026-09）：本地**先截到那条之前**，再插入改写后的这条
        * 与服务端在同一个请求里做的事完全一致（`rewindForEdit`）。乐观展示失败时由下面的
        * 「回滚本地乐观展示」分支把整份 `chatMessages` 放回去，不会留下半截历史。
        */
@@ -1882,7 +1882,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
       setPendingImage(null); // 点击发送后立即清掉预览，图片已进聊天室
       // 发送后收起手机键盘，方便看后续回复
       try { inputRef.current?.blur(); } catch { /* 忽略 */ }
-      // 本地先展示用户消息（含图片；若是引用回复则带上被引用的内容——与服务端落库的是同一份）
+      // 本地先展示用户消息（含图片；若是引用回复则带上被引用的内容，与服务端落库的是同一份）
       const userMsg = newMsg('user', content, image, replyToForSend, audio);
       setChatMessages([...chatMessages, userMsg]);
       setReplyTo(null); // 已带入本条回复，清空引用
@@ -1936,7 +1936,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
           // 输出卫生闸改过正文（剥掉开头自言自语 / 重生成）→ 用最终正文重建本轮气泡，
           // 否则屏幕上会永久留着那段自言自语（前端优先用流式文本）。必须在 cancelStream() 之前。
           if (r.data.revised) rebuildTurnBubbles(r.data.reply);
-          // 来源按段挂到对应气泡（整轮来源挂最后一条）—— 必须赶在 cancelStream() 之前（见该函数注释）
+          // 来源按段挂到对应气泡（整轮来源挂最后一条），必须赶在 cancelStream() 之前（见该函数注释）
           attachSourcesBySegment(r.data.sources, r.data.sourceSegments);
           cancelStream();
         } else {
@@ -1965,7 +1965,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
         reportAiFailure('chat', 'PARTIAL', false); // 半截也算「没接上」，运营端要看得到
         break;
       } else if (attempt < AUTO_RETRY_MAX && shouldAutoRetry(r, false)) {
-        // —— 一个字都没收到 + 瞬时失败原因 → 自动再 call 一次 ——
+        // 【一个字都没收到 + 瞬时失败原因 → 自动再 call 一次】
         firstFailCode = failCodeOf(r);
         console.warn('[chat] 首次失败，立即自动再 call 一次:', firstFailCode, r.status || '');
         // AUTO_RETRY_DELAY_MS 默认 0 = 不等（连接已经坏了，等再久那条连接也不会好；新请求会新建连接）
@@ -2108,10 +2108,10 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
     } catch { /* 忽略 */ }
     /**
      * 第二层（多对话抽屉）里的**会话级未读点**也要一起清：
-     * 抽屉读的是 `chatSessions`（GET /chats 带 unread），它是"点进会话那一刻"拉的快照 ——
+     * 抽屉读的是 `chatSessions`（GET /chats 带 unread），它是"点进会话那一刻"拉的快照
      * 不本地同步的话，刚读完的那条会话在抽屉里仍然挂着红点（2026-09-20 复核实测到的）。
      */
-    // ⚠️ `setChatSessions` 是 store 的"整份替换"动作（不吃 updater 函数）——传函数会把 state 变成函数，
+    // ⚠️ `setChatSessions` 是 store 的"整份替换"动作（不吃 updater 函数），传函数会把 state 变成函数，
     // 下一帧 `.map` 直接炸（2026-09-20 端到端实测抓到）。所以先取最新值再替换。
     const curSessions = useAppStore.getState().chatSessions;
     if (Array.isArray(curSessions)) {
@@ -2122,14 +2122,14 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
   /**
    * 消息列表里点某个角色：打开**真正有未读的那条会话**（没有未读就打开最近那条）并清它的未读。
    *
-   * 为什么不是"打开最近那条"：行的角标是**跨该角色所有会话**的和 —— 角色主动消息只落在最新一条上，
+   * 为什么不是"打开最近那条"：行的角标是**跨该角色所有会话**的和，角色主动消息只落在最新一条上，
    * 但如果用户之后又开了新对话，未读就留在更旧的那条里；此时打开最近那条会出现
    * 「角标一直在、点进去什么都没变」的死结。所以服务端额外告诉我们 `unreadSessionId`。
    */
   const openFromInbox = (row: ChatInboxRow) => {
     setListOpen(false);
     const target = row.unreadSessionId || row.sessionId;
-    // 已读不在这里标：此刻消息还没加载，标不了 upTo —— 交给下面加载完的那条路（loadSessionsFor / handleOpenChat）
+    // 已读不在这里标：此刻消息还没加载，标不了 upTo，交给下面加载完的那条路（loadSessionsFor / handleOpenChat）
     const c = characters.find(x => x.id === row.characterId);
     if (c) switchCharacter(c, target || null);
     else if (target) void loadSessionsFor(row.characterId, target);
@@ -2143,7 +2143,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
    *
    * ⚠️ 那为什么**挂载后第一次加载也不算已读**：第一版写成「有消息 + 列表没开 → 标已读」，
    * 于是自动加载最近会话这一下就把那个角色的未读清掉了（真机实测非确定性复现：角标有时在、有时空）。
-   * 现在的判据是**消息条数相对挂载时发生变化**（= 用户自己发了/收到了，确实在跟这条会话互动）——
+   * 现在的判据是**消息条数相对挂载时发生变化**（= 用户自己发了/收到了，确实在跟这条会话互动）
    * 单纯"被程序铺在界面后面"不算读过。清除未读的另外两条路是显式动作：点列表某一行、从抽屉打开某条会话。
    */
   const mountMsgCountRef = useRef<number | null>(null);
@@ -2176,7 +2176,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
   }, [activeCharacter, chatSessionId, chatMessages.length, listOpen]);
 
   /**
-   * —— 手机返回键 / 页面 ← 的层级（2026-09-20 用户口径：「返回键要能返回上一级而不是退到首页」）——
+   * 【手机返回键 / 页面 ← 的层级（2026-09-20 用户口径：「返回键要能返回上一级而不是退到首页」）】
    *
    * 与剧情模式（`rpDeepBack` + `RoleplayPage`）同一套做法，三条规矩一条都不能少：
    *  ① **每进一层压一条自己的历史条目**（`xiaoyuChat`）。实测教训（2026-09-19 剧情模式首轮验证）：
@@ -2261,11 +2261,11 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
     try { navigator.clipboard.writeText(getInviteLink()); void trackInviteCopy(); setInviteCopied(true); setTimeout(() => setInviteCopied(false), 1500); } catch { /* 忽略 */ }
   };
 
-  // —— 消息操作：长按（移动端）/ 悬停 ⋯（桌面）/ 右键 打开 回复·复制 菜单 ——
+  // 【消息操作：长按（移动端）/ 悬停 ⋯（桌面）/ 右键 打开 回复·复制 菜单】
   /**
    * 点引用块 → 跳回被引用的那条消息并闪一下。
    * 定位走 findQuotedMessage（内容/时间戳/前缀三级匹配，id 会随刷新而变不能用作依据）；
-   * 找不到就静默不动（老会话没存定位信息、或那条消息已被清掉）——绝不乱跳。
+   * 找不到就静默不动（老会话没存定位信息、或那条消息已被清掉），绝不乱跳。
    * 动效：滚动与高亮都尊重 prefers-reduced-motion（减弱动效下直接定位 + 保留静态描边环）。
    */
   const jumpToQuotedMessage = (m: ChatMessage) => {
@@ -2285,7 +2285,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
    * ⋯ 里，拿出来也不用加名字，可以直接放图标」）。
    *
    * 为什么把弹层整条路拿走（连长按 / 右键一起）：这三个动作就是一条消息上的全部操作，弹层里**再没有别的项**
-   * —— 留着只会多一条"得先点开才知道有什么"的路径，还得同时维护定位、背板、关闭三件事。顺带消失的还有
+   * 留着只会多一条"得先点开才知道有什么"的路径，还得同时维护定位、背板、关闭三件事。顺带消失的还有
    * 长按的副作用（长按选不中文字）。可发现性与无障碍靠 `aria-label` + `title`：图标不写字，但必须能被读出来、
    * 能悬停看名字（图标按钮的通用要求，别为了"简洁"把这两个也删了）。
    */
@@ -2388,7 +2388,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
     ? t('chatSub')
     : quota.creditEnabled
       // 无限档（Pro / 终身 / 7 天体验）：显示「无限畅聊」。⚠️ 绝不能把 quotaChatRemain() 的
-      // Infinity 直接插进 {n}——线上就是这样印出英文「額度剩餘 ≈ 還能聊 Infinity 條」的。
+      // Infinity 直接插进 {n}，线上就是这样印出英文「額度剩餘 ≈ 還能聊 Infinity 條」的。
       ? (quotaIsUnlimited(quota)
         ? t('chatQuotaPro')
         : (!isLoggedIn()
@@ -2633,7 +2633,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
 
       {/*
         消息列表 = 聊一聊的**第一层首页**（2026-09-20 用户口径「要做成首页」）：
-        整屏白底、无遮罩、无关闭按钮 —— 进来先看到"谁给我发了消息"，点一行才进对话。
+        整屏白底、无遮罩、无关闭按钮，进来先看到"谁给我发了消息"，点一行才进对话。
         退出的方式是它自己的 ←（= 离开聊一聊回 App 主界面），与对话窗口里那支 ←（回列表）分工不同。
       */}
       {listOpen && (
@@ -2705,7 +2705,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
                         className={'relative flex items-center gap-3 px-3.5 py-3 cursor-pointer transition-colors duration-150 ' + (isActive ? 'bg-primary-lighter/60' : 'hover:bg-clay-muted/35 active:bg-clay-muted/60')}
                         data-testid={`chat-inbox-row-${c.id}`}
                       >
-                        {/* 当前角色：一条 3px 品牌色细带 —— 比整行填色轻，且不抢未读的数字 */}
+                        {/* 当前角色：一条 3px 品牌色细带，比整行填色轻，且不抢未读的数字 */}
                         {isActive && <span aria-hidden className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full bg-primary" />}
                         <div className="relative flex-shrink-0">
                           {/* 图片描边用 1px 低透明纯黑（better-ui 的 image-outline 配方）：比"灰边"干净，不吸底色 */}
@@ -2880,7 +2880,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
               </button>
               {/*
                 ⚠️ 2026-09-20（用户口径「现在有两个位置可以切换角色，也很奇怪」）：
-                这里原来是**角色切换列表**（下拉里选另一个角色）——与新的消息列表首页重复。
+                这里原来是**角色切换列表**（下拉里选另一个角色），与新的消息列表首页重复。
                 现在只保留**当前角色自己的操作**（剧情记忆 / 观景窗 / 编辑 / 删除），
                 **切换角色只剩一个位置 = 消息列表**（微信的层级就是"列表 → 对话"）。
                 新建角色也只在消息列表底部（这里是"这个人的资料页"，不是通讯录）。
@@ -2952,7 +2952,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
         <div className="px-3 pb-2 pt-1 flex items-center justify-between gap-1">
           <div ref={historyGroupRef} className="flex items-center gap-0.5">
             {/*
-              这里原本有一个"打开消息列表"的图标 —— 现在消息列表就是首页（左上角 ← 回去），
+              这里原本有一个"打开消息列表"的图标，现在消息列表就是首页（左上角 ← 回去），
               再放一个入口等于**第二个切换角色的位置**（用户明确说"两个位置可以切换角色很奇怪"），故移除。
               本组只剩"该角色自己的多对话"（第二层）与"新对话"。
             */}
@@ -2978,7 +2978,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
             {/* 当前角色设置组：小愈怎么陪你 + 声音（coach-mark 以一个「洞」同时圈住这两个按钮） */}
             <div ref={chatSettingsGroupRef} className="flex items-center gap-0.5">
               {/*
-                ⚠️ 2026-09-20 修正：这里原本在"剧情角色"时**把设置按钮整个换成**「TA 记得的这段剧情」——
+                ⚠️ 2026-09-20 修正：这里原本在"剧情角色"时**把设置按钮整个换成**「TA 记得的这段剧情」
                 那样一来剧情角色窗口里就**再也调不到地区语气/语气程度/智能贴合/括号内心独白**了。
                 现在改成：设置入口始终在，剧情角色时在面板**内部**加一块"剧情出身"（剧名 + 入戏/出戏 + 看记忆）。
                 （2026-09-23：「陪伴方式」档位已从面板整体退场，这段解释保留是因为"别把入口整个换掉"那条教训仍然成立。）
@@ -3064,7 +3064,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
               </div>
             </div>
             {/* 快速开始：这三颗是空对话页的**主入口**。
-                2026-09-27 用户反馈「看不出能点」——病根是它们和下面的说明文字同一层级：
+                2026-09-27 用户反馈「看不出能点」，病根是它们和下面的说明文字同一层级：
                 1px 细描边 + 无阴影 + 无箭头 + 约 38px 高，且唯一的「可点」信号是 hover（手机上根本没有 hover）。
                 现在把「可点」做成**静态**四件套，hover/active 只作锦上添花（better-ui：每个状态变化都要有静态线索）：
                   ① 2px 厚描边 + shadow-soft（与 .card-soft / .btn-primary 同一套「厚描边=实体」的黏土语言）；
@@ -3098,7 +3098,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
               <span className="min-w-0 text-center">{t('chatNewsHint')}</span>
               <ArrowRight className="w-3.5 h-3.5 flex-shrink-0 text-primary-text transition-transform duration-150 group-hover:translate-x-0.5" strokeWidth={2.5} />
             </button>
-            {/* 生活能力提示：它**不是按钮**（点了不会发生任何事），所以刻意和上面那颗按钮拉开层级 ——
+            {/* 生活能力提示：它**不是按钮**（点了不会发生任何事），所以刻意和上面那颗按钮拉开层级
                 无描边、无箭头、无阴影，只剩一层浅白底保证在棉花糖/深色等任何皮肤下都读得清。
                 2026-09-27 之前它和「新闻」按钮同为 1px 描边白盒，这正是「到底哪些能点」说不清的另一半原因：
                 可点性要靠**一致的正向信号**（描边+阴影+箭头），不能靠「长得都一样」。 */}
@@ -3135,7 +3135,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
                     <img src={activeAvatar} alt={activeName} className="w-7 h-7 rounded-full object-cover flex-shrink-0 mix-blend-multiply" />
                   )}
                   <div
-                    /* 2026-09：气泡不再挂长按/右键处理器 —— 操作已经常显在消息下方（见下），
+                    /* 2026-09：气泡不再挂长按/右键处理器，操作已经常显在消息下方（见下），
                        长按回到浏览器默认行为（可以正常选中文字），也少掉"长按弹层"这条隐藏路径。 */
                     className={`max-w-[78%] rounded-2xl px-3.5 py-2.5 text-[15px] leading-relaxed whitespace-pre-line break-words shadow-sm ${
                     flashMsgId === m.id ? 'msg-flash ' : ''
@@ -3147,16 +3147,16 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
                     {/* 引用被回复的消息。设计要点（2026-09-17 三轮打磨，依据见 CHANGELOG 里的调研）：
                         · **按气泡角色反过来取色**：用户气泡是绿底 → 引用卡用**更深的同族绿**（`bg-primary-strong`）+ 白字，
                           读起来是「气泡里凹下去的一块」，和气泡是一体；小愈气泡是白底 → 引用卡用淡薄荷 + 深绿字，
-                          依旧是「贴上来的浅卡」。即「卡片色始终与容器色反向」——不靠近白/近黑硬撞
+                          依旧是「贴上来的浅卡」。即「卡片色始终与容器色反向」，不靠近白/近黑硬撞
                           （同一手法：WhatsApp/Signal 用半透明遮盖压/提气泡色；Stream/Slack/iMessage 在浅气泡里用中性次级面色）。
                         · 圆角走**同心**（better-ui：内层 = 外层 − 间距）：气泡 16px − 内边距 14px ≈ 2px，
-                          这里取 4px（近方角、仍留一点软）——Stream Chat 的引用气泡也刻意压成 `radius/6` 的近方角；
+                          这里取 4px（近方角、仍留一点软），Stream Chat 的引用气泡也刻意压成 `radius/6` 的近方角；
                           8px 圆角会读成「浮在上面的独立卡片」，正是上一版被嫌「白纸条」的同一种观感。
                         · 正文收口靠 quoteText() 的**字符级截断**（42 字 ≈ 手机端两行）+ 省略号；发信人名字永远完整
                           （ui-ux-pro-max ux-guidelines #84 截断要带省略号、#113 可辨识的名字不得被截）。
                           ⚠️ 不用 line-clamp：Chrome 会把下一行字头露出来（见 quoteText 注释）。
                         · 对比度实测（引用卡文字 vs 合成底色）：深绿底白字 4.76:1（candy 4.68 / zen 10.2 / star 15.1，五皮肤全 ≥4.5）；
-                          淡薄荷底深绿字 4.79:1。⚠️ 别再写回裸 `var(--color-*)`——通道变量已就位（见 tailwind.config.js）。 */}
+                          淡薄荷底深绿字 4.79:1。⚠️ 别再写回裸 `var(--color-*)`，通道变量已就位（见 tailwind.config.js）。 */}
                     {m.replyTo && (
                       <button
                         type="button"
@@ -3200,7 +3200,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
                     ) : m.content)}
                   </div>
                 </div>
-                {/* 来源行（2026-09-29）：本轮 web_search 的命中，常显在气泡下方 —— 用户不必先知道「可以要链接」。
+                {/* 来源行（2026-09-29）：本轮 web_search 的命中，常显在气泡下方，用户不必先知道「可以要链接」。
                     只对带 sources 的 assistant 消息有内容（组件自身对空数组返回 null）；位置在气泡与「时间/操作行」之间。 */}
                 {m.role === 'assistant' && <ChatSources sources={m.sources} />}
                 {/* 时间戳 + 助手回复的反馈小标 + **常显的回复/编辑/复制图标**（2026-09 从 ⋯ 弹层里拿出来：
@@ -3320,7 +3320,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
               </button>
             )}
             {/* 成人向：主按钮进剧情并自动展开「我的偏好」抽屉（把用户直接送到「无限制模式」开关前）。
-                只指路不给按钮的版本试过——用户进了剧情列表仍然不知道开关在哪，等于没解决。 */}
+                只指路不给按钮的版本试过，用户进了剧情列表仍然不知道开关在哪，等于没解决。 */}
             {redirectHint === 'adultRoleplay' && (
               <button
                 onClick={() => goRoleplayFromHint('list', { adult: true })}
@@ -3423,7 +3423,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
             </button>
           </div>
         )}
-        {/* 引用回复预览：正在回复某条消息（与气泡内引用卡同款实色淡薄荷底；⚠️ 不用 `border-primary/20` —— 变量色 + 透明度不生成 CSS，等于没有描边） */}
+        {/* 引用回复预览：正在回复某条消息（与气泡内引用卡同款实色淡薄荷底；⚠️ 不用 `border-primary/20`，变量色 + 透明度不生成 CSS，等于没有描边） */}
         {replyTo && !editTarget && (
           <div className="mb-2 flex items-start gap-2 bg-primary-lighter border border-primary-soft rounded-lg px-3 py-2">
             <span className="text-[12px] text-primary-text flex-1 leading-snug min-w-0">
@@ -3825,7 +3825,7 @@ export default function ChatPage({ children, onBack, onNeedPay, onOpenMembership
             </div>
         </Modal>
       )}
-      {/* 角色声音设置弹窗（VoxCPM2）——受控：改动即生效；顶栏=当前角色的声音（小愈=全局，自定义角色=该角色） */}
+      {/* 角色声音设置弹窗（VoxCPM2），受控：改动即生效；顶栏=当前角色的声音（小愈=全局，自定义角色=该角色） */}
       <VoiceSettingsModal
         open={voiceSettingsOpen}
         onClose={() => setVoiceSettingsOpen(false)}

@@ -123,7 +123,7 @@ export async function generateImage(prompt: string, size: string, cfg: SeedreamC
       const msg = e instanceof Error ? e.message : String(e);
       lastError = msg;
       // 网络错误/超时 → 可重试；业务错误（如密钥无效、模型未开通）→ 直接抛出
-      // 只认 5xx（以及非 HTTP 的网络类错误）；**4xx 不重试**——
+      // 只认 5xx（以及非 HTTP 的网络类错误）；**4xx 不重试**
     // 此前这里是 /Seedream (4\d\d|5\d\d)/，把上面刚抛出的「Seedream 401」又判成可重试，
     // 与 :102 的 429/5xx 判定自相矛盾（2026-09-29 审查 A4-P3）。
     const isRetriable = /fetch|abort|timeout|network|ECONN|ETIMEDOUT/i.test(msg) || /Seedream 5\d\d/.test(msg);

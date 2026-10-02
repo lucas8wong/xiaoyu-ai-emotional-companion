@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-小愈 · 服务端语音转文字（ASR）—— faster-whisper（CTranslate2）侧车服务
+小愈 · 服务端语音转文字（ASR），faster-whisper（CTranslate2）侧车服务
 ================================================
 Node 后端 /api/asr 会把客户端的 16kHz 单声道 PCM16 base64 转发到这里，
 由 faster-whisper 在本地 CPU（默认 int8）做转写，亚秒级返回 { text }。

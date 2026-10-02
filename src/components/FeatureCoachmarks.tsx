@@ -7,7 +7,7 @@
  *
  * ⚠️ 2026-09-22 修「新用户主页理一理气泡被隐私确认横幅挡住」：底部隐私横幅（未同意的新访客常驻，
  *   手机 ~104px / 桌面 ~61px）占掉视口最下面一条，而本组件此前把「目标在不在视口里」「气泡放上还是放下」
- *   都按**整条视口**算 —— 洞与气泡会落进横幅那一条（实测桌面 1280×800：理一理按钮 754–800 整颗在
+ *   都按**整条视口**算，洞与气泡会落进横幅那一条（实测桌面 1280×800：理一理按钮 754–800 整颗在
  *   横幅 739–800 之下，洞挖开的是横幅、箭头也指着横幅；360×640 同样整颗被盖住），且全屏遮罩把横幅
  *   压暗并吞掉它的点击（「同意并继续」在 7 步引导期间根本点不动）。
  *   现在：① 安全区底边 = 视口高 − store.privacyBannerH（与 2026-09-03 聊一聊输入栏预留同一口径），
@@ -49,7 +49,7 @@ export default function FeatureCoachmarks({ steps, onDone, onSkip }: FeatureCoac
   const bubbleRef = useRef<HTMLDivElement>(null);
   /** 气泡实测高度：决定它放目标下方放不放得下、会不会越进底部隐私横幅那一条 */
   const [bubbleH, setBubbleH] = useState(0);
-  /** 底部隐私横幅高度（px；无横幅=0）——引导的「安全区底边」= 视口高 − 它 */
+  /** 底部隐私横幅高度（px；无横幅=0），引导的「安全区底边」= 视口高 − 它 */
   const privacyBannerH = useAppStore((s) => s.privacyBannerH);
   /** 隐私政策弹窗是否打开（可从底部横幅点进来）：打开时引导让位，不压在弹窗上（见下方 return null） */
   const privacyOpen = useAppStore((s) => s.privacyOpen);
@@ -93,7 +93,7 @@ export default function FeatureCoachmarks({ steps, onDone, onSkip }: FeatureCoac
      *
      * 🐞 2026-09-18 修「首次进入 AI 文游，页面自己跳几下」（用户反馈）：
      *   旧实现是 `scrollIntoView({ block: 'center', behavior: 'auto' })`，两处叠加导致页面自己动：
-     *     ① `behavior:'auto'` 不是「立即」，而是「用 CSS 的 scroll-behavior」——本项目 `index.css` 里
+     *     ① `behavior:'auto'` 不是「立即」，而是「用 CSS 的 scroll-behavior」，本项目 `index.css` 里
      *        `html{scroll-behavior:smooth}`，于是每次调用都变成**动画滚动**；
      *     ② 它还被放进了下面 250ms 的轮询里，动画没走完就被再次触发 → 页面连续抖动（实测 y=96→105→101→95→91）；
      *  而且目标本来就在屏幕内也照滚不误（文游首页「命书阁」在 y=509 / 视口 932，仍然被滚了 91px）。
@@ -114,7 +114,7 @@ export default function FeatureCoachmarks({ steps, onDone, onSkip }: FeatureCoac
         // 'instant' 明确要求立即跳转，不受 html{scroll-behavior:smooth} 影响
         el.scrollIntoView({ block: 'nearest', behavior: 'instant' as ScrollBehavior });
       } catch { /* 忽略 */ }
-      // 「nearest」只保证目标进视口 —— 它可能正好停在横幅底下（实测 1280×800 整颗按钮落在横幅下）
+      // 「nearest」只保证目标进视口，它可能正好停在横幅底下（实测 1280×800 整颗按钮落在横幅下）
       // ⇒ 再补一次差额，把目标抬到安全底边之上。一次性、无动画；页面滚到底时差额会被浏览器自然吃掉。
       const after = el.getBoundingClientRect();
       const deficit = after.bottom - safeBottom;
@@ -168,7 +168,7 @@ export default function FeatureCoachmarks({ steps, onDone, onSkip }: FeatureCoac
   if (!step) return null;
   if (typeof window === 'undefined') return null;
   /**
-   * 隐私政策弹窗是 z-[80]，在引导遮罩（z-90/91）之下 —— 让横幅可点之后，用户从横幅点「隐私政策」
+   * 隐私政策弹窗是 z-[80]，在引导遮罩（z-90/91）之下，让横幅可点之后，用户从横幅点「隐私政策」
    * 会看到弹窗被压在引导暗色遮罩下、按钮点不动。所以弹窗期间引导整体不渲染（组件仍挂载，idx 不丢），
    * 关闭弹窗后自动回到当前这一步。
    */
@@ -181,7 +181,7 @@ export default function FeatureCoachmarks({ steps, onDone, onSkip }: FeatureCoac
   const bubbleLeft = coords ? Math.max(12, Math.min(targetCenterX - bubbleMaxW / 2, vw - bubbleMaxW - 12)) : 12;
 
   /**
-   * 气泡放目标上/下方 —— 但**安全区底边 = 视口高 − 隐私横幅高**，气泡不许越进横幅那一条。
+   * 气泡放目标上/下方，但**安全区底边 = 视口高 − 隐私横幅高**，气泡不许越进横幅那一条。
    * 判定顺序：下面放得下 → 放下面；放不下 → 放上面；两边都放不下（极小屏兜底）→ 选空间大的一侧并夹紧。
    * estH 用气泡实测高度（bubbleH），首帧还没量到时退化为 96px 估算，量完自动校正。
    */
@@ -231,7 +231,7 @@ export default function FeatureCoachmarks({ steps, onDone, onSkip }: FeatureCoac
       </div>
 
       {coords && step && (
-        /* 气泡层：整屏（坐标口径与遮罩一致＝视口坐标）但自身不接收点击，只有气泡可点 ——
+        /* 气泡层：整屏（坐标口径与遮罩一致＝视口坐标）但自身不接收点击，只有气泡可点
            这样底部那条横幅不会被这一层吞掉。 */
         <div className="fixed inset-0 z-[91] pointer-events-none">
         <div

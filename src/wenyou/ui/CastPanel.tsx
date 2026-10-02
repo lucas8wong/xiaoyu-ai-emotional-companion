@@ -3,7 +3,7 @@ import type { CastMember } from '../engine/types'
 import { useModalA11y } from './useModalA11y'
 
 // 人物志：本局登场过的具名人物一览（点击任一行开该人的人物卡）。
-// 与正文内联可点互补——正文只标当前这一幕出现过的名字，人物志能回看所有遇见过的人。
+// 与正文内联可点互补，正文只标当前这一幕出现过的名字，人物志能回看所有遇见过的人。
 export function CastPanel({
   cast,
   scenario,

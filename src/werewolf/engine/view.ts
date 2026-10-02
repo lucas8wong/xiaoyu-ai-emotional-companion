@@ -2,7 +2,7 @@
  * AI 狼人杀 · 视角过滤（防作弊的唯一出口）
  *
  * **所有**下发到前端的对局数据都必须经过 `viewFor()`。任何地方直接返回 `WerewolfState`
- * 都会把狼人底牌、预言家验人结果泄漏给真人玩家——这是本玩法最严重的一类缺陷，
+ * 都会把狼人底牌、预言家验人结果泄漏给真人玩家，这是本玩法最严重的一类缺陷，
  * 因此这里有专门的单测（`test/unit/werewolf.test.ts`）断言「村民视角拿不到狼人身份」。
  */
 
@@ -95,7 +95,7 @@ export function canSeeEvent(e: GameEvent, seat: number, state: WerewolfState): b
  *
  * @param opts.spectatorReveal 出局者是否进入「旁观者全见」。
  *   单人局（场上全是 AI）默认开启：用户出局后还能把这一局看完，体验更好、也不存在串通。
- *   **一旦场上出现第二个真人，必须传 false**——出局者只能看公开信息，否则等于把底牌告诉活人。
+ *   **一旦场上出现第二个真人，必须传 false**，出局者只能看公开信息，否则等于把底牌告诉活人。
  */
 export function viewFor(
   state: WerewolfState,
@@ -185,7 +185,7 @@ export function viewFor(
 }
 
 /**
- * 「每一局开场都要给每个 AI 玩家一份它自己视角的视图」——服务端编排用。
+ * 「每一局开场都要给每个 AI 玩家一份它自己视角的视图」，服务端编排用。
  * 与 `viewFor` 同源，保证 AI 与真人看到的世界规则一致（不可能出现「AI 偷看」）。
  */
 export function viewForAi(state: WerewolfState, seat: number): WerewolfView {

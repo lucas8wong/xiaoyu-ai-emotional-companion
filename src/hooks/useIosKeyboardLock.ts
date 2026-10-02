@@ -9,7 +9,7 @@ import { useEffect } from 'react';
  *
  * ⚠️ 只对 iOS 生效：Android 的 WebView/Chrome 是靠**收缩布局视口**（`interactive-widget=resizes-content`
  * 让 `window.innerHeight` 随键盘缩小，见 super-productivity #9277）来给键盘让位，不需要也没法靠
- * 「锁 body 滚动」——锁定反而会卡住系统对键盘的处理、把输入栏盖在键盘下面。Android 交给
+ * 「锁 body 滚动」：锁定反而会卡住系统对键盘的处理、把输入栏盖在键盘下面。Android 交给
  * `useVisualViewport`（高度=min(visualViewport.height, window.innerHeight)）随视口收缩即可。
  *
  * @param active 为 false 时不加锁（例如剧情模式只在「对局聊天」阶段才锁，

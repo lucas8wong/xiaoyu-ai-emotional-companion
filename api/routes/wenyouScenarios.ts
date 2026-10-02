@@ -104,7 +104,7 @@ router.put('/scenarios', (req: Request, res: Response): void => {
   res.json({ success: true, data: { scenarios: saved } });
 });
 
-/** 轻量校验进度包：games/slots/endings/stats 形状（内容不深校验——是用户私有游戏进度，非公开人设） */
+/** 轻量校验进度包：games/slots/endings/stats 形状（内容不深校验，是用户私有游戏进度，非公开人设） */
 function looseSaveGameShape(v: any): boolean {
   return (
     !!v && typeof v === 'object' &&

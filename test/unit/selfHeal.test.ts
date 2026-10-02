@@ -1,5 +1,5 @@
 /**
- * 🩺 自愈引擎单测（2026-09-18 新增）—— `api/services/selfHeal.ts`。
+ * 🩺 自愈引擎单测（2026-09-18 新增），`api/services/selfHeal.ts`。
  *
  * 覆盖口径（每条检测器都要验「发现 → 修复 → 复查 → 幂等」四件事）：
  *   ① 半截回复没打标记        → 补 `incomplete:true`，**正文一字不改**；
@@ -20,7 +20,7 @@ import { setupTempCwd } from './setup.js';
 
 const tmpDir = setupTempCwd();
 
-// ⚠️ 顺序很重要：先手写一份「脏库文件」（缺时间戳 / versions 不自洽），再 import store ——
+// ⚠️ 顺序很重要：先手写一份「脏库文件」（缺时间戳 / versions 不自洽），再 import store
 //    store 在 import 时按 cwd 读盘，之后用 heal()/save() 是**造不出**这两类脏数据的（两条写入路径都会补齐）。
 const { writeJson, dataFile } = await import('../../api/storage/persistence.js');
 writeJson(dataFile('roleplay-sessions.json'), [
@@ -158,7 +158,7 @@ test('⑤ 历史里的系统兜底文案：默认只报告（needs_human）且�
 
   setEnv({ SELF_HEAL_DELETE: '1' });
   const run2 = await runSelfHealCycle({ apply: true });
-  // 同一个问题（同一个 sig）在允许删除后由 needs_human **转成** fixed —— 一条记录跟着状态走，不是新增一条
+  // 同一个问题（同一个 sig）在允许删除后由 needs_human **转成** fixed，一条记录跟着状态走，不是新增一条
   const rec2 = run2.records.find((r) => r.scenarioId === sid && r.kind === 'FALLBACK_IN_HISTORY');
   assert.ok(rec2, '同一个问题应仍被检出');
   assert.equal(rec2!.status, 'fixed');

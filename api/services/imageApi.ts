@@ -124,8 +124,8 @@ export function rotateProviderModel(id: ImageProviderId = 'wanx'): boolean {
 }
 
 /**
- * 已知的老 wanx 模型尺寸白名单 —— ⚠️ **每个模型不一样，不能共用一张表**。
- * 2026-09-14 实测：`wanx2.0-t2i-turbo` 有 `864*1152`，而 `wanx-v1` **没有**（它只有 `768*1152`）——
+ * 已知的老 wanx 模型尺寸白名单，⚠️ **每个模型不一样，不能共用一张表**。
+ * 2026-09-14 实测：`wanx2.0-t2i-turbo` 有 `864*1152`，而 `wanx-v1` **没有**（它只有 `768*1152`）
  * 共用一张表导致自动切到 wanx-v1 后 **104 张连续 400**。
  * 所以：已知的写在这里（省一次试错），**未知的靠 `parseAllowedSizes` 从报错里学**（见 `learnAllowedSizes`）。
  */
@@ -171,21 +171,21 @@ export function pickClosestSize(allowed: string[], width: number, height: number
 
 /**
  * 正向守卫词：给**不支持负向词**的后端顶替 `NEGATIVE_PROMPT`。
- * ⚠️ 这是**固定常量**，不是用户文本 —— 红线仍然只有白名单表能进 prompt。
+ * ⚠️ 这是**固定常量**，不是用户文本，红线仍然只有白名单表能进 prompt。
  */
 export const POSITIVE_GUARD = 'empty scene without people, no text or lettering, no watermark';
 
 /**
  * 出图默认尺寸 = **竖版 3:4（960×1280）**。
  *
- * ⚠️ 2026-09-14 用户一句「这些图怎么都是横着的，聊天背景是竖着的吧」——**是真 bug，而且旧图一直是错的**。
+ * ⚠️ 2026-09-14 用户一句「这些图怎么都是横着的，聊天背景是竖着的吧」，**是真 bug，而且旧图一直是错的**。
  *    真机实测（`temp/measure-scene-aspect.mjs`，无头 Chrome 量容器 + object-cover 裁切）：
  *      · 手机 390×844：背景容器 **421×631 = 0.668（竖）** → 16:9 的图**只能看到 37.6%**（裁掉 62%）
  *      · 桌面 1440×900：容器 693×662 = 1.047 → 16:9 可见 58.9%
  *    场景图**唯一**的消费方是 `StorySceneBackdrop`（`absolute inset-0` 满屏 + `object-cover`），
  *    没有别处依赖 16:9，所以换比例是安全的。
  *
- * 为什么选 3:4（而不是 9:16 / 1:1 / 4:5）——按"较差场景也要够看"挑：
+ * 为什么选 3:4（而不是 9:16 / 1:1 / 4:5），按"较差场景也要够看"挑：
  *    | 图比例 | 手机 0.668 | 矮屏手机 0.82 | 桌面 1.047 | 最差 |
  *    | 16:9   | 37.6%     | 50.1%        | 58.9%     | 37.6% |
  *    | 1:1    | 66.8%     | 82%          | 95%       | 66.8% |
@@ -302,13 +302,13 @@ export function promptFor(id: ImageProviderId, req: ImageGenRequest): { prompt: 
   return { prompt: POSITIVE_GUARD + ', ' + req.prompt, negative: undefined, negativeDropped: !!req.negative };
 }
 
-/** 估价（元）—— 只给 `--dry-run` 用；真实账单以厂商控制台为准 */
+/** 估价（元），只给 `--dry-run` 用；真实账单以厂商控制台为准 */
 export function estimateCostYuan(id: ImageProviderId, count: number): number {
   return Math.round(IMAGE_PROVIDERS[id].refPriceYuan * count * 100) / 100;
 }
 
 /**
- * 该后端的**参考单价**（元/张）—— 供成本记账使用（与 estimateCostYuan 同源，避免两处单价漂移）。
+ * 该后端的**参考单价**（元/张），供成本记账使用（与 estimateCostYuan 同源，避免两处单价漂移）。
  * 注意：这是标价估算，不含厂商免费额度；侧车（本机 GPU）为 0（只有电费）。
  */
 export function priceOfProvider(id: ImageProviderId): number {
@@ -354,7 +354,7 @@ export function webpTool(): 'sharp' | 'ffmpeg' | 'none' {
 }
 
 /**
- * 转成 webp —— **必须做**：现有 110 张图库平均 37KB/张，云 API 直出 PNG 是 1–3MB，
+ * 转成 webp，**必须做**：现有 110 张图库平均 37KB/张，云 API 直出 PNG 是 1–3MB，
  * 用户主要在手机上（港澳/海外）看剧情，不转码 = 带宽与首屏灾难。
  * 优先 `sharp`，退 `ffmpeg`（项目已有用它压图的先例），都没有就原样返回（并如实给出扩展名）。
  */
@@ -425,7 +425,7 @@ const errText = (t: string) => t.replace(/\s+/g, ' ').slice(0, 200);
  * 把后端错误分类成"能重试 / 必须中止 / 直接降级"。
  *
  * ⚠️ 2026-09-14 实测教训（一次跑批 561 张全废）：
- *   · **429 `Throttling.RateQuota`**（限流）必须**退避重试**——低配额档 QPS 很低，一次并发就撞，直接判失败会成片丢图；
+ *   · **429 `Throttling.RateQuota`**（限流）必须**退避重试**，低配额档 QPS 很低，一次并发就撞，直接判失败会成片丢图；
  *   · **403 `AllocationQuota.FreeTierOnly` / 余额不足 / Key 失效** 是**账号级**错误：重试一万次也一样，
  *     必须**立刻中止整批**并让人去控制台处理，而不是把 590 张各撞一次（既浪费时间，也把日志淹掉）。
  */
@@ -455,7 +455,7 @@ function apiFail(status: number, text: string, label: string): Error {
 interface BackendResult { bytes: Buffer; ext: 'webp' | 'png' | 'jpg'; seed?: number }
 
 /**
- * 阿里云百炼（DashScope）：**异步任务**型 —— 提交拿 task_id，再轮询到 SUCCEEDED。
+ * 阿里云百炼（DashScope）：**异步任务**型，提交拿 task_id，再轮询到 SUCCEEDED。
  * 支持 `negative_prompt`（现有 `SCENE_NEGATIVE_PROMPT` 表可原样复用，红线靠负向词压制）。
  */
 async function genWanx(req: ImageGenRequest, timeoutMs: number): Promise<BackendResult> {
@@ -600,10 +600,10 @@ async function genSidecar(req: ImageGenRequest, timeoutMs: number): Promise<Back
 
 /**
  * 统一入口：调所选后端出图，**失败一律返回 `ok:false` + `degraded:true`**（不抛），
- * 让上层安静地降级到共享图库 —— 出图永远不该阻塞剧情。
+ * 让上层安静地降级到共享图库，出图永远不该阻塞剧情。
  *
  * 限流（429）内部**退避重试**（低配额档 QPS 很低，实测并发 3 就会成片 429）；
- * 账号级错误（403 免费额度用尽 / 余额不足 / Key 失效）返回 `fatal:true` —— 上层应**立刻中止整批**，
+ * 账号级错误（403 免费额度用尽 / 余额不足 / Key 失效）返回 `fatal:true`，上层应**立刻中止整批**，
  * 重试没有任何意义（2026-09-14 实测：590 张各撞一次，561 张全废）。
  */
 export async function generateImage(

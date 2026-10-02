@@ -14,7 +14,7 @@ const CODES_FILE = dataFile('emailcodes.json');
 const CODE_TTL = Number(process.env.EMAIL_CODE_TTL_MINUTES || 5) * 60 * 1000;
 const MAIL_MODE = process.env.MAIL_MODE || 'console';
 
-// —— 每日非关键邮件预算护栏（P: 关键邮件优先）——
+// 【每日非关键邮件预算护栏（P: 关键邮件优先）】
 // 关键邮件（邮箱验证码/改密）永远放行；非关键邮件（奖励通知 / 新人 Pro 恭喜 / 召回 / 公告等）
 // 每天最多发 N 封，超过则跳过。把每天额度优先留给关键邮件，避免促销/通知邮件把
 // Resend(约100/天)/Gmail(约500/天) 的每日上限吃光，导致新用户连验证码都收不到。

@@ -57,7 +57,7 @@ export function evalCondition(
 // 提取条件中引用的所有属性 key（供 import 校验属性是否存在）
 export function conditionAttrs(c: Condition): string[] {
   const clauses = c.kind === 'and' ? c.parts : [c]
-  // 排除伪属性 `turn`（回合门，非剧本属性）——否则属性存在性校验会误判其不存在。
+  // 排除伪属性 `turn`（回合门，非剧本属性），否则属性存在性校验会误判其不存在。
   return clauses.flatMap((p) => (p.kind === 'cmp' && p.attr !== 'turn' ? [p.attr] : []))
 }
 
@@ -75,8 +75,8 @@ function normalize(c: Condition): Norm {
   return n
 }
 
-// a 成立则 b 必成立（a 的满足区域 ⊆ b）——即 a「至少和 b 一样严格」。保守可靠（只认必要条件，不会误判蕴含）。
-// 用途：结局择优——满足的结局里取「最具体」者（不被更严结局严格蕴含者），使数组顺序不再造成遮蔽。
+// a 成立则 b 必成立（a 的满足区域 ⊆ b），即 a「至少和 b 一样严格」。保守可靠（只认必要条件，不会误判蕴含）。
+// 用途：结局择优，满足的结局里取「最具体」者（不被更严结局严格蕴含者），使数组顺序不再造成遮蔽。
 export function conditionImplies(a: Condition, b: Condition): boolean {
   const A = normalize(a)
   const B = normalize(b)

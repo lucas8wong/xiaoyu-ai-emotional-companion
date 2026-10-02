@@ -174,7 +174,7 @@ test('stableSeed：同一 key 稳定复现，不同 key 不同（抽检不合格
 });
 
 test('estimateCostYuan：按张估价，量级与"总花费有硬上界"一致', () => {
-  // 30 剧本 × 16 幕 = 480 张（C 方案）——这就是云 API 的终身花费上界
+  // 30 剧本 × 16 幕 = 480 张（C 方案），这就是云 API 的终身花费上界
   assert.ok(estimateCostYuan('cogview', 480) <= 48, '智谱 480 张不该超过 48 元');
   assert.ok(estimateCostYuan('wanx', 480) <= 96, '万相 480 张不该超过 96 元');
   assert.strictEqual(estimateCostYuan('sidecar', 480), 0, '侧车是电费，不计钱');

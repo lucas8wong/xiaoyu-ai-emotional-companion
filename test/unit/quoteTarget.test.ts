@@ -2,7 +2,7 @@
  * 「点引用块 → 跳回原消息」的定位逻辑（src/lib/quoteTarget.ts）。
  *
  * 为什么不能按 id 找：本地消息 id 是 `m-<ts>-<rand>`，刷新后从服务端读回会变成 `h-<i>-<ts>`
- * ——同一条消息 id 会变。跨刷新稳定的只有 role / 时间戳 / 内容，所以这里把三级匹配逐条钉住：
+ *。同一条消息 id 会变。跨刷新稳定的只有 role / 时间戳 / 内容，所以这里把三级匹配逐条钉住：
  *   ① 内容完全一致（助手长回复被拆段后，引用的是其中一段）→ 精确落到那一段；
  *   ② 时间戳 + 角色（纯图片/纯语音引用没有文字，只能靠这个）+ 内容前缀消歧；
  *   ③ 老会话没存 at → 只用前 12 字前缀兜底；
@@ -57,7 +57,7 @@ test('角色必须一致：不会把「小愈的话」匹配到用户自己那�
   assert.equal(findQuotedMessage(list, { role: 'user', content: '同一句话' })?.id, 'u1');
 });
 
-test('定位不到就返回 undefined（消息已被清掉 / 老数据）——调用方静默不动', () => {
+test('定位不到就返回 undefined（消息已被清掉 / 老数据），调用方静默不动', () => {
   const list = [msg('u1', 'user', '在吗', T1)];
   assert.equal(findQuotedMessage(list, { role: 'assistant', content: '早就被删掉的那句', at: T2 }), undefined);
   assert.equal(findQuotedMessage(list, undefined), undefined);

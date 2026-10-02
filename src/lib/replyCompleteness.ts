@@ -1,17 +1,17 @@
 /**
- * 「这一条回复写完了吗」——剧情/对话流式回复的**完整性判定 + 续写拼接**（纯函数，前后端共用）
+ * 「这一条回复写完了吗」，剧情/对话流式回复的**完整性判定 + 续写拼接**（纯函数，前后端共用）
  *
  * 为什么需要它（2026-09-18 诊断结论）：
  *   用户「小愈的朋友」(98e677f1…) 在《与沈辞的故事》里的最后一条 AI 回复，落盘内容是
- *   `……乖，慢慢刷。”\n\n（他并未退` —— 括号没闭合、停在半句中间，而**整条链路没有任何一环**
+ *   `……乖，慢慢刷。”\n\n（他并未退`：括号没闭合、停在半句中间，而**整条链路没有任何一环**
  *   发现它没写完：剧情路由不看上游的 `finish_reason`，前端拿到什么就存什么，
  *   于是「半截台词」被当成完整回复永久留在历史里（详情见
  *   `temp/rp-check/诊断-98e677f1-最新剧情回复是否中断.md`）。
  *
  * 这里只做两件**可判定**的事，不碰提示词、不碰数据：
- *   1. `looksIncomplete()` —— 这条回复是不是断在半路（三条判据：上游 `finish_reason=length`、
+ *   1. `looksIncomplete()`：这条回复是不是断在半路（三条判据：上游 `finish_reason=length`、
  *      标记符（括号/引号）没配对、结尾不是句末标点）；
- *   2. `overlapTrim()` / `mergeContinuation()` —— 续写回来的那一段与已写内容**去重叠**再拼接
+ *   2. `overlapTrim()` / `mergeContinuation()`，续写回来的那一段与已写内容**去重叠**再拼接
  *      （模型续写几乎必然把断点前几个字重抄一遍，直接拼会得到「（他并未退（他并未退出去」）。
  *
  * 设计口径（刻意保守，宁可漏报也不要误报）：
@@ -107,16 +107,16 @@ export function looksIncomplete(raw: string, finishReason?: string): boolean {
 }
 
 /**
- * 把**续写新增的那一段**裁进字数预算里（只在句末标点处裁）——用户口径「续写应该只是满足一次的
+ * 把**续写新增的那一段**裁进字数预算里（只在句末标点处裁），用户口径「续写应该只是满足一次的
  * 字数量，而不是每次都生成类似初始回复的量」（2026-09-19）。
  *
- * 为什么需要硬裁：预算已经写进续写指令了，但**指令管不住长度**——模型会照旧再写一整条（实测
+ * 为什么需要硬裁：预算已经写进续写指令了，但**指令管不住长度**，模型会照旧再写一整条（实测
  * 799 → 续 551 → 再续 618 = 1968 字，而这一轮的目标篇幅只有 400–700）。所以除了"说"，还要有"拦"。
  *
  * 三条边界（宁可少裁也不砍断句子）：
  *   1. **不超预算就原样返回**；
  *   2. 从预算位置向前找最近的**句末标点**（含收尾引号/括号）→ 在它之后裁断；
- *   3. 整个前缀里**一个句界都没有** → 原样返回（宁可超预算，也不把一句好好的话砍成半句——
+ *   3. 整个前缀里**一个句界都没有** → 原样返回（宁可超预算，也不把一句好好的话砍成半句
  *      那正是这次要治的毛病）。调用方拿到 `trimmed` 自行记日志。
  */
 export function trimAdditionToBudget(addition: string, budget: number): { text: string; trimmed: boolean } {
@@ -137,7 +137,7 @@ export function trimAdditionToBudget(addition: string, budget: number): { text: 
  *
  * 两条规则：
  *   1. **整段重写**（`addition` 以**整份 base** 开头，模型把上文原样重抄一遍再往下写）：
- *      直接剪掉整份 base —— 这种"重叠"长度等于 base，通常远超下面的上限，只有单独处理才不会漏剪；
+ *      直接剪掉整份 base，这种"重叠"长度等于 base，通常远超下面的上限，只有单独处理才不会漏剪；
  *   2. 否则取**最长**公共重叠（从大到小试），上限 `maxOverlap` 字符。
  *
  * 为什么要上限：模型有时会写出很长的重复片段，无上限的匹配在"通篇重复字符"（如整段「……」）时
@@ -168,7 +168,7 @@ export function incompleteCode(reason: IncompleteReason | null): string | null {
   return reason ? 'PARTIAL_' + reason.toUpperCase() : null;
 }
 
-/** 未闭合标记的位置（栈式配对；ASCII 直引号按奇偶取最后一个）——用于判断"断点是不是真在括号里" */
+/** 未闭合标记的位置（栈式配对；ASCII 直引号按奇偶取最后一个），用于判断"断点是不是真在括号里" */
 export function unclosedPositions(raw: string): Array<{ marker: string; at: number }> {
   const s = String(raw ?? '');
   const out: Array<{ marker: string; at: number }> = [];
@@ -186,11 +186,11 @@ export function unclosedPositions(raw: string): Array<{ marker: string; at: numb
 }
 
 /**
- * 未闭合的标记是不是**落在尾部窗口里**——也就是"真的写到一半被截断"，
+ * 未闭合的标记是不是**落在尾部窗口里**，也就是"真的写到一半被截断"，
  * 而不是"正文中段有个落单的开括号/开引号"（后者续写补不回来，只会换来一段重讲）。
  *
  * 为什么需要这条：`unclosed` 一直是自动续写的**真截断**通道（2026-09-19 只收窄了 `mid_sentence`），
- * 但它在无限制链路上被一个**格式习惯**高频命中——模型用两个开引号框台词（`“台词……“`），
+ * 但它在无限制链路上被一个**格式习惯**高频命中，模型用两个开引号框台词（`“台词……“`），
  * 计数天然不配对（取证见 `temp/rp-rep-cf8077d3/`）。这类"中段落单"每轮都被续满 2 次、且 2 次之后
  * 仍然 unclosed（`data/server-err.log` 里 8 条 `回复仍不完整（unclosed，续写 2 次）`）。
  *
@@ -207,10 +207,10 @@ export function unclosedNearTail(raw: string, window = 120): boolean {
  * **自动续写的触发闸**（2026-09-19 收窄；起因见 `temp/rp-rep-8f17a9ac/` 的诊断报告）。
  *
  * 为什么不能「只要判定没写完就续」：
- *   `mid_sentence`（结尾没句末标点）在无限制链路（27B abliterated）上是**收尾习惯**，不是截断——
+ *   `mid_sentence`（结尾没句末标点）在无限制链路（27B abliterated）上是**收尾习惯**，不是截断
  *   实测该链路 11% 的回合命中、个别用户 6/9 命中，而且**续满 2 次后仍然不完整**
  *   （服务端日志：`仍不完整（mid_sentence，续写 2 次）`）。也就是说：这类续写收益极低，
- *   代价却是**把整篇 2000+ 字正文再喂给弱模型一次**——而那次生成一旦"重讲一遍"，
+ *   代价却是**把整篇 2000+ 字正文再喂给弱模型一次**，而那次生成一旦"重讲一遍"，
  *   就会被拼进正文，用户看到的就是大段复读（诊断里 4/9 条命中、最长 1112 字）。
  *
  * 所以只有**真截断**才自动续写：
@@ -220,7 +220,7 @@ export function unclosedNearTail(raw: string, window = 120): boolean {
  *   - `mid_sentence`：上游若**明确说写完了**（`finish_reason=stop`）→ **不续**，交前端提示 + 手动「续写」；
  *     上游没说（拿不到 finish_reason，可能是流被掐断）→ 仍然续。
  *
- * @param opts.midSentence 旧口径开关（`RP_CONTINUE_MID_SENTENCE=1`）——把 mid_sentence 也当成可续，
+ * @param opts.midSentence 旧口径开关（`RP_CONTINUE_MID_SENTENCE=1`），把 mid_sentence 也当成可续，
  *                         用于消融对比与线上止血回滚。
  * @param opts.text        本轮正文：给了才能对 `unclosed` 做"断点是否落在标记里"的判断；
  *                         **不传 = 保持收窄前的 unclosed 口径**（老调用方与老测试不受影响）。
@@ -244,7 +244,7 @@ export function autoContinueEligible(
 /**
  * 续写里**逐字抄自已写正文**的最长片段长度（8-gram 连续命中，空白先归一）。
  *
- * 口径与 `temp/rp-rep-8f17a9ac/probe-continuation.mts` 完全一致——那边用它量出过一组关键事实：
+ * 口径与 `temp/rp-rep-8f17a9ac/probe-continuation.mts` 完全一致，那边用它量出过一组关键事实：
  * **真续写抄写 0–9 字，重讲同一拍抄写 150 字以上**。这里只是把它从脚本搬进代码，成为线上判据。
  */
 export function longestCopyFrom(base: string, addition: string, gram = 8): number {
@@ -274,7 +274,7 @@ export function longestCopyFrom(base: string, addition: string, gram = 8): numbe
  * 逐字抄写片段全部 0 字）；重讲同一拍 50 / 98 / 141 / 461 字（用户 cf8077d3 的真实落盘，
  * 见 `temp/rp-rep-cf8077d3/修复前后-真实数据核验.txt`）、最长 1112 字（8f17a9ac）。
  * 40 落在两簇之间：离"真续写"的上限观察值（9）有 4 倍以上余量，又能覆盖最小的一例重讲（50 字）。
- * ⚠️ 这是**逐字**判据：措辞微变的重讲（同一拍换个说法）抓不到——那种靠"别触发续写"来避免（见 autoContinueEligible）。
+ * ⚠️ 这是**逐字**判据：措辞微变的重讲（同一拍换个说法）抓不到，那种靠"别触发续写"来避免（见 autoContinueEligible）。
  */
 export const CONTINUATION_RETELL_MIN_CHARS = 40;
 
@@ -293,7 +293,7 @@ export function continuationIsRetelling(
  * 命中即**丢弃这一段续写**（返回已写正文），并给出 `retell/copied` 供调用方记日志。
  *
  * 为什么必须在这里拦：`overlapTrim` 只剪**接缝处的逐字重叠**（≤200 字），而弱模型的重讲
- * 是"从更早的地方重新铺一遍"——接缝处往往一个字节都不重（措辞微变），于是拼接后正文里
+ * 是"从更早的地方重新铺一遍"，接缝处往往一个字节都不重（措辞微变），于是拼接后正文里
  * 出现两块同一拍的内容。判据见 `continuationIsRetelling`。
  */
 export function mergeContinuationGuarded(

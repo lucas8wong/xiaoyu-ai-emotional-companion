@@ -28,7 +28,7 @@ export function mergeGuestData(guestId: string, accountId: string): void {
   // 成年确认（18+ 门槛）随注册并入账号：游客在 App 内确认过，注册后不该再被拦一次
   adultConfirmStore.reassignUser(guestId, accountId);
   activityStore.mergeFrom(guestId, accountId);
-  // 使用时长（心跳账本）：游客期记到的秒数随注册并入账号 —— 否则账号侧看起来「一注册就没有使用时长」，
+  // 使用时长（心跳账本）：游客期记到的秒数随注册并入账号，否则账号侧看起来「一注册就没有使用时长」，
   // 而控制台区间视图里那段时间又挂在游客身份上（2026-09-18 补）
   usageTimeStore.mergeUsers(guestId, accountId);
   console.log(`🔀 [Merge] 游客数据合并完成: ${guestId.slice(0, 8)} -> ${accountId.slice(0, 8)}`);

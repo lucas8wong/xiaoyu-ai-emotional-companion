@@ -114,7 +114,7 @@ export default function Home() {
   }, []);
   const [prefsOpen, setPrefsOpen] = useState(false);
   const [prefsFocusPush, setPrefsFocusPush] = useState(false); // 直达「主动找我」：打开后定位/高亮推送开关
-  // 界面外观弹窗改由全局 store 承载（原来是本页局部 state）——这样剧情聊天页的「⋯」菜单也能直接打开它，
+  // 界面外观弹窗改由全局 store 承载（原来是本页局部 state），这样剧情聊天页的「⋯」菜单也能直接打开它，
   // 用户问透明度在哪儿调时，可以在聊天里一键跳到调节处。
   const skinOpen = useAppStore((s) => s.appearanceOpen);
   const setSkinOpen = useAppStore((s) => s.setAppearanceOpen);
@@ -128,7 +128,7 @@ export default function Home() {
   const install = usePwaInstall(); // 保存/安装 提示（底部轻提示 + More 菜单对话框 + 离开引导共用同一份 beforeinstallprompt）
   // 底部轻提示：只要没装且有能力提示，每次进入都显示；用户点 × 才隐藏当前视图，刷新后仍未装会再出现
   const toastVisible = !toastDismissed && install.toastEligible;
-  // 底部隐私同意横幅当前高度（未同意的新访客才有）——推广浮层要叠在它**上方**而不是压在它身上（F4）
+  // 底部隐私同意横幅当前高度（未同意的新访客才有），推广浮层要叠在它**上方**而不是压在它身上（F4）
   const privacyBannerH = useAppStore((s) => s.privacyBannerH);
   // 底部推广浮层排队（F4）：同屏最多一条，优先级 打卡 > 安装；隐私横幅不参与排队（合规提示常显）
   const bottomPromo = pickBottomPromo({ toastVisible, moodEligible, moodBannerSeen });
@@ -179,7 +179,7 @@ export default function Home() {
    * （前提是过得了 18+ 年龄闸门，见 RoleplayPage 的 initialAdultIntent）。2026-09-27 用户拍板 A 案。
    */
   const [initialRoleplayAdult, setInitialRoleplayAdult] = useState(false);
-  // —— 18+ 成年确认门槛（邮件落地 ?adult=1；服务端留痕见 api/services/adultConfirm.ts）——
+  // 【18+ 成年确认门槛（邮件落地 ?adult=1；服务端留痕见 api/services/adultConfirm.ts）】
   const [adultGateOpen, setAdultGateOpen] = useState(false);
   const [adultGateBusy, setAdultGateBusy] = useState(false);
   const [adultGateErr, setAdultGateErr] = useState('');
@@ -198,7 +198,7 @@ export default function Home() {
 
   /**
    * 用户点「我未满 18 岁」：清掉这次深链的剧情跳转参数，留在首页。
-   * 不继续把他送进剧情设置里——那封邮件的目标就是成人向设置，不该顺着往下推。
+   * 不继续把他送进剧情设置里，那封邮件的目标就是成人向设置，不该顺着往下推。
    */
   const declineAdultGate = useCallback(() => {
     const qs = new URLSearchParams(location.search);
@@ -210,7 +210,7 @@ export default function Home() {
   useEffect(() => {
     const qs = new URLSearchParams(location.search);
     /**
-     * 18+ 门槛：邮件里的按钮带 adult=1。确认之前**不做任何跳转**——
+     * 18+ 门槛：邮件里的按钮带 adult=1。确认之前**不做任何跳转**
      * 否则用户会直接落到「无限制模式」那个开关面前，把年龄确认变成一句脚注。
      * 本地已确认过（同一台设备点过一次）时不再拦，去掉参数继续走原深链；
      * 服务端仍是权威：真没留痕的话，开关那一步会再弹一次确认。
@@ -274,7 +274,7 @@ export default function Home() {
     void flushAdultPending('email-campaign');
   }, [authUser]);
 
-  // —— 首次进入 · 主页功能引导气泡（coach-mark；排队于注册/新手导览/UI 导览之后）——
+  // 【首次进入 · 主页功能引导气泡（coach-mark；排队于注册/新手导览/UI 导览之后）】
   const [homeCoachOpen, setHomeCoachOpen] = useState<boolean>(() => {
     try { return localStorage.getItem('cure_home_coach_seen') !== '1'; } catch { return false; }
   });
@@ -371,7 +371,7 @@ export default function Home() {
       if (flag === 'cancel') {
         /**
          * 用户在 Stripe 结账页点了「← 返回」：把他放回**刚刚那一屏**（付费弹窗：连续包月 / 单次购买 +
-         * 档位 + 天数都还原），而不是丢回首页从头找入口 —— 服务端 cancel_url 带了这套 query。
+         * 档位 + 天数都还原），而不是丢回首页从头找入口，服务端 cancel_url 带了这套 query。
          * 老链接（无 pay/plan/term）也能用：按当前 store 的档位默认值打开弹窗。
          */
         const plan = p.get('plan');
@@ -422,7 +422,7 @@ export default function Home() {
   }, []);
 
   // 首次访问（未注册过、未弹过注册弹窗）：新用户进页面直接弹注册（注册 tab 优先）。
-  // 不再等隐私横幅「同意并继续」——隐私横幅仍常驻底部，弹窗层级高于横幅（AuthModal z-70）。
+  // 不再等隐私横幅「同意并继续」，隐私横幅仍常驻底部，弹窗层级高于横幅（AuthModal z-70）。
   useEffect(() => {
     if (authUser) return;
     if (getToken()) return; // 存在登录会话（token）即便本地用户缓存暂缺也视为已登录，不再自动弹注册，避免闪现/误弹
@@ -575,7 +575,7 @@ export default function Home() {
   }, [rewardNotice]);
 
   // 预热偏好缓存（聊一聊/理一聊打开时偏好已就绪）
-  // 2026-09-23：不再同步「陪伴方式」到全局 store —— 用户侧档位已退场，判断交给小愈自己
+  // 2026-09-23：不再同步「陪伴方式」到全局 store，用户侧档位已退场，判断交给小愈自己
   useEffect(() => {
     loadPreferences().catch(() => {});
   }, []);
@@ -661,7 +661,7 @@ export default function Home() {
     setInitialRoleplayCreate(!!opts?.create);
     setInitialRoleplayScenario(opts?.scenarioId || null);
     /**
-     * 邮件深链（?open=roleplay&pref=1）：进剧情后自动展开「我的偏好」抽屉，把用户送到开关前——
+     * 邮件深链（?open=roleplay&pref=1）：进剧情后自动展开「我的偏好」抽屉，把用户送到开关前
      * 这条路只**指路**，不替用户改任何设置。
      */
     setInitialRoleplayPref(!!opts?.pref);
@@ -705,7 +705,7 @@ export default function Home() {
 
   /**
    * 把剧情角色加到聊一聊之后「去看看」：切到聊一聊。
-   * 与上面那条桥的区别：**不带草稿**——目标角色由 RoleplayPage 写进 `pendingChatCharId`，
+   * 与上面那条桥的区别：**不带草稿**，目标角色由 RoleplayPage 写进 `pendingChatCharId`，
    * 聊一聊挂载时读一次即清空（落到新角色的会话线，而不是用户的输入框）。
    */
   const openChatAfterImport = () => {
@@ -717,7 +717,7 @@ export default function Home() {
     window.scrollTo(0, 0);
   };
 
-  // —— 手机返回键/浏览器后退适配：深页返回在 App 内逐级回退，而不是退出浏览器 ——
+  // 【手机返回键/浏览器后退适配：深页返回在 App 内逐级回退，而不是退出浏览器】
   // 深页：角色扮演 / 关于 / 理一理 / 聊一聊（showApp）
   const deepViewKey = roleplayOpen ? 'roleplay'
     : aboutOpen ? 'about'
@@ -746,7 +746,7 @@ export default function Home() {
   // 返回键：深页内按返回 → App 内回退一层；顶层首页时交给浏览器（退出/上一页）
   useEffect(() => {
     const onPop = () => {
-      // 先问已注册的深页组件（剧情模式本身 / 千世书文游…，从最深往前问）能否消费这次返回——
+      // 先问已注册的深页组件（剧情模式本身 / 千世书文游…，从最深往前问）能否消费这次返回
       // 它们内部按返回键应逐级回退，而不是被这里直接关掉整个角色扮演、跳回主界面
       if (runDeepBack()) return;
       if (aboutOpen) { setAboutOpen(false); return; }
@@ -942,7 +942,7 @@ export default function Home() {
           层级必须**高于模态层**：AuthModal/InstallAppDialog/PrivacyModal/InviteModal 分别是 70/70/80/90，
           与它同层或更高（实测新访客会自动弹注册框，且在 DOM 里更靠后 → 同层时把闸门整个盖住，
           用户根本看不到年龄确认，闸门形同不存在）。取 95：高于全部模态层，仍低于应用级浮层
-          （AppSplash 100 / LangSwitch 120）——那些是加载与引导，本就该在最上面。 */}
+          （AppSplash 100 / LangSwitch 120），那些是加载与引导，本就该在最上面。 */}
       {adultGateOpen && (
         <div className="fixed inset-0 z-[95] bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5">
@@ -1037,7 +1037,7 @@ export default function Home() {
           onOpenMembership={() => { setProfileOpen(false); setMembershipOpen(true); }}
           // 「我的 → 邀请好友」里的「查看我的邀请记录」：关掉我的，打开邀请弹窗（明细在那边）
           onOpenInvite={() => { setProfileOpen(false); setInviteOpen(true); }}
-          // 「我的 → 小愈信箱」：同样钻取式——关掉我的，打开信箱（避免弹窗套弹窗的层级/滚动问题）
+          // 「我的 → 小愈信箱」：同样钻取式，关掉我的，打开信箱（避免弹窗套弹窗的层级/滚动问题）
           onOpenInbox={() => { setProfileOpen(false); setInboxOpen(true); }}
           onNeedLogin={() => { setProfileOpen(false); openAuth('login'); }}
           onRenamed={(u) => setAuthUser(u)}
@@ -1742,7 +1742,7 @@ export default function Home() {
                     </span>
                     <div className="min-w-0">
                       <p className="text-sm font-bold leading-tight">{t('memFreeHint')}</p>
-                      {/* 统一口径下「剩余」的单位是**条**（不是理一理池的「次」）——注册免费档就是每天 20 条 */}
+                      {/* 统一口径下「剩余」的单位是**条**（不是理一理池的「次」），注册免费档就是每天 20 条 */}
                       <p className="text-[11px] text-white/80 mt-0.5">{quota?.creditEnabled
                         ? (quotaIsUnlimited(quota) ? t('chatQuotaPro') : t('chatQuotaCredit', { n: quotaChatRemain(quota) }))
                         : t('memFreeLeft', { n: quota?.remainFree ?? 0 })}</p>

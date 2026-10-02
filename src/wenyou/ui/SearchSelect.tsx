@@ -5,7 +5,7 @@ export interface SearchOption {
   label?: string
   hint?: string
   /**
-   * 分组名。调用方要保证同组的选项【连续】—— 组标题是在遍历中「组名一变就插一行」
+   * 分组名。调用方要保证同组的选项【连续】，组标题是在遍历中「组名一变就插一行」
    * 生成的，不是先分桶再渲染。这样过滤后不会留下没有条目的空标题。
    */
   group?: string
@@ -16,7 +16,7 @@ export interface SearchOption {
 // - allowCustom=true（自动完成模式）：输入即值，列表仅做建议
 //
 // 键盘与「打开时停在哪」对齐成熟组件库的行为，因为不这么做的代价是实打实的：
-// 列表有 260px 的高度上限、服务商有二十多个，而它永远从第一项开始渲染 ——
+// 列表有 260px 的高度上限、服务商有二十多个，而它永远从第一项开始渲染
 // 选着靠后的一家（比如 TokenHub）再打开，看到的是列表顶部，每次都要滚一遍才知道
 // 自己在哪。方向键同理：以前压根没有，回车只能选中第一个匹配。
 export function SearchSelect({
@@ -50,9 +50,9 @@ export function SearchSelect({
   /**
    * 打开时该停在哪。
    *
-   * 选择模式：停在【已选中的那一项】—— 打开下拉是为了「看看还有什么」，起点当然
+   * 选择模式：停在【已选中的那一项】，打开下拉是为了「看看还有什么」，起点当然
    * 是当前所在的位置。没选中过才落到第一项。
-   * 自动完成模式：值在列表里就停在它，否则【不高亮】（-1）—— 那里输入框里的文字
+   * 自动完成模式：值在列表里就停在它，否则【不高亮】（-1），那里输入框里的文字
    * 就是值，凭空高亮一项会让回车把用户手打的型号名换掉。
    */
   const openList = () => {
@@ -92,7 +92,7 @@ export function SearchSelect({
   const move = (delta: number) => {
     if (!filtered.length) return
     if (!open) return openList()
-    // 环形：到底再按一次回到顶部 —— 长列表里比撞死在末尾更省事
+    // 环形：到底再按一次回到顶部，长列表里比撞死在末尾更省事
     setActive((cur) => (cur < 0 ? (delta > 0 ? 0 : filtered.length - 1) : (cur + delta + filtered.length) % filtered.length))
   }
 

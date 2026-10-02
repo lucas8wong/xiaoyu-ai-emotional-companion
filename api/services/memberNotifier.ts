@@ -2,7 +2,7 @@
  * 会员开通通知：运营在控制台**手动**给某个用户开通 / 延长会员后，给他发一封「你的会员已开通」邮件。
  *
  * 为什么要做这一封（用户口径 2026-09-18）：
- *   手动开通以前是**静默**的——`POST /api/payment/admin/users/:userId/unlock` 只写有效期、
+ *   手动开通以前是**静默**的：`POST /api/payment/admin/users/:userId/unlock` 只写有效期、
  *   记一条「免费」订单、写审计日志，用户那边**一封邮件都没有**，只能自己登录才发现成了会员。
  *   运营希望「每次手动开通都能看到邮件」：本模块发信给用户，`sendEmail` 里的 `MAIL_BCC`
  *   （本机 .env = myxiaoyu2026@gmail.com）会把每一封自动抄送一份到运营邮箱，运营因此每封都看得到。
@@ -10,7 +10,7 @@
  * 口径：
  *   - **只覆盖手动开通这一条路径**（用户选 A；「确认订单」与 Stripe 自助付款本次不改）；
  *   - 语言按用户地区/偏好三语（简中/繁中/英文，见 `userLang.inferLanguageForUser`）；
- *   - 档位按**实际生效档位**（`quotaStore.getPlan`）写，不按运营点选的档位——`quotaStore.unlock`
+ *   - 档位按**实际生效档位**（`quotaStore.getPlan`）写，不按运营点选的档位，`quotaStore.unlock`
  *     有「续费不降级」，给 Pro 用户开 Plus 时实际仍是 Pro，邮件不能写成「Plus 已开通」；
  *   - 测试账号 / 开发者账号 / 无邮箱（游客）→ **不发**；
  *   - 同一用户 60 秒内只发一封（防手抖双击、连续续期点两次）；
@@ -51,7 +51,7 @@ export interface MembershipGrantNotice {
   days: number;
   /** 新的到期时间戳（ms） */
   unlockUntil: number;
-  /** 是否续期（开通前已是有效会员）——决定「已开通 / 已续期」措辞 */
+  /** 是否续期（开通前已是有效会员），决定「已开通 / 已续期」措辞 */
   renewal?: boolean;
 }
 
@@ -180,7 +180,7 @@ export function buildMembershipEmail(lang: EmailLang, input: MembershipEmailInpu
 
 /**
  * 发一封会员开通通知（失败/跳过都不抛，返回结构化结果供调用方记审计日志）。
- * 只有真的发出去（`ok:true`）才占用去重窗口——失败时不占，运营重试仍能发。
+ * 只有真的发出去（`ok:true`）才占用去重窗口，失败时不占，运营重试仍能发。
  */
 export async function notifyMembershipGranted(grant: MembershipGrantNotice): Promise<MembershipMailResult> {
   try {

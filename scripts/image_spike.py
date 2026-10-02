@@ -23,13 +23,13 @@
 - 计时 = wall time，**含 VAE 解码与 CPU→GPU 搬运**（不是纯 UNet 前向），因为用户等的是整张图；
 - 每个 (size, steps) 组合先跑 1 次 warmup **不计入**，之后跑 --runs 次取中位数；
 - 显存 = torch.cuda.max_memory_allocated() 峰值（每次生成前 reset），另打印整卡 free/total；
-- VoxCPM 侧车是**独立进程**，它占的显存直接体现在整卡 free 里 —— 所以「共存测试」
+- VoxCPM 侧车是**独立进程**，它占的显存直接体现在整卡 free 里，所以「共存测试」
   就是在侧车开着的情况下跑本脚本，看还够不够、会不会 OOM。不要为了漂亮数字去停侧车。
 
 ⚠️ 一个会影响安全设计的事实（脚本会记录到 json 里）：
    turbo 类模型用 guidance_scale=0（无 CFG）时 **negative_prompt 不生效**，
    所以「靠负向词挡违规内容」在实时出图这条路上不成立，
-   安全必须靠「正向白名单模板 + 出图后抽检」——见 docs/roleplay-immersion-plan.md §4.4。
+   安全必须靠「正向白名单模板 + 出图后抽检」，见 docs/roleplay-immersion-plan.md §4.4。
 """
 
 from __future__ import annotations
@@ -69,7 +69,7 @@ MODELS: dict[str, dict] = {
         "guidance": 0.0,
         "steps": [1, 2, 4],
         "sizes": [512],
-        "note": "最小最快（SD2.1 底模 / 512px）——用来看延迟下界",
+        "note": "最小最快（SD2.1 底模 / 512px），用来看延迟下界",
     },
     "sdxl-turbo": {
         "id": "stabilityai/sdxl-turbo",

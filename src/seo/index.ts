@@ -1,9 +1,9 @@
 /**
- * SEO/GEO 内容页注册表 —— 单一数据源
+ * SEO/GEO 内容页注册表，单一数据源
  *
  * 「新增一个 SEO 页 = 在这里加一条数据」：路由（`src/App.tsx`）、预渲染（`scripts/prerender.mts`）、
  * sitemap（`scripts/gen-sitemap.mts`）全部由本注册表派生，不再各自维护一份清单
- * ——避免过去那种「加了页面但忘了进 sitemap / 忘了预渲染」的漂移。
+ *。避免过去那种「加了页面但忘了进 sitemap / 忘了预渲染」的漂移。
  *
  * 校验（`test/unit/seoPages.test.ts`）：slug 唯一、title/description 长度、
  * sitemap ⊇ 注册表、每个页面必须带合规免责表述、内链 slug 必须存在。

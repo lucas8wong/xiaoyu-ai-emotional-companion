@@ -94,7 +94,7 @@ test('被引用的是纯图片/纯语音消息（没有文字）：用占位词�
   assert.ok(aud.user.includes('（一条语音消息）'));
 });
 
-// —— 请求体收口（parseReplyTo）：前端是唯一来源，但 body 不可信 ——
+// 【请求体收口（parseReplyTo）：前端是唯一来源，但 body 不可信】
 
 test('parseReplyTo：正常引用原样通过（含换行压平、kind 白名单）', () => {
   assert.deepEqual(parseReplyTo({ role: 'assistant', content: '第一行\n第二行', kind: 'image' }), { role: 'assistant', content: '第一行 第二行', kind: 'image' });
@@ -116,7 +116,7 @@ test('parseReplyTo：超长引用截到 300 字（存储层不膨胀）', () => 
   assert.equal(out?.content.length, 300);
 });
 
-test('parseReplyTo：at（被引用消息的时间戳）只在「像时间戳」时保留——界面回跳靠它定位', () => {
+test('parseReplyTo：at（被引用消息的时间戳）只在「像时间戳」时保留，界面回跳靠它定位', () => {
   assert.equal(parseReplyTo({ role: 'assistant', content: 'x', at: '2026-09-17T10:00:00.000Z' })?.at, '2026-09-17T10:00:00.000Z');
   assert.equal(parseReplyTo({ role: 'assistant', content: 'x', at: '随便什么字符串' })?.at, undefined, '非时间戳形状 → 丢弃（不能拿它去乱定位）');
   assert.equal(parseReplyTo({ role: 'assistant', content: 'x', at: 'A'.repeat(80) })?.at, undefined, '超长 → 丢弃');

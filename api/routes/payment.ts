@@ -181,7 +181,7 @@ router.get('/quota', async (req: Request, res: Response): Promise<void> => {
   } catch { /* 忽略：拿不到就不显示补填入口 */ }
 
   // Google 一键登录是否可用：Client ID 本就是公开值，下发给前端渲染官方按钮；
-  // **没配就不下发**（undefined），前端据此不渲染按钮——线上不会出现一个点了就报错的按钮。
+  // **没配就不下发**（undefined），前端据此不渲染按钮，线上不会出现一个点了就报错的按钮。
   const { GOOGLE_CLIENT_ID } = await import('../services/googleAuth.js');
   // 返回解析后的 userId：前端据此生成稳定的邀请链接（游客也能正确归因奖励）
   res.json({ success: true, data: { ...quota, userId, usage7d, inviteCode, googleClientId: GOOGLE_CLIENT_ID || undefined } });
@@ -236,8 +236,8 @@ router.get('/config', async (req: Request, res: Response): Promise<void> => {
  *  - mode=subscription（连续包月，默认）：订阅价 + 可选手月试用价，周期 30 天自动续费
  *  - mode=payment（单次购买）：按天计价，一次买断 N 天
  *
- * 结算币种（2026-09-24）：按访客 IP 判定 —— 港澳 HKD / 内地 CNY / 其他 USD（服务端定，前端不传）。
- * 支付方式（2026-09-24）：**不传 `payment_method_types`** —— 走 Stripe 动态支付方式，
+ * 结算币种（2026-09-24）：按访客 IP 判定，港澳 HKD / 内地 CNY / 其他 USD（服务端定，前端不传）。
+ * 支付方式（2026-09-24）：**不传 `payment_method_types`**，走 Stripe 动态支付方式，
  *   让结账页把该币种/该客户**所有可用方式**都摆出来（卡、Link、Apple Pay、Google Pay，
  *   HKD/CNY 下还会有支付宝）。一旦显式指定就会把其它方式全部关掉，故永不指定。
  * 排除微信支付（2026-09-29 用户拍板「Stripe 那里移除微信支付这个选项」）：改用
@@ -284,7 +284,7 @@ router.post('/stripe/create-checkout', async (req: Request, res: Response): Prom
     const STRIPE_FIRST_MONTH_COUPON = process.env.STRIPE_FIRST_MONTH_COUPON || '';
 
     if (mode === 'subscription') {
-      // —— 连续包月：Stripe 订阅，每月自动扣款续期 ——
+      // 【连续包月：Stripe 订阅，每月自动扣款续期】
       const productName = (plan === 'pro' ? 'Xiaoyu Pro' : 'Xiaoyu Plus') + ' · Monthly Subscription';
       const session = await stripe.checkout.sessions.create({
         mode: 'subscription',
@@ -312,7 +312,7 @@ router.post('/stripe/create-checkout', async (req: Request, res: Response): Prom
       return;
     }
 
-    // —— 单次购买（月付按天比例；年付/买断固定价）——
+    // 【单次购买（月付按天比例；年付/买断固定价）】
     const priceBase = getPriceIn(plan, purchase, currency);
     const price = purchase === 'monthly'
       ? Math.round(priceBase * (days / UNLOCK_DAYS_COUNT) * 100) / 100
@@ -383,7 +383,7 @@ router.post('/stripe/webhook', express.raw({ type: '*/*' }), async (req: Request
  * 处理单个 Stripe 事件（幂等）。返回 false = 处理失败，调用方应回 5xx 让 Stripe 重试。
  * - 按 event.id 去重：已处理过直接返回 true。
  * - checkout.session.completed / checkout.session.async_payment_succeeded：两者走同一条解锁路径。
- *   completed 必须 payment_status === 'paid'；async_payment_succeeded 本身就代表到账——
+ *   completed 必须 payment_status === 'paid'；async_payment_succeeded 本身就代表到账
  *   微信/支付宝等延迟通知方式真正付款成功的时刻（缺它则用户付钱不开会员，见 2026-09-28 审查 P1-5）。
  * - checkout.session.async_payment_failed：不解锁，只告警（可观测）。
  * - 未列入 HANDLED_STRIPE_EVENTS 的事件类型：记日志、不做业务处理（不再静默「假装成功」）。
@@ -393,7 +393,7 @@ router.post('/stripe/webhook', express.raw({ type: '*/*' }), async (req: Request
  */
 /**
  * 已显式处理的事件类型（2026-09-28 审查 P1-5）。
- * 不在此表内的事件类型**不再静默「假装成功」**——那正是「用户付了钱、系统无动于衷」的成因。
+ * 不在此表内的事件类型**不再静默「假装成功」**：那正是「用户付了钱、系统无动于衷」的成因。
  * 注意 checkout.session.async_payment_succeeded：微信/支付宝等延迟通知方式真正到账的时刻；
  * completed 时 payment_status 往往还是 unpaid。缺了它，用户付了钱既没会员也没告警。
  */
@@ -413,7 +413,7 @@ export async function processStripeEvent(event: Stripe.Event): Promise<boolean> 
   }
 
   // 异步付款（微信 / 支付宝等延迟通知方式）：completed 时 payment_status 往往还不是 paid，
-  // 真正到账发生在 checkout.session.async_payment_succeeded。两者走**同一条解锁路径**——此前只处理
+  // 真正到账发生在 checkout.session.async_payment_succeeded。两者走**同一条解锁路径**，此前只处理
   // completed，导致这类用户付了钱却拿不到会员，且那个事件还被静默标记成「已处理」（2026-09-28 审查 P1-5）。
   const isCheckoutSessionEvent = event.type === 'checkout.session.completed'
     || event.type === 'checkout.session.async_payment_succeeded';
@@ -431,7 +431,7 @@ export async function processStripeEvent(event: Stripe.Event): Promise<boolean> 
     const mode = session.metadata?.mode || (session.mode === 'subscription' ? 'subscription' : 'payment');
     if (userId) {
       if (mode === 'subscription' && session.subscription) {
-        // —— 连续包月首次扣款成功：建订阅记录 + 解锁 30 天 ——
+        // 【连续包月首次扣款成功：建订阅记录 + 解锁 30 天】
         const subId = typeof session.subscription === 'string' ? session.subscription : session.subscription.id;
         const { subscriptionStore } = await import('../services/subscription.js');
         const now = Date.now();
@@ -458,7 +458,7 @@ export async function processStripeEvent(event: Stripe.Event): Promise<boolean> 
         auditStore.log('stripe_subscribed', `Stripe 订阅 ${plan} 首期扣款成功：` + userId.slice(0, 8), '');
         console.log('✅ [Stripe] 订阅', plan, '首期解锁:', userId.slice(0, 8));
       } else {
-        // —— 单次购买 ——
+        // 【单次购买】
         const days = Math.max(1, Number(session.metadata && session.metadata.days) || UNLOCK_DAYS_COUNT);
         // 单次购买是真实付费（Stripe 收款）：订单标 paid 计入收入统计；
         // 连续包月订单为避免与 MRR 重复计费仍标 free（见订阅分支）。
@@ -490,7 +490,7 @@ export async function processStripeEvent(event: Stripe.Event): Promise<boolean> 
     console.warn('⚠️ [Stripe] 异步付款失败（未解锁）:', event.id, 'session=' + session.id, 'userId=' + who);
   }
 
-  // —— 连续包月续费扣款成功：按 Stripe 周期续期（无感续费）——
+  // 【连续包月续费扣款成功：按 Stripe 周期续期（无感续费）】
   if (event.type === 'invoice.paid') {
     const invoice = event.data.object as Stripe.Invoice & { subscription?: string | { id?: string } | null };
     const subRef = invoice.subscription;
@@ -522,7 +522,7 @@ export async function processStripeEvent(event: Stripe.Event): Promise<boolean> 
     }
   }
 
-  // —— 订阅状态变更：取消预告 / 档位变化 / 删除 ——
+  // 【订阅状态变更：取消预告 / 档位变化 / 删除】
   if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
     const sub = event.data.object as Stripe.Subscription;
     const { subscriptionStore } = await import('../services/subscription.js');

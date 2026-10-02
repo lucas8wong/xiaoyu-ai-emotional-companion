@@ -15,7 +15,7 @@ const LS_MUTE = 'cure_bgm_muted';
 const OFF = 'off'; // 用户选择"不使用配乐"
 
 // ⚠️ 这两个函数在 `useScenarioBgm()` 里被 **useState 初始化器**直接调用（即渲染期），
-// 而 RoleplayPage 一挂载就会调用它 —— 裸调 localStorage 在「存储被禁」的浏览器里会抛异常，
+// 而 RoleplayPage 一挂载就会调用它，裸调 localStorage 在「存储被禁」的浏览器里会抛异常，
 // 因为发生在渲染路径上、又没有 ErrorBoundary，会把**整个剧情模式**变成白屏。
 // 所以这里必须走带护栏的 safeStorage（读取失败=当作没存过）。
 export function loadBgmVolume(): number {

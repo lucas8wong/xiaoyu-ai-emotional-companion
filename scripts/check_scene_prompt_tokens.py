@@ -3,7 +3,7 @@
 """
 量一下场景 prompt 的**真实 CLIP token 数**（SDXL 上限 77，超了会被静默截断）
 
-为什么单独做这一步：diffusers 只在控制台打一行 warning，图照出，但约束被砍掉一半——
+为什么单独做这一步：diffusers 只在控制台打一行 warning，图照出，但约束被砍掉一半
 靠"估"（词数×1.3）不靠谱，只有拿真分词器数一遍才知道。配置由 TS 侧导出：
     npx tsx scripts/export-scene-config.mts
     .venv-image\\Scripts\\python.exe scripts/check_scene_prompt_tokens.py --config temp/scene-config.json

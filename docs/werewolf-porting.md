@@ -306,7 +306,7 @@ vendor/wolfcha/
 
 - 主题 CSS 作为**独立分包**随狼人杀页面懒加载（`WerewolfPage-*.css` 1.12 kB），**全站品牌色零影响**
 - `bg-white` → `bg-clay-surface`（新增的 `surface` 记号），避免暗底上出现亮白卡
-- 字体：`--skin-display-font` 用 `Cinzel, 'Ma Shan Zheng', 'Songti SC', serif`——
+- 字体：`--skin-display-font` 用 `Cinzel, 'Ma Shan Zheng', 'Songti SC', serif`
   Cinzel 未自托管，用**项目已有的书法体 Ma Shan Zheng** 兜住「古」的味道，不引新字体资产
 
 > ⚠️ **品牌红线 #4 的放宽范围：仅限 `.ww-theme` 作用域（狼人杀这一屏）**，全站品牌色（主绿 #1FA46B / 奶油底 #FBF6EE）不变。
@@ -352,7 +352,7 @@ vendor/wolfcha/
 
 ### 6.2 仍未完成（勿当作已修）
 
-1. **玩家发言的语音（`/api/tts`）实时触发未验证** —— 需要完成一次夜间行动或让对局走到白天发言；旁白语音（`/audio/narrator/*.mp3`）已验证在播（有 `NarratorAudioPlayer: Playing → Started → Ended` 日志）。
-2. **偶发 `400 POST /api/chat`** —— 已定位到我路由里唯一的 400 分支（`messages 不能为空`），即对局中某个调用会发空 `messages`；**复现不稳定，调用方未定位**。已在路由里埋常驻诊断（异常路径才打印），下次出现可直接对上。
+1. **玩家发言的语音（`/api/tts`）实时触发未验证**，需要完成一次夜间行动或让对局走到白天发言；旁白语音（`/audio/narrator/*.mp3`）已验证在播（有 `NarratorAudioPlayer: Playing → Started → Ended` 日志）。
+2. **偶发 `400 POST /api/chat`**，已定位到我路由里唯一的 400 分支（`messages 不能为空`），即对局中某个调用会发空 `messages`；**复现不稳定，调用方未定位**。已在路由里埋常驻诊断（异常路径才打印），下次出现可直接对上。
 3. 启动时不重复生成人设（缓存/复用同一批角色）未做。
 4. `.ww-scope` 的 token 映射只覆盖了几个常用名，未逐个核对。

@@ -28,7 +28,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 /**
  * 小愈重构：上游在这里做三套 provider（zenmux / dashscope / tokendance）+ 用户自带 Key
- * + TokenPay 代付。小愈一律不用 —— 模型调用走本站 `/api/chat`，服务端用自己的 Key 转发
+ * + TokenPay 代付。小愈一律不用，模型调用走本站 `/api/chat`，服务端用自己的 Key 转发
  * 且**有意忽略**客户端传的 model/provider。因此来源恒为 `project`，也不再有任何 Key 头。
  */
 export function resolveApiKeySource(_model: string): ApiKeySource {

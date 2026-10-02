@@ -3,7 +3,7 @@
  * POST /api/ai-failure { feature: 'chat'|'roleplay'|'wenyou'|'other', code: string, recovered?: boolean }
  *
  * 前端在「这一轮 AI 没接上」时 fire-and-forget 上报（**不含任何用户内容**），
- * 让运营端能看到「今天 AI 失败了多少次、其中多少次被自动重试救回来」——
+ * 让运营端能看到「今天 AI 失败了多少次、其中多少次被自动重试救回来」
  * 2026-09-15 事故的教训：这类失败在服务端完全静默，只能靠用户投诉才知道。
  *
  * 说明：接口永远返回 success（埋点不该影响用户流程）；测试设备不计。

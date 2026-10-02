@@ -17,34 +17,34 @@
  *
  * ## 本文件负责的两件事
  *   · `buildChatRelationBlock`：按**关系档**给口吻参数（称呼 / 权位 / 玩梗强度 / 连发上限 / 亲密上限）
- *   · `pickChatScene` + 场景块：把「轻松玩梗」与「情绪低落」分流 —— 这两件事的关键词是**相反**的
+ *   · `pickChatScene` + 场景块：把「轻松玩梗」与「情绪低落」分流，这两件事的关键词是**相反**的
  *     （前者要接梗/对抗/推进，后者要共情/落地），混在一个块里写，模型必然折中成"温和的陪伴者"，
  *     两边都不像。这是用户拍板「两者都要」后的必然结构，不是可选项。
  *
  * ## 三条设计约束（都是本仓库踩出来的，别推翻）
- *   · **位置即权重**：两轮取证（`chatVoice.ts:280-284` / CHANGELOG 2026-09-17）——同一个意思写在
+ *   · **位置即权重**：两轮取证（`chatVoice.ts:280-284` / CHANGELOG 2026-09-17），同一个意思写在
  *     提示词中段会被无视，写在 system 尾部才有效。关系块与场景块因此由调用方钉在尾部同区。
  *   · **要给许可，不要给句子**：把示范台词写进提示词就会被逐字抄走（`chatVoice.ts:50-56` 两次事故：
  *     「（我这边还没关灯）」被 3/8 条回复照抄）。所以本文件只给**形态与称呼集合**，一句示范台词都不给。
- *     唯一的例外是关系档描述里那个「退货→焊死」的例子——它示范的是**接字接力的动作**，
+ *     唯一的例外是关系档描述里那个「退货→焊死」的例子，它示范的是**接字接力的动作**，
  *     不是可照抄的成句，且只在 relation=lover/buddy 的高玩梗档出现。
  *   · **tender 优先于一切**：用户情绪低落时，关系档的棱角（损友的怼、家人的催、恋人的吃醋）**全部停用**，
- *     只保留称呼与亲密表达。这与 `prompts.ts` 的 `SAFETY_TONE`（幽默→0、打趣→0）同源——
+ *     只保留称呼与亲密表达。这与 `prompts.ts` 的 `SAFETY_TONE`（幽默→0、打趣→0）同源
  *     是硬约束，不是偏好。判据见 `pickChatScene`。
  *
  * ## 红线（不因"可玩性"放松）
  *   关系档只改**口吻**，不改**尺度**：不产生性内容、不进 `safety.ts` 的任何一类；
  *   亲密只到「称呼、撒娇、玩笑式占有欲」；**禁止道德绑架**（「没有我你怎么办」「你只能找我」这类
- *   一句都不许有）——那是 PUA，不是撒娇，且直接违反品牌口径「不制造依赖」。
+ *   一句都不许有），那是 PUA，不是撒娇，且直接违反品牌口径「不制造依赖」。
  *   聊一聊侧没有剧情那条「无限制模式」，这条边界与关系档无关，恒成立。
  *
  * ## 第二条红线（2026-10-02 · 用户实测反馈）
  *   用户原话：「小俞（＝小愈）的攻击性也太强了吧？我也没装啊。。不要特意这种预期来显得是朋友关系」
- *   ——`Preferences.xiaoyuRelation = buddy` 的用户只问了一句「心动的信号9你知道不」，收到的是
+ *。`Preferences.xiaoyuRelation = buddy` 的用户只问了一句「心动的信号9你知道不」，收到的是
  *   「知道啊，8月3号腾讯视频开播…**你还想装没追？**」，下一轮的八卦又收在「**所以你站哪对，别装路人。**」。
  *
  *   病根不是"玩梗强度高"，而是**替用户认定**：把 TA 没说过的立场（在追这档恋综、在装路人）
- *   当成已知事实来"揭穿"，再拿这个当攻击面 —— 攻击性和"熟"都是这么凭空长出来的。
+ *   当成已知事实来"揭穿"，再拿这个当攻击面，攻击性和"熟"都是这么凭空长出来的。
  *   所以除原有红线外再加三条（实现见 `buildChatRelationBlock` 尾部三条禁令 + buddy 档的改写）
  *   ① **玩梗要 TA 先起头**（对方只是问事就正常回答，先开火不叫熟）；
  *   ② **不许替 TA 认定 / 揭穿 TA**（「你还想装…」「别装了」这一类句式一句都不许有）；
@@ -80,7 +80,7 @@ export function normalizeRelation(v: unknown): RelationKind {
 interface RelationSpec {
   /** 关系名（面板与提示词共用同一个词，用户看到的和模型读到的必须是同一档） */
   name: string;
-  /** 一句话关系描述——决定"我凭什么用这个语气" */
+  /** 一句话关系描述，决定"我凭什么用这个语气" */
   oneLiner: string;
   /** 你（AI）怎么叫 TA */
   callThem: string;
@@ -97,7 +97,7 @@ interface RelationSpec {
 }
 
 /**
- * 四档参数（中文）。**这一份是"关系档"的全部内容**——档与档之间只差这几个参数，
+ * 四档参数（中文）。**这一份是"关系档"的全部内容**，档与档之间只差这几个参数，
  * 机制完全共用（用户拍板：不是四套体系，是同一套机制跑不同参数）。
  */
 const ZH: Record<RelationKind, RelationSpec> = {
@@ -183,7 +183,7 @@ const EN: Record<RelationKind, RelationSpec> = {
   },
 };
 
-/** 场景块（中文）—— `neutral` 刻意**没有词条**：平常场景不该被额外指挥。 */
+/** 场景块（中文），`neutral` 刻意**没有词条**：平常场景不该被额外指挥。 */
 const SCENE_ZH: Record<Exclude<ChatScene, 'neutral'>, string> = {
   playful: `【这一轮的气氛：轻松、在闹】TA 这一条是玩笑、吐槽，或者在跟你闹。按这个来：
 - 接住 TA 用的**那个具体的词**，接着往下加码，真人是把梗玩够了才停，不是赶紧把话收回正题。
@@ -214,7 +214,7 @@ const SCENE_EN: Record<Exclude<ChatScene, 'neutral'>, string> = {
  *
  * 为什么不做成模型判定：聊一聊每轮已经在跑一次生成，再加一次分类调用会同时抬高延迟与成本，
  * 而这个判定只需要"够用"。本仓库同类判据（`src/lib/rpEnding.ts` 的收尾形态、`chatIsShortReply`
- * 的字数阈值）都是结构判定 —— 教训是同一条：**只做结构判定，不认任何具体句子**。
+ * 的字数阈值）都是结构判定，教训是同一条：**只做结构判定，不认任何具体句子**。
  *
  * `tender` 优先于 `playful`：宁可把一句玩笑误判成低落（代价是这一轮少了点乐子），
  * 也不能把一句"我撑不住了"误判成玩梗（代价是用户在最需要的时候被开玩笑）。这个不对称是刻意的。
@@ -226,7 +226,7 @@ const EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}
 function hasTenderSignal(text: string): boolean {
   if (!text) return false;
   if (TENDER_RE.test(text)) return true;
-  // 与提示词链路的危机判定共用同一份模式（prompts.ts 的 DISTRESS_PATTERNS）——
+  // 与提示词链路的危机判定共用同一份模式（prompts.ts 的 DISTRESS_PATTERNS）
   // 单一来源，避免"提示词认为高危、关系档却以为在玩梗"这种分叉。
   return DISTRESS_PATTERNS.some((re) => re.test(text));
 }
@@ -235,7 +235,7 @@ function hasPlayfulSignal(text: string): boolean {
   if (!text) return false;
   if (PLAYFUL_RE.test(text)) return true;
   if (EMOJI_RE.test(text)) return true;
-  // 短促吐槽：很短 + 以 ！/？/～ 收尾（"这也行？""服了！"）——这条不看词，看形态。
+  // 短促吐槽：很短 + 以 ！/？/～ 收尾（"这也行？""服了！"）。这条不看词，看形态。
   const stripped = text.replace(/\s/g, '');
   const body = stripped.replace(/[!！?？~～。.…]+$/, '');
   return body.length > 0 && body.length <= 12 && /[!！?？~～]$/.test(stripped);
@@ -267,7 +267,7 @@ export interface ChatRelationInput {
  * 组装「关系档 + 场景」块。
  *
  * 调用方（`gemini.ts` 的聊一聊 system）必须把它钉在**尾部同区**（与静态套话块、负例块相邻、
- * `【输出语言】` 之前）——位置即权重，写在提示词中段等于没有（`chatVoice.ts:280-284`）。
+ * `【输出语言】` 之前），位置即权重，写在提示词中段等于没有（`chatVoice.ts:280-284`）。
  */
 export function buildChatRelationBlock(input: ChatRelationInput): string {
   if (process.env.CHAT_RELATION === '0') return '';

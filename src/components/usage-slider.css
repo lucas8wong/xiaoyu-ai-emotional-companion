@@ -9,14 +9,14 @@
  * 工艺要点：
  * ① 不用 accent-color 一行搞定：它只能染一条纯色，画不出「品牌色渐变填充 + 白珠描边环 +
  *    按下回弹」；而这里是整张卡的主交互（4 条滑块），值得单独一层工艺。
- * ② **仍然保留原生 <input type="range">** —— 键盘/读屏/触屏惯性全部白拿，只重画轨道与拨钮，
+ * ② **仍然保留原生 <input type="range">**，键盘/读屏/触屏惯性全部白拿，只重画轨道与拨钮，
  *    无障碍零回退（焦点环、可访问名、aria-live 总数都在）。
  * ③ 皮肤感知：空轨 = color-mix(品牌色 × 卡片面)、填充 = --color-primary → --color-primary-strong、
  *    珠子 = --color-surface 白 + 品牌色描边 → zen/candy/star 换肤自动跟随，不硬编码灰绿。
  * ④ 填充比例由 JS 写进自定义属性 --usage-fill（0–100%）：伪元素能继承自定义属性，所以不必为了
  *    进度条再包一层 DOM；Firefox 用原生 ::-moz-range-progress，无需该变量。
  * ⑤ 轨道高度 = 输入框高度（24px）= **触屏命中区**，可见那条 8px 亮条靠 background-size 压出来
- *    —— input 上不能挂 ::after 扩热区（表单控件不生成伪元素），只能靠自身高度给。
+ *    input 上不能挂 ::after 扩热区（表单控件不生成伪元素），只能靠自身高度给。
  * ⑥ 不写 @layer：本文件独立过 PostCSS，直接给规则（特性类不会被 Tailwind 工具类覆盖，
  *    本组件也没在滑块上叠 height/background 这类工具类）。
  */
@@ -89,7 +89,7 @@
   box-shadow: 0 1px 3px rgba(36, 59, 46, 0.28);
 }
 
-/* 焦点：**不摘全局 :focus-visible 的 outline**（键盘可见性优先，绝不静默无焦点——
+/* 焦点：**不摘全局 :focus-visible 的 outline**（键盘可见性优先，绝不静默无焦点
    万一某个浏览器不认下面这两条伪元素规则，仍然看得见焦点）；珠子光环只是强化。 */
 .usage-slider:focus-visible::-webkit-slider-thumb {
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-ring) 38%, transparent);

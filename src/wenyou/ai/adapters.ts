@@ -5,16 +5,16 @@ import { isHttpUrl } from '../utils/url'
 
 /**
  * 开思考时 Claude 的输出上限。thinking.budget_tokens 必须【小于】max_tokens，
- * 而目录给的预算是按上游同样的 16384 反推的 —— 这两个数是配套的，改一个就要
+ * 而目录给的预算是按上游同样的 16384 反推的，这两个数是配套的，改一个就要
  * 核另一个（presets.test.ts 里有条不变量钉着）。不开思考时用 2048 就够。
  */
 export const THINKING_MAX_TOKENS = 16384
 
 /**
- * 这一轮是否真的开着思考 —— 用来决定要不要抬高 Claude 的 max_tokens。
+ * 这一轮是否真的开着思考，用来决定要不要抬高 Claude 的 max_tokens。
  *
  * 「选了关」不等于「真关了」：有的型号根本关不掉（官方逐模型表标 Always on，
- * 发关闭值直接 400）。这种情况下服务端照样思考，思考 token 计入 max_tokens ——
+ * 发关闭值直接 400）。这种情况下服务端照样思考，思考 token 计入 max_tokens
  * 按不思考的额度发会被 stop_reason:"max_tokens" 截断。
  *
  * ⚠ 判据与界面上那句「仍会推理、仍会计费」共用同一个 canDisableThinking：传输层
@@ -39,7 +39,7 @@ function viaProxy(url: string, proxy?: string): string {
   if (!p) return url
   // ⚠ 漏写 https:// 时拼出来的是【相对地址】：浏览器按本站域名解析，于是 API Key
   // 与整段 prompt 被 POST 到自己站上（同源，连预检都不会拦），只留下一个 404 和
-  // 一行带 Key 的访问日志。界面已经把它标红，但标红只是提示 —— 真正不让它发出去
+  // 一行带 Key 的访问日志。界面已经把它标红，但标红只是提示，真正不让它发出去
   // 得在这里挡。
   // 用 400 而不是 0：这是配置错，重试一次还是同样的错（0 会被判成可重试）
   if (!isHttpUrl(p)) throw new AIError(400, `中转地址不是完整的网址（要带 https://）：${p}`)
@@ -48,9 +48,9 @@ function viaProxy(url: string, proxy?: string): string {
 
 /**
  * 挂住超时：连接卡死时抛错，而不是让进度条永远转。分两段，因为两段的正常
- * 等待时间差一个数量级 ——
+ * 等待时间差一个数量级
  *   · 出字之前：连上、排队、思考模型想很久（高档思考跑到一两分钟是正常的），给足；
- *     这一段【连 fetch 本身也算】—— 握手完成但响应头永不到达时浏览器不会自己超时，
+ *     这一段【连 fetch 本身也算】，握手完成但响应头永不到达时浏览器不会自己超时，
  *     没有这道闸就是最典型的「转圈到天荒地老」。
  *   · 出字之后：token 间隔只有几秒，超过一分钟基本就是流断了而 TCP 还没察觉。
  * 不设【总时长】上限：长回复本来就该跑很久，按总时长砍会砍掉正常输出。
@@ -87,12 +87,12 @@ async function postStream(
   headers: Record<string, string>,
   body: unknown,
   // 返回值 = 这一行有没有带来【真正的内容】。心跳、[DONE]、Claude 的 message_start
-  // 也会走到这里，但它们不算「开始出字」——见下面两段窗口的分界。
+  // 也会走到这里，但它们不算「开始出字」，见下面两段窗口的分界。
   onData: (data: string) => boolean,
   signal?: AbortSignal,
 ): Promise<void> {
   // 自己这条 AbortController：超时后要真的把请求掐掉。只抛错不掐的话，服务端会
-  // 继续生成、继续计费，而 chat 已经按「可重试」开了第二条 —— 两条一起烧额度。
+  // 继续生成、继续计费，而 chat 已经按「可重试」开了第二条，两条一起烧额度。
   const ac = new AbortController()
   if (signal) {
     if (signal.aborted) ac.abort(signal.reason)
@@ -117,7 +117,7 @@ async function postStream(
   let buf = ''
   // ⚠ 是「出过内容」而不是「收到过字节」：中转/服务商往往先刷一个心跳或
   // message_start，收到它就切到 60 秒窗口的话，一个想 90 秒的高档思考会被判成
-  // 卡住 —— 而那 3 分钟宽限本来就是为这段等待留的。
+  // 卡住，而那 3 分钟宽限本来就是为这段等待留的。
   let gotContent = false
 
   try {
@@ -174,7 +174,7 @@ export async function chatOpenAI(
     // 不发送 temperature：前端无温度设置项，且部分新推理模型（GPT-5.x 等）
     // 只接受默认采样值，显式发送会 400；交由各家服务端默认
     // 思考参数逐 SKU 从 provider 目录取；没有条目就一个字段都不发
-    // （已知不思考，或这家没有已知形态 —— 两种都不该乱猜）。
+    // （已知不思考，或这家没有已知形态，两种都不该乱猜）。
     { model: cfg.model, messages, stream: true, ...(thinkingWireFor(cfg.presetId, cfg.model, cfg.thinkingLevel ?? 'off') ?? {}) },
     (data) => {
       const obj = parseData(data) as {
@@ -213,7 +213,7 @@ export async function chatAnthropic(
     {
       model: cfg.model,
       // 开思考时必须抬高上限：thinking.budget_tokens 要【小于】max_tokens，
-      // 而目录给的预算最高 12000 —— 维持 2048 会直接 400。
+      // 而目录给的预算最高 12000，维持 2048 会直接 400。
       max_tokens: thinkingOn(cfg) ? THINKING_MAX_TOKENS : 2048,
       ...(system ? { system } : {}),
       messages: rest,

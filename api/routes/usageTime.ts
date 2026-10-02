@@ -4,7 +4,7 @@
  *
  * 用户端在「页面可见 + 窗口聚焦（或近期有交互）」期间周期性心跳上报活跃秒数，并在离开页面时用
  * sendBeacon 兜底 flush。本接口用 resolveUserIdWithFallback(req) 识别用户（登录→账号，
- * 游客→设备指纹+IP 哈希）——**因为 sendBeacon 无法带自定义请求头**，身份会同时放在 body 里兜底
+ * 游客→设备指纹+IP 哈希），**因为 sendBeacon 无法带自定义请求头**，身份会同时放在 body 里兜底
  * （见 api/services/session.ts 的注释；旧版只认请求头，导致兜底那段时间被记成「无设备身份」幽灵游客）。
  *
  * 免计口径（2026-09-18 收紧，与 visits.ts 一致）：测试设备（deviceId 以 test- 开头）、

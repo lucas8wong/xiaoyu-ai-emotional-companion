@@ -194,7 +194,7 @@ export default function App({ onBack, lang, initialResumeId, onGoChat }: { onBac
           <span aria-hidden="true" className="wy-back-arrow">←</span>
         </button>
       )}
-      {/* key=lang：语言切换只重挂载「渲染层」，screen/session 留在顶层组件 ——
+      {/* key=lang：语言切换只重挂载「渲染层」，screen/session 留在顶层组件
           切语言不再整棵 App 重挂载、不再把玩家踢回首页 */}
       <main id="main-content" key={lang} tabIndex={-1}>
         {screen === 'home' && (

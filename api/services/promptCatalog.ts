@@ -6,12 +6,12 @@
  * 按模式收拢成结构化数据，控制台直接渲染。
  *
  * 纪律（重要）：
- *   1. **不复制文本**。所有内容都从真实调用点同源的 builder / 常量读出来 —— 复制一份必然漂移，
+ *   1. **不复制文本**。所有内容都从真实调用点同源的 builder / 常量读出来，复制一份必然漂移，
  *      那正是「提示词监控」最不能出的错。取不到的（内联在函数里、未导出）如实标出来，
  *      不猜、不近似。
  *   2. **只读、无副作用**。不写 store、不发请求、不落盘；需要用户上下文才有内容的块（记忆/昵称/
  *      地区语气/括号开关），一律用「示例值」渲染，并在 note 里写明这是示例。
- *   3. 敏感内容（成人模式提示词、情欲/分流引导）**照实展示**——控制台本来就是 ADMIN_TOKEN 鉴权，
+ *   3. 敏感内容（成人模式提示词、情欲/分流引导）**照实展示**，控制台本来就是 ADMIN_TOKEN 鉴权，
  *      且运营必须能看到模型收到的原文；但会在 note 里标明敏感。
  *
  * 出口：
@@ -106,7 +106,7 @@ export interface PromptModeMeta {
 export interface PromptMode extends PromptModeMeta {
   notes: string[];
   variants: PromptVariant[];
-  /** 该模式下每个变体/块的完整列表见 variant.blockList？——保持扁平：正文都在 variants + blockList 里 */
+  /** 该模式下每个变体/块的完整列表见 variant.blockList？，保持扁平：正文都在 variants + blockList 里 */
   blockList: PromptBlock[];
 }
 
@@ -351,7 +351,7 @@ function buildRoleplayMode(opts: { lang?: RPLang; scenarioId?: string; style?: R
    * 成人档（无限制模式）单独给一个变体：它在 system 里的**成人口径散在四处**
    * （system 尾句 / 成人块 / 任务指令 / 回合纪律），只看成人块会漏掉后三处的差异。
    * 2026-09-27 用户口径「成人模式也要适当的自己推进剧情…可以主动调情，主动说色情的话，做色情的动作」
-   * 就是改这四处 —— 所以这里必须能一眼看到**组装后的原文**。
+   * 就是改这四处，所以这里必须能一眼看到**组装后的原文**。
    */
   for (const lang of langs) {
     const text = scenario[lang === 'en' ? 'en' : 'zh'];
@@ -527,8 +527,8 @@ function buildTextgameMode(langs: RPLang[]): PromptMode {
     blk('lang-en', '输出语言硬要求 · 英文', 'textgamePrompts.ts textgameLangDirective()', textgameLangDirective('en')),
     blk('json-stream', '输出格式 · 流式（正文先行 + 尾部 JSON）', 'textgamePrompts.ts textgameJsonDirective()', textgameJsonDirective(true, true)),
     blk('json-single', '输出格式 · 单 JSON', 'textgamePrompts.ts textgameJsonDirective()', textgameJsonDirective(true, false)),
-    blk('repair', 'JSON 纠错重试追加句（仅简中·已发现的缺口）', 'api/routes/textgame.ts POST /chat 纠正分支', '你上一条输出格式不对：没有完整的 JSON 对象……（该追加句目前只有简中版本，en/zh-TW 用户同样会看到——与 jsonDirective 同一处缺口）', 'gap'),
-    blk('host', '剧本主持词（systemPrompt）在哪', 'src/wenyou/engine/prompt.ts buildTurnMessages()', '剧本自带的 systemPrompt + 属性说明 + 格式契约，由前端拼好后**作为第一条 user 消息**发上来（客户端会把 system 拍平成 user，路由也会丢弃 system 角色消息）——所以不在服务端 system 里。', 'gap'),
+    blk('repair', 'JSON 纠错重试追加句（仅简中·已发现的缺口）', 'api/routes/textgame.ts POST /chat 纠正分支', '你上一条输出格式不对：没有完整的 JSON 对象……（该追加句目前只有简中版本，en/zh-TW 用户同样会看到，与 jsonDirective 同一处缺口）', 'gap'),
+    blk('host', '剧本主持词（systemPrompt）在哪', 'src/wenyou/engine/prompt.ts buildTurnMessages()', '剧本自带的 systemPrompt + 属性说明 + 格式契约，由前端拼好后**作为第一条 user 消息**发上来（客户端会把 system 拍平成 user，路由也会丢弃 system 角色消息），所以不在服务端 system 里。', 'gap'),
   ];
   const all = variants.map((v) => v.text).concat(blockList.map((b) => b.text)).join('\u0000');
   return {
@@ -647,7 +647,7 @@ function buildMemoryMode(): PromptMode {
   ];
   const blockList: PromptBlock[] = [
     blk('daily-life-block', '今日小事·注入块（示例）', 'chatDailyLife.ts buildDailyLifeBlock()', buildDailyLifeBlock(fallbackItems('2026-09-26', 'zh', 6).map((t) => ({ text: t })) as any, 'zh'), 'sample'),
-    blk('daily-life-gen', '今日小事·生成提示词（后台每日一次）', 'chatDailyLife.ts ensureDailyLife() 内联', '（内联在函数里、未导出：你是"<角色名>"——一个有自己的日子的陪伴者…… 要做成「可查看」需要把该字面量抽成导出 builder）', 'gap'),
+    blk('daily-life-gen', '今日小事·生成提示词（后台每日一次）', 'chatDailyLife.ts ensureDailyLife() 内联', '（内联在函数里、未导出：你是"<角色名>"，一个有自己的日子的陪伴者…… 要做成「可查看」需要把该字面量抽成导出 builder）', 'gap'),
     blk('story-bridge', '剧情出身角色的人设块（聊一聊里用）', 'storyBridge.ts storyPromptBlock()/composeStory*()', '（这些块按剧情档案动态拼装，且目前**只有简中**；要查看请在「用户记录」里看具体角色）', 'gap'),
   ];
   const all = variants.map((v) => v.text).concat(blockList.map((b) => b.text)).join('\u0000');

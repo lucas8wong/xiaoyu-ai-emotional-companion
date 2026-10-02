@@ -1,13 +1,13 @@
 /**
  * AI 狼人杀 API
  *
- * GET  /api/werewolf/config          —— 局型、每日局数上限、整局预估点数
- * GET  /api/werewolf/roster          —— 可拉入的角色（聊一聊角色）+ 内置陪玩 + 今日剩余局数
- * POST /api/werewolf/start           —— 开局（选人 / 局型）
- * POST /api/werewolf/:id/action      —— 真人本轮动作（发言 / 刀 / 验 / 用药 / 投票 / 开枪）
- * GET  /api/werewolf/:id             —— 取当前视角的对局视图（**必过视角过滤**）
- * GET  /api/werewolf/games           —— 我的对局列表
- * POST /api/werewolf/:id/abandon     —— 放弃本局（回滚未结算点数）
+ * GET  /api/werewolf/config：局型、每日局数上限、整局预估点数
+ * GET  /api/werewolf/roster，可拉入的角色（聊一聊角色）+ 内置陪玩 + 今日剩余局数
+ * POST /api/werewolf/start，开局（选人 / 局型）
+ * POST /api/werewolf/:id/action，真人本轮动作（发言 / 刀 / 验 / 用药 / 投票 / 开枪）
+ * GET  /api/werewolf/:id，取当前视角的对局视图（**必过视角过滤**）
+ * GET  /api/werewolf/games，我的对局列表
+ * POST /api/werewolf/:id/abandon，放弃本局（回滚未结算点数）
  *
  * 安全：`/action` 的发言先在服务层过 `safety.ts`；命中自伤类内容时返回
  * `crisis: true` 并**中断对局**，由前端把用户带到陪伴/危机响应路径（绝不当成游戏发言继续玩）。

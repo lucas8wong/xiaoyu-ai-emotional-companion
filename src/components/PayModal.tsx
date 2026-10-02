@@ -3,18 +3,18 @@
  *
  * 通道：Stripe 结账页（卡 / Link / Apple Pay / Google Pay / **支付宝**，三种币种下单次购买都可用）。
  * 结算币种：由**服务端按访客地区**判定（港澳 HKD / 内地 CNY / 其他 USD，见 /api/payment/config 的
- *   `payCurrency`）——前端只展示该币种价格，实扣同源，页面价 = 实扣价。
+ *   `payCurrency`），前端只展示该币种价格，实扣同源，页面价 = 实扣价。
  * 支付方式：服务端创建 Checkout 时**不传 payment_method_types**（动态支付方式），
  *   让结账页把该币种/该客户所有可用方式都摆出来；一旦显式指定就会关掉其它方式。
- *   2026-09-29：**微信支付从 Stripe 侧移除**（用户拍板「Stripe 那里移除微信支付这个选项」）——
+ *   2026-09-29：**微信支付从 Stripe 侧移除**（用户拍板「Stripe 那里移除微信支付这个选项」）
  *   服务端用 `excluded_payment_method_types: ['wechat_pay']` 只摘掉它，本弹窗也不再提它；
  *   同日按要求在「单次购买」下标注**支付宝**（按界面语言：支付宝 / 支付寶 / Alipay）。
  * 2026-09-23：移除微信收款码人工确认通道；本站用户侧只有 Stripe。
- * 2026-09-24：UI 重做 —— 文案精简、单一结算币种主价、全皮肤 token（无硬编码品牌色）。
+ * 2026-09-24：UI 重做：文案精简、单一结算币种主价、全皮肤 token（无硬编码品牌色）。
  * 2026-09-25：① Stripe 结账页点「返回」→ 服务端 cancel_url 带 pay/plan/term/days，Home 据此**原样重开本弹窗**
  *   （回到「选连续包月」那一屏，不再丢回首页）+ 顶部一句「已取消」；
  *   ② 弹窗底部补客服（小红书一键直达 + 邮箱）。
- * 2026-09-26：**微信收款码作为「Stripe 付不了」的备用通道回到用户侧**（用户拍板 B）——
+ * 2026-09-26：**微信收款码作为「Stripe 付不了」的备用通道回到用户侧**（用户拍板 B）
  *   支付通道下方一个**默认折叠**的块：收款码图片（URL 由服务端下发、带内容哈希版本号）+ 三步说明 +
  *   「需人工确认、会有等待时间」的如实提示。付完把截图 + 注册邮箱发到小红书 / 邮箱，运营侧手动开通。
  */
@@ -95,7 +95,7 @@ export default function PayModal({ open, plan = 'plus', days, term = 'monthly', 
     try { navigator.clipboard.writeText(getInviteLink()); void trackInviteCopy(); setInviteCopied(true); setTimeout(() => setInviteCopied(false), 1500); } catch { /* 忽略 */ }
   };
 
-  /* —— 价格（只显示本次结算币种；另两币种放在小字里便于换算；取值/格式化统一走 lib/payPrice）—— */
+  /* 【价格（只显示本次结算币种；另两币种放在小字里便于换算；取值/格式化统一走 lib/payPrice）】 */
   const pp = config?.pricing?.plans?.[plan];
   const cur = payCurrencyOf(config);
   // 月付续费延长（30/60/90 天）：按 天数/30 比例放大，与 Stripe 单次购买实扣一致
@@ -115,13 +115,13 @@ export default function PayModal({ open, plan = 'plus', days, term = 'monthly', 
    * 折扣标注（2026-09-29，共享组件见 ui/DiscountBadge）：
    *  - `offerBadge`：月付的限时优惠（服务端下发 launchOffer/discountPct；只在真有优惠时出现）
    *  - `saveBadge`：年付的「省 3 个月」（结构性省钱，不是限时）
-   * 两者都是填充色块、11px bold，紧贴主价下方 —— 旧写法是裸琥珀小字，五皮肤实测 2.15–3.10:1 不达标。
+   * 两者都是填充色块、11px bold，紧贴主价下方，旧写法是裸琥珀小字，五皮肤实测 2.15–3.10:1 不达标。
    */
   const offerBadge = config?.launchOffer && term === 'monthly' && origPrice
     ? <DiscountBadge tone="offer">{t('membershipLaunchOffer', { pct: config.discountPct ?? 50 })}</DiscountBadge>
     : null;
   const saveBadge = term === 'yearly' ? <DiscountBadge tone="save">{t('memSaveMonths')}</DiscountBadge> : null;
-  /** 分档额度（条）：游客 5 / 注册 20（数字来自后端，弹窗里不写死）——2026-09-27 口径 */
+  /** 分档额度（条）：游客 5 / 注册 20（数字来自后端，弹窗里不写死），2026-09-27 口径 */
   const tier = quotaTierTiao(quota, config);
 
   return (
@@ -132,7 +132,7 @@ export default function PayModal({ open, plan = 'plus', days, term = 'monthly', 
         </div>
         <h2 className="text-lg font-bold text-ink">{t('payTitle')}</h2>
         <p className="text-xs text-ink-soft mt-1">
-          {/* 统一口径：额度是**按天重置**的「条」（游客 5 / 注册 20），不是一次性「次」——
+          {/* 统一口径：额度是**按天重置**的「条」（游客 5 / 注册 20），不是一次性「次」
               文案与数字都跟着口径换，别在点数制下继续印「已用完 3 次免费体验」 */}
           {quota?.creditEnabled
             ? (tier?.own != null ? t('payUsedUpCredit', { n: tier.own }) : t('payUsedUp', { n: quota?.freeTotal ?? 5 }))
@@ -218,7 +218,7 @@ export default function PayModal({ open, plan = 'plus', days, term = 'monthly', 
           </button>
           {/*
             可用方式提示（2026-09-29 用户要求：「这里要标注支付宝，不同语言显示对应语言」）：
-            支付宝**不做币种隐藏**——实测（temp/probe-pay-methods-by-currency.mjs，建真会话回读后立即 expire）
+            支付宝**不做币种隐藏**，实测（temp/probe-pay-methods-by-currency.mjs，建真会话回读后立即 expire）
             单次购买在 HKD / CNY / USD 三种币种下 Stripe 都解析出 ["card","alipay","link"]，
             所以这条（挂在「单次购买」按钮下）恒列支付宝；连续包月那条不列（订阅解析为 ["card","link"]，无支付宝）。
             微信支付已于同日从 Stripe 侧移除（见 excluded_payment_method_types），故此处不再出现。
@@ -227,7 +227,7 @@ export default function PayModal({ open, plan = 'plus', days, term = 'monthly', 
           <p className="text-[10px] text-ink-soft text-center pt-0.5">{t('paySecured')}</p>
         </div>
 
-        {/* 备用通道（2026-09-26 用户拍板 B）：Stripe 走不通（卡被拒 / 没有可用方式）时的兜底 —— 微信收款码。
+        {/* 备用通道（2026-09-26 用户拍板 B）：Stripe 走不通（卡被拒 / 没有可用方式）时的兜底，微信收款码。
             **默认折叠**：不影响主通道的视线，但用户真付不了时能自己扫码走人工确认。
             收款码 URL 由服务端下发（带图片内容哈希版本号，换图不会让用户看到旧码）。 */}
         {config?.payQrUrl && (
@@ -261,7 +261,7 @@ export default function PayModal({ open, plan = 'plus', days, term = 'monthly', 
         {message && <p className="text-xs text-red-500 text-center">{message}</p>}
       </div>
 
-      {/* 客服：付款出问题找谁（小红书 / Instagram / 邮箱三个直达），与上面的备用通道是两件事——
+      {/* 客服：付款出问题找谁（小红书 / Instagram / 邮箱三个直达），与上面的备用通道是两件事
           上面那张码是「怎么把钱付过来」，这里是「付完 / 付不动时找谁」。
           2026-09-29 用户要求「这里的句子可以直接删掉，留 3 个直达链接就行」：删掉说明句
           （i18n 的 `payHelpBody` 保留但不再渲染），标题 + 三个链接自己就把话说清了。 */}

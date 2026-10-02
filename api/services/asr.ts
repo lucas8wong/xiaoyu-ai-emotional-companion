@@ -65,7 +65,7 @@ export function isAsrReady(): boolean { return asrReady; }
 /** 预热：启动时调用（fire-and-forget），首次加载模型并返回是否就绪 */
 export async function ensureAsrReady(): Promise<boolean> {
   try {
-    // 只验证「模型能加载」，不做推理——whisper-large-v3-turbo 对纯静音/合成音会返回空 token 导致解码报错，
+    // 只验证「模型能加载」，不做推理，whisper-large-v3-turbo 对纯静音/合成音会返回空 token 导致解码报错，
     // 但那不代表模型不可用；真实语音推理由 transcribe 处理。
     await getTranscriber();
     asrReady = true;

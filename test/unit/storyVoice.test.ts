@@ -13,7 +13,7 @@ import {
   SPEECH_MAX_CHARS,
 } from '../../src/lib/storyVoice.js';
 
-// —— 语气基调：与 storyBgm.setForScenario 共用同一套标签分组 ——
+// 【语气基调：与 storyBgm.setForScenario 共用同一套标签分组】
 test('toneForScenario：标签分组 → 语气基调（校园明快/冷感克制/治愈温柔/古韵温暖/都市默认）', () => {
   assert.strictEqual(toneForScenario({ tags: ['校园'] }), 'bright');
   assert.strictEqual(toneForScenario({ tags: ['刑警'] }), 'cool');
@@ -76,7 +76,7 @@ test('presets 自洽：id 唯一、design 非空、label 齐全', () => {
   assert.strictEqual(defaultVoiceForScenario({ tags: ['治愈'], ai: { gender: '女' } }).design.startsWith('('), true);
 });
 
-// —— 朗读文本清洗：括号心理描写必须去掉（否则"看不见的内心"被念出来 = 立刻出戏）——
+// 【朗读文本清洗：括号心理描写必须去掉（否则"看不见的内心"被念出来 = 立刻出戏）】
 test('speakableRoleplayText：去掉全角括号里的心理活动/神态，保留对白与旁白', () => {
   const raw = '（他轻轻叹了口气）「我在这儿。」他抬眼看过来。';
   assert.strictEqual(speakableRoleplayText(raw), '「我在这儿。」他抬眼看过来。');

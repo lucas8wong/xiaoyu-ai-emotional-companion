@@ -12,7 +12,7 @@ import { parseRoleplayText, type RpSegment } from '../lib/roleplayText';
  * - **心声/神态**（括号） = 安静的注解：只有 `0.94em` + 括号符淡色，不铺底、不加竖线
  *   （独占一行仍是块级，但只是为了保持行结构，不带来任何容器）。
  *
- * 2026-09-17 用户口径：「高亮的应该是对白而不是心声」——此前容器给的是心声（视觉上"被框起来的"
+ * 2026-09-17 用户口径：「高亮的应该是对白而不是心声」，此前容器给的是心声（视觉上"被框起来的"
  * 是心里话），本轮把容器**搬给对白**，两档互换而非叠加。
  *
  * 为什么**不**给对白整段上品牌色文字（也评估过）：① 颜色会变成唯一强通道
@@ -27,7 +27,7 @@ import { parseRoleplayText, type RpSegment } from '../lib/roleplayText';
  *
  * 三条设计红线（详见 `src/index.css` 的 `.rp-*` 段与 `CHANGELOG.md` 2026-09-16 / 09-17）：
  * 1. **不靠颜色单独承载信息**：每类至少两个通道（颜色 + 字重 / 字阶 / 底色 / 竖线）；
- * 2. **中文不上斜体**：本项目 `index.css` 设了 `font-synthesis: none` —— `italic` 对中文
+ * 2. **中文不上斜体**：本项目 `index.css` 设了 `font-synthesis: none`，`italic` 对中文
  *    是个**静默 no-op**，所以斜体只作为**英文界面**的附加通道（`ITALIC_LANGS`）；
  * 3. **只用皮肤 token 派生**（`healing / zen / star / candy` 四套皮肤）：颜色一律走
  *    `var(--color-*)` + `color-mix()`，禁止硬编码灰/绿，否则四套皮肤里必有一套翻车。
@@ -38,7 +38,7 @@ const ITALIC_LANGS = new Set(['en']);
 
 export interface RoleplayRichTextProps {
   text: string;
-  /** 界面语言（'zh' | 'zh-TW' | 'en'）——只用来决定要不要上斜体 */
+  /** 界面语言（'zh' | 'zh-TW' | 'en'），只用来决定要不要上斜体 */
   lang?: string;
 }
 

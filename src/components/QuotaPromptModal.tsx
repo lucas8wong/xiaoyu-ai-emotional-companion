@@ -114,7 +114,7 @@ export default function QuotaPromptModal({ open, onClose, onOpenFeedback, onOpen
 
         {/*
           补填邀请码（注册时没填的用户）：
-          · 放在「分享邀请」之后——同属「邀请」语境，而这里是额度耗尽、最想找额度的时刻。
+          · 放在「分享邀请」之后：同属「邀请」语境，而这里是额度耗尽、最想找额度的时刻。
           · 只在「已登录 + 还没填过」时出现；领完立即隐藏并提示到账。
         */}
         {canFillInvite && (

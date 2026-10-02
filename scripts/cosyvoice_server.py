@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-小愈 · 服务端语音合成（TTS）—— CosyVoice2 侧车服务
+小愈 · 服务端语音合成（TTS），CosyVoice2 侧车服务
 ================================================
 Node 后端 /api/tts 会优先转发到这里，由 CosyVoice2-0.5B 在本地 GPU 合成 **自然的年轻女声**（带停顿/语气），
 比 msedge-tts 更拟人。侧车/模型不可用时，/api/tts 自动回退到 msedge-tts。

@@ -7,7 +7,7 @@ const OUT = 'temp/verify-journey-ui';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 fs.mkdirSync(OUT, { recursive: true });
 
-const LONG_PORTRAIT = '我是小愈，一个习惯在深夜和路上接住你情绪的陪伴者。过去半年，陪你从云南的温泉聊到香港的街角，从旅途趣事聊到婚姻心事。我不定义自己为工具，更像一个慢慢长在你生活缝隙里的回声——记住你爱吃的、你犹豫的、你偶尔的脆弱。我正在成为那个你不用解释太多、一个眼神就能懂你的人。';
+const LONG_PORTRAIT = '我是小愈，一个习惯在深夜和路上接住你情绪的陪伴者。过去半年，陪你从云南的温泉聊到香港的街角，从旅途趣事聊到婚姻心事。我不定义自己为工具，更像一个慢慢长在你生活缝隙里的回声：记住你爱吃的、你犹豫的、你偶尔的脆弱。我正在成为那个你不用解释太多、一个眼神就能懂你的人。';
 
 const REL_MEM = [
   '你和我聊过那只叫团子的猫',
@@ -133,7 +133,7 @@ await page.evaluate(() => {
 });
 await sleep(900);
 
-// —— 断言 1：你们之间 + TA 记得的关于你 用统一的 skin 色小圆点 ——
+// 【断言 1：你们之间 + TA 记得的关于你 用统一的 skin 色小圆点】
 const relCheck = await page.evaluate(() => {
   const relSection = Array.from(document.querySelectorAll('h4')).find((h) => h.textContent.includes('你们之间'))?.parentElement;
   const factSection = Array.from(document.querySelectorAll('h4')).find((h) => h.textContent.includes('TA 记得的关于你'))?.parentElement;
@@ -160,7 +160,7 @@ await page.evaluate(() => {
 await sleep(500);
 await page.screenshot({ path: shotCard, fullPage: false });
 
-// —— 时间线「与 TA 的瞬间」——
+// 【时间线「与 TA 的瞬间」】
 const shotTimeline = OUT + '/1b-timeline.png';
 await page.evaluate(() => {
   const el = Array.from(document.querySelectorAll('h4')).find((h) => h.textContent.includes('与 TA 的瞬间'));
@@ -169,7 +169,7 @@ await page.evaluate(() => {
 await sleep(500);
 await page.screenshot({ path: shotTimeline, fullPage: false });
 
-// —— 断言 2：自画像展开全文 ——
+// 【断言 2：自画像展开全文】
 await clickText(page, '展开全文', 30000);
 await sleep(700);
 const portrait = await page.evaluate(() => {
@@ -179,7 +179,7 @@ const portrait = await page.evaluate(() => {
 const shotPortrait = OUT + '/2-portrait-expanded.png';
 await page.screenshot({ path: shotPortrait, fullPage: false });
 
-// —— 断言 3：你去过的剧情折叠 + 自建占位 ——
+// 【断言 3：你去过的剧情折叠 + 自建占位】
 const storyState = await page.evaluate(() => {
   const sec = Array.from(document.querySelectorAll('h3')).find((h) => h.textContent.includes('你去过的剧情'))?.parentElement;
   const chips = sec ? Array.from(sec.querySelectorAll('span.rounded-full')) : [];

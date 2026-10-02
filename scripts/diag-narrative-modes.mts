@@ -15,7 +15,7 @@ const scenario = rp.getScenario((rp.listScenarios('zh') as any[])[0].id);
 
 function build(style: 'classic' | 'immersive', adult: boolean): string {
   const sys = rp.buildSystemPrompt(scenario, 'zh', undefined, undefined, undefined, style, adult);
-  // 注意：必须把 style 传进去，否则两种风格都会拿到同一档（默认 immersive）——这正是要诊断的问题
+  // 注意：必须把 style 传进去，否则两种风格都会拿到同一档（默认 immersive），这正是要诊断的问题
   return sys + (adult ? '\n\n' + rp.buildUnlimitedModeBlock('zh', style) : '');
 }
 

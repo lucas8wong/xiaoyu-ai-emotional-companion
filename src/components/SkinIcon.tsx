@@ -17,7 +17,7 @@ import {
 import { useSkin } from './SkinProvider';
 import type { CompanionMode } from '../services/api';
 
-/** 会员档位（含免费档）——与支付侧可购买的 `PlanKey`（仅 plus/pro）不同，仅用于会员图标/徽章映射 */
+/** 会员档位（含免费档），与支付侧可购买的 `PlanKey`（仅 plus/pro）不同，仅用于会员图标/徽章映射 */
 type PlanLevel = 'free' | 'plus' | 'pro';
 
 const MODE_FALLBACK: Record<CompanionMode, LucideIcon> = {

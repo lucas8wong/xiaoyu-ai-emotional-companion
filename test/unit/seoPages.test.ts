@@ -127,7 +127,7 @@ test('合规红线：无 China / little healing / 医疗承诺类表述', () => 
     const text = pageText(p);
     for (const { re, why } of FORBIDDEN) {
       const m = text.match(re);
-      assert.ok(!m, `${p.slug} 命中违禁表述「${m?.[0]}」——${why}`);
+      assert.ok(!m, `${p.slug} 命中违禁表述「${m?.[0]}」，${why}`);
     }
   }
 });
@@ -166,7 +166,7 @@ test('sitemap：覆盖注册表每一个 URL（先跑 npm run sitemap）', () =>
   try {
     xml = readFileSync(file, 'utf8');
   } catch {
-    assert.fail('public/sitemap.xml 不存在——请先运行 `npm run sitemap`');
+    assert.fail('public/sitemap.xml 不存在，请先运行 `npm run sitemap`');
   }
   const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
   assert.ok(locs.length > 0, 'sitemap 里没有任何 <loc>');
@@ -179,7 +179,7 @@ test('sitemap：覆盖注册表每一个 URL（先跑 npm run sitemap）', () =>
   for (const loc of locs) {
     if (!loc.startsWith(SITE_ORIGIN)) continue;
     const rel = loc.slice(SITE_ORIGIN.length);
-    // 固定公开页（首页 / FAQ / 隐私政策…）以 STATIC_SITEMAP_PATHS 为准 —— 与生成器同一份真源。
+    // 固定公开页（首页 / FAQ / 隐私政策…）以 STATIC_SITEMAP_PATHS 为准，与生成器同一份真源。
     // 原先这里硬编码 '/ 与 /faq'，于是新增固定页要记得改两处，这次加 /privacy 就漏了一处。
     if (STATIC_SITEMAP_PATHS.includes(rel)) continue;
     if (rel.startsWith('/s/')) continue; // 千世书分享页有意不进 sitemap

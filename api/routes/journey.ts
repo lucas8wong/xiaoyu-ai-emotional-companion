@@ -1,6 +1,6 @@
 /**
  * «与你的旅程» API
- * GET /api/journey  —— 聚合当前用户（登录账号或游客设备指纹）的陪伴旅程
+ * GET /api/journey，聚合当前用户（登录账号或游客设备指纹）的陪伴旅程
  */
 
 import 'dotenv/config';

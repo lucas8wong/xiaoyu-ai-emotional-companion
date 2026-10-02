@@ -146,7 +146,7 @@ if (fs.existsSync(distDir)) {
   }
   // 预渲染静态页直达：命中 sitemap 里的公开页（/faq + `src/seo` 注册表里的全部内容页，含 /zh/*）时
   // 直接返回快照，避免 express.static 把 dist/<目录> 301 到带尾斜杠的地址
-  // —— 保证 sitemap 与站内链接里的**无尾斜杠 URL 一次请求直达内容**（少一跳，收录更快）。
+  // 保证 sitemap 与站内链接里的**无尾斜杠 URL 一次请求直达内容**（少一跳，收录更快）。
   // 路径清单由注册表派生：新增内容页不需要再改本文件（此前是硬编码数组，加页必漏）。
   const prerenderedPaths = new Set<string>(['/faq']);
   for (const page of SEO_PAGES) prerenderedPaths.add(seoPagePath(page));
@@ -170,7 +170,7 @@ if (fs.existsSync(distDir)) {
         return;
       }
       // 狼人杀子应用样式（public/wolfcha.css / wolfcha-overrides.css）：文件名不带 hash、内容随每次样式改动而变。
-      // 默认 7 天缓存会让「改了样式线上看不到」——实测边缘已命中 Age≈41h 的旧文件，而源站早已是新内容。
+      // 默认 7 天缓存会让「改了样式线上看不到」，实测边缘已命中 Age≈41h 的旧文件，而源站早已是新内容。
       // 这里与 .html 同口径：必须回源校验（ETag/304），改样式即时生效。
       if (filePath.endsWith('wolfcha.css') || filePath.endsWith('wolfcha-overrides.css')) {
         res.setHeader('Cache-Control', 'no-cache');

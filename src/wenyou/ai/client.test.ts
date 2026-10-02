@@ -66,7 +66,7 @@ describe('chat 的自动重试', () => {
   const cfg = { provider: 'openai', apiKey: 'k', model: 'm' } as const
 
   // 重试之间真的会 sleep（限流 2s、其余 0.8s）。用假定时器跑完，否则这一组
-  // 测试要空等 4 秒多 —— 每次跑套件都付一遍。
+  // 测试要空等 4 秒多，每次跑套件都付一遍。
   beforeEach(() => vi.useFakeTimers())
   afterEach(() => vi.useRealTimers())
 
@@ -93,7 +93,7 @@ describe('chat 的自动重试', () => {
     }
   })
 
-  it('key 不对 / 请求本身有问题：不重试 —— 再试一次还是同样的错，只是让用户多等', async () => {
+  it('key 不对 / 请求本身有问题：不重试。再试一次还是同样的错，只是让用户多等', async () => {
     for (const err of [new AIError(401, 'bad key'), new AIError(403, 'forbidden'), new AIError(400, 'bad model')]) {
       const fn = okOnSecond(err)
       vi.spyOn(adapters, 'chatOpenAI').mockImplementation(fn as never)
@@ -102,7 +102,7 @@ describe('chat 的自动重试', () => {
     }
   })
 
-  it('已经吐出过内容就不重试 —— 否则界面会把写了一半的段落倒回去重写', async () => {
+  it('已经吐出过内容就不重试，否则界面会把写了一半的段落倒回去重写', async () => {
     const fn = vi.fn(async (_c: unknown, _m: unknown, onDelta?: (t: string) => void) => {
       onDelta?.('写了一半')
       throw new AIError(503, 'mid-stream')

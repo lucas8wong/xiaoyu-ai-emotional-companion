@@ -1,8 +1,8 @@
 /**
  * 邀请反馈（用户侧）API
- * GET  /api/referral/summary     —— 当前登录用户的「我的邀请记录」
- * POST /api/referral/invite-code —— 注册后补填预设邀请码（注册时没填的人补领额度，一人一次）
- * POST /api/referral/copied      —— 「我复制了专属邀请链接」上报（运营端看「是否复制过」，一人可多次）
+ * GET  /api/referral/summary，当前登录用户的「我的邀请记录」
+ * POST /api/referral/invite-code，注册后补填预设邀请码（注册时没填的人补领额度，一人一次）
+ * POST /api/referral/copied，「我复制了专属邀请链接」上报（运营端看「是否复制过」，一人可多次）
  *
  * 回答用户自己的问题：「有没有人通过我的链接注册？我因此拿到多少额度 / 会员天数？」
  * 数据源与运营端「📣 邀请推广」**同源**（`services/adminReferrals.ts` 的 `buildMyReferralSummary`），
@@ -25,7 +25,7 @@ import { rateLimit } from '../middleware/rateLimit.js';
 
 const router = Router();
 
-// 补填邀请码限流：预设码很短（可能被爆破枚举），按 IP 固定窗口限次——正常用户一次就够
+// 补填邀请码限流：预设码很短（可能被爆破枚举），按 IP 固定窗口限次，正常用户一次就够
 const limitInviteCode = rateLimit({ windowMs: 10 * 60 * 1000, max: 8, message: '操作过于频繁，请稍后再试' });
 
 router.get('/summary', async (req: Request, res: Response): Promise<void> => {
@@ -86,9 +86,9 @@ router.post('/invite-code', limitInviteCode, async (req: Request, res: Response)
 });
 
 /**
- * POST /api/referral/copied  —— 用户端「复制了我的专属邀请链接」上报（2026-09-29）
+ * POST /api/referral/copied，用户端「复制了我的专属邀请链接」上报（2026-09-29）
  *
- * 为什么需要埋点：运营端要能区分三类人——「压根不知道有邀请入口」（一次没复制）、
+ * 为什么需要埋点：运营端要能区分三类人：「压根不知道有邀请入口」（一次没复制）、
  * 「复制了但没人注册」（该给话术/激励）、「复制且真的拉来人」。此前只有**结果**（inviteCount），
  * 没有**动作**，所以前两类分不开。
  *

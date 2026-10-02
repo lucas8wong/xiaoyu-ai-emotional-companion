@@ -2,7 +2,7 @@
  * 审阅「已读 / 未读」状态存储的单测。
  *
  * store 在 import 时用 process.cwd() 定位 data/，所以必须先 setupTempCwd 再动态 import
- * ——否则会往真实 data/ 里写（AGENTS.md 红线 3：data/ 里是真实用户数据）。
+ *。否则会往真实 data/ 里写（AGENTS.md 红线 3：data/ 里是真实用户数据）。
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

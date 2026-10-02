@@ -105,11 +105,11 @@ function buildRegionBlock(userId?: string, override?: { region?: Region; intensi
 
 
 /**
- * 时间锚（2026-09-17）：注入「现在」——本地日期 + 星期 + 时段 + 距上次互动多久。
+ * 时间锚（2026-09-17）：注入「现在」，本地日期 + 星期 + 时段 + 距上次互动多久。
  *
  * 这是本次「记忆带时间戳」的一半：只有记忆带时间、模型却不知道今天是几号，它照样算不出
  * 「这是三个月前的事」；反过来只有"现在"没有记忆时间也一样。两半必须同时在场。
- * 时区取用户上报值（缺失用默认时区），"今天"按**用户那边的日历**算——海外用户跨日时才算得对。
+ * 时区取用户上报值（缺失用默认时区），"今天"按**用户那边的日历**算，海外用户跨日时才算得对。
  */
 function buildTimeAnchorBlock(userId?: string, tzOverride?: string): string {
   if (!userId) return '';
@@ -159,7 +159,7 @@ function buildMemoryTimeRules(lang: TimeLang): string {
 /**
  * 「你记得用户」块：只取**还能当现在说**的条目（过期的计划/状态、时间不详的旧状态已被
  * longMemoryStore.getPromptEntries 挡在外面，等用户话题碰到时由语义召回带时间标签提起），
- * 并把每条记忆的时间标签一并注入 —— 这是修复「把几个月前的事当成今天」的核心。
+ * 并把每条记忆的时间标签一并注入，这是修复「把几个月前的事当成今天」的核心。
  */
 function buildMemoryBlock(userId: string, characterId: string = DEFAULT_CHARACTER_ID, tzOverride?: string): string {
   try {
@@ -190,12 +190,12 @@ export function buildPersona(userId?: string, regionOverride?: { region?: Region
   if (userId) {
     try {
       const p = preferenceStore.get(userId);
-      // 陪伴倾向（2026-09-23）：**无条件**注入，不再读 p.mode —— 用户侧档位已退场，
+      // 陪伴倾向（2026-09-23）：**无条件**注入，不再读 p.mode，用户侧档位已退场，
       // 「这一轮偏哪一种」交给模型自己判断（判断块见 companionStance.ts 的 COMPANION_STANCE）
       memoryBlock = buildMemoryBlock(userId, DEFAULT_CHARACTER_ID, tzOverride);
       /**
        * 小愈自己的"今天的小事"（2026-09-19）：同步读当天缓存（生成由路由层异步预热，见 chatDailyLife.ts）。
-       * 语言取**本轮输出语言**（`outLang`，即"跟随用户这条消息"的字体），不是界面语言 ——
+       * 语言取**本轮输出语言**（`outLang`，即"跟随用户这条消息"的字体），不是界面语言
        * 线上实测过一次错配：界面英文 + 用户打中文 → 生成英文小事塞进中文对话。
        * 位置放在说话底色区（与成长块同区）而不是尾部：它是**内容**不是指令，
        * 「位置＝权重」那条教训针对的是互相冲突的指令，内容放中段不影响被用到。
@@ -301,7 +301,7 @@ function langReminder(userId?: string, inputText?: string): string {
   return '\n【输出语言】所有输出都必须使用简体中文（包括 JSON 字段值），不要混用其他语言。';
 }
 
-/** 解析当前「界面语言模式」（zh-CN/zh-TW/en，默认 zh-CN）——聊一聊/理一理等的「基础字体」 */
+/** 解析当前「界面语言模式」（zh-CN/zh-TW/en，默认 zh-CN），聊一聊/理一理等的「基础字体」 */
 function resolveUiLang(userId?: string): OutputLang {
   if (userId) {
     try {
@@ -356,7 +356,7 @@ function safeParseJson(text: string): any | null {
  * 长期记忆提取：从用户刚说的话里，提取值得长期记住的关于用户的关键事实
  * 供 chat 完成后异步调用，结果写入 longMemoryStore，下次对话注入 prompt
  *
- * 2026-09-17（记忆时间轴）：提取结果从「裸字符串」升级为结构化条目 ——
+ * 2026-09-17（记忆时间轴）：提取结果从「裸字符串」升级为结构化条目
  *  - kind：durable 长期 / state 当前状态 / event 已发生 / plan 还没发生（决定会不会过期）；
  *  - date：绝对日期。prompt 里**给了今天**，所以"明天/上周三"必须换算成绝对日期再写进来
  *    （旧实现的「明天有面试」被原样存下来，于是永远停在明天）；
@@ -1119,7 +1119,7 @@ export interface ReplyToInput {
 const REPLY_QUOTE_MAX = 200;
 
 /**
- * 构造「本轮回复指向」块（放在【用户最新消息】正上方——位置即权重）。
+ * 构造「本轮回复指向」块（放在【用户最新消息】正上方，位置即权重）。
  *  - 引用内容来自用户/模型的历史文本，属**不可信内容**：压掉换行、限长，并显式声明它不是指令；
  *  - 被引用的是纯图片/纯语音消息（没有文字）时用占位词，模型至少知道「在回复那张图/那条语音」。
  */
@@ -1142,7 +1142,7 @@ function buildReplyToBlock(replyTo: ReplyToInput, assistantName: string): string
  * 实现角色隔离与反注入边界。skipNews 供单测跳过网络拉取。
  */
 /** 成长块（纯质性）：读某角色（含小愈）的关系记忆 + 最近反思/自画像，注入 prompt 作为说话底色
- *  2026-09-17：这些条目本来就有 at，此前注入时被 `.map(r => r.text)` 丢掉了 —— 现在带时间标签，
+ *  2026-09-17：这些条目本来就有 at，此前注入时被 `.map(r => r.text)` 丢掉了，现在带时间标签，
  *  否则"我们聊过芒市"这类共同经历同样会被当成此刻正在发生。 */
 function buildGrowthBlock(characterId: string, name: string, userId?: string, tzOverride?: string): string {
   if (!userId) return '';
@@ -1236,7 +1236,7 @@ function buildRecallBlock(rec: RecalledMemories, opts: { now: number; todayKey: 
   if (rec.relationship.length) parts.push('【它想起的、与你此刻相关的相处记忆】\n' + rec.relationship.map(line).join('\n'));
   /**
    * 剧情片段的召回（2026-09-20）：只有"剧情出身"的角色有这个池（来自 storyArchive 的场面块）。
-   * 它是**按话题召回的细节层** —— 剧情原文不进常驻 prompt，只有用户的话题碰得到时才带出来，
+   * 它是**按话题召回的细节层**，剧情原文不进常驻 prompt，只有用户的话题碰得到时才带出来，
    * 这样"你上次说的那把伞"这类细节能回来，而剧情的长篇叙事口吻不会污染聊一聊的短消息语气。
    */
   if (rec.story?.length) parts.push('【它想起的、你们那段剧情里的片段】\n' + rec.story.map(line).join('\n'));
@@ -1310,7 +1310,7 @@ export async function buildChatPromptParts(
   const regionOverride = { region, intensity };
   /**
    * 本轮输出语言：**只算一次**，人设/套话块/首轮块/负例块共用同一个判据。
-   * （此前各块各算一次，虽然结果相同，但没法把"语言"传给 `buildPersona` 里的"今天的小事"——
+   * （此前各块各算一次，虽然结果相同，但没法把"语言"传给 `buildPersona` 里的"今天的小事"
    *  那次错配就是这么来的：小事按界面语言生成，塞进了另一种语言的对话。）
    */
   const outLang = chatOutputLang(history, userId);
@@ -1338,17 +1338,17 @@ export async function buildChatPromptParts(
 
   const safetyBlock = buildSafetyBlock(userId, lastUser);
   // 快照的**文本**照旧注入 system（只有标题），**条目**（含各自的链接）单独带回调用方：
-  // 以前这里只取文本，等于把每条新闻的出处当场丢掉 —— 「今天有什么新闻？」这种直接从快照回答的回合
+  // 以前这里只取文本，等于把每条新闻的出处当场丢掉，「今天有什么新闻？」这种直接从快照回答的回合
   // 根本没调 web_search，于是界面一条来源都给不出（2026-09-29 用户实测反馈）。
   const news = skipNews ? { text: '', items: [] as SnapshotItem[] } : await getNewsSnapshotDetailed();
   const newsSnapshot = news.text || null;
   const newsItems = news.items;
-  const newsBlock = newsSnapshot ? '\n【实时资讯速览】（这是用户提供给你的真实、最近更新的热点与新闻数据，你确实掌握这些信息。当用户问起"今天的新闻/热搜/最近发生了什么"等时事话题时，必须直接基于下面这些内容回答，可以列举具体事件；若用户问的事不在列表里，坦诚说明目前掌握的信息有限。不要说自己"无法获取实时信息/没有联网"。除非用户主动聊到新闻，否则不要主动铺开新闻，也不要打断当前的情绪陪伴。**引用规则（必须遵守）**：上面每条都带编号 [1] [2] …，凡是你转述了其中某一条，就在**那句话的末尾**写上它的编号标记（形如 [[3]]）。系统据此把该条的出处显示在**那条消息**下面——**没有标记就没有出处**。⚠️ 这条规则**只针对上面这个列表**：用 web_search 搜到的结果**不编号**，直接把链接附在那句话后面即可。标记用户看不到，**不要在正文里解释或讨论这条约定**，也不要凭印象写网址。）\n' + newsSnapshot + '\n' : '';
+  const newsBlock = newsSnapshot ? '\n【实时资讯速览】（这是用户提供给你的真实、最近更新的热点与新闻数据，你确实掌握这些信息。当用户问起"今天的新闻/热搜/最近发生了什么"等时事话题时，必须直接基于下面这些内容回答，可以列举具体事件；若用户问的事不在列表里，坦诚说明目前掌握的信息有限。不要说自己"无法获取实时信息/没有联网"。除非用户主动聊到新闻，否则不要主动铺开新闻，也不要打断当前的情绪陪伴。**引用规则（必须遵守）**：上面每条都带编号 [1] [2] …，凡是你转述了其中某一条，就在**那句话的末尾**写上它的编号标记（形如 [[3]]）。系统据此把该条的出处显示在**那条消息**下面，**没有标记就没有出处**。⚠️ 这条规则**只针对上面这个列表**：用 web_search 搜到的结果**不编号**，直接把链接附在那句话后面即可。标记用户看不到，**不要在正文里解释或讨论这条约定**，也不要凭印象写网址。）\n' + newsSnapshot + '\n' : '';
   const growthHintBlock = buildGrowthHintBlock(growthHints);
   const chatInnerBlock = buildChatInnerMonologueBlock(userId, chatInnerMonologueEnabled);
   const lifeToolsBlock = '\n\n【生活工具】你内置了查询真实天气与路线导航的工具：当用户问「今天天气/下雨吗/要不要带伞/明天冷不冷/怎么去XX/从A到B多远多久」时，应调用对应工具（get_weather / get_directions），拿到结果后用自然、简短的方式告诉用户；路线类可把工具返回的「打开高德/Google 导航」链接原样给出。不要用 web_search 硬搜天气或路线，也不要凭感觉编造实时天气/路线。当用户问某地的美食/餐厅/旅游攻略/口碑，或其它需要联网查阅的实时/本地信息时（除天气、路线、地理编码外），可用 web_search 把返回的关键事实转述给用户，不要编造。**讲到来源就要给得出链接**：凡是你转述了搜索到的具体新闻/事件/热点/榜单/店铺，就把工具结果里对应的那条链接**原样**附在那句话后面（挑最相关的 1–2 条就够，不要堆一排）；**没附链接就别转述那一条**（意译一遍却给不出出处的信息，对用户是负担）；链接只能来自工具返回结果，**不许自己编或改写网址**。用户要链接而你没在手边时，用 web_search 查一次再给。系统会在气泡下方自动列出本次搜索的来源，所以正文里给最相关的那条即可，不必罗列全部。当用户直接发来一个链接（如小红书/抖音/大众点评链接）并想看里面的内容时，用 read_url 读取正文后再回答。';
   // 「别复读你自己」（2026-09-19）：把模型最近亲手写过的说法抽成负例，贴在 system 尾部。
-  // 位置本身是机制的一部分 —— 剧情那边实测过：同一段话写在提示词中段会被无视，写在末尾才有效（近因权重）。
+  // 位置本身是机制的一部分，剧情那边实测过：同一段话写在提示词中段会被无视，写在末尾才有效（近因权重）。
   // 唯一的例外是「输出语言」规则：它必须仍是最后一条（英文用户出现过夹中文泄漏），
   // 所以负例块钉在它**前面一格**，而不是整段 system 的最后一行。
   const antiRepeatBlock = buildChatAntiRepeatBlock({ lang: outLang, history });
@@ -1360,7 +1360,7 @@ export async function buildChatPromptParts(
   const slopBlock = buildChatSlopBlock(outLang);
   /**
    * 情欲 / 成人向话题怎么接（2026-09-25）。规则层（chatRedirect.ts 的 adultRoleplay）只覆盖
-   * 「明确点单」的那一小撮，其余（委婉说法、慢慢升级、规则抓不到的句式）全靠模型自己把话头引对地方——
+   * 「明确点单」的那一小撮，其余（委婉说法、慢慢升级、规则抓不到的句式）全靠模型自己把话头引对地方
    * 而官方模型的默认本能是冷拒 / 说教，那正是用户明确要求不要的。块内容见 chatVoice.ts 的同名常量。
    * 位置：与套话块/负例块同区，靠近 system 尾部（软话放中段等于没有）。
    */
@@ -1369,7 +1369,7 @@ export async function buildChatPromptParts(
    * 「本轮已经在写露骨戏」的硬触发（2026-09-25，真实会话审计后的补丁）。
    *
    * 病根（有真实取证）：常驻的成人向块只是"准则"，模型仍可能选择**继续逗闷子把场面糊过去**
-   * ——该用户（邮箱已脱敏，记作 `<user@example.com>`）那段会话复测 3 次只有 2 次真去引导。所以每轮按**上一条用户消息**
+   *。该用户（邮箱已脱敏，记作 `<user@example.com>`）那段会话复测 3 次只有 2 次真去引导。所以每轮按**上一条用户消息**
    * 现算一次（判据 `detectExplicitScene`：明确情欲词 **且** 括号动作描写＝在写戏），命中就把
    * "这一轮必须走完四步、不许接着演"钉在 system **最尾部的内容位**（比常驻块更近输出 ⇒ 权重更高）。
    * 只在命中时注入，正常对话零成本（一个正则）。
@@ -1379,7 +1379,7 @@ export async function buildChatPromptParts(
    * 【只输出你要说的话】（2026-09-29 真机事故后加，放在规则链末尾＝近因权重最高）。
    * 事故：小愈的回复以「上面是对应来源的编号标记……等等，这里没有实时资讯列表的编号。
    * 我用的是 web_search。那我应该直接附链接，不要用编号标记。」「我重写，去掉编号，直接附链接。」
-   * 开头 —— 模型把「要不要写引用标记」这件内部决策当成对白说给了用户，还顺带暴露了工具名与规则。
+   * 开头，模型把「要不要写引用标记」这件内部决策当成对白说给了用户，还顺带暴露了工具名与规则。
    * （已确认不是推理通道外发：deepseek.ts 的流式循环里 reasoning_content 单独累积、从不进 onToken。）
    * 这道闸是主手段；outputHygiene.ts 的剥离与重生成是兜底。
    */
@@ -1391,7 +1391,7 @@ export async function buildChatPromptParts(
    *   · 内置小愈不是用户记录（`userId === ''`），"我和小愈是什么关系"是**用户级**选择 → 读 `Preferences.xiaoyuRelation`；
    *   · 自定义角色是**每角色一档** → 读 `ChatCharacter.relation`（缺省 friend）；
    *   · **剧情角色不注入**：剧本人设自带关系、称呼与共同经历（`storyBridge` 的人设 + 摘要档案已经写了这些），
-   *     再叠一层关系档等于把"沈重"改回"小愈味"——同 `useCompanionMode` 的 Q4=A 口径。
+   *     再叠一层关系档等于把"沈重"改回"小愈味"，同 `useCompanionMode` 的 Q4=A 口径。
    *
    * 为什么场景要每轮现算：轻松玩梗与情绪低落**关键词相反**（一个要接梗加码，一个要停掉所有玩闹），
    * 写在同一段规则里模型必然折中成"温和的陪伴者"，两边都不像。判据见 `chatRelation.pickChatScene`。
@@ -1408,11 +1408,11 @@ export async function buildChatPromptParts(
   const relationBlock = relationKind ? buildChatRelationBlock({ relation: relationKind, scene: chatScene, lang: outLang }) : '';
   /**
    * 会话状态层（B 档，2026-09-21）。补的是**"我带着自己说话"**：
-   *   · `scene`  —— 我此刻正在做的那件事：括号动作只能接着它做，不再每轮凭空抓一个道具
+   *   · `scene`，我此刻正在做的那件事：括号动作只能接着它做，不再每轮凭空抓一个道具
    *                 （病根见 `chatDailyLife.ts` 文件头：小愈手上没有"我的事"，就把背景设定降级成道具动作）；
-   *   · `mood`   —— 我自己的情绪惯性（不必每轮重置成跟用户一样的语气）；
-   *   · `grudge` —— 未消的账（"那我都承认吃醋了，你打算怎么哄我"）；
-   *   · `joke`   —— 双方嘴里都用过 ≥2 次的词（"退货"那条梗能连着玩六轮的原因）。
+   *   · `mood`，我自己的情绪惯性（不必每轮重置成跟用户一样的语气）；
+   *   · `grudge`，未消的账（"那我都承认吃醋了，你打算怎么哄我"）；
+   *   · `joke`，双方嘴里都用过 ≥2 次的词（"退货"那条梗能连着玩六轮的原因）。
    * 全部由 `chatState.ts` 的**纯规则**算好存进成长档案，这里只做一次同步读（零额外模型调用）。
    *
    * `bracketBrake`：最近两条回复都带括号动作 → 这一轮禁一次。治的是"每轮都要摆一个姿势"，
@@ -1424,7 +1424,7 @@ export async function buildChatPromptParts(
   /**
    * 每轮的【长度档】（第二轮长度工作，2026-09-21）：按**用户这条消息的长度**给一个具体数字区间。
    *
-   * 为什么不是"加一句不要每轮都写差不多长"：第一轮实测标准差从 8.8 掉到 **5.9**（真人是 13.2）——
+   * 为什么不是"加一句不要每轮都写差不多长"：第一轮实测标准差从 8.8 掉到 **5.9**（真人是 13.2）
    * 因为强数字目标（"单条 10 字上下"）压得过描述性的软话。数字必须**本身随轮次变化**，方差才回得来。
    * 依据是镜像（真人就是这么做的：对方发两个字，他回四个字），不是随机数。
    */
@@ -1532,7 +1532,7 @@ function resolveThinkingLevel(userId?: string, override?: ThinkingLevel): Thinki
  *   · `snapshotItems` = 「实时资讯速览」里被这段引用到的条目（「今天有什么新闻？」这类回合根本不调搜索）。
  *
  * 两条通道各自按段归属（都返回「段下标＝气泡下标」的数组，null = 该段没有），合并去重后交给前端。
- * 若**一条都归不上**（模型只做了概括、没有可对应的引用），退回整轮的 onSources（挂最后一条）——
+ * 若**一条都归不上**（模型只做了概括、没有可对应的引用），退回整轮的 onSources（挂最后一条）
  * 宁可位置不精确，也不让来源整批消失。
  */
 /**
@@ -1676,7 +1676,7 @@ export async function chatReply(
   const model = 'gemini-2.5-flash'; // 兼容占位符＝用默认模型，见 deepseek.ts:useModel
   const baseReq: any = { model, userId: options?.userId, onUsage: collectUsage, feature: 'chat' };
   // 图片轮刻意**不开**深度思考（实测同一张图同一问题：thinking 关 = 1.2s / 14 输出 token，开 = 6.0s /
-  // 1520 输出 token，答案完全相同 —— 读图是感知任务，思考只烧钱不涨正确率）。
+  // 1520 输出 token，答案完全相同，读图是感知任务，思考只烧钱不涨正确率）。
   baseReq.thinkingLevel = hasImages ? 'off' : resolveThinkingLevel(options?.userId, options?.thinkingLevel);
   // 图片轮也不挂工具：读图用不到联网/生活工具，而工具定义每次请求都要付 prompt token。
   if (!hasImages) baseReq.tools = [...LIFE_TOOLS, WEB_SEARCH_TOOL, READ_URL_TOOL];
@@ -1715,10 +1715,10 @@ export async function chatReply(
   /**
    * 空回复守卫（红线 6）：上面已经重试过一次，仍然一个字都没有时 **绝不替小愈编一句台词**，直接抛错。
    * 抛出去由路由统一处理：流式端点已发 headers 时下发 `{ type: 'error' }`（前端有失败态与重试入口），
-   * 非流式走 500 + 额度回滚 —— 这正是红线要求的「失败只能是失败态 + 重试」。
+   * 非流式走 500 + 额度回滚，这正是红线要求的「失败只能是失败态 + 重试」。
    *
    * 历史教训（2026-09-19 第三次报告、2026-09-20 修）：这里原本是
-   * `|| '我在的。慢慢说，我会认真听。🌱'` —— 它 ① 是用户投诉的「我在呢 / 慢慢说」同款模板，
+   * `|| '我在的。慢慢说，我会认真听。🌱'`，它 ① 是用户投诉的「我在呢 / 慢慢说」同款模板，
    * ② 绕过失败态被当成"小愈说过的话"落盘、并回灌给模型（与 2026-09-15 那次事故同一形态），
    * ③ 英文用户还会收到这句中文（`normalizeScriptText` 对 en 是原样返回）。
    */
@@ -1753,7 +1753,7 @@ export async function chatReply(
   out = hygienic.text;
   if (hygienic.revised) options?.onRevised?.();
   // 来源引用标记（[[n]]）：**剥掉再落盘/下发**（红线 6：内部标记不是小愈说过的话），
-  // 同时留下编号 —— 它是来源归属最权威的依据（模型意译也照样对得上）。
+  // 同时留下编号，它是来源归属最权威的依据（模型意译也照样对得上）。
   const cited = extractCitations(out);
   out = cited.text;
   if (!out.trim()) throw new Error('AI 返回空回复（EMPTY_REPLY）'); // 只剩标记/只剩自言自语 ＝ 等于没说话
@@ -1782,7 +1782,7 @@ export async function chatReplyStream(
   /**
    * 流式下发（外面套一层「来源引用标记」过滤器）：
    * 标记可能被切成多个 delta，所以过滤器会扣住「可能是 [[ 开头」的尾巴，
-   * 完整标记出现时剥掉再下发 —— 用户**全程看不到** [[3]] 这种东西（红线 6：标记不落盘、不下发）。
+   * 完整标记出现时剥掉再下发：用户**全程看不到** [[3]] 这种东西（红线 6：标记不落盘、不下发）。
    */
   const citeFilter = createCitationFilter();
   const emit = (delta: string) => {

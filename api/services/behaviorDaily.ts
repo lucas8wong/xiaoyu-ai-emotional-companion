@@ -75,7 +75,7 @@ export interface BehaviorRangeSummary {
 
 const zeroCell = (): BehaviorDayCell => ({ chat: 0, structure: 0, roleplay: 0, wenyou: 0, werewolf: 0, login: 0, install: 0, likes: 0, lastAt: 0 });
 
-/** 服务端本地日期键（YYYY-MM-DD）——与 usageTime 保持一致 */
+/** 服务端本地日期键（YYYY-MM-DD），与 usageTime 保持一致 */
 function localKeyOf(ts: number): string {
   const d = new Date(ts);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

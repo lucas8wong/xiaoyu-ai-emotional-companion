@@ -17,7 +17,7 @@ import { assertStorageReady } from './storage/persistence.js';
 
 /**
  * 可选：启动 faster-whisper 侧车（本地 CPU 亚秒级 ASR）。
- * 若已显式配置外部 `ASR_SIDECAR_URL`、或通过 `FASTER_WHISPER_ENABLED=0` 关闭、或 Python 不可用，则跳过——
+ * 若已显式配置外部 `ASR_SIDECAR_URL`、或通过 `FASTER_WHISPER_ENABLED=0` 关闭、或 Python 不可用，则跳过
  * /api/asr 会自然回退到 transformers.js Whisper，不影响服务。
  */
 let sidecar: ChildProcess | null = null;
@@ -113,7 +113,7 @@ function startSelfHealScheduler(): void {
  * 🔍 审阅档案定时增量并档（2026-09-29 新增）。
  *
  * 为什么要有它（真实病根）：2026-09-25 把「审阅队列」从静态快照改成**增量档案**，解决了
- * 「重建会把旧记录挤掉」；但**没人重建**的话新记录照样进不来 —— 档案停在 09-25 那一次，
+ * 「重建会把旧记录挤掉」；但**没人重建**的话新记录照样进不来，档案停在 09-25 那一次，
  * 到 09-29 页面上最新记录还在 09-24，用户看到的就是「审阅 tab 只有 9/23 的」。
  * 后台按钮虽然是入口，但不能指望人记得每天点；所以加一个常驻定时器，
  * 与后台按钮**共用** `services/reviewBuilder.ts` 的同一份编排（含 fail-closed 去标识化断言）。

@@ -181,7 +181,7 @@ test('reengageStore：被召回用户「回来」即记回访，且同一封召�
   assert.strictEqual(reengageStore.getStats(U).returned, 2, '第二次召回后回来应再计一次');
 });
 
-test('reengageStore：启动回填——召回后已回来但未计回访的补计一次', () => {
+test('reengageStore：启动回填，召回后已回来但未计回访的补计一次', () => {
   const reg = accountStore.register({ email: 'bf@x.com', password: 'password', username: 'bf' });
   const U = reg.user!.userId;
   activityStore.trackFeature(U, 'chat');

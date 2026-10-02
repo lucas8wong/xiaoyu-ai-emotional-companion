@@ -1,7 +1,7 @@
 import type { ScenarioAchConfig } from '../engine/achievements'
 
 // 千世书各剧本的专属成就内容（传说巅峰 / 走完一段人生 / 集齐全部结局）。
-// 这是「游戏内容」，与通用引擎解耦——换一款游戏，只换这份配置 + 剧本，引擎 computeAchievements 不动。
+// 这是「游戏内容」，与通用引擎解耦，换一款游戏，只换这份配置 + 剧本，引擎 computeAchievements 不动。
 export const achievementConfig: ScenarioAchConfig = {
   xian: {
     legend: { tone: '渡劫飞升·得道成仙', name: '羽化登仙', desc: '渡劫飞升、得道成仙', icon: '🪽' },
