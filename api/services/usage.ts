@@ -205,6 +205,8 @@ export interface FeatureBucket {
   images: number;           // 出图张数（token 渠道恒为 0）
   imageCost: number;        // 出图成本（元）
   estimated: number;        // 其中「按生成量估算入账」的调用次数（拿不到真实 usage 时的兜底）
+  flatCalls: number;        // 其中走**订阅制上游**的调用次数（token 照记，但成本不按 token 计，见 notionalCost）
+  notionalCost: number;     // 订阅制调用的**参考价**（若按 DeepSeek 单价折算会是多少）；不计入 cost
 }
 
 export interface UsageRecord {
@@ -213,7 +215,11 @@ export interface UsageRecord {
   promptTokens: number;    // 输入 tokens（不含缓存命中）
   cachedTokens: number;    // 缓存命中 tokens
   completionTokens: number; // 输出 tokens
-  cost: number;            // 估算费用（元）
+  cost: number;            // 估算费用（元；订阅制上游的调用记 0，见 flatCalls/notionalCost）
+  /** 订阅制上游（剧情「无限制模式」的第三方托管）调用次数：token 照记，但不计入 cost */
+  flatCalls?: number;
+  /** 上述调用的参考价（若按 DeepSeek 单价折算会是多少；仅参考，不计入 cost） */
+  notionalCost?: number;
   lastUsed: number;        // 最近使用时间
   /** 按功能分桶（升级前写入的记录没有这个字段，查询时按 unknown 兜底合成） */
   byFeature?: Record<string, FeatureBucket>;
@@ -226,6 +232,9 @@ interface DailyUsage {
   cachedTokens: number;
   completionTokens: number;
   cost: number;
+  /** 订阅制上游调用次数与参考价（口径同 UsageRecord，见那里的注释） */
+  flatCalls?: number;
+  notionalCost?: number;
   byFeature?: Record<string, FeatureBucket>;
 }
 
@@ -239,6 +248,9 @@ export interface FeatureTotals {
   images: number;
   imageCost: number;
   estimated: number;
+  /** 订阅制上游调用次数与参考价（不计入 cost；见 FeatureBucket 的同名字段） */
+  flatCalls: number;
+  notionalCost: number;
   byFeature: Record<string, FeatureBucket>;
 }
 
@@ -259,7 +271,7 @@ const round4 = (n: number): number => Math.round(n * 10000) / 10000;
 const round6 = (n: number): number => Math.round(n * 1e6) / 1e6;
 
 function emptyBucket(): FeatureBucket {
-  return { requests: 0, promptTokens: 0, cachedTokens: 0, completionTokens: 0, cost: 0, images: 0, imageCost: 0, estimated: 0 };
+  return { requests: 0, promptTokens: 0, cachedTokens: 0, completionTokens: 0, cost: 0, images: 0, imageCost: 0, estimated: 0, flatCalls: 0, notionalCost: 0 };
 }
 
 /** 取（或建）byFeature 里的桶 */
@@ -273,13 +285,27 @@ function bucketOf(map: Record<string, FeatureBucket> | undefined, feature: strin
 }
 
 /** 累加一次 token 调用 */
-function addTokenCall(b: FeatureBucket, prompt: number, cached: number, completion: number, cost: number, estimated: boolean): void {
+function addTokenCall(
+  b: FeatureBucket,
+  prompt: number,
+  cached: number,
+  completion: number,
+  cost: number,
+  estimated: boolean,
+  /** 这次调用是否走订阅制上游（cost 已按 0 传入，参考价另计） */
+  flat: boolean,
+  notional: number,
+): void {
   b.requests += 1;
   b.promptTokens += prompt;
   b.cachedTokens += cached;
   b.completionTokens += completion;
   b.cost += cost;
   if (estimated) b.estimated += 1;
+  if (flat) {
+    b.flatCalls += 1;
+    b.notionalCost += notional;
+  }
 }
 
 /** 累加一次按张计费（出图） */
@@ -299,16 +325,18 @@ function addImageCall(b: FeatureBucket, count: number, yuan: number): void {
  *     残差按 'unknown' 补上（实测：上线当天 207 次里 5 次带功能标记，残差 202 次必须显式可见）。
  * 只影响读取视图，不写回磁盘、不改动 totalCost 口径。
  */
-function bucketsOf(rec: { byFeature?: Record<string, FeatureBucket>; requests: number; promptTokens: number; cachedTokens: number; completionTokens: number; cost: number }): Record<string, FeatureBucket> {
+function bucketsOf(rec: { byFeature?: Record<string, FeatureBucket>; requests: number; promptTokens: number; cachedTokens: number; completionTokens: number; cost: number; flatCalls?: number; notionalCost?: number }): Record<string, FeatureBucket> {
   const src = (rec.byFeature && Object.keys(rec.byFeature).length) ? rec.byFeature : null;
   if (src) {
-    let reqSum = 0, costSum = 0, promptSum = 0, cachedSum = 0, completionSum = 0;
+    let reqSum = 0, costSum = 0, promptSum = 0, cachedSum = 0, completionSum = 0, flatSum = 0, notionalSum = 0;
     for (const b of Object.values(src)) {
       reqSum += b.requests || 0;
       costSum += b.cost || 0;
       promptSum += b.promptTokens || 0;
       cachedSum += b.cachedTokens || 0;
       completionSum += b.completionTokens || 0;
+      flatSum += b.flatCalls || 0;
+      notionalSum += b.notionalCost || 0;
     }
     const restReq = (rec.requests || 0) - reqSum;
     const restCost = (rec.cost || 0) - costSum;
@@ -323,6 +351,8 @@ function bucketsOf(rec: { byFeature?: Record<string, FeatureBucket>; requests: n
         cachedTokens: prev.cachedTokens + Math.max(0, (rec.cachedTokens || 0) - cachedSum),
         completionTokens: prev.completionTokens + Math.max(0, (rec.completionTokens || 0) - completionSum),
         cost: prev.cost + Math.max(0, restCost),
+        flatCalls: (prev.flatCalls || 0) + Math.max(0, (rec.flatCalls || 0) - flatSum),
+        notionalCost: (prev.notionalCost || 0) + Math.max(0, (rec.notionalCost || 0) - notionalSum),
       };
       return merged;
     }
@@ -337,6 +367,8 @@ function bucketsOf(rec: { byFeature?: Record<string, FeatureBucket>; requests: n
     images: 0,
     imageCost: 0,
     estimated: 0,
+    flatCalls: rec.flatCalls || 0,
+    notionalCost: rec.notionalCost || 0,
   };
   return { unknown: legacy };
 }
@@ -345,7 +377,7 @@ function bucketsOf(rec: { byFeature?: Record<string, FeatureBucket>; requests: n
 function roundBuckets(map: Record<string, FeatureBucket>): Record<string, FeatureBucket> {
   const out: Record<string, FeatureBucket> = {};
   for (const [k, b] of Object.entries(map)) {
-    out[k] = { ...b, cost: round6(b.cost), imageCost: round6(b.imageCost) };
+    out[k] = { ...b, cost: round6(b.cost), imageCost: round6(b.imageCost), flatCalls: b.flatCalls || 0, notionalCost: round6(b.notionalCost || 0) };
   }
   return out;
 }
@@ -360,6 +392,8 @@ function mergeBucket(into: FeatureBucket, from: FeatureBucket): void {
   into.images += from.images || 0;
   into.imageCost += from.imageCost || 0;
   into.estimated += from.estimated || 0;
+  into.flatCalls += from.flatCalls || 0;
+  into.notionalCost += from.notionalCost || 0;
 }
 
 /**
@@ -396,19 +430,27 @@ export class UsageStore {
    * @param opts.estimated 这次成本是「按生成量估算」的（上游没给真实 usage 时的兜底），控制台会标出来
    * @param opts.at 调用**发起**时刻（ms），按分时定价算成本（peak × 倍率）。不传 = 用当前时间。
    *               长流式跨过 peak 边界时，用「发起时刻」才与实际计费口径一致。
+   * @param opts.flatRate 这次调用是否走**订阅制上游**（第三方托管，如 Featherless）。
+   *               为 true 时 token 照记，但 **cost 记 0**（钱是固定月费，不按 token 花），
+   *               只把「若按 DeepSeek 单价折算会是多少」存进 notionalCost 供运营端参考。
+   *               ⚠️ 用户点数**不受影响**：额度层走 costFromUsage()，不读账本的 cost。
    */
   record(
     userId: string,
     usage: UsageLike | undefined,
     feature: UsageFeature | string = 'unknown',
-    opts: { estimated?: boolean; at?: number } = {},
+    opts: { estimated?: boolean; at?: number; flatRate?: boolean } = {},
   ): void {
     if (!userId) return;
     const cached = cachedTokensOf(usage);
     const prompt = Math.max(0, (usage?.prompt_tokens || 0) - cached);
     const completion = usage?.completion_tokens || 0;
     const at = Number.isFinite(opts.at) ? Number(opts.at) : Date.now();
-    const cost = costFromUsage(usage, at);
+    // 订阅制上游：真实支出是固定月费（记在 expenses），token 不按 DeepSeek 单价花钱。
+    // 所以 cost 记 0，只留一份「参考价」notionalCost：运营端据此看出这批调用值多少、订阅划不划算。
+    const notional = costFromUsage(usage, at);
+    const flat = opts.flatRate === true;
+    const cost = flat ? 0 : notional;
 
     // 用户累计
     const u = this.records.get(userId) || { userId, requests: 0, promptTokens: 0, cachedTokens: 0, completionTokens: 0, cost: 0, lastUsed: 0 };
@@ -417,9 +459,13 @@ export class UsageStore {
     u.cachedTokens += cached;
     u.completionTokens += completion;
     u.cost += cost;
+    if (flat) {
+      u.flatCalls = (u.flatCalls || 0) + 1;
+      u.notionalCost = (u.notionalCost || 0) + notional;
+    }
     u.lastUsed = Date.now();
     if (!u.byFeature) u.byFeature = {};
-    addTokenCall(bucketOf(u.byFeature, feature), prompt, cached, completion, cost, !!opts.estimated);
+    addTokenCall(bucketOf(u.byFeature, feature), prompt, cached, completion, cost, !!opts.estimated, flat, notional);
     this.records.set(userId, u);
 
     // 按天累计（趋势图）：用本地日期，与 getDailyTrend 一致（toISOString 是 UTC，会导致跨时区日界错位）
@@ -430,8 +476,12 @@ export class UsageStore {
     d.cachedTokens += cached;
     d.completionTokens += completion;
     d.cost += cost;
+    if (flat) {
+      d.flatCalls = (d.flatCalls || 0) + 1;
+      d.notionalCost = (d.notionalCost || 0) + notional;
+    }
     if (!d.byFeature) d.byFeature = {};
-    addTokenCall(bucketOf(d.byFeature, feature), prompt, cached, completion, cost, !!opts.estimated);
+    addTokenCall(bucketOf(d.byFeature, feature), prompt, cached, completion, cost, !!opts.estimated, flat, notional);
     this.daily.set(date, d);
 
     this.saveToDisk();
@@ -519,14 +569,21 @@ export class UsageStore {
   /**
    * 最近 N 天每日成本趋势（空的天补 0）
    */
-  getDailyTrend(days: number): { date: string; cost: number; requests: number }[] {
-    const out: { date: string; cost: number; requests: number }[] = [];
+  getDailyTrend(days: number): { date: string; cost: number; requests: number; notionalCost: number; flatCalls: number }[] {
+    const out: { date: string; cost: number; requests: number; notionalCost: number; flatCalls: number }[] = [];
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const rec = this.daily.get(key);
-      out.push({ date: key.slice(5), cost: rec ? round4(rec.cost) : 0, requests: rec ? rec.requests : 0 });
+      out.push({
+        date: key.slice(5),
+        cost: rec ? round4(rec.cost) : 0,
+        requests: rec ? rec.requests : 0,
+        // 订阅制上游的调用不出现在 cost 里，单独给一列（参考价），否则趋势图上会像「突然没花钱了」
+        notionalCost: rec ? round4(rec.notionalCost || 0) : 0,
+        flatCalls: rec ? (rec.flatCalls || 0) : 0,
+      });
     }
     return out;
   }
@@ -543,7 +600,7 @@ export class UsageStore {
     const n = Math.max(1, Math.min(90, Math.floor(days) || 30));
     const totals: FeatureTotals = {
       cost: 0, requests: 0, promptTokens: 0, cachedTokens: 0, completionTokens: 0,
-      images: 0, imageCost: 0, estimated: 0, byFeature: {},
+      images: 0, imageCost: 0, estimated: 0, flatCalls: 0, notionalCost: 0, byFeature: {},
     };
     const daily: { date: string; cost: number; requests: number; byFeature: Record<string, FeatureBucket> }[] = [];
     const keys: string[] = [];
@@ -574,10 +631,12 @@ export class UsageStore {
       totals.images += b.images;
       totals.imageCost = round4(totals.imageCost + b.imageCost);
       totals.estimated += b.estimated;
+      totals.flatCalls += b.flatCalls || 0;
+      totals.notionalCost += b.notionalCost || 0;
     }
     return {
       range: { days: n, from: keys[0], to: keys[keys.length - 1] },
-      totals: { ...totals, cost: round4(totals.cost), imageCost: round6(totals.imageCost), byFeature: roundBuckets(totals.byFeature) },
+      totals: { ...totals, cost: round4(totals.cost), imageCost: round6(totals.imageCost), notionalCost: round4(totals.notionalCost), byFeature: roundBuckets(totals.byFeature) },
       daily: daily.map(d => ({ ...d, cost: round4(d.cost), byFeature: roundBuckets(d.byFeature) })),
     };
   }

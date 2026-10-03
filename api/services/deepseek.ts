@@ -44,6 +44,17 @@ export interface ProviderConfig {
   maxRetries: number;
   /** true = DeepSeek 官方（才注入 thinking/reasoning_effort/user_id 等专有字段） */
   isDeepSeek: boolean;
+  /**
+   * true = 该上游按**订阅制**（固定月费 / 并发单元）计费，token 不产生按量费用。
+   *
+   * 影响：usage 账本把它的调用按 **cost 0** 记（token 照记，另存 notionalCost 参考价）。
+   * 不这么做的话，运营端会把「其实没花的 token 钱」算进 API 成本，利润被系统性低估
+   * （剧情成人档的第三方托管就是这种：按并发单元订阅，不按 token）。
+   *
+   * 缺省：createCompatClient 设为 true（第三方托管基本都是订阅制）；
+   * 若某天指向**按量计费**的第三方（OpenRouter 等），配「RP_*_FLAT_RATE=0」关掉。
+   */
+  flatRate?: boolean;
   /** 流式最后一帧是否回传 usage；第三方托管不一定支持，不支持就别发，否则可能 400 */
   streamUsage: boolean;
   /**
@@ -299,7 +310,7 @@ async function generateContent(req: GenerateContentRequest, cfg: ProviderConfig 
       if (req.userId) {
         try {
           const { usageStore } = await import('./usage.js');
-          usageStore.record(req.userId, usage, req.feature, { at: startedAt });
+          usageStore.record(req.userId, usage, req.feature, { at: startedAt, flatRate: cfg.flatRate === true });
         } catch (e) {
           console.warn(`⚠️ ${tag} 用量记录失败:`, (e as Error)?.message);
         }
@@ -399,7 +410,7 @@ async function generateContentStream(
     recorded = true;
     try {
       const { usageStore } = await import('./usage.js');
-      usageStore.record(req.userId, usageObj, req.feature, { estimated, at: startedAt });
+      usageStore.record(req.userId, usageObj, req.feature, { estimated, at: startedAt, flatRate: cfg.flatRate === true });
     } catch (e) {
       console.warn(`⚠️ ${tag} 用量记录失败:`, (e as Error)?.message);
     }
@@ -498,7 +509,9 @@ async function generateContentStream(
  * 必须走条件化分支，否则会直接 400。
  */
 export function createCompatClient(cfg: Omit<ProviderConfig, 'isDeepSeek'>): any {
-  const resolved: ProviderConfig = { ...cfg, isDeepSeek: false };
+  // flatRate 缺省 true：第三方托管基本都按订阅制（并发单元 / 月费）卖，token 不单独出账。
+  // 只有显式传 false 才按量计费（roleplayModel 会按该分支的 *_FLAT_RATE 决定）。
+  const resolved: ProviderConfig = { ...cfg, isDeepSeek: false, flatRate: cfg.flatRate !== false };
   return {
     models: {
       generateContent: (req: GenerateContentRequest) => generateContent(req, resolved),

@@ -231,3 +231,65 @@ test('向后兼容：升级前写入的记录（无 byFeature）归入「历史�
   const daily = store.getFeatureBreakdown(400); // 超过上限会被 clamp 到 90，不应抛错
   assert.ok(Array.isArray(daily.daily));
 });
+
+// ── 订阅制上游（剧情「无限制模式」的第三方托管）：token 照记，但不按 token 花钱 ──
+
+test('record(flatRate)：订阅制调用不计 token 成本，只留参考价', () => {
+  const dataDir = path.resolve(process.cwd(), 'data');
+  fs.writeFileSync(path.join(dataDir, 'usage.json'), '[]', 'utf8');
+  fs.writeFileSync(path.join(dataDir, 'usage-daily.json'), '[]', 'utf8');
+  const store = new mod.UsageStore();
+
+  store.record('flat-u1', { prompt_tokens: 1000, completion_tokens: 500 }, 'roleplay', { flatRate: true });
+
+  const r = store.get('flat-u1')!;
+  assert.strictEqual(r.requests, 1, '调用次数照记');
+  assert.strictEqual(r.promptTokens, 1000, 'token 照记（控制台/额度仍要看）');
+  assert.strictEqual(r.completionTokens, 500);
+  assert.strictEqual(r.cost, 0, '订阅制上游不产生按量成本');
+  assert.strictEqual(r.flatCalls, 1);
+  const expected = (1000 / 1e6) * 2 + (500 / 1e6) * 8;
+  assert.ok(Math.abs((r.notionalCost || 0) - expected) < 1e-6, '参考价 = 若按 DeepSeek 单价折算');
+  assert.strictEqual(store.totalCost(), 0, '真实成本不因订阅制调用增加');
+
+  const bf = store.getUserFeatureBreakdown('flat-u1');
+  assert.strictEqual(bf.roleplay.cost, 0);
+  assert.strictEqual(bf.roleplay.flatCalls, 1);
+  assert.ok(Math.abs(bf.roleplay.notionalCost - expected) < 1e-6);
+  assert.strictEqual(bf.roleplay.requests, 1, '请求数不受影响，仍看得出这个功能在被用');
+});
+
+test('getFeatureBreakdown：订阅制计入 flatCalls/notionalCost，但绝不进 cost', () => {
+  const dataDir = path.resolve(process.cwd(), 'data');
+  fs.writeFileSync(path.join(dataDir, 'usage.json'), '[]', 'utf8');
+  fs.writeFileSync(path.join(dataDir, 'usage-daily.json'), '[]', 'utf8');
+  const store = new mod.UsageStore();
+
+  store.record('flat-u2', { prompt_tokens: 1000, completion_tokens: 0 }, 'roleplay', { flatRate: true });
+  store.record('flat-u2', { prompt_tokens: 1000, completion_tokens: 0 }, 'chat'); // 对照组：按量
+
+  const d = store.getFeatureBreakdown(1);
+  assert.strictEqual(d.totals.flatCalls, 1, '区间内订阅制调用数');
+  assert.ok(Math.abs(d.totals.notionalCost - 0.002) < 1e-9, '参考价 1000 prompt × 2 元/M');
+  assert.ok(Math.abs(d.totals.cost - 0.002) < 1e-9, '真实成本只来自按量那条 chat');
+  assert.strictEqual(d.totals.byFeature.roleplay.flatCalls, 1);
+  assert.strictEqual(d.totals.byFeature.roleplay.cost, 0);
+  assert.strictEqual(d.totals.byFeature.chat.flatCalls, 0);
+
+  const day = store.getDailyTrend(1)[0];
+  assert.strictEqual(day.flatCalls, 1);
+  assert.ok(Math.abs(day.notionalCost - 0.002) < 1e-9);
+  assert.ok(Math.abs(day.cost - 0.002) < 1e-9, '趋势图的 cost 不含订阅制');
+});
+
+test('向后兼容：老记录没有 flatCalls/notionalCost 也当 0（不产生 NaN）', () => {
+  const dataDir = path.resolve(process.cwd(), 'data');
+  const legacy = [{ userId: 'legacy2', requests: 1, promptTokens: 100, cachedTokens: 0, completionTokens: 10, cost: 0.5, lastUsed: Date.now() }];
+  fs.writeFileSync(path.join(dataDir, 'usage.json'), JSON.stringify(legacy), 'utf8');
+  const store = new mod.UsageStore();
+  const bf = store.getUserFeatureBreakdown('legacy2');
+  assert.strictEqual(bf.unknown.flatCalls, 0);
+  assert.strictEqual(bf.unknown.notionalCost, 0);
+  assert.strictEqual(store.totalCost(), 0.5);
+});
+

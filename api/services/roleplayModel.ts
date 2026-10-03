@@ -50,6 +50,14 @@
  *   RP_ZH_PROVIDER / RP_EN_PROVIDER                可选，'deepseek' | 'custom'，按分支覆盖
  *                                                  （分支级优先于 RP_PROVIDER；'custom' 可强行用回第三方）
  *   RP_MAX_RETRIES                                 可选，默认 2
+ *   RP_ZH_FLAT_RATE / RP_EN_FLAT_RATE / RP_AUX_FLAT_RATE
+ *                                                  可选，缺省 = 订阅制（1）。第三方托管按固定月费 /
+ *                                                  并发单元卖，token 不单独出账，所以 usage 账本把
+ *                                                  这些调用按 **cost 0** 记、只留 notionalCost 参考价，
+ *                                                  免得运营端 API 成本被「没花的 token 钱」撑虚高。
+ *                                                  配 '0' = 该分支上游是**按量计费**的第三方
+ *                                                  （OpenRouter 之类），恢复按 DeepSeek 单价折 token 成本。
+ *                                                  全局开关 RP_FLAT_RATE=0 一次关掉三个分支。
  *   RP_STREAM_USAGE                                可选，'1' 才在流式请求里带
  *                                                  stream_options.include_usage。
  *                                                  **2026-09-17 实测：Featherless 支持该字段**
@@ -139,8 +147,27 @@ function readBranch(prefix: 'RP_ZH' | 'RP_EN' | 'RP_AUX'): CompatConfig | null {
     maxRetries: common.maxRetries,
     streamUsage: common.streamUsage,
     extraBody: readExtraBody(prefix),
+    // 这个上游是不是「订阅制」（固定月费/并发单元，token 不单独出账）→ 决定 usage 账本怎么记钱
+    flatRate: flatRateFor(prefix),
     apiKey,
   };
+}
+
+/**
+ * 该分支的上游是否按**订阅制**（固定月费 / 并发单元）计费。
+ *
+ * 默认 true：本项目接的第三方托管（Featherless）就是按并发单元订阅卖的，token 用量不产生
+ * 按量费用。usage 账本据此把它的调用按 **cost 0** 记，只留 notionalCost 参考价，
+ * 否则运营端 API 成本会被一批其实没花的 token 账单撑虚高（利润被低估）。
+ *
+ * 换成**按量计费**的第三方（OpenRouter 之类）时，配「RP_ZH_FLAT_RATE=0」即可恢复
+ * 「按 DeepSeek 单价折算 token 成本」的旧口径；全局开关 RP_FLAT_RATE=0 一次关三个分支。
+ * 注意：这只影响**成本记账**，与用户点数无关（额度层走 costFromUsage，不读账本）。
+ */
+function flatRateFor(prefix: 'RP_ZH' | 'RP_EN' | 'RP_AUX'): boolean {
+  const perBranch = (process.env[prefix + '_FLAT_RATE'] || '').trim();
+  const global = (process.env.RP_FLAT_RATE || '').trim();
+  return (perBranch || global) !== '0';
 }
 
 /**

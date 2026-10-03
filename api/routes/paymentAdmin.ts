@@ -725,6 +725,10 @@ router.get('/cost-breakdown', async (req: Request, res: Response): Promise<void>
       // 分时定价状态：peak 时段官方单价翻倍，控制台要能看出「此刻是否按 ×N 在算」
       peak: peakPricingInfo(),
       imageNote: '出图按厂商参考单价估算（万相 0.14 / Seedream 0.2 / CogView 0.06 元/张；本机侧车 0），不含厂商免费额度',
+      // 订阅制上游（剧情「无限制模式」的第三方托管）：token 不按量花钱，cost 记 0，只给参考价。
+      // 它的真实支出是固定月费，请在「其他支出」里单独记一笔，否则利润会虚高。
+      flatNote: '订阅制上游（剧情「无限制模式」的第三方托管）按固定月费 / 并发单元计费，token 不计入成本，仅给「参考价」；月费请在「其他支出」里单独记录。',
+      flat: { calls: data.totals.flatCalls || 0, notionalCost: data.totals.notionalCost || 0 },
     },
   });
 });
