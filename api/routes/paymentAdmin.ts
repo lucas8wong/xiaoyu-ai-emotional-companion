@@ -11,6 +11,7 @@ import { quotaStore, UNLOCK_DAYS_COUNT, FREE_STRUCT_COUNT, INVITE_BONUS_COUNT } 
 import { paymentStore, isPlanKey, type PlanKey, type Purchase } from '../services/payment.js';
 import { accountStore } from '../services/accounts.js';
 import { expenseStore } from '../services/expenses.js';
+import { usageAdjustStore } from '../services/usageAdjust.js';
 import { safeError } from '../services/safeError.js';
 import { getDisplayLikes } from '../services/roleplay.js';
 import { customRoleplayStore } from '../services/customRoleplay.js';
@@ -711,6 +712,10 @@ router.get('/cost-breakdown', async (req: Request, res: Response): Promise<void>
   const days = Math.min(90, Math.max(1, Number(req.query?.days || 30)));
   const { usageStore, FEATURE_LABELS, peakPricingInfo } = await import('../services/usage.js');
   const data = usageStore.getFeatureBreakdown(days);
+  // 历史成本口径修正（独立可逆账本，见 services/usageAdjust.ts）：负数 = 从成本里扣掉
+  const adjustTotal = usageAdjustStore.totalRounded();
+  const adjustInRange = usageAdjustStore.totalInRange(data.range.from, data.range.to);
+  const netAllTimeCost = Math.round((usageStore.totalCost() + adjustTotal) * 100) / 100;
   const today = usageStore.getFeatureBreakdown(1);
   const t = today.daily[0];
   res.json({
@@ -722,6 +727,15 @@ router.get('/cost-breakdown', async (req: Request, res: Response): Promise<void>
       today: t ? { date: t.date, cost: t.cost, requests: t.requests, byFeature: t.byFeature } : null,
       daily: data.daily,
       allTimeCost: usageStore.totalCost(),
+      // 修正后口径（账面 + 修正）；账面值照旧返回，运营端两者都看得到
+      netRangeCost: Math.round((data.totals.cost + adjustInRange) * 100) / 100,
+      adjust: {
+        total: adjustTotal,
+        totalInRange: adjustInRange,
+        netAllTimeCost,
+        entries: usageAdjustStore.list(),
+      },
+      adjustNote: '「历史口径修正」记在独立可逆账本（data/usage-adjust.json）：成人档（订阅制上游）的 token 曾被按 DeepSeek 单价计价，按当日回合占比扣回；删条目即撤销，历史数据一行未动。',
       // 分时定价状态：peak 时段官方单价翻倍，控制台要能看出「此刻是否按 ×N 在算」
       peak: peakPricingInfo(),
       imageNote: '出图按厂商参考单价估算（万相 0.14 / Seedream 0.2 / CogView 0.06 元/张；本机侧车 0），不含厂商免费额度',
@@ -731,6 +745,51 @@ router.get('/cost-breakdown', async (req: Request, res: Response): Promise<void>
       flat: { calls: data.totals.flatCalls || 0, notionalCost: data.totals.notionalCost || 0 },
     },
   });
+});
+
+/**
+ * 运营端：历史成本口径修正账本（独立、可逆）
+ *
+ * 背景：剧情「无限制模式」（成人档）走订阅制第三方托管（token 不按量花钱），但 2026-10-03 前
+ * 账本把所有 provider 的 token 按 DeepSeek 单价折成钱 → API 成本虚高、利润低估。历史**无法精确
+ * 回算**（账本无逐笔、无 provider 维度；流式调用不写 usage 日志），所以修正记在**独立账本**
+ * data/usage-adjust.json：现有记录一行不动，删条目即撤销。
+ *
+ *   GET    /usage-adjust            → { entries, total }
+ *   POST   /usage-adjust/rebuild    → 按 roleplaySessions 的 viaUnlimited 归因重建（幂等）
+ *   DELETE /usage-adjust?id=xxx     → 删一条（撤销）；?kind=flat-upstream 删该类
+ */
+router.get('/usage-adjust', (req: Request, res: Response): void => {
+  if (!isAdmin(req)) { res.status(401).json({ success: false, error: '无权限' }); return; }
+  res.json({ success: true, data: { entries: usageAdjustStore.list(), total: usageAdjustStore.totalRounded() } });
+});
+
+router.post('/usage-adjust/rebuild', async (req: Request, res: Response): Promise<void> => {
+  if (!isAdmin(req)) { res.status(401).json({ success: false, error: '无权限' }); return; }
+  try {
+    const { rebuildFlatUpstreamAdjustments } = await import('../services/usageAdjust.js');
+    const r = await rebuildFlatUpstreamAdjustments();
+    res.json({ success: true, data: { ...r, entries: usageAdjustStore.list(), total: usageAdjustStore.totalRounded() } });
+  } catch (e) {
+    res.status(500).json({ success: false, error: safeError('generic', e) });
+  }
+});
+
+router.delete('/usage-adjust', (req: Request, res: Response): void => {
+  if (!isAdmin(req)) { res.status(401).json({ success: false, error: '无权限' }); return; }
+  const id = String(req.query?.id || '');
+  const kind = String(req.query?.kind || '');
+  if (id) {
+    const ok = usageAdjustStore.remove(id);
+    res.json({ success: ok, data: { removed: ok ? 1 : 0, total: usageAdjustStore.totalRounded() } });
+    return;
+  }
+  if (kind === 'flat-upstream' || kind === 'manual') {
+    const removed = usageAdjustStore.clearByKind(kind);
+    res.json({ success: true, data: { removed, total: usageAdjustStore.totalRounded() } });
+    return;
+  }
+  res.status(400).json({ success: false, error: '需要 id 或 kind' });
 });
 
 /**
@@ -1262,7 +1321,10 @@ router.get('/users', async (req: Request, res: Response): Promise<void> => {
     total: users.length,               // 注册用户数（不含测试账户）
     unlocked: users.filter(r => r.unlocked).length, // 已解锁注册用户数
     visits: visitStore.getVisitCount(), // 累计独立访客数
-    apiCost: usageStore.totalCost(),  // 全部 API 成本（元）
+    apiCost: usageStore.totalCost(),  // 全部 API 成本（元，**账面**）
+    // 历史口径修正（成人档订阅制 token 曾被按量计价）：负数，见 services/usageAdjust.ts
+    apiAdjust: usageAdjustStore.totalRounded(),
+    apiCostNet: Math.round((usageStore.totalCost() + usageAdjustStore.totalRounded()) * 100) / 100,
     apiRequests: usageStore.listAll().reduce((s, u) => s + u.requests, 0),
   };
 
@@ -3108,8 +3170,12 @@ router.get('/business-review', async (req: Request, res: Response): Promise<void
     else plusCount++;
   }
   const apiCost = usageStore.totalCost ? usageStore.totalCost() : 0;
+  // 历史口径修正：成人档走订阅制上游、token 不按量花钱，旧账本却按 DeepSeek 单价记了钱。
+  // 修正记在独立可逆账本里（apiAdjust 为负数），利润用**修正后**口径，避免低估利润。
+  const apiAdjust = usageAdjustStore.totalRounded();
+  const apiCostNet = Math.round((apiCost + apiAdjust) * 100) / 100;
   const otherExpenses = expenseStore.total();
-  const totalCost = apiCost + otherExpenses;
+  const totalCost = apiCostNet + otherExpenses;
   const profit = totalRevenue - totalCost;
   const profitMarginPct = totalRevenue > 0 ? (profit / totalRevenue) * 100 : 0;
 
@@ -3141,7 +3207,7 @@ router.get('/business-review', async (req: Request, res: Response): Promise<void
   const modelChecks = [
     { item: '收入来源', ok: plusCount + proCount > 0 || true, detail: `Plus/Pro 双档订阅（已解锁 ${unlocked.length} 单）` },
     { item: '支付渠道', ok: true, detail: 'Stripe（信用卡 / Link，自动解锁）为主通道；微信收款码为人工兜底（付费弹窗折叠块，2026-09-26 回到用户侧，需手动确认开通）' },
-    { item: '成本结构', ok: totalCost < totalRevenue, detail: `API 成本 ¥${apiCost.toFixed(2)} + 其他支出 ¥${otherExpenses.toFixed(2)} vs 收入 ¥${totalRevenue}` },
+    { item: '成本结构', ok: totalCost < totalRevenue, detail: `API 成本 ¥${apiCostNet.toFixed(2)}（账面 ¥${apiCost.toFixed(2)}，历史口径修正 ${apiAdjust.toFixed(2)}）+ 其他支出 ¥${otherExpenses.toFixed(2)} vs 收入 ¥${totalRevenue}` },
     { item: '线上可用', ok: true, detail: 'myxiaoyu.com（Cloudflare HKG）' },
     { item: '证据', ok: unlocked.length > 0, detail: unlocked.length > 0 ? '有真实付费订单' : '尚无真实付费订单（仍可运行）' },
   ];
@@ -3164,6 +3230,8 @@ router.get('/business-review', async (req: Request, res: Response): Promise<void
         currency: 'CNY',
         totalRevenue: Math.round(totalRevenue * 100) / 100,
         apiCost: Math.round(apiCost * 10000) / 10000,
+        apiAdjust,
+        apiCostNet,
         otherExpenses: Math.round(otherExpenses * 100) / 100,
         totalCost: Math.round(totalCost * 100) / 100,
         profit: Math.round(profit * 100) / 100,
