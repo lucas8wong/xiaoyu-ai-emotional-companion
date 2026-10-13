@@ -31,7 +31,7 @@ const WEBP_WIDTH: Record<string, number> = {
   bg: 1600, bgPortrait: 900, hero: 1600, chat: 800, structure: 800, story: 800,
   wordmark: 1200, heart: 512, favicon: 512, companion: 800, membership: 512,
   modeHug: 512, modeAlly: 512, modeClarify: 512, modeLight: 512, modeObjective: 512,
-  feedback: 512, planFree: 512, planPlus: 512, planPro: 512, preview: 800,
+  feedback: 512, planFree: 512, planPlus: 512, planPro: 512, planMax: 512, preview: 800,
 };
 
 export interface StyleAnchor {
@@ -259,7 +259,7 @@ async function saveImage(filePath: string, img: SeedreamImageResult, slotKey: st
   // 额外生成 240px 小图 `*-sm.webp`，供首页/开始页/场景卡/会员徽章在手机端用小图省流量（无则前端回退大图）
   if (slotKey === 'chat' || slotKey === 'structure' || slotKey === 'story' ||
       slotKey === 'modeHug' || slotKey === 'modeAlly' || slotKey === 'modeClarify' || slotKey === 'modeLight' || slotKey === 'modeObjective' ||
-      slotKey === 'planFree' || slotKey === 'planPlus' || slotKey === 'planPro' || slotKey === 'feedback') {
+      slotKey === 'planFree' || slotKey === 'planPlus' || slotKey === 'planPro' || slotKey === 'planMax' || slotKey === 'feedback') {
     const smallPath = filePath.replace(/\.webp$/, '-sm.webp');
     const small = await sharp(buffer).resize({ width: 240, withoutEnlargement: true }).webp({ quality: 75 }).toBuffer();
     await fs.writeFile(smallPath, small);
@@ -352,9 +352,11 @@ export async function generateSkin(opts: GenerateSkinOptions): Promise<GenerateS
     planFree: u('planFree'),
     planPlus: u('planPlus'),
     planPro: u('planPro'),
+    planMax: u('planMax'),
     planFreeSm: existsSync(path.join(imageDir, 'planFree-sm.webp')) ? `/skins/${skinId}/planFree-sm.webp?v=2` : '',
     planPlusSm: existsSync(path.join(imageDir, 'planPlus-sm.webp')) ? `/skins/${skinId}/planPlus-sm.webp?v=2` : '',
     planProSm: existsSync(path.join(imageDir, 'planPro-sm.webp')) ? `/skins/${skinId}/planPro-sm.webp?v=2` : '',
+    planMaxSm: existsSync(path.join(imageDir, 'planMax-sm.webp')) ? `/skins/${skinId}/planMax-sm.webp?v=2` : '',
     preview: u('preview'),
     palette: anchor.palette,
     theme,

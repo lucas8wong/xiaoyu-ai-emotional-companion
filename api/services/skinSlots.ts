@@ -40,6 +40,7 @@ export const SKIN_SLOTS: SkinSlot[] = [
   { key: 'planFree', kind: 'icon', aspect: 'square', size: '1920x1920', titleEn: 'free plan icon', desc: '会员档·免费图标' },
   { key: 'planPlus', kind: 'icon', aspect: 'square', size: '1920x1920', titleEn: 'plus plan icon', desc: '会员档·Plus 图标' },
   { key: 'planPro', kind: 'icon', aspect: 'square', size: '1920x1920', titleEn: 'pro plan icon', desc: '会员档·Pro 图标' },
+  { key: 'planMax', kind: 'icon', aspect: 'square', size: '1920x1920', titleEn: 'max plan imperial crown and storybook icon, the most prestigious tier', desc: '会员档·Max 至尊图标' },
   { key: 'preview', kind: 'scene', aspect: 'wide', size: '2560x1440', titleEn: 'skin preview thumbnail', desc: '皮肤选择器缩略图' },
 ];
 

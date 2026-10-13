@@ -1,0 +1,239 @@
+{
+  "mode": "built-in image_gen",
+  "date": "2026-10-13",
+  "useCase": "ui membership illustrations",
+  "shared": "One square asset per skin and tier. Match the skin reference. No text or pricing. Consistent visual family with ascending prestige Plus → Pro → Max. Preserve generated alpha when present. Readable at 48–56px.",
+  "assets": [
+    {
+      "skin": "default",
+      "tier": "plus",
+      "final": "Sculptural jade-green, cream and gold; transparent background. An open storybook with a heart gemstone and two young leaves. Warm, elegant, simple ornamentation. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "default/plus.webp",
+      "thumbnail": "default/plus-sm.webp"
+    },
+    {
+      "skin": "candy",
+      "tier": "plus",
+      "final": "Pastel iridescent pink, lavender and blue clouds. An open storybook with a heart gemstone and two young leaves. Warm, elegant, simple ornamentation. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "candy/plus.webp",
+      "thumbnail": "candy/plus-sm.webp"
+    },
+    {
+      "skin": "healing",
+      "tier": "plus",
+      "final": "Luminous cream watercolor, sage greenery and warm gold. An open storybook with a heart gemstone and two young leaves. Warm, elegant, simple ornamentation. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "healing/plus.webp",
+      "thumbnail": "healing/plus-sm.webp"
+    },
+    {
+      "skin": "zen",
+      "tier": "max",
+      "final": "Misty ink-wash mountains, pale jade and antique gold. A magnificent seven-point imperial crown, a large heart gemstone, an ornate open book, pearl details, golden halo and finest filigree. Clearly the most prestigious tier. Strong readable silhouette, exceptional craftsmanship; richer composition than Pro. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "zen/max.webp",
+      "thumbnail": "zen/max-sm.webp"
+    },
+    {
+      "skin": "star",
+      "tier": "max",
+      "final": "Deep violet and sapphire galaxy, cyan gems and luminous gold. A magnificent seven-point imperial crown, a large heart gemstone, an ornate open book, pearl details, golden halo and finest filigree. Clearly the most prestigious tier. Strong readable silhouette, exceptional craftsmanship; richer composition than Pro. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "star/max.webp",
+      "thumbnail": "star/max-sm.webp"
+    },
+    {
+      "skin": "aurora-glass",
+      "tier": "max",
+      "final": "Botanical stained glass, midnight blue, green jewels and golden tracery. A magnificent seven-point imperial crown, a large heart gemstone, an ornate open book, pearl details, golden halo and finest filigree. Clearly the most prestigious tier. Strong readable silhouette, exceptional craftsmanship; richer composition than Pro. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "aurora-glass/max.webp",
+      "thumbnail": "aurora-glass/max-sm.webp"
+    },
+    {
+      "skin": "default",
+      "tier": "pro",
+      "final": "Sculptural jade-green, cream and gold; transparent background. A refined five-point gold crown with a heart gemstone. More substantial precious materials and intricate details than Plus; no book or imperial halo. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "default/pro.webp",
+      "thumbnail": "default/pro-sm.webp"
+    },
+    {
+      "skin": "candy",
+      "tier": "max",
+      "final": "Pastel iridescent pink, lavender and blue clouds. A magnificent seven-point imperial crown, a large heart gemstone, an ornate open book, pearl details, golden halo and finest filigree. Clearly the most prestigious tier. Strong readable silhouette, exceptional craftsmanship; richer composition than Pro. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "candy/max.webp",
+      "thumbnail": "candy/max-sm.webp"
+    },
+    {
+      "skin": "default",
+      "tier": "max",
+      "final": "Sculptural jade-green, cream and gold; transparent background. A magnificent seven-point imperial crown, a large heart gemstone, an ornate open book, pearl details, golden halo and finest filigree. Clearly the most prestigious tier. Strong readable silhouette, exceptional craftsmanship; richer composition than Pro. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "default/max.webp",
+      "thumbnail": "default/max-sm.webp"
+    },
+    {
+      "skin": "healing",
+      "tier": "pro",
+      "final": "Luminous cream watercolor, sage greenery and warm gold. A refined five-point gold crown with a heart gemstone. More substantial precious materials and intricate details than Plus; no book or imperial halo. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "healing/pro.webp",
+      "thumbnail": "healing/pro-sm.webp"
+    },
+    {
+      "skin": "candy",
+      "tier": "pro",
+      "final": "Pastel iridescent pink, lavender and blue clouds. A refined five-point gold crown with a heart gemstone. More substantial precious materials and intricate details than Plus; no book or imperial halo. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "candy/pro.webp",
+      "thumbnail": "candy/pro-sm.webp"
+    },
+    {
+      "skin": "healing",
+      "tier": "max",
+      "final": "Luminous cream watercolor, sage greenery and warm gold. A magnificent seven-point imperial crown, a large heart gemstone, an ornate open book, pearl details, golden halo and finest filigree. Clearly the most prestigious tier. Strong readable silhouette, exceptional craftsmanship; richer composition than Pro. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "healing/max.webp",
+      "thumbnail": "healing/max-sm.webp"
+    },
+    {
+      "skin": "zen",
+      "tier": "plus",
+      "final": "Misty ink-wash mountains, pale jade and antique gold. An open storybook with a heart gemstone and two young leaves. Warm, elegant, simple ornamentation. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "zen/plus.webp",
+      "thumbnail": "zen/plus-sm.webp"
+    },
+    {
+      "skin": "star",
+      "tier": "pro",
+      "final": "Deep violet and sapphire galaxy, cyan gems and luminous gold. A refined five-point gold crown with a heart gemstone. More substantial precious materials and intricate details than Plus; no book or imperial halo. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "star/pro.webp",
+      "thumbnail": "star/pro-sm.webp"
+    },
+    {
+      "skin": "zen",
+      "tier": "pro",
+      "final": "Misty ink-wash mountains, pale jade and antique gold. A refined five-point gold crown with a heart gemstone. More substantial precious materials and intricate details than Plus; no book or imperial halo. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "zen/pro.webp",
+      "thumbnail": "zen/pro-sm.webp"
+    },
+    {
+      "skin": "aurora-glass",
+      "tier": "plus",
+      "final": "Botanical stained glass, midnight blue, green jewels and golden tracery. An open storybook with a heart gemstone and two young leaves. Warm, elegant, simple ornamentation. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "aurora-glass/plus.webp",
+      "thumbnail": "aurora-glass/plus-sm.webp"
+    },
+    {
+      "skin": "star",
+      "tier": "plus",
+      "final": "Deep violet and sapphire galaxy, cyan gems and luminous gold. An open storybook with a heart gemstone and two young leaves. Warm, elegant, simple ornamentation. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "star/plus.webp",
+      "thumbnail": "star/plus-sm.webp"
+    },
+    {
+      "skin": "aurora-glass",
+      "tier": "pro",
+      "final": "Botanical stained glass, midnight blue, green jewels and golden tracery. A refined five-point gold crown with a heart gemstone. More substantial precious materials and intricate details than Plus; no book or imperial halo. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "aurora-glass/pro.webp",
+      "thumbnail": "aurora-glass/pro-sm.webp"
+    },
+    {
+      "skin": "midnight-library",
+      "tier": "plus",
+      "final": "Amber-lit dark library, antique gold and deep jewel tones. An open storybook with a heart gemstone and two young leaves. Warm, elegant, simple ornamentation. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "midnight-library/plus.webp",
+      "thumbnail": "midnight-library/plus-sm.webp"
+    },
+    {
+      "skin": "midnight-library",
+      "tier": "pro",
+      "final": "Amber-lit dark library, antique gold and deep jewel tones. A refined five-point gold crown with a heart gemstone. More substantial precious materials and intricate details than Plus; no book or imperial halo. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "midnight-library/pro.webp",
+      "thumbnail": "midnight-library/pro-sm.webp"
+    },
+    {
+      "skin": "neon-harbour",
+      "tier": "plus",
+      "final": "Aquatic iridescent glass, cyan light and pearl refraction. An open storybook with a heart gemstone and two young leaves. Warm, elegant, simple ornamentation. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "neon-harbour/plus.webp",
+      "thumbnail": "neon-harbour/plus-sm.webp"
+    },
+    {
+      "skin": "midnight-library",
+      "tier": "max",
+      "final": "Amber-lit dark library, antique gold and deep jewel tones. A magnificent seven-point imperial crown, a large heart gemstone, an ornate open book, pearl details, golden halo and finest filigree. Clearly the most prestigious tier. Strong readable silhouette, exceptional craftsmanship; richer composition than Pro. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "midnight-library/max.webp",
+      "thumbnail": "midnight-library/max-sm.webp"
+    },
+    {
+      "skin": "neon-harbour",
+      "tier": "pro",
+      "final": "Aquatic iridescent glass, cyan light and pearl refraction. A refined five-point gold crown with a heart gemstone. More substantial precious materials and intricate details than Plus; no book or imperial halo. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "neon-harbour/pro.webp",
+      "thumbnail": "neon-harbour/pro-sm.webp"
+    },
+    {
+      "skin": "neon-harbour",
+      "tier": "max",
+      "final": "Aquatic iridescent glass, cyan light and pearl refraction. A magnificent seven-point imperial crown, a large heart gemstone, an ornate open book, pearl details, golden halo and finest filigree. Clearly the most prestigious tier. Strong readable silhouette, exceptional craftsmanship; richer composition than Pro. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "neon-harbour/max.webp",
+      "thumbnail": "neon-harbour/max-sm.webp"
+    },
+    {
+      "skin": "pixel-cottage",
+      "tier": "plus",
+      "final": "Highly polished pixel art, woodland cottage, berries and warm gold. An open storybook with a heart gemstone and two young leaves. Warm, elegant, simple ornamentation. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "pixel-cottage/plus.webp",
+      "thumbnail": "pixel-cottage/plus-sm.webp"
+    },
+    {
+      "skin": "pixel-cottage",
+      "tier": "pro",
+      "final": "Highly polished pixel art, woodland cottage, berries and warm gold. A refined five-point gold crown with a heart gemstone. More substantial precious materials and intricate details than Plus; no book or imperial halo. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "pixel-cottage/pro.webp",
+      "thumbnail": "pixel-cottage/pro-sm.webp"
+    },
+    {
+      "skin": "pixel-cottage",
+      "tier": "max",
+      "final": "Highly polished pixel art, woodland cottage, berries and warm gold. A magnificent seven-point imperial crown, a large heart gemstone, an ornate open book, pearl details, golden halo and finest filigree. Clearly the most prestigious tier. Strong readable silhouette, exceptional craftsmanship; richer composition than Pro. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "pixel-cottage/max.webp",
+      "thumbnail": "pixel-cottage/max-sm.webp"
+    },
+    {
+      "skin": "moon-courtyard",
+      "tier": "plus",
+      "final": "Moonlit blossom courtyard, pink porcelain, rose gold and soft light. An open storybook with a heart gemstone and two young leaves. Warm, elegant, simple ornamentation. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "moon-courtyard/plus.webp",
+      "thumbnail": "moon-courtyard/plus-sm.webp"
+    },
+    {
+      "skin": "moon-courtyard",
+      "tier": "pro",
+      "final": "Moonlit blossom courtyard, pink porcelain, rose gold and soft light. A refined five-point gold crown with a heart gemstone. More substantial precious materials and intricate details than Plus; no book or imperial halo. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "moon-courtyard/pro.webp",
+      "thumbnail": "moon-courtyard/pro-sm.webp"
+    },
+    {
+      "skin": "cream-editorial",
+      "tier": "plus",
+      "final": "Tactile cream paper, sage leaves, clay hearts and restrained antique gold. An open storybook with a heart gemstone and two young leaves. Warm, elegant, simple ornamentation. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "cream-editorial/plus.webp",
+      "thumbnail": "cream-editorial/plus-sm.webp"
+    },
+    {
+      "skin": "cream-editorial",
+      "tier": "pro",
+      "final": "Tactile cream paper, sage leaves, clay hearts and restrained antique gold. A refined five-point gold crown with a heart gemstone. More substantial precious materials and intricate details than Plus; no book or imperial halo. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "cream-editorial/pro.webp",
+      "thumbnail": "cream-editorial/pro-sm.webp"
+    },
+    {
+      "skin": "moon-courtyard",
+      "tier": "max",
+      "final": "Moonlit blossom courtyard, pink porcelain, rose gold and soft light. A magnificent seven-point imperial crown, a large heart gemstone, an ornate open book, pearl details, golden halo and finest filigree. Clearly the most prestigious tier. Strong readable silhouette, exceptional craftsmanship; richer composition than Pro. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "moon-courtyard/max.webp",
+      "thumbnail": "moon-courtyard/max-sm.webp"
+    },
+    {
+      "skin": "cream-editorial",
+      "tier": "max",
+      "final": "Tactile cream paper, sage leaves, clay hearts and restrained antique gold. A magnificent seven-point imperial crown, a large heart gemstone, an ornate open book, pearl details, golden halo and finest filigree. Clearly the most prestigious tier. Strong readable silhouette, exceptional craftsmanship; richer composition than Pro. High-quality cohesive membership art, carefully balanced centered composition, clear thumbnail silhouette, no lettering, no watermark.",
+      "file": "cream-editorial/max.webp",
+      "thumbnail": "cream-editorial/max-sm.webp"
+    }
+  ]
+}

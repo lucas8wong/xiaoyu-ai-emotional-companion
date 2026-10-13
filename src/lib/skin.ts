@@ -51,10 +51,12 @@ export interface SkinMeta {
   planFree: string;
   planPlus: string;
   planPro: string;
+  planMax?: string;
   /** 会员档图标小图（≈240px；会员徽章/会员卡用小图省流量） */
   planFreeSm: string;
   planPlusSm: string;
   planProSm: string;
+  planMaxSm?: string;
   /** 意见反馈图标小图（≈240px） */
   feedbackSm: string;
   /** 选择器缩略图 */
@@ -254,6 +256,19 @@ export const SKINS: SkinMeta[] = [
   },  // 管理员生成的皮肤（静态化，随 build 发布；由皮肤生成器/scripts/staticize-skins.mts 写入）
   ...GENERATED_STATIC_SKINS,
 ];
+
+// Cohesive paid-tier artwork, versioned separately from each skin's other assets.
+for (const skin of SKINS) {
+  if (!['default', 'candy', 'healing', 'zen', 'star', 'aurora-glass', 'midnight-library', 'neon-harbour', 'pixel-cottage', 'moon-courtyard', 'cream-editorial'].includes(skin.id)) continue;
+  const base = `/skins/membership-v1/${skin.id}`;
+  skin.planPlus = `${base}/plus.webp`;
+  skin.planPro = `${base}/pro.webp`;
+  skin.planMax = `${base}/max.webp`;
+  skin.planPlusSm = `${base}/plus-sm.webp`;
+  skin.planProSm = `${base}/pro-sm.webp`;
+  skin.planMaxSm = `${base}/max-sm.webp`;
+}
+
 
 /**
  * 默认皮肤（2026-09-18 由「小愈治愈系」改为「棉花糖」）。

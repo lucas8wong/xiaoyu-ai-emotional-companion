@@ -18,7 +18,7 @@ import { useSkin } from './SkinProvider';
 import type { CompanionMode } from '../services/api';
 
 /** 会员档位（含免费档），与支付侧可购买的 `PlanKey`（仅 plus/pro）不同，仅用于会员图标/徽章映射 */
-type PlanLevel = 'free' | 'plus' | 'pro';
+type PlanLevel = 'free' | 'plus' | 'pro' | 'max';
 
 const MODE_FALLBACK: Record<CompanionMode, LucideIcon> = {
   hug: Flower2,
@@ -32,6 +32,7 @@ const PLAN_FALLBACK: Record<PlanLevel, LucideIcon> = {
   free: Gift,
   plus: Sparkles,
   pro: Crown,
+  max: Crown,
 };
 
 function modeField(mode: CompanionMode): keyof ReturnType<typeof useSkin>['meta'] {
@@ -49,6 +50,7 @@ function planField(plan: PlanLevel): keyof ReturnType<typeof useSkin>['meta'] {
     case 'free': return 'planFree';
     case 'plus': return 'planPlus';
     case 'pro': return 'planPro';
+    case 'max': return 'planMax';
   }
 }
 
