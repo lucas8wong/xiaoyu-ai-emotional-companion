@@ -1,6 +1,7 @@
 import { StrictMode, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import { isLocalAndroidApp } from "./lib/androidApp";
 import AppErrorBoundary from "./components/AppErrorBoundary";
 import { isStaleAssetError, reloadOnce } from "./lib/appRecovery";
 import "./index.css";
@@ -91,6 +92,7 @@ function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
 
 // 注册 Service Worker（Web Push / PWA）：生产环境（或 localhost）才需要，避免 dev 干扰 HMR
 function registerServiceWorker(): void {
+  if (isLocalAndroidApp()) return; // Bundled APK owns its interface version.
   try {
     if ('serviceWorker' in navigator && (window.isSecureContext || location.hostname === 'localhost')) {
       navigator.serviceWorker.register(SW_SCRIPT).then((reg) => {

@@ -157,3 +157,7 @@ public/music/
 public/fonts/
 src/wenyou/assets/
 闽南语Hokkien-地区语气研究报告.md
+
+# Signed Android downloads stay outside the public source repository.
+public/download/*.apk
+public/download/*.idsig

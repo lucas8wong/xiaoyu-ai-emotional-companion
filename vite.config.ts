@@ -8,6 +8,7 @@ const wolfcha = path.resolve(process.cwd(), 'src/wolfcha')
 
 // https://vite.dev/config/
 export default defineConfig({
+  publicDir: process.env.XIAOYU_ANDROID_BUILD === '1' ? false : 'public',
   resolve: {
     // 显式配死，不依赖 vite-tsconfig-paths 对 `~` 的解析（它没解析出来，导致 Rollup 找不到模块）
     alias: [
@@ -39,7 +40,7 @@ export default defineConfig({
     react({
       babel: {
         plugins: [
-          'react-dev-locator',
+          ...(process.env.XIAOYU_ANDROID_BUILD === '1' ? [] : ['react-dev-locator']),
         ],
       },
     }),

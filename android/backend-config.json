@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "storageOrigin": "https://myxiaoyu.com",
+  "backendOrigins": ["https://myxiaoyu.com"],
+  "downloadOrigins": ["https://myxiaoyu.com"],
+  "updatePath": "/download/android-release.json"
+}

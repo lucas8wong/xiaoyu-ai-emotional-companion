@@ -1,0 +1,14 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'com.myxiaoyu.probe'
+    compileSdk 36
+    buildToolsVersion '36.0.0'
+    defaultConfig { applicationId 'com.myxiaoyu.probe'; minSdk 26; targetSdk 34; versionCode 1; versionName '1.0' }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    sourceSets.main.java {
+        srcDir '../app/src/main/java'
+        include '**/StorageProbe.java', '**/UpdaterProbe.java', '**/AppUpdater.java'
+        exclude '**/MainActivity.java', '**/LocalContent.java'
+    }
+}
+dependencies { implementation 'androidx.core:core:1.13.1' }

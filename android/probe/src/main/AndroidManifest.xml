@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <instrumentation android:name=".StorageProbe" android:targetPackage="com.myxiaoyu.app" android:label="Synthetic upgrade checks" />
+    <instrumentation android:name="com.myxiaoyu.app.UpdaterProbe" android:targetPackage="com.myxiaoyu.app" android:label="Synthetic updater checks" />
+    <application android:label="Xiaoyu upgrade test" />
+</manifest>

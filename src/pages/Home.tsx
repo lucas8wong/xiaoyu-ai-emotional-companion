@@ -5,6 +5,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { runDeepBack } from '../lib/deepBack';
 import EmotionInput from '../components/EmotionInput';
+import AndroidAppPanel from '../components/AndroidAppPanel';
 // 理一理分析结果视图仅在提交情绪后才需要 → 懒加载独立分包，减小主页首屏 chunk
 const AnalysisResult = lazy(() => import('../components/AnalysisResult'));
 const QuestionInteraction = lazy(() => import('../components/QuestionInteraction'));
@@ -1636,6 +1637,7 @@ export default function Home() {
 
       {/* Hero Section（手机紧凑：首屏尽快露出三入口） */}
       <div id="main-content" role="main" tabIndex={-1} className="container mx-auto px-4 pt-6 sm:pt-16 pb-6 sm:pb-8">
+        <AndroidAppPanel />
         <div className="text-center">
           {/* 电影感 Hero 背景：仅非默认皮肤时展示；中心径向落地 + 底部渐隐，保证文字可读 */}
           <div className="relative overflow-hidden rounded-[1.6rem] sm:rounded-[3rem] shadow-lift">
