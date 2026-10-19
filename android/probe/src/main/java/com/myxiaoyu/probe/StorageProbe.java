@@ -70,6 +70,17 @@ public final class StorageProbe extends Instrumentation {
                 result.putString("upgrade", "PASS: offline React UI, localStorage, cookie, IndexedDB");
                 result.putString("state", evaluate(view,"JSON.stringify(window.__XIAOYU_ANDROID__)"));
                 result.putString("url", evaluate(view,"location.href"));
+                if ("email".equals(args.getString("mode"))) {
+                    evaluate(view, "dispatchEvent(new Event('xiaoyu:need-register'))");
+                    for (int i=0;i<100;i++) { if ("true".equals(evaluate(view,"!!document.getElementById('auth-label-email')"))) break; Thread.sleep(100); }
+                    String initial = evaluate(view, "(()=>{const e=document.getElementById('auth-label-email');const d=e?.parentElement.querySelector('input[inputmode=url]');return !!e&&e.type==='text'&&e.inputMode==='email'&&d.value==='qq.com'&&!d.placeholder})()");
+                    if (!"true".equals(initial)) throw new Exception("Email default/native type failed");
+                    evaluate(view, "(()=>{const e=document.getElementById('auth-label-email');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'123456');e.dispatchEvent(new Event('input',{bubbles:true}));})()");
+                    Thread.sleep(200);
+                    String valid = evaluate(view, "(()=>{const e=document.getElementById('auth-label-email');return e.checkValidity()&&!e.validity.typeMismatch&&e.parentElement.parentElement.parentElement.textContent.includes('✓')})()");
+                    if (!"true".equals(valid)) throw new Exception("Email composed/native validity failed");
+                    result.putString("email", "PASS: actual Android WebView default qq.com, email keyboard, no type mismatch, complete-email UI validation");
+                }
             }
             if (args.containsKey("hold")) Thread.sleep(Long.parseLong(args.getString("hold")));
             finish(Activity.RESULT_OK,result);
