@@ -78,8 +78,8 @@ export default function AndroidUpdateNotice({ userId }: { userId?: string }) {
       <button type="button" className="min-h-11 rounded-xl border border-primary/25 px-4" onClick={() => setOpen(false)}>{text('下次再说', '下次再說', 'Later')}</button>
       {window.XiaoyuHost ? <button type="button" disabled={busy} className="min-h-11 rounded-xl bg-primary-strong px-4 font-semibold text-white disabled:opacity-60"
         onClick={() => androidCommand(ready ? 'installUpdate' : state.update === 'failed' ? 'checkUpdate' : 'downloadUpdate')}>
-        {ready ? text('安装更新', '安裝更新', 'Install update') : state.update === 'failed' ? text('重试', '重試', 'Retry') : text('下载更新', '下載更新', 'Download update')}
-      </button> : <a href="https://myxiaoyu.com/download/" className="inline-flex min-h-11 items-center rounded-xl bg-primary-strong px-4 font-semibold text-white">{text('下载新版', '下載新版', 'Download update')}</a>}
+        {ready ? text('安装更新', '安裝更新', 'Install update') : state.update === 'failed' ? text('重试', '重試', 'Retry') : state.updateDelivery === 'browser' ? text('前往蒲公英更新', '前往蒲公英更新', 'Update on Pgyer') : text('下载更新', '下載更新', 'Download update')}
+      </button> : <a href="https://www.pgyer.com/xiaoyu-ai-android-1" className="inline-flex min-h-11 items-center rounded-xl bg-primary-strong px-4 font-semibold text-white">{text('下载新版', '下載新版', 'Download update')}</a>}
     </div>
   </dialog>;
 }

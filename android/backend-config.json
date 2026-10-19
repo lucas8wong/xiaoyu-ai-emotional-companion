@@ -1,5 +1,6 @@
 {
   "schema": 1,
+  "updateProvider": "pgyer-public-page",
   "storageOrigin": "https://myxiaoyu.com",
   "backendOrigins": ["https://myxiaoyu.com"],
   "downloadOrigins": ["https://myxiaoyu.com"],

@@ -26,6 +26,7 @@ final class AppUpdater {
     private volatile boolean busy;
     private volatile boolean closed;
     private JSONObject release;
+    private boolean pgyerAvailable;
     private File readyFile;
     private boolean waitingPermission;
     AppUpdater(Activity activity, JSONObject config, Listener listener) {
@@ -89,6 +90,15 @@ final class AppUpdater {
         busy = true; emit("update", "checking");
         worker.execute(() -> {
             try {
+                if ("pgyer-public-page".equals(config.optString("updateProvider"))) {
+                    pgyerAvailable = false;
+                    String version = publicPgyerVersion();
+                    pgyerAvailable = PgyerRelease.newer(version, versionName(activity));
+                    emit("updateDelivery", "browser");
+                    emit("latestVersion", version);
+                    emit("update", pgyerAvailable ? "available" : "current");
+                    return;
+                }
                 JSONObject found = null;
                 JSONArray origins = config.getJSONArray("backendOrigins");
                 for (int i = 0; i < origins.length(); i++) {
@@ -103,6 +113,25 @@ final class AppUpdater {
             finally { busy = false; }
         });
     }
+    private String publicPgyerVersion() throws Exception {
+        HttpURLConnection connection = (HttpURLConnection)new URL(PgyerRelease.PAGE + "?updateCheck=" + System.currentTimeMillis()).openConnection();
+        connection.setInstanceFollowRedirects(false);
+        connection.setConnectTimeout(6000); connection.setReadTimeout(6000);
+        connection.setRequestProperty("Accept", "text/html");
+        connection.setRequestProperty("Cache-Control", "no-cache");
+        try {
+            if (connection.getResponseCode() != 200) throw new IOException("Update page unavailable");
+            try (InputStream input = connection.getInputStream(); ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+                long deadline = android.os.SystemClock.elapsedRealtime() + 15000;
+                byte[] buffer = new byte[8192]; int n;
+                while ((n = input.read(buffer)) != -1) {
+                    if (closed || android.os.SystemClock.elapsedRealtime() > deadline || output.size() + n > 1024 * 1024) throw new IOException("Invalid update page");
+                    output.write(buffer, 0, n);
+                }
+                return PgyerRelease.version(output.toString("UTF-8"));
+            }
+        } finally { connection.disconnect(); }
+    }
     private void validate(JSONObject entry) throws Exception {
         if (entry.getInt("schema") != 1 || !activity.getPackageName().equals(entry.getString("packageId"))
             || entry.getLong("versionCode") <= 0 || entry.getString("versionName").length() > 40
@@ -112,6 +141,13 @@ final class AppUpdater {
             || !allowed(entry.getString("apkUrl"), "downloadOrigins")) throw new IOException("Invalid release");
     }
     synchronized void download() {
+        if ("pgyer-public-page".equals(config.optString("updateProvider"))) {
+            if (!closed && !busy && pgyerAvailable) activity.runOnUiThread(() -> {
+                try { activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(PgyerRelease.PAGE))); }
+                catch (Exception failure) { emit("update", "failed"); }
+            });
+            return;
+        }
         if (busy || release == null || closed) return;
         busy = true; emit("progress", 0); emit("update", "downloading");
         final JSONObject selected = release;

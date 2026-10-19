@@ -7,6 +7,31 @@ server saves, community and generated media still require the existing backend.
 
 ## Continuity and release
 
+### Update delivery from 1.1.3
+
+The signed config selects `pgyer-public-page`. The native checker reads only the fixed
+HTTPS page `https://www.pgyer.com/xiaoyu-ai-android-1`, without visiting myxiaoyu.com
+or using account API credentials. It reads literal public metadata, pins the public
+application-group ID and Android type, and compares numeric version names (not Pgyer's
+independent build counter). Each release must increase both Android versionCode and
+numeric versionName. No JavaScript is executed, no URL from page contents is trusted,
+and redirects, duplicate/unknown metadata, oversized pages and unsupported versions fail
+closed. Network/parser failures stay silent; the fixed manual download entry remains.
+
+This is a best-effort **public HTML adapter, not the official Pgyer check API**. A page
+layout change, access challenge, password protection or unavailable network can prevent
+detection; keep the app page public and verify detection after each upload. Publish new
+versions to the same Pgyer application and retain its short URL and current-version
+selection. Same-version-name rebuilds cannot be detected by this adapter.
+
+The existing once-per-login prompt is retained. Its update button opens the fixed Pgyer
+page in the system browser; Android performs signature/package checks during the user's
+in-place installation. The former app-managed SHA-256 download pipeline is retained for
+legacy manifest mode, but is **not** used for Pgyer browser downloads. Existing 1.1.2
+clients require one signed in-place upgrade. They still use the old manifest until then.
+There is no new business store, API key, paid API call, cloud account or SDK dependency.
+Pgyer only supplies distribution/version discovery; backend connectivity is unchanged.
+
 - Keep application ID `com.myxiaoyu.app`, storage origin `https://myxiaoyu.com`, existing
   storage keys and the **original release signing key**. Install over the old app;
   never uninstall or clear data to upgrade. Browser data and Android app data remain
@@ -107,6 +132,17 @@ an approved HTTPS origin serving the manifest and APK directly, plus measured co
 <a id="zh"></a>
 
 # 小愈安卓本地界面
+
+**1.1.3 更新方式：** 新版直接读取固定蒲公英公开页中的版本元数据，校验公开应用标识和
+安卓类型后比较数字版本号；不访问 myxiaoyu.com 来检查更新、不携带账号密钥、不执行网页
+脚本、不采纳网页中的下载地址。仅较新版本沿用登录后一次提醒，点击后用系统浏览器打开
+固定蒲公英链接，由用户下载并覆盖安装，系统核对包名和签名。旧版 App 需先覆盖升级一次。
+公开页识别不是蒲公英正式 API，平台改版、验证码、访问限制或网络失败时会静默停止提醒，
+不能承诺永久稳定；固定手动入口仍可用。每次发布须增加 versionCode 与数字 versionName，
+上传同一应用、保留短链接、确认当前发布版本，再核验识别。仅改构建号而不改版本名无法识别。
+此模式不执行旧的 App 内 SHA-256 下载流程；原校验流程保留给旧清单模式。无需云账号、
+额外 SDK、付费 API 或新增业务存储。下方早期版本的“无备用链接”描述仅适用于此前状态；
+后台的内地连通性仍未解决。
 
 新版把现有 React 界面、页面代码、字体、皮肤、剧情／文游图片和音乐放进安装包，
 通过系统 WebView 本地运行。不是重新用 Kotlin 编写整套界面。打开界面不再等网站

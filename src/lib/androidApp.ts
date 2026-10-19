@@ -6,6 +6,7 @@ export type AndroidAppState = {
   connection?: 'checking' | 'online' | 'offline';
   update?: 'checking' | 'current' | 'available' | 'downloading' | 'ready' | 'failed';
   latestVersion?: string;
+  updateDelivery?: 'browser';
   progress?: number;
 };
 
