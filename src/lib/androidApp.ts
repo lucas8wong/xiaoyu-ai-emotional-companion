@@ -1,6 +1,7 @@
 export type AndroidAppState = {
   versionName: string;
   versionCode: number;
+  openSequence?: number;
   backendOrigin: string;
   backendOrigins: string[];
   connection?: 'checking' | 'online' | 'offline';

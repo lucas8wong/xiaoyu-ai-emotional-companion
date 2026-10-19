@@ -1,17 +1,12 @@
-/** In-memory only: one optional reminder per login, including a restored app session. */
+/** In-memory only: one optional reminder per native foreground visit, including guests. */
 export function createAndroidUpdatePromptGate() {
   let session = '';
   let shown = false;
-  let checked = false;
   return {
     enter(next: string): boolean {
       if (next === session) return false;
-      session = next; shown = false; checked = false;
+      session = next; shown = false;
       return true;
-    },
-    check(): boolean {
-      if (!session || checked) return false;
-      checked = true; return true;
     },
     pending(update?: string): boolean {
       return !!session && !shown && (update === 'available' || update === 'ready');

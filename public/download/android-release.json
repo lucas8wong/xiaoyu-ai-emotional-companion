@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "packageId": "com.myxiaoyu.app",
-  "versionCode": 6,
-  "versionName": "1.1.4",
+  "versionCode": 7,
+  "versionName": "1.1.5",
   "minSdk": 24,
   "bytes": 418521326,
-  "sha256": "cf7ae9bb1fbdd38230fadc3f89e4a3d80650ab4aeb19d22ce292f9d1a6c648b8",
-  "apkUrl": "https://myxiaoyu.com/download/xiaoyu-1.1.4.apk"
+  "sha256": "acf32a83539c21c714a20b42266795401a64ab24eb852d389e536ac541fb0ffd",
+  "apkUrl": "https://myxiaoyu.com/download/xiaoyu-1.1.5.apk"
 }

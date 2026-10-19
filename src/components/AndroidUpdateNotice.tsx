@@ -1,33 +1,28 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { getLang } from '../i18n';
-import { getToken } from '../services/api';
 import { androidCommand, isLocalAndroidApp, type AndroidAppState } from '../lib/androidApp';
 import { createAndroidUpdatePromptGate } from '../lib/androidUpdatePrompt';
 
-// Survives Home unmounting while a story is open; never writes account or save data.
+// One reminder per native foreground visit; never writes account or save data.
 const gate = createAndroidUpdatePromptGate();
 
-export default function AndroidUpdateNotice({ userId }: { userId?: string }) {
+export default function AndroidUpdateNotice() {
   const [state, setState] = useState<AndroidAppState | undefined>(() => window.__XIAOYU_ANDROID__);
-  const [, refreshAuth] = useState(0);
   const [open, setOpen] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
-  const session = userId ? getToken() : '';
+  const session = String(state?.openSequence ?? 1);
   useEffect(() => {
     if (!isLocalAndroidApp()) return;
     const update = () => setState({ ...window.__XIAOYU_ANDROID__! });
-    const auth = () => refreshAuth(value => value + 1);
     window.addEventListener('xiaoyu:android-state', update);
-    window.addEventListener('auth-changed', auth);
+    update();
     return () => {
       window.removeEventListener('xiaoyu:android-state', update);
-      window.removeEventListener('auth-changed', auth);
     };
   }, []);
   useEffect(() => {
     if (!isLocalAndroidApp()) return;
     if (gate.enter(session)) setOpen(false);
-    if (gate.check()) androidCommand('checkUpdate');
   }, [session]);
   useEffect(() => {
     if (!isLocalAndroidApp() || open || !session || !gate.pending(state?.update)) return;
@@ -79,7 +74,7 @@ export default function AndroidUpdateNotice({ userId }: { userId?: string }) {
       {window.XiaoyuHost ? <button type="button" disabled={busy} className="min-h-11 rounded-xl bg-primary-strong px-4 font-semibold text-white disabled:opacity-60"
         onClick={() => androidCommand(ready ? 'installUpdate' : state.update === 'failed' ? 'checkUpdate' : 'downloadUpdate')}>
         {ready ? text('安装更新', '安裝更新', 'Install update') : state.update === 'failed' ? text('重试', '重試', 'Retry') : state.updateDelivery === 'browser' ? text('前往蒲公英更新', '前往蒲公英更新', 'Update on Pgyer') : text('下载更新', '下載更新', 'Download update')}
-      </button> : <a href="https://www.pgyer.com/xiaoyu-ai-android-1" className="inline-flex min-h-11 items-center rounded-xl bg-primary-strong px-4 font-semibold text-white">{text('下载新版', '下載新版', 'Download update')}</a>}
+      </button> : <a href="https://www.pgyer.com/xiaoyu-ai-android" className="inline-flex min-h-11 items-center rounded-xl bg-primary-strong px-4 font-semibold text-white">{text('下载新版', '下載新版', 'Download update')}</a>}
     </div>
   </dialog>;
 }

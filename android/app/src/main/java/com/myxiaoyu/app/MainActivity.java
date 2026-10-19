@@ -55,7 +55,6 @@ public class MainActivity extends Activity {
     private final JSONObject nativeState = new JSONObject();
     private byte[] pendingImage;
     private boolean startedChecks;
-    private long lastCheckTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -179,7 +178,6 @@ public class MainActivity extends Activity {
                 updateState(new JSONObject());
                 if (!startedChecks) {
                     startedChecks = true;
-                    lastCheckTime = System.currentTimeMillis();
                     updater.checkConnection();
                     updater.check();
                 }
@@ -438,12 +436,23 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        try {
+            updateState(new JSONObject().put("openSequence", nativeState.optLong("openSequence", 0) + 1));
+        } catch (Exception ignored) { }
+        // A real foreground visit, including returning from the background. A permission
+        // dialog that only pauses the Activity does not create another reminder.
+        if (updater != null && startedChecks) {
+            updater.check();
+            updater.checkConnection();
+        }
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         if (updater != null) updater.onResume();
-        if (updater != null && startedChecks && System.currentTimeMillis() - lastCheckTime > 24L * 60 * 60 * 1000) {
-            lastCheckTime = System.currentTimeMillis(); updater.checkConnection(); updater.check();
-        }
         if (webView != null) {
             webView.onResume();
         }

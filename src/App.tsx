@@ -1,3 +1,4 @@
+import AndroidUpdateNotice from './components/AndroidUpdateNotice';
 import { lazy, Suspense, useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import PrivacyBanner from "@/components/PrivacyBanner";
@@ -81,6 +82,7 @@ export default function App() {
       {/* 已安装 PWA 的应用内启动画面（standalone 才显示，展示 hero 完整画面后淡出） */}
       <AppSplash />
       <Router>
+        <AndroidUpdateNotice />
         {/* 整页氛围背景固定层（position:fixed，滚动顺滑/铺满视口） */}
         <div className="skin-backdrop" aria-hidden />
         <ScrollToTop />

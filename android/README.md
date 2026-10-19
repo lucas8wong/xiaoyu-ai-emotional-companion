@@ -10,7 +10,7 @@ server saves, community and generated media still require the existing backend.
 ### Update delivery from 1.1.3
 
 The signed config selects `pgyer-public-page`. The native checker reads only the fixed
-HTTPS page `https://www.pgyer.com/xiaoyu-ai-android-1`, without visiting myxiaoyu.com
+HTTPS page `https://www.pgyer.com/xiaoyu-ai-android` (from 1.1.5), without visiting myxiaoyu.com
 or using account API credentials. It reads literal public metadata, pins the public
 application-group ID and Android type, and compares numeric version names (not Pgyer's
 independent build counter). Each release must increase both Android versionCode and
@@ -24,7 +24,11 @@ detection; keep the app page public and verify detection after each upload. Publ
 versions to the same Pgyer application and retain its short URL and current-version
 selection. Same-version-name rebuilds cannot be detected by this adapter.
 
-The existing once-per-login prompt is retained. Its update button opens the fixed Pgyer
+From 1.1.5, every cold start and return from the background checks for a newer version,
+including guests. A confirmed newer version prompts once per foreground visit, across
+app screens, after other dialogs or active typing finish. “Later” lasts until the next
+foreground visit. Native onStart drives this; permission-dialog onResume alone does not
+reset it. Failed checks and current versions stay silent. Its update button opens the fixed Pgyer
 page in the system browser; Android performs signature/package checks during the user's
 in-place installation. The former app-managed SHA-256 download pipeline is retained for
 legacy manifest mode, but is **not** used for Pgyer browser downloads. Existing 1.1.2
@@ -43,10 +47,9 @@ Pgyer only supplies distribution/version discovery; backend connectivity is unch
 - `backend-config.json` is compiled into the signed package. Only listed HTTPS origins
   may receive redirected API calls or deliver updates. There is no retry of generation
   POSTs on another origin. Keep every gateway connected to the same authoritative data.
-- Update checks are silent on startup, login and after a day away. There is no permanent
-  homepage update panel. An available version prompts once per login (including a restored
-  session on cold start), on Home after other dialogs or active typing finish. “Later”
-  suppresses further prompts in that login, including returns from stories. This gate is
+- Update checks run on every native foreground visit. There is no permanent
+  homepage update panel. An available version prompts once per visit, including guests;
+  navigating between app screens does not repeat a dismissed prompt. This gate is
   memory-only; there is no new persistent business store. Downloads stay in private cache;
   SHA-256, exact length, package ID,
   increasing version and original signing identity must all pass. Android asks the user

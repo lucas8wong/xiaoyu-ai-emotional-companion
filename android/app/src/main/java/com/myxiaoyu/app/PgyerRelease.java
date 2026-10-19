@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 /** Read-only public-page adapter. No JavaScript execution, account keys or downloaded URLs. */
 final class PgyerRelease {
-    static final String PAGE = "https://www.pgyer.com/xiaoyu-ai-android-1";
+    static final String PAGE = "https://www.pgyer.com/xiaoyu-ai-android";
     // Public, stable application-group identifier observed on the owner's download page.
     private static final String APP_GROUP = "d41a59afbc045d82dfc7bc2c4fb48e11";
     private static final Pattern SCRIPTS = Pattern.compile("<script\\b[^>]*>(.*?)</script\\s*>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
