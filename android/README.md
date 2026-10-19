@@ -33,7 +33,9 @@ server saves, community and generated media still require the existing backend.
 
 ## Build and publish
 
-Prerequisites: Node dependencies, JDK 17, Android SDK 36/build-tools 36.0.0, Gradle 8.9.
+Prerequisites: Node dependencies (including Sharp), FFmpeg/ffprobe, JDK 17,
+Android SDK 36/build-tools 36.0.0, Gradle 8.9. Set `FFMPEG_PATH` and `FFPROBE_PATH`
+when those build tools are not on PATH. They are not bundled in the APK or required by the server.
 The complete private production resource inventory must be present locally. The public
 Git repository intentionally excludes some fonts, music and game resources. A successful
 build without those resources is not a complete release.
@@ -57,10 +59,22 @@ build without those resources is not a complete release.
    `npm run build:seo`. Check the public manifest and APK range/length afterwards.
    Keep old APKs and the private key backup. Do not overwrite the production database.
 
-The initial full-resource package is approximately 722 MiB. Download over Wi-Fi and
-allow at least 2 GiB of free space for installation/update. Future size reductions
-should use a separately versioned, verified optional-resource cache, with offline
-fallbacks and continuity tests; do not silently remove current game/media resources.
+Version 1.1.2 reduces the signed full-resource package from 721.8 to 399.1 MiB (44.7%).
+Only isolated Android build copies are transformed: imported WebP scene art has a
+1280px long-edge cap at quality 78; public photo/WebP art has a 1600px cap at quality 82;
+high-bitrate background MP3s use 128 kbps with their original duration/sample rate/channels.
+Animated images, fonts, skin artwork, PNGs/QRs, tutorials and speech/effects are retained.
+This is lossy media optimization, not a claim of pixel-identical or lossless audio output.
+Original website/source resources, every resource URL, app functions and saves stay intact.
+No new runtime network dependency or persistent business store is added.
+
+The build-only cache under ignored `temp/android-media-cache/` is keyed by source bytes,
+policy and encoder versions, with output digests. It is disposable and cannot be used as
+a user-data backup. `bundle-size-report.json` records the generated package totals. Windows
+read-only flags are cleared only on generated copies; failed builds do not publish an APK.
+Download over Wi-Fi and allow at least 2 GiB free for upgrades from the previous large package.
+Further reductions through optional-resource downloads require a separately versioned,
+verified cache, reachable hosting, offline fallbacks and continuity tests.
 
 ## Mainland connectivity: pending deployment
 
@@ -106,7 +120,13 @@ an approved HTTPS origin serving the manifest and APK directly, plus measured co
 下载经过文件大小、SHA-256、包名、递增版本和签名校验，再由安卓系统确认安装。
 更新缓存不是业务存档；取消安装不会删除存档。
 
-完整资源首包约 722 MiB，建议 Wi-Fi 下载并预留至少 2 GiB 空间。构建、原签名、
+1.1.2 完整资源包约 399 MiB，比上一版约 722 MiB 小 44.7%。只压缩安卓构建副本：
+文游场景图最长边 1280px、质量 78；公共照片／WebP 图最长边 1600px、质量 82；
+高码率背景音乐改为 128 kbps，保留时长、采样率和声道。这是有损资源优化，不宣称
+画面或音频无损。字体、皮肤、PNG／二维码、教程和语音音效保留原文件，全部资源仍随包
+提供，不新增联网下载前提；网页原图、功能和存档不变。构建新增 FFmpeg／ffprobe 工具，
+可通过 FFMPEG_PATH／FFPROBE_PATH 配置；编码缓存只在忽略的 temp 目录，随时可重建，
+不是业务数据或用户备份。建议 Wi-Fi 下载，旧大包升级仍预留至少 2 GiB 空间。构建、原签名、
 测试、先发布 APK 后发布版本清单的步骤见上方。签名密钥及密码必须私下备份，
 测试探针不能给用户安装。后续每次界面更新要升版本、打包并发布；后台逻辑可独立更新，
 仍须兼容已安装的旧客户端。

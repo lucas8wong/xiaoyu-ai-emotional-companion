@@ -42,7 +42,11 @@ final class LocalContent {
             if (!manifest.has(path)) return error(404, "Not Found");
             long size = manifest.getJSONObject(path).getLong("bytes");
             InputStream input = context.getAssets().open("web" + path.substring(0));
-            String range = request.getRequestHeaders().get("Range");
+            // WebView may normalize fetch headers to lowercase; HTTP names are case-insensitive.
+            String range = null;
+            for (Map.Entry<String, String> header : request.getRequestHeaders().entrySet()) {
+                if ("Range".equalsIgnoreCase(header.getKey())) { range = header.getValue(); break; }
+            }
             if (range != null && range.matches("bytes=\\d+-\\d*")) {
                 String[] parts = range.substring(6).split("-", -1);
                 long start = Long.parseLong(parts[0]);
