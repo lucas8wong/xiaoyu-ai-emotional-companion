@@ -18,8 +18,12 @@ server saves, community and generated media still require the existing backend.
 - `backend-config.json` is compiled into the signed package. Only listed HTTPS origins
   may receive redirected API calls or deliver updates. There is no retry of generation
   POSTs on another origin. Keep every gateway connected to the same authoritative data.
-- The homepage checks for an update on startup, offers a manual check and checks again
-  after a day away. Downloads stay in private cache; SHA-256, exact length, package ID,
+- Update checks are silent on startup, login and after a day away. There is no permanent
+  homepage update panel. An available version prompts once per login (including a restored
+  session on cold start), on Home after other dialogs or active typing finish. “Later”
+  suppresses further prompts in that login, including returns from stories. This gate is
+  memory-only; there is no new persistent business store. Downloads stay in private cache;
+  SHA-256, exact length, package ID,
   increasing version and original signing identity must all pass. Android asks the user
   to authorize installation. Cancelling does not delete saves. A new app process can
   check/download again; resumable downloads are not implemented.
@@ -79,6 +83,13 @@ Serve the signed APK and manifest on a reachable HTTPS download origin. An APK c
 also be transferred directly, but that alone provides no online AI access. No cloud
 cutover, mainland connectivity test, store submission or filing is claimed here.
 
+For immediate distribution, share the original signed APK through a reachable file-transfer
+or netdisk service. Recipients download the APK to Android and install over the old app;
+do not rename it to another file type, unpack/repackage it, or request an uninstall. Keep
+the release filename and SHA-256 alongside it. No alternate share link is provisioned here.
+Netdisk sharing does not automatically become an in-app updater endpoint: that requires
+an approved HTTPS origin serving the manifest and APK directly, plus measured connectivity.
+
 <a id="zh"></a>
 
 # 小愈安卓本地界面
@@ -89,8 +100,11 @@ cutover, mainland connectivity test, store submission or filing is claimed here.
 
 升级须沿用原包名、原签名和原 HTTPS 存储域名，直接覆盖安装，不卸载、不清数据。
 网页浏览器与 App 的本机数据仍各自独立，不宣称浏览器存档已上传或跨设备迁移。
-首页提供更新提示与检查按钮，下载经过文件大小、SHA-256、包名、递增版本和签名校验，
-再由安卓系统确认安装。更新缓存不是业务存档；取消安装不会删除存档。
+首页不再常驻显示检查按钮。启动、登录和离开一天后静默检查，有新版才在登录后的首页
+弹出提醒，避开其他弹窗和正在输入的内容。「下次再说」后本次登录不重复提示；重开 App
+恢复登录或下次重新登录可再次提醒。提醒次数只存在内存，不新增持久业务数据。
+下载经过文件大小、SHA-256、包名、递增版本和签名校验，再由安卓系统确认安装。
+更新缓存不是业务存档；取消安装不会删除存档。
 
 完整资源首包约 722 MiB，建议 Wi-Fi 下载并预留至少 2 GiB 空间。构建、原签名、
 测试、先发布 APK 后发布版本清单的步骤见上方。签名密钥及密码必须私下备份，
@@ -101,3 +115,8 @@ cutover, mainland connectivity test, store submission or filing is claimed here.
 真实可达的 API／下载域名和服务器，完成数据连续性检查、所需手续及当地网络实测。
 多入口必须连同一份权威账号／存档库；配置备用域名之前，须验证跨域、鉴权、流式对话、
 上传与生成素材、语音、邮件链接和支付回调。直接传 APK 只能解决安装，不能替代后台连接。
+
+现阶段可以把原签名 APK 用可访问的网盘或文件传输服务发给用户，下载到安卓手机后直接
+覆盖安装。保留发布文件名与 SHA-256，不改后缀、不拆包重打包、不要求卸载旧版。
+本轮没有创建网盘分享链接。网盘分享也不等于 App 自动更新线路；后者需要配置允许访问的
+HTTPS 域名，直接提供版本清单和安装包，并完成实际网络测试。
