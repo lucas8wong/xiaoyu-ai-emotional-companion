@@ -70,6 +70,14 @@ public final class StorageProbe extends Instrumentation {
                 result.putString("upgrade", "PASS: offline React UI, localStorage, cookie, IndexedDB");
                 result.putString("state", evaluate(view,"JSON.stringify(window.__XIAOYU_ANDROID__)"));
                 result.putString("url", evaluate(view,"location.href"));
+                if ("client".equals(args.getString("mode"))) {
+                    evaluate(view, "window.probeClient=null;navigator.sendBeacon=(url,blob)=>{if(String(url).includes('/api/usage-time/hit'))blob.text().then(s=>window.probeClient=JSON.parse(s));return true;}");
+                    Thread.sleep(1500);
+                    evaluate(view, "dispatchEvent(new Event('pagehide'))");
+                    for (int i=0;i<50;i++) { if ("true".equals(evaluate(view,"window.probeClient?.client==='android-app'&&window.probeClient?.appVersion===window.__XIAOYU_ANDROID__.versionName"))) break; Thread.sleep(100); }
+                    if (!"true".equals(evaluate(view,"window.probeClient?.client==='android-app'&&window.probeClient?.appVersion===window.__XIAOYU_ANDROID__.versionName"))) throw new Exception("Native telemetry delivery source/version failed");
+                    result.putString("client", "PASS: actual packaged heartbeat beacon identifies android-app and installed release version");
+                }
                 if ("email".equals(args.getString("mode"))) {
                     evaluate(view, "dispatchEvent(new Event('xiaoyu:need-register'))");
                     for (int i=0;i<100;i++) { if ("true".equals(evaluate(view,"!!document.getElementById('auth-label-email')"))) break; Thread.sleep(100); }

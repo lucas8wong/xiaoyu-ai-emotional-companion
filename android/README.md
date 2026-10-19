@@ -7,6 +7,17 @@ server saves, community and generated media still require the existing backend.
 
 ## Continuity and release
 
+### Client reporting from 1.1.6
+
+The bundled client reports `android-app` plus its installed version in API headers and
+heartbeat/beacon bodies. The website separately reports other web, iOS browser and iOS
+home-screen web. The latter is not a native iOS app. The backend uses the existing APK
+UA suffix to identify older APKs without inferring their version. Unmarked history stays
+unknown. Console channel counts, successful-session counts and dwell duration extend the
+existing usage-time ledger; realtime per-channel presence is memory-only. Client hints
+never grant permissions or change prices. Migration inventory is in the cloud deployment
+continuity gates. Upgrading retains the original package/signature/storage identity.
+
 ### Update delivery from 1.1.3
 
 The signed config selects `pgyer-public-page`. The native checker reads only the fixed

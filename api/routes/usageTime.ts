@@ -1,3 +1,6 @@
+import { presenceStore } from '../services/presence.js';
+import { quotaStore } from '../services/quota.js';
+import { requestClientSource } from '../services/clientSource.js';
 /**
  * 用户真实使用时长上报
  * POST /api/usage-time/hit
@@ -95,7 +98,11 @@ router.post('/hit', (req: Request, res: Response): void => {
     autoLike: vis && !focus && !interaction && diagOnly,
   });
 
-  if (seconds > 0) usageTimeStore.addActiveTime(userId, seconds);
+  if (seconds > 0) {
+    const source = requestClientSource(req);
+    usageTimeStore.addActiveTime(userId, seconds, source);
+    presenceStore.touch(userId, { account: isAccount, deviceKey: deviceId ? quotaStore.identifyByDevice(deviceId) : undefined, source });
+  }
   res.json({ success: true, recorded: seconds > 0 });
 });
 

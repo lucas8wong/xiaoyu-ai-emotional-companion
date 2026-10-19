@@ -1,5 +1,5 @@
 /**
- * 用户真实使用时长统计模块
+ * 页面前台停留时长统计模块
  *
  * 从用户端「活跃时长埋点」接收心跳（页面前台且聚焦时），按「日 × 用户/游客」
  * 累计活跃秒数，持久化到 data/usage-time.json。
@@ -12,6 +12,7 @@
  */
 
 import { dataFile, readJson, writeJson } from '../storage/persistence.js';
+import { CLIENT_KINDS, clientDate, type ClientSource, type ClientUsageBucket, type ClientUsageBuckets, type ClientUsageRow } from './clientSource.js';
 
 const USAGE_TIME_FILE = dataFile('usage-time.json');
 
@@ -24,6 +25,13 @@ export interface UsageTimeEntry {
   userId: string;
   /** 按天累计的活跃秒数，key = YYYY-MM-DD（服务端本地日期） */
   daily: Record<string, number>;
+  /**
+   * 最近一次「使用时长心跳」的时刻（ms）。2026-10-08 新增（用户要求控制台显示「最近使用时间」）：
+   * 此前只存按日秒数，回答不了「这个人最近什么时候用过」；老数据没有该字段（读取为 0，展示端退回按日账本）。
+   */
+  lastAt?: number;
+  /** Optional since 2026-10-19; absent historical channel data stays unknown. */
+  clients?: ClientUsageBuckets;
 }
 
 export interface RangeSummary {
@@ -36,7 +44,7 @@ export interface RangeSummary {
   /** 区间内按日合计：date → 全体用户当日活跃秒数之和 */
   daily: { date: string; seconds: number }[];
   /** 区间内按用户合计（降序）：seconds 为区间内秒数，lifetimeSeconds 为全量累计 */
-  users: { userId: string; seconds: number; lifetimeSeconds: number; daily: Record<string, number> }[];
+  users: { userId: string; seconds: number; lifetimeSeconds: number; daily: Record<string, number>; lastAt: number }[];
 }
 
 /** 本地日期键（YYYY-MM-DD），与 usage.ts 的 getDailyTrend 口径保持一致 */
@@ -45,8 +53,11 @@ function todayLocalKey(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-class UsageTimeStore {
+export class UsageTimeStore {
   private map: Map<string, Record<string, number>> = new Map();
+  /** 最近一次心跳时刻（ms），与 map 同生命周期；老数据没有该键（读取为 0） */
+  private lastAtMap: Map<string, number> = new Map();
+  private clientMap = new Map<string, ClientUsageBuckets>();
 
   constructor() {
     this.loadFromDisk();
@@ -58,6 +69,9 @@ class UsageTimeStore {
       for (const e of parsed) {
         if (e?.userId && e.daily && typeof e.daily === 'object') {
           this.map.set(e.userId, e.daily);
+          const lastAt = Number(e.lastAt);
+          if (Number.isFinite(lastAt) && lastAt > 0) this.lastAtMap.set(e.userId, lastAt);
+          if (e.clients && typeof e.clients === 'object') this.clientMap.set(e.userId, e.clients);
         }
       }
     }
@@ -65,7 +79,7 @@ class UsageTimeStore {
 
   private saveToDisk(): void {
     try {
-      const out: UsageTimeEntry[] = Array.from(this.map.entries()).map(([userId, daily]) => ({ userId, daily }));
+      const out = this.listAll();
       writeJson(USAGE_TIME_FILE, out);
     } catch (e) {
       console.warn('⚠️ [UsageTime] 保存使用时长数据失败:', (e as Error)?.message);
@@ -77,7 +91,7 @@ class UsageTimeStore {
    * @param userId 用户唯一标识（登录账号 userId 或游客设备指纹）
    * @param seconds 本次上报的活跃秒数（取整，范围 1–MAX_TICK_SECONDS）
    */
-  addActiveTime(userId: string, seconds: number): void {
+  addActiveTime(userId: string, seconds: number, source: ClientSource = { kind: 'unknown' }): void {
     if (!userId) return;
     const sec = Math.floor(Number(seconds) || 0);
     if (sec <= 0) return;
@@ -86,8 +100,57 @@ class UsageTimeStore {
     const daily = this.map.get(userId) || {};
     daily[date] = (daily[date] || 0) + capped;
     this.map.set(userId, daily);
+    // 记录「最近使用时刻」（取 max，防系统时钟回拨把时间写小）
+    const nowMs = Date.now();
+    if (nowMs > (this.lastAtMap.get(userId) || 0)) this.lastAtMap.set(userId, nowMs);
+    const bucket = this.clientBucket(userId, source, nowMs);
+    const clientDay = clientDate(nowMs);
+    bucket.daily[clientDay] = (bucket.daily[clientDay] || 0) + capped;
     this.saveToDisk();
   }
+
+  private clientBucket(userId: string, source: ClientSource, at: number): ClientUsageBucket {
+    const buckets = this.clientMap.get(userId) || {};
+    const bucket = buckets[source.kind] || { daily: {}, logins: {}, lastAt: 0, lastLoginAt: 0 };
+    if (at >= bucket.lastAt) { bucket.lastAt = at; bucket.version = source.version; }
+    buckets[source.kind] = bucket; this.clientMap.set(userId, buckets);
+    return bucket;
+  }
+
+  /** Called only after successful authentication, never for restored-session heartbeats. */
+  recordClientLogin(userId: string, source: ClientSource, at = Date.now()): void {
+    if (!userId) return;
+    if (!this.map.has(userId)) this.map.set(userId, {});
+    const bucket = this.clientBucket(userId, source, at), day = clientDate(at);
+    bucket.logins[day] = Math.min(1_000_000, (bucket.logins[day] || 0) + 1);
+    bucket.lastLoginAt = Math.max(bucket.lastLoginAt, at);
+    this.saveToDisk();
+  }
+
+  /** Channel totals use existing identity rows; no guessed historical source. */
+  getClientRange(userId: string, from: string, to: string): ClientUsageRow[] {
+    if (from > to) [from, to] = [to, from];
+    const buckets = this.clientMap.get(userId) || {}, daily = this.map.get(userId) || {};
+    const rows = Object.fromEntries(CLIENT_KINDS.map(kind => [kind, { kind, seconds: 0, logins: 0,
+      lastAt: buckets[kind]?.lastAt || 0, lastLoginAt: buckets[kind]?.lastLoginAt || 0,
+      ...(buckets[kind]?.version ? { version: buckets[kind]!.version } : {}) }])) as Record<string, ClientUsageRow>;
+    for (const [day, total] of Object.entries(daily)) {
+      if (day < from || day > to) continue;
+      let remaining = total;
+      // A historical merge may have capped its total at 24h. Never exceed that ledger.
+      for (const kind of CLIENT_KINDS) {
+        const seconds = Math.min(remaining, Math.max(0, Number(buckets[kind]?.daily?.[day]) || 0));
+        rows[kind].seconds += seconds; remaining -= seconds;
+      }
+      rows.unknown.seconds += remaining;
+    }
+    for (const kind of CLIENT_KINDS) for (const [day, count] of Object.entries(buckets[kind]?.logins || {})) {
+      if (day >= from && day <= to) rows[kind].logins += count;
+    }
+    return CLIENT_KINDS.map(kind => rows[kind]).filter(row => row.seconds > 0 || row.logins > 0);
+  }
+
+  clientUserIds(): string[] { return [...this.clientMap.keys()]; }
 
   /**
    * 直接设置某用户某一天的活跃秒数（覆盖旧值）。
@@ -110,6 +173,25 @@ class UsageTimeStore {
     return total;
   }
 
+  /** 某用户最近一次「使用时长心跳」的时刻（ms）；老数据/无记录返回 0 */
+  getLastActiveAt(userId: string): number {
+    return this.lastAtMap.get(userId) || 0;
+  }
+
+  /**
+   * 某用户账本里最近有使用记录的一天（YYYY-MM-DD）；没有记录返回 null。
+   * 用途：老数据没有精确的 lastAt，只能精确到天，作为「最近使用」的退路（不编造时刻）。
+   */
+  getLastUsageDay(userId: string): string | null {
+    const daily = this.map.get(userId);
+    if (!daily) return null;
+    let max: string | null = null;
+    for (const date of Object.keys(daily)) {
+      if (!max || date > max) max = date;
+    }
+    return max;
+  }
+
   /**
    * 游客并入账号：把 from 的按日秒数按天累加进 to，随后删除 from。
    * 为什么需要：注册时 `mergeGuestData` 会把配额/会话/剧情/行为日志都带过去，
@@ -124,6 +206,23 @@ class UsageTimeStore {
       to[date] = Math.min((to[date] || 0) + (Number(sec) || 0), MAX_DAY_SECONDS);
     }
     this.map.set(toId, to);
+    // 最近使用时刻也随身份并入（取较新的一边），否则并入后账号侧「最近使用」会突然变旧
+    const fromLast = this.lastAtMap.get(fromId) || 0;
+    if (fromLast) this.lastAtMap.set(toId, Math.max(this.lastAtMap.get(toId) || 0, fromLast));
+    this.lastAtMap.delete(fromId);
+    const fromClients = this.clientMap.get(fromId);
+    if (fromClients) {
+      const toClients = this.clientMap.get(toId) || {};
+      for (const kind of CLIENT_KINDS) {
+        const a = fromClients[kind]; if (!a) continue;
+        const b = toClients[kind];
+        if (!b) { toClients[kind] = structuredClone(a); continue; }
+        for (const field of ['daily', 'logins'] as const) for (const [day, count] of Object.entries(a[field])) b[field][day] = (b[field][day] || 0) + count;
+        if (a.lastAt > b.lastAt) { b.lastAt = a.lastAt; b.version = a.version; }
+        b.lastLoginAt = Math.max(a.lastLoginAt, b.lastLoginAt);
+      }
+      this.clientMap.set(toId, toClients); this.clientMap.delete(fromId);
+    }
     this.map.delete(fromId);
     this.saveToDisk();
   }
@@ -131,7 +230,10 @@ class UsageTimeStore {
   /** 账户注销时清理（合规：个人数据删除） */
   deleteUser(userId: string): void {
     if (!userId) return;
-    if (this.map.delete(userId)) this.saveToDisk();
+    const hadSeconds = this.map.delete(userId);
+    const hadLast = this.lastAtMap.delete(userId);
+    const hadClients = this.clientMap.delete(userId);
+    if (hadSeconds || hadLast || hadClients) this.saveToDisk();
   }
 
   /**
@@ -166,7 +268,7 @@ class UsageTimeStore {
       if (rangeSec > 0) {
         activeUsers += 1;
         totalSeconds += rangeSec;
-        users.push({ userId, seconds: rangeSec, lifetimeSeconds: lifetimeSec, daily: inRangeDaily });
+        users.push({ userId, seconds: rangeSec, lifetimeSeconds: lifetimeSec, daily: inRangeDaily, lastAt: this.lastAtMap.get(userId) || 0 });
       }
     }
 
@@ -181,7 +283,11 @@ class UsageTimeStore {
 
   /** 列出全部记录（调试/测试用） */
   listAll(): UsageTimeEntry[] {
-    return Array.from(this.map.entries()).map(([userId, daily]) => ({ userId, daily }));
+    return Array.from(this.map.entries()).map(([userId, daily]) => {
+      const lastAt = this.lastAtMap.get(userId) || 0;
+      const clients = this.clientMap.get(userId);
+      return { userId, daily, ...(lastAt > 0 ? { lastAt } : {}), ...(clients ? { clients } : {}) };
+    });
   }
 }
 

@@ -1,3 +1,4 @@
+import { clientEnvironment } from '../lib/clientEnvironment';
 /**
  * 用户真实使用时长埋点（客户端单例）
  *
@@ -84,6 +85,7 @@ function payloadOf(seconds: number, beacon: boolean, diagOnly: boolean): Record<
     beacon,
     ...(diagOnly ? { diag: true } : {}),
     ...identityPayload(),
+    ...clientEnvironment(),
   };
 }
 

@@ -41,7 +41,7 @@ import java.util.List;
  */
 public class MainActivity extends Activity {
     private static final String START_URL = "https://myxiaoyu.com/";
-    private static final String UA_SUFFIX = " XiaoyuAndroid/1.1";
+    private static final String UA_SUFFIX = " XiaoyuAndroid/";
     private static final int REQ_FILE_CHOOSER = 4101;
     private static final int REQ_PERMISSIONS = 4102;
     private static final int REQ_SAVE_IMAGE = 4103;
@@ -134,7 +134,7 @@ public class MainActivity extends Activity {
         settings.setAllowContentAccess(false);
         settings.setGeolocationEnabled(false);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        settings.setUserAgentString(settings.getUserAgentString() + UA_SUFFIX);
+        settings.setUserAgentString(settings.getUserAgentString() + UA_SUFFIX + AppUpdater.versionName(this));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             settings.setForceDark(WebSettings.FORCE_DARK_OFF);
         }

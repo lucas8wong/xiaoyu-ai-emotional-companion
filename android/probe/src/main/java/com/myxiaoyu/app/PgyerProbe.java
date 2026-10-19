@@ -60,7 +60,7 @@ public final class PgyerProbe extends Instrumentation {
             runOnMainSync(checkedUpdater::download);
             if (monitor.getHits() != 1) throw new Exception("Browser monitor hits=" + monitor.getHits() + ", state=" + state.get());
             removeMonitor(monitor);
-            remote = "1.1.5"; updater.check(); await(state, "current");
+            remote = "1.1.6"; updater.check(); await(state, "current");
             remote = "1.1.2"; updater.check(); await(state, "current");
             remote = "invalid"; updater.check(); await(state, "failed");
             result.putString("pgyer", "PASS: website unavailable, newer/equal/older/malformed, browser handoff");

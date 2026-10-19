@@ -1,3 +1,4 @@
+import { clientEnvironmentHeaders } from '../lib/clientEnvironment';
 /**
  * API服务模块
  * 处理与后端的所有通信
@@ -208,6 +209,7 @@ export function buildHeaders(extra?: Record<string, string>): Record<string, str
   return {
     'Content-Type': 'application/json',
     'X-Device-Id': getDeviceId(),
+    ...clientEnvironmentHeaders(),
     'X-Lang': getLang(),
     // 本地时区（2026-09-19）：服务端「时间锚」要用它算**用户那边的今天/现在**。
     // 每个请求都带上（几十字节），这样**不必等用户去设置里开推送**才有时区：
