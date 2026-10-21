@@ -100,7 +100,7 @@ export function SkinPlanIcon({ plan, className = '' }: SkinPlanIconProps) {
   const { meta } = useSkin();
   if (plan === 'mini' || plan === 'flagship') {
     const artwork = premiumMemberArt(meta.id, plan);
-    if (artwork) return <img src={artwork} alt="" className={`${className} premium-plan-image`} data-plan-emblem={plan} loading="lazy" decoding="async" />;
+    if (artwork) return <img src={artwork} alt="" className={`${className} premium-plan-image`} style={meta.bg ? { backgroundImage: `url("${meta.bg}")` } : undefined} data-plan-emblem={plan} loading="lazy" decoding="async" />;
     const Icon = PLAN_FALLBACK[plan];
     return <Icon className={className} aria-hidden="true" />;
   }

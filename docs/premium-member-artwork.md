@@ -6,9 +6,13 @@ Production files live under `public/skins/membership-v2/<skin>/` as `prestige.we
 
 The original images were generated with built-in imagegen from the approved concept and each existing skin's artwork. Sharp only resized and re-encoded the originals. Validate transparency, dimensions, unique files, public image MIME/hash, small-size rendering on light/dark backgrounds and narrow translated membership views before publishing. This frontend asset family introduces no persistent store or backend dependency.
 
+Interface badges place the transparent jewel over the active skin's existing background illustration, cropped to a rounded square. The original skin uses an emerald and mint gradient. This shared component treatment applies to both tiers wherever shown without changing their approved artwork or loading another background asset family.
+
 <a id="zh"></a>
 
 # 尊享与至尊图标
+
+两档图标统一垫上当前皮肤的背景插画，居中裁成圆角方形；原版皮肤使用翡翠薄荷渐变。所有共用入口同步显示，已确认的珠宝主体保持原样，复用现有背景资源。
 
 每套现有皮肤分别有尊享心钻徽章与至尊冠冕，沿用已批准的珠宝插画风格，按皮肤适配颜色／材质／装饰；像素木屋保留像素画法。生产目录membership-v2包含512像素大图与128像素小图，均保留透明通道。premiumMemberArt集中管理映射，SkinPlanIcon共用，未知新皮肤保留基础装饰图标兜底；增加皮肤时须补图并复核。
 

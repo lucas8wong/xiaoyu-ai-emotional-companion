@@ -1,1 +1,17 @@
-.premium-plan-image { display:block; flex-shrink:0; object-fit:contain; }
+.premium-plan-image {
+  display: block;
+  flex-shrink: 0;
+  object-fit: contain;
+  border-radius: 24%;
+  background-color: #dcfce7;
+  background-image: linear-gradient(145deg, #dcfce7, #91d9b2 55%, #27845c);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  outline: 1px solid rgb(0 0 0 / 10%);
+  outline-offset: -1px;
+}
+
+.dark .premium-plan-image {
+  outline-color: rgb(255 255 255 / 10%);
+}
