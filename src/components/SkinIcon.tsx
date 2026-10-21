@@ -14,11 +14,13 @@ import {
   Crown,
   type LucideIcon,
 } from 'lucide-react';
+import './premium-plan-emblem.css';
 import { useSkin } from './SkinProvider';
+import { premiumMemberArt } from '../lib/premiumMemberArt';
 import type { CompanionMode } from '../services/api';
 
 /** 会员档位（含免费档），与支付侧可购买的 `PlanKey`（仅 plus/pro）不同，仅用于会员图标/徽章映射 */
-type PlanLevel = 'free' | 'plus' | 'pro' | 'max';
+type PlanLevel = 'free' | 'plus' | 'pro' | 'max' | 'mini' | 'flagship';
 
 const MODE_FALLBACK: Record<CompanionMode, LucideIcon> = {
   hug: Flower2,
@@ -33,6 +35,8 @@ const PLAN_FALLBACK: Record<PlanLevel, LucideIcon> = {
   plus: Sparkles,
   pro: Crown,
   max: Crown,
+  mini: Sparkles,
+  flagship: Crown,
 };
 
 function modeField(mode: CompanionMode): keyof ReturnType<typeof useSkin>['meta'] {
@@ -50,6 +54,8 @@ function planField(plan: PlanLevel): keyof ReturnType<typeof useSkin>['meta'] {
     case 'free': return 'planFree';
     case 'plus': return 'planPlus';
     case 'pro': return 'planPro';
+    case 'mini':
+    case 'flagship':
     case 'max': return 'planMax';
   }
 }
@@ -92,6 +98,12 @@ interface SkinPlanIconProps {
 
 export function SkinPlanIcon({ plan, className = '' }: SkinPlanIconProps) {
   const { meta } = useSkin();
+  if (plan === 'mini' || plan === 'flagship') {
+    const artwork = premiumMemberArt(meta.id, plan);
+    if (artwork) return <img src={artwork} alt="" className={`${className} premium-plan-image`} data-plan-emblem={plan} loading="lazy" decoding="async" />;
+    const Icon = PLAN_FALLBACK[plan];
+    return <Icon className={className} aria-hidden="true" />;
+  }
   const base = planField(plan);
   // 优先用 240px 小图（会员徽章/会员卡只有 ~36-48px），无则回退大图
   const url = (meta as unknown as Record<string, string>)[base + 'Sm'] || meta[base];
