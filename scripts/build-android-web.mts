@@ -4,11 +4,15 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { optimizeAndroidBundle } from './lib/androidBundleOptimize.mts';
+import { registerBuildScratch, removeBuildScratch, reclaimAbandonedBuilds } from './lib/buildScratch.mts';
 const root = process.cwd();
 const out = path.join(root, 'temp', `android-web-${Date.now()}`);
 const assets = path.join(root, 'android/app/src/main/assets');
 const web = path.join(assets, 'web');
 const config = JSON.parse(fs.readFileSync('android/backend-config.json', 'utf8'));
+reclaimAbandonedBuilds(root);
+registerBuildScratch(root, out);
+try {
 for (const required of ['public/fonts', 'public/music', 'public/img', 'public/skins', 'src/wenyou/assets']) {
   if (!fs.existsSync(required) || !fs.readdirSync(required).length) throw new Error('Required release resources missing: ' + required);
 }
@@ -20,7 +24,8 @@ for (const origin of [...config.backendOrigins, ...config.downloadOrigins]) {
 const result = spawnSync(process.execPath, ['node_modules/vite/bin/vite.js', 'build', '--mode', 'production', '--outDir', out], {
   stdio: 'inherit', env: { ...process.env, XIAOYU_DIST_DIR: out, XIAOYU_ANDROID_BUILD: '1', VITE_ANDROID_LOCAL: '1', VITE_API_BASE_URL: '' },
 });
-if (result.status !== 0) process.exit(result.status || 1);
+if (result.error) throw result.error;
+if (result.status !== 0) throw new Error('Android web build failed: ' + result.status);
 // Explicit public allowlist; never include consoles, user uploads, database, .env or APKs.
 const directories = ['img', 'skins', 'fonts', 'music', 'bgm', 'audio', 'media', 'wenyou'];
 const files = ['favicon.ico', 'favicon.svg', 'logo-word.png', 'manifest.webmanifest', 'pay-qr.jpg', 'wolfcha-overrides.css', 'wolfcha.css', 'xiaoyu-avatar.jpg', 'xiaoyu-logo-192.png', 'xiaoyu-logo-512.png', 'xiaoyu-logo-new.png', 'xiaoyu-logo.png', 'xiaoyu-logo.svg', 'xiaoyu.svg'];
@@ -84,3 +89,15 @@ fs.copyFileSync('android/backend-config.json', path.join(assets, 'backend-config
 fs.writeFileSync(path.join(assets, 'bundle-size-report.json'), JSON.stringify(sizeReport, null, 2));
 const total = Object.values(manifest).reduce((sum, f) => sum + f.bytes, 0);
 console.log(`[android-web] ${Object.keys(manifest).length} files, ${(total / 1048576).toFixed(1)} MiB; no live dist or user data changed`);
+// The new bundle and all manifests have been committed successfully. Previous
+// generated web assets are disposable; signed APK releases remain untouched.
+// Register only after success: a failed replacement retains its rollback copy.
+// The previous directory already exists here, so register its future cleanup
+// before moving it into a fresh owned scratch directory.
+const discard = path.join(root, 'temp', `android-web-previous-${Date.now() + 1}`);
+registerBuildScratch(root, discard);
+if (fs.existsSync(previous)) await renameGenerated(previous, discard);
+removeBuildScratch(root, discard);
+} finally {
+  removeBuildScratch(root, out);
+}
