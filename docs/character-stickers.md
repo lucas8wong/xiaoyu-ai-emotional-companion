@@ -12,16 +12,21 @@ No third-party image or production data is committed to public Git.
 Selection happens after successful text generation and safety validation. It uses
 the user's current message, the completed response, actual character voice/identity/
 boundaries, effective relationship and that owner's retained character history.
-There is no extra model call, prompt catalog, token charge or fake "sent a sticker"
-text. Empty/failed replies cannot create attachments. Unmatched topics stay text-only.
+After the low-frequency gates, a semantic auxiliary call judges intent, negation,
+tone, persona and relationships against at most 48 balanced local descriptions.
+It has 96 output tokens and a 2.5-second deadline; invalid/unknown IDs or uncertainty
+mean text only. Actual auxiliary usage is metered, without debiting user energy.
+No fake "sent a sticker" text is inserted. Empty/failed replies cannot create attachments.
 
-- Match a concrete beat: comfort, kisses, missing someone, flirting, sleep, food,
-  laughter, observing, speechless reactions, finishing work, music, play, agreement
-  or greetings. The picture must have that scene category.
-- Gentle/affectionate roles prefer cute dogs/cats/bears; playful roles may use real
-  cat reactions, opossums, elegant penguins or Nailong. Reserved roles use quieter
-  cat/penguin/capybara reactions and exclude abstract categories. Character-specific
-  family affinity is stable; images vary by the saved turn's deterministic seed.
+- Meaning selects the picture, rather than keyword/category lookup. The model can
+  decline even after a sampled opportunity and can understand an implicit sleepy
+  remark without needing the word "goodnight". Candidate descriptions are data,
+  never instructions; no URL or invented asset ID can be returned.
+- Gentle roles favor natural cute expression; playful roles may use abstract humor
+  only when the atmosphere fits. Reserved roles exclude abstract categories and
+  sample less often. Character-family affinity and balanced scene/family coverage
+  limit domination by the largest source; the final semantic decision follows the
+  actual voice, boundaries, recent conversation and current relationship.
 - Romantic pictures require the lover relationship; gifts do not imply a relationship
   upgrade. Explicit no-sticker requests and character boundaries suppress use.
   Recent saved user opt-outs remain respected across character sessions until a
@@ -103,7 +108,9 @@ are not verified. Final build/restart/health evidence is recorded in CHANGELOG.
 # 角色日常聊天与朋友圈表情
 
 按用户2026-10-25明确要求启用。角色先正常完成文字回复并过安全校验，再用实际人设、口吻、
-边界、关系及当前话题匹配；不增加模型调用、提示词目录或额外元气，不强迫每轮配图。
+边界、关系及当前语义决定。低频门槛后最多48候选交给辅助模型判断，96输出token／2.5秒上限；
+理解反讽、否定与隐含情绪，不按关键词直接配图；不确定／超时／未知ID就纯文字。
+按真实用量登记辅助成本，不扣用户元气，不强迫每轮配图。
 温柔系偏可爱，活泼系可抽象，克制系较少且不整活；恋爱图片只给恋人关系，送礼不自动升级关系。
 危机／哀伤／严重困扰、古代入戏、别发表情的意愿、其他媒体与搜索答案等不配梗图。
 
