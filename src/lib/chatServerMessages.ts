@@ -1,3 +1,4 @@
+import { validCharacterSticker, type CharacterSticker } from './characterSticker';
 import type { ChatMessage, ChatSource } from '../services/api';
 import { isFallbackBubble } from './fallbackBubbles';
 
@@ -25,13 +26,14 @@ export function mergeSources(a: ChatSource[], b: ChatSource[]): ChatSource[] {
   return out;
 }
 
-export function mapServerMessages(msgs: { role: 'user' | 'assistant'; content: string; timestamp: string; image?: string; audio?: string; replyTo?: { role: 'user' | 'assistant'; content: string; kind?: 'image' | 'audio' }; sources?: { title: string; url: string; host?: string }[]; sourceSegments?: ({ title: string; url: string; host?: string }[] | null)[] }[]): ChatMessage[] {
+export function mapServerMessages(msgs: { role: 'user' | 'assistant'; content: string; timestamp: string; image?: string; audio?: string; sticker?: CharacterSticker; replyTo?: { role: 'user' | 'assistant'; content: string; kind?: 'image' | 'audio' }; sources?: { title: string; url: string; host?: string }[]; sourceSegments?: ({ title: string; url: string; host?: string }[] | null)[] }[]): ChatMessage[] {
   const out: ChatMessage[] = [];
   msgs.forEach((m, i) => {
     // 失败兜底气泡不进列表（只认整串匹配，正常台词里出现「没听清」这类字样不受影响）
     if (m.role === 'assistant' && isFallbackBubble(m.content)) return;
     // 引用回复已落库：刷新/换设备重进时把引用卡一起还原（引用属于「用户那条消息」，分段只针对助手长回复）
     const quote = m.replyTo ? { replyTo: m.replyTo } : {};
+    const sticker = m.role === 'assistant' && validCharacterSticker(m.sticker) ? { sticker: m.sticker } : {};
     /**
      * 来源（2026-09-29）：两路来源、两种归属，这里都要还原到**实时那条路径**同样的位置
      *  · `sourceSegments[j]` = 第 j 段（＝第 j 条气泡）**自己引用**的来源 → 挂在那条气泡下；
@@ -65,17 +67,17 @@ export function mapServerMessages(msgs: { role: 'user' | 'assistant'; content: s
       // 全为空白（如只含换行）时回退为原消息，避免把这条回复丢掉
       if (parts.length === 0) {
         const s0 = sourcesFor(0, true, 1);
-        out.push({ id: `h-${i}-${m.timestamp}`, role: m.role, content: m.content, timestamp: m.timestamp, ...(m.image ? { image: m.image } : {}), ...(m.audio ? { audio: m.audio } : {}), ...quote, ...(s0.length ? { sources: s0 } : {}) });
+        out.push({ id: `h-${i}-${m.timestamp}`, role: m.role, content: m.content, timestamp: m.timestamp, ...sticker, ...(m.image ? { image: m.image } : {}), ...(m.audio ? { audio: m.audio } : {}), ...quote, ...(s0.length ? { sources: s0 } : {}) });
         return;
       }
       parts.forEach((p, j) => {
         const src = sourcesFor(j, j === parts.length - 1, parts.length);
-        out.push({ id: `h-${i}-${j}-${m.timestamp}`, role: 'assistant', content: p, timestamp: m.timestamp, ...(m.image ? { image: m.image } : {}), ...(src.length ? { sources: src } : {}) });
+        out.push({ id: `h-${i}-${j}-${m.timestamp}`, role: 'assistant', content: p, timestamp: m.timestamp, ...(j === parts.length - 1 ? sticker : {}), ...(m.image ? { image: m.image } : {}), ...(src.length ? { sources: src } : {}) });
       });
       return;
     }
     const single = sourcesFor(0, true, 1);
-    out.push({ id: `h-${i}-${m.timestamp}`, role: m.role, content: m.content, timestamp: m.timestamp, ...(m.image ? { image: m.image } : {}), ...(m.audio ? { audio: m.audio } : {}), ...quote, ...(single.length ? { sources: single } : {}) });
+    out.push({ id: `h-${i}-${m.timestamp}`, role: m.role, content: m.content, timestamp: m.timestamp, ...sticker, ...(m.image ? { image: m.image } : {}), ...(m.audio ? { audio: m.audio } : {}), ...quote, ...(single.length ? { sources: single } : {}) });
   });
   return out;
 }

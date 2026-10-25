@@ -11,8 +11,18 @@
 import { Router } from 'express';
 import { checkContentSafety } from '../services/safety.js';
 import { fetchPublicUrl } from '../services/news.js';
+import { localCharacterStickerFile } from '../services/characterStickers.js';
 
 const router = Router();
+
+// Only reviewed, immutable library files. No URL proxy, catalog or private user data.
+router.get('/local/:filename', (req, res) => {
+  const file = localCharacterStickerFile(String(req.params.filename || ''));
+  if (!file) { res.status(404).end(); return; }
+  res.sendFile(file, { headers: { 'Cache-Control': 'public, max-age=31536000, immutable', 'X-Content-Type-Options': 'nosniff' } }, error => {
+    if (error && !res.headersSent) res.status(404).end();
+  });
+});
 
 const DEFAULT_UPSTREAM = 'https://v3.alapi.cn/api/doutu';
 

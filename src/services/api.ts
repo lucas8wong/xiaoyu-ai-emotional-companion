@@ -1,3 +1,4 @@
+import type { CharacterSticker } from '../lib/characterSticker';
 import { clientEnvironmentHeaders } from '../lib/clientEnvironment';
 /**
  * API服务模块
@@ -481,6 +482,7 @@ export interface ReplyToRef {
 }
 
 export interface ChatMessage {
+  sticker?: CharacterSticker;
   id: string;
   role: 'user' | 'assistant';
   content: string;

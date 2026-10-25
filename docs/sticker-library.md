@@ -43,19 +43,22 @@ separately from everyday agreement/comfort. No new message/post records are crea
 
 `src/lib/stickerLibrary.ts` remains a shared pure search/ID/URL allowlist helper.
 It excludes `rightsStatus: unverified` or `publicationAllowed: false` records.
-The public catalog is intentionally empty pending clearance; the private catalog's
-`file`/`posterFile` paths work in the offline gallery. Its prospective public `url`
-values are not deployed. Automatic character sending and message/Moments attachments
-are not connected by this collection delivery. Future integration must resolve IDs,
-respect relationship/context/repeat limits, allow no sticker, preserve reduced motion,
-quota/cache/safety contracts and the immutable attachment history.
+The retired public catalog stays empty. The private catalog's `file`/`posterFile`
+paths work in the offline gallery; its old prospective `url` fields are not deployed.
+The operator subsequently requested in-app activation: `characterStickers.ts` uses
+a separate explicit private runtime-approval.json allowlist and immutable first-party
+API image URLs, preserving the original source-rights metadata without claiming an IP
+license. Daily chat and Moments now store/show occasional persona/relationship/scene
+matched attachments. See [runtime contract](character-stickers.md) for pacing, history,
+reduced motion, fallback and deployment checks. This does not publish a bulk catalog
+or include third-party media in public Git.
 
 ## Sources and actual reuse limits
 
 Downloads use public files from the pinned repositories and source pages recorded
 in `scripts/collect-modern-stickers.mjs` and each private catalog row. Repository
 code licenses do not establish commercial rights to third-party characters.
-All new media remain **unverified / publicationAllowed=false** and gitignored;
+The collection's source-rights records remain **unverified / publicationAllowed=false** and gitignored;
 source README/license notices are preserved without claiming they license the IP.
 
 SigStick was excluded because its [terms](https://www.sigstick.com/tos) explicitly
@@ -86,8 +89,10 @@ requires the separately checked exact-directory retirement step, not just a buil
 The new private directory must be explicitly provisioned and hash-verified during a
 future cloud migration; it is not in public Git or an automatic cloud/off-host backup.
 No new database key, browser state, dependency or runtime service. No backend restart
-is needed for this source/static-library change. Rights clearance must precede any
-public media provisioning and sending integration.
+was needed for that source/static-library-only phase. The subsequent backend
+integration requires the normal guarded restart and uses the explicit in-app
+deployment configuration described in character-stickers.md; source-rights
+uncertainty remains documented separately.
 
 <a id="zh"></a>
 
@@ -107,6 +112,7 @@ public media provisioning and sending integration.
 未修改聊天、朋友圈或其他用户记录。
 
 新角色IP的商业再分发授权尚未核实，素材保存在被Git忽略的私有目录，公共索引暂为空；
-已备聊天／朋友圈共用分类检索，尚未接入线上角色自动发送。明确禁止批量抓取的SigStick已排除，
+后续已按用户明确要求接入聊天／朋友圈偶尔配表情，使用独立站内启用名单，详见character-stickers.md；
+不将站内启用要求当成第三方版权授权证明。明确禁止批量抓取的SigStick已排除，
 没有从Tenor下载，也未绕过登录／付费／封禁页面。来源可下载不等于取得IP授权。
 上云须私下携带新目录并验哈希，不能当成已上传或已异机备份。无用户持久层或后端服务变动。
