@@ -1,0 +1,10 @@
+Xiaoyu sticker library
+
+Fluent Emoji: Copyright (c) Microsoft Corporation. MIT.
+Blob Emoji: Blob Emoji community, Google and Raymo111. Apache-2.0.
+Blobfox: Feuerfuchs and the blobfox team. Apache-2.0.
+Chinese annotation metadata: Copyright Unicode, Inc., Unicode-3.0.
+
+Local modifications: resized/re-encoded as WebP; APNG motion preserved in PNG; static posters added; application search tags added.
+Per-file source, SHA-256, license and modifications: catalog.json; full upstream terms and credits: licenses/.
+Filename screening is not full visual approval. No live popularity ranking is claimed.
