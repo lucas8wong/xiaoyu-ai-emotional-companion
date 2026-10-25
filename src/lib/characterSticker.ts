@@ -10,6 +10,12 @@ export interface CharacterSticker {
   animated: boolean;
 }
 
+export interface StickerLibraryItem extends CharacterSticker {
+  family: string;
+  categories: string[];
+}
+export interface StickerLibrary {version:string;items:StickerLibraryItem[]}
+
 const LOCAL = /^\/api\/stickers\/local\/[a-z0-9-]+\.(?:webp|png)$/;
 export function validCharacterSticker(value: unknown): value is CharacterSticker {
   if (!value || typeof value !== 'object') return false;

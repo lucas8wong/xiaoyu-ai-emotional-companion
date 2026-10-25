@@ -1,5 +1,12 @@
 # Character stickers in daily chat and Moments
 
+Update: user-selectable local packs and Moments comments now use canonical sticker
+IDs through the shared picker. The deployment-only image metadata is available at
+`/api/stickers/library`; source manifests and filesystem paths remain private.
+Both user and assistant attachments persist independently of text. Manual user
+choices are distinct from low-frequency character reactions. Real-model follow-up,
+comments, ownership checks and migration fields: [comments contract](moments-comments-live.md).
+
 Enabled by the operator's explicit request on 2026-10-25. The 372-image private
 bundle is now used by `api/services/characterStickers.ts`, independently of the
 retired public catalog/search helper. This is operational approval to use the

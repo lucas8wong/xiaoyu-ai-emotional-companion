@@ -11,9 +11,11 @@
 import { Router } from 'express';
 import { checkContentSafety } from '../services/safety.js';
 import { fetchPublicUrl } from '../services/news.js';
-import { localCharacterStickerFile } from '../services/characterStickers.js';
+import { localCharacterStickerFile,characterStickerLibrary } from '../services/characterStickers.js';
 
 const router = Router();
+
+router.get('/library',(_req,res)=>{res.set('Cache-Control','public, max-age=300');res.json({success:true,data:characterStickerLibrary()});});
 
 // Only reviewed, immutable library files. No URL proxy, catalog or private user data.
 router.get('/local/:filename', (req, res) => {

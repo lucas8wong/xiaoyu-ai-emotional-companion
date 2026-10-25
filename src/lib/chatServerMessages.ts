@@ -33,7 +33,7 @@ export function mapServerMessages(msgs: { role: 'user' | 'assistant'; content: s
     if (m.role === 'assistant' && isFallbackBubble(m.content)) return;
     // 引用回复已落库：刷新/换设备重进时把引用卡一起还原（引用属于「用户那条消息」，分段只针对助手长回复）
     const quote = m.replyTo ? { replyTo: m.replyTo } : {};
-    const sticker = m.role === 'assistant' && validCharacterSticker(m.sticker) ? { sticker: m.sticker } : {};
+    const sticker = validCharacterSticker(m.sticker) ? { sticker: m.sticker } : {};
     /**
      * 来源（2026-09-29）：两路来源、两种归属，这里都要还原到**实时那条路径**同样的位置
      *  · `sourceSegments[j]` = 第 j 段（＝第 j 条气泡）**自己引用**的来源 → 挂在那条气泡下；

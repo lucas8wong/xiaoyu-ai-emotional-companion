@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import type { CharacterSticker } from '../../src/lib/characterSticker.js';
+import type { CharacterSticker,StickerLibrary } from '../../src/lib/characterSticker.js';
 import { toZhSimple } from './zhConvert.js';
 
 type StickerRelation = 'friend' | 'buddy' | 'family' | 'lover';
@@ -59,6 +59,15 @@ export function localCharacterStickerFile(filename: string): string | undefined 
   if(!/^[a-z0-9-]+\.(webp|png)$/.test(filename))return undefined;
   return bank().files.get(filename);
 }
+/** Return only deployed image metadata, never source manifests, paths or user data. */
+export function characterStickerById(id:unknown):CharacterSticker|undefined{
+ if(typeof id!=='string'||!/^[a-z0-9-]{1,100}$/.test(id))return;
+ const a=bank().assets.find(a=>a.id===id);if(!a)return;
+ return {id:a.id,version:VERSION,url:'/api/stickers/local/'+path.basename(a.file),...(a.posterFile?{posterUrl:'/api/stickers/local/'+path.basename(a.posterFile)}:{}),alt:a.title,width:a.width,height:a.height,animated:a.animated};
+}
+export function characterStickerLibrary():StickerLibrary{
+ return {version:VERSION,items:bank().assets.map(a=>({...characterStickerById(a.id)!,family:a.family,categories:a.categories}))};
+}
 const time=(h:StickerHistory)=>h.at??+new Date(h.timestamp||0);
 const roll=(seed:string)=>createHash('sha256').update(seed).digest().readUInt32BE(0)/0x100000000;
 const romantic=new Set(['kiss','flirt','jealous','miss','reconcile','hug']);
@@ -88,7 +97,7 @@ export function characterStickerCandidates(input:StickerSelection,candidates?:St
   if(c.story&&c.storyMode!=='out'&&/古代|古风|江湖|仙侠|武侠|修仙|宫廷|王朝|medieval|ancient|wuxia/i.test(persona+'\n'+c.story.scenarioTitle))return [];
   const history=input.history.filter(h=>(context==='moments'||h.role==='assistant')&&time(h)<=now).sort((a,b)=>time(a)-time(b));
   const own=context==='moments'?history.filter(h=>h.characterId===c.id):history,attached=own.filter(h=>h.sticker),last=attached.at(-1);
-  const requested=context==='chat'&&/(?:发|来|给|用).{0,8}(?:表情包|贴图|梗图)|send.{0,15}(?:sticker|meme)/i.test(user);
+  const requested=context==='chat'&&/(?:发|来|给|用).{0,8}(?:表情(?:包)?|贴图|梗图)|send.{0,15}(?:sticker|meme)/i.test(user);
   if(context==='chat'){
    if(!requested&&own.length<3)return [];
    if(last&&(now-time(last)<12*60000||own.filter(h=>time(h)>time(last)).length<5))return [];
@@ -119,7 +128,7 @@ export async function chooseCharacterSticker(input:StickerSelection,options:{can
  const available=characterStickerCandidates(input,options.candidates);if(!available.length)return;
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),options.timeoutMs??2500);
  try{
-  const data=JSON.stringify({context:input.context,character:input.character,relationship:input.relation===undefined?(input.character.relation??'friend'):input.relation,recentDialogue:input.history.filter(h=>h.content).slice(-4).map(h=>({role:h.role||'assistant',text:h.content!.slice(0,220)})),userMessage:input.userText||'',completedText:input.text,candidates:available.map(a=>({id:a.id,description:a.title,scenes:a.categories,family:a.family}))});
+  const data=JSON.stringify({context:input.context,character:{identity:input.character.identity.slice(0,600),voice:input.character.voice.slice(0,240),boundaries:input.character.boundaries.slice(0,240),story:input.character.story?{scenarioTitle:input.character.story.scenarioTitle.slice(0,120)}:undefined,storyMode:input.character.storyMode},relationship:input.relation===undefined?(input.character.relation??'friend'):input.relation,recentDialogue:input.history.filter(h=>h.content).slice(-4).map(h=>({role:h.role||'assistant',text:h.content!.slice(0,220)})),userMessage:input.userText||'',completedText:input.text,candidates:available.map(a=>({id:a.id,description:a.title,scenes:a.categories,family:a.family}))});
   const generate=options.generate??(async(system:string,user:string,signal:AbortSignal)=>{
    const {createDeepSeekClient}=await import('./deepseek.js');const {coalesceAuxiliary}=await import('./auxiliaryCalls.js');
    const result:any=await coalesceAuxiliary(input.userId,['character-sticker-semantic',input.seed],()=>createDeepSeekClient().models.generateContent({model:'deepseek-flash',contents:[{role:'system',parts:[{text:system}]},{role:'user',parts:[{text:user}]}],userId:input.userId,feature:'characterSticker',callKind:'sticker-semantic',maxTokensCap:96,temperature:.2,signal}));

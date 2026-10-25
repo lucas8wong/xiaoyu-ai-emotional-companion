@@ -88,7 +88,7 @@ test('one attachment survives split history only on the last assistant bubble; u
  const sticker=select()!;
  const message={role:'assistant' as const,content:'第一句\n\n第二句',timestamp:new Date(NOW).toISOString(),sticker};
  const rows=mapServerMessages([message]);assert.equal(rows.length,2);assert.equal(rows[0].sticker,undefined);assert.deepEqual(rows[1].sticker,sticker);
- assert.equal(mapServerMessages([{...message,role:'user'}])[0].sticker,undefined);
+ assert.deepEqual(mapServerMessages([{...message,role:'user'}])[0].sticker,sticker,'user-selected local stickers survive history restoration');
  for(const url of ['https://evil.example/a.webp','/api/stickers/local/../secret.png','/api/stickers/local/a.svg','/api/stickers/local/a.webp?token=secret']){
   assert.equal(validCharacterSticker({...sticker,url}),false);assert.equal(mapServerMessages([{...message,sticker:{...sticker,url}}]).at(-1)?.sticker,undefined);
  }
