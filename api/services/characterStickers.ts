@@ -86,6 +86,7 @@ export function selectCharacterSticker(input: StickerSelection, candidates?: Sti
     const {character:c,context,now}=input;
     const user=toZhSimple(input.userText||''); const text=toZhSimple(input.text||'');
     if(!text.trim()||text.length>600||user.length>400||serious.test(user+'\n'+text))return;
+    if(context==='chat'&&input.history.filter(h=>h.role==='user'&&time(h)<=now).sort((a,b)=>time(a)-time(b)).slice(-3).some(h=>serious.test(toZhSimple(h.content||''))))return;
     if(/(?:别|不要|不用|停止|不发|不喜欢).{0,10}(?:表情|梗图|贴图|亲|抱|撒娇)|no stickers|stop.{0,8}memes/i.test(user))return;
     if(context==='chat'){
       const controls=[...input.history.filter(h=>h.role==='user'&&time(h)<=now).sort((a,b)=>time(a)-time(b)).map(h=>toZhSimple(h.content||'')),user];

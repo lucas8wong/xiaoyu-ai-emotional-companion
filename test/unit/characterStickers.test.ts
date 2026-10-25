@@ -24,6 +24,7 @@ test('serious subjects, no-sticker requests and character boundaries suppress re
  assert.equal(select({hasOtherMedia:true}),undefined);
  assert.equal(select({userId:''}),undefined);
  assert.equal(select({text:''}),undefined);
+ assert.equal(select({history:[{role:'user',content:'我朋友去世了',timestamp:new Date(NOW-60000)}]}),undefined,'a short follow-up does not reset serious context');
  assert.equal(select({text:'x'.repeat(601)}),undefined);
 });
 test('romantic pictures require lover relationship and do not infer romance from received gifts',()=>{
