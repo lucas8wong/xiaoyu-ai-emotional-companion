@@ -1,9 +1,9 @@
 # 小愈（Xiaoyu）阶段1上云镜像
 # 说明：
-#  - 用 Debian/glibc 基础镜像（node:20-slim），因为 onnxruntime-node 需要 glibc（alpine/musl 会跑不了 embedding）。
+#  - 用 Debian/glibc 基础镜像（node:24.22.1-slim），因为 onnxruntime-node 需要 glibc（alpine/musl 会跑不了 embedding）。
 #  - 构建时：安装依赖 → 编译前端 dist → 预下载本地 embedding 模型（离线可用）。
 #  - 运行时：挂载 /app/data 持久卷（存放所有用户记忆/账号/会话），.env 用环境变量或挂载文件注入（勿打进镜像）。
-FROM node:20-slim AS runtime
+FROM node:24.22.1-slim AS runtime
 WORKDIR /app
 
 # 系统依赖（sharp/onnxruntime-node/msedge-tts 等可能需要；最小化但保留常用）
