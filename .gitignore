@@ -161,3 +161,6 @@ src/wenyou/assets/
 # Signed Android downloads stay outside the public source repository.
 public/download/*.apk
 public/download/*.idsig
+
+# Locally collected third-party sticker media; provision privately after rights review.
+resources/stickers-modern/

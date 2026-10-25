@@ -24,6 +24,8 @@ export interface LibrarySticker {
   height: number;
   animated: boolean;
   review: string;
+  rightsStatus?: 'cleared' | 'unverified';
+  publicationAllowed?: boolean;
 }
 export interface StickerLibrary {
   schemaVersion: 1;
@@ -40,7 +42,7 @@ export interface StickerSearchOptions {
   limit?: number;
 }
 
-export const STICKER_LIBRARY_VERSION = '2026-10-25.1';
+export const STICKER_LIBRARY_VERSION = '2026-10-25.2';
 export const STICKER_CATALOG_URL = `/stickers/catalog.json?v=${STICKER_LIBRARY_VERSION}`;
 const LOCAL_ASSET = /^\/stickers\/assets\/[a-z0-9-]+\.(webp|png)$/;
 const normalize = (s: string) => s.normalize('NFKC').toLowerCase().trim();
@@ -51,7 +53,7 @@ export function isLocalStickerAsset(url: string): boolean {
 
 /** Resolve model/user-supplied IDs through the allowlist, never use invented URLs. */
 export function stickerById(catalog: StickerLibrary, id: string): LibrarySticker | undefined {
-  return catalog.assets.find(a => a.id === id && isLocalStickerAsset(a.url)
+  return catalog.assets.find(a => a.id === id && a.rightsStatus !== 'unverified' && a.publicationAllowed !== false && isLocalStickerAsset(a.url)
     && (!a.posterUrl || isLocalStickerAsset(a.posterUrl)));
 }
 
@@ -83,6 +85,7 @@ export function searchStickerLibrary(catalog: StickerLibrary, options: StickerSe
   if (!limit || catalog.schemaVersion !== 1) return [];
   const exclude = new Set(options.excludeIds || []);
   const scored = catalog.assets.filter(a => !exclude.has(a.id)
+    && a.rightsStatus !== 'unverified' && a.publicationAllowed !== false
     && isLocalStickerAsset(a.url) && (!a.posterUrl || isLocalStickerAsset(a.posterUrl))
     && (!options.context || a.contexts.includes(options.context))
     && (!options.style || a.style === options.style)

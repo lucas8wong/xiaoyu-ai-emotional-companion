@@ -1,102 +1,112 @@
-# Shared sticker library
+# Modern shared sticker collection
 
-The local library serves both daily character chat and Moments. Assets are bundled
-under `public/stickers/`; they do not require an online sticker API or a model call.
-This delivery provides the assets and shared retrieval functions. Automatic character
-sending, message attachments and Moments rendering have **not** been connected yet.
+The user-approved A/C/D/E/F/G/H/I families replace the retired Fluent/Blob/Blobfox
+collection. Version 2026-10-25.2 contains **372 curated images, 115 animated**, with
+27 scene indexes. The private bundle is `resources/stickers-modern/2026-10-25/`;
+open `index.html` locally. The ZIP is `temp/sticker-modern/xiaoyu-modern-stickers-20261025.zip`.
 
-## Contents and provenance
+| Family | Collection | Curated |
+|---|---|---:|
+| A | Real cat reactions | 12 |
+| C | Arms-behind-back opossum | 26 |
+| D | Elegant penguin poses/templates | 101 |
+| E | Maltese line dog and golden retriever | 18 |
+| F | Peach and Goma cats | 28 |
+| G | Bear couple | 30 |
+| H | Capybara Lululu | 18 |
+| I | Abstract Nailong | 139 |
 
-- 2,279 unique assets: 1,514 Fluent 3D, 455 Blob community reactions, 310 Blobfox.
-- 130 animated assets, each with a static poster. WebP is used for compressed
-  images/animations; source APNG animations stay PNG because sharp cannot decode
-  their animation. No APNG is silently reduced to its first frame.
-- 33 categories cover emotions, greetings, comfort, agreement, daily life, food,
-  drinks, work/study, games, music, exercise, weather, nature, animals, travel,
-  shopping, festivals, people, objects and symbols. Categories can overlap.
-- Simplified/Traditional Chinese aliases plus English source keywords. Fluent
-  names also retain pinned Unicode CLDR Chinese annotations. Specific aliases
-  distinguish cats/foxes/dogs and Christmas/New Year rather than tagging an entire
-  topic with every species or festival name.
-- Original image bytes total 74,477,995; catalog image bytes total 25,768,061
-  (65.4% smaller, excluding separate posters, catalog and notices).
+745 unique downloads were visually inspected through contact sheets; repetitive
+penguin templates and unsuitable images were excluded. Each animation's poster was
+inspected and all frames decoded; this does not claim full motion-by-motion review.
+This is an approved style collection, not a measured popularity ranking or a claim
+that each source image was created recently. Penguin entries include reusable
+poses and props, rather than 101 finished captioned memes.
 
-`catalog.json` records each stable ID, content-addressed URL, SHA-256, original
-SHA-256, source URL/path, pinned upstream revision, license, dimensions, frame
-count, style, topics and supported contexts. `summary.json` supplies counts.
-Sources: [Fluent Emoji](https://github.com/microsoft/fluentui-emoji),
-[Blob archive](https://github.com/Raymo111/emoji),
-[Blobfox team](https://github.com/adri326/blobfox), and
-[Unicode CLDR](https://github.com/unicode-org/cldr-json).
-Full upstream licenses, author notices and README credits ship in `licenses/`.
-Read `NOTICE.txt` when redistributing. This is a broad collection of commonly used
-styles, not a measured live popularity ranking. The importer performs source and
-filename screening; the catalog's `review` field does not claim every image has
-received individual human visual approval. Three sample contact sheets were checked.
+The curated originals total 188,912,202 bytes; compressed primary images total
+63,958,784 bytes (66.1% smaller), or 65,473,026 bytes including static posters.
+The verified ZIP is 65,587,137 bytes / 527 files. Both the ZIP CRC and every archived
+file's SHA-256 were checked against the local bundle.
 
-## Reuse in chat and Moments
+## Scenes and common metadata
 
-`src/lib/stickerLibrary.ts` is a pure shared module. Load `/stickers/catalog.json`
-lazily once outside the main UI bundle, then call `searchStickerLibrary` with a
-query, `context: 'chat' | 'moments'`, optional persona style, categories and recent
-IDs to exclude. Queries such as 好困, 摸摸, 收到, 下班了, 吃飯 and coffee work.
-Empty queries return a mix of styles; unknown topics can return no result.
+`scenes/<primary-scene>/` stores each image once. `scene-index/*.json` provides
+cross-scene indexes: greetings, agreement, confusion, laughter, teasing, speechless
+reactions, work/study, rest/goodnight, food/drink, care, sadness, missing/waiting,
+hugs, kisses, flirting, jealousy, reconciliation, absurd humour, observing,
+refusal, play, music, sport/travel, weather, home, shopping and celebration.
 
-Resolve any chosen ID through `stickerById`; model output must never invent image
-URLs. `stickerDisplayUrl(asset, reducedMotion)` selects the static poster.
-`allowAnimated: false` excludes animated candidates entirely. Match style and
-relationship/context before attaching anything; a search result is not an
-instruction to send. Keep the option to send no sticker.
+Every record retains its source URL/page, pinned repository revision where relevant,
+original/output SHA-256, dimensions, animation frames, Chinese title, search aliases,
+scene categories and `contexts: ['chat', 'moments']`. Romantic reactions are labelled
+separately from everyday agreement/comfort. No new message/post records are created.
 
-For the later sending integration, persist the attachment's ID, immutable URL and
-accessible description alongside the actual message/post. Retain files referenced
-by historical messages when revising the library. Do not put the full catalog,
-technical asset URLs or fake "sent a sticker" prose into model history. Only a
-small relevant candidate set belongs in changing context; preserve existing prompt
-cache ordering, quota caps, safety checks and failure-state rules. Existing online
-search and chat transcripts are unchanged by this delivery.
+`src/lib/stickerLibrary.ts` remains a shared pure search/ID/URL allowlist helper.
+It excludes `rightsStatus: unverified` or `publicationAllowed: false` records.
+The public catalog is intentionally empty pending clearance; the private catalog's
+`file`/`posterFile` paths work in the offline gallery. Its prospective public `url`
+values are not deployed. Automatic character sending and message/Moments attachments
+are not connected by this collection delivery. Future integration must resolve IDs,
+respect relationship/context/repeat limits, allow no sticker, preserve reduced motion,
+quota/cache/safety contracts and the immutable attachment history.
 
-## Import, validate and deploy
+## Sources and actual reuse limits
 
-Run `node scripts/build-sticker-library.mjs --dry-run` to inspect pinned candidates;
-`--apply` downloads/resumes original files into ignored `temp/sticker-library`,
-compresses assets and replaces the manifest last. No credentials or production data
-are used. It reuses installed sharp 0.34.5; the direct package/lock declaration is
-included for clean installs, with no local installation or version change. The
-importer never deletes historical asset files.
-Pinned sources and the taxonomy are explicit in the script and
-`scripts/lib/stickerTaxonomy.mjs`. Change them deliberately when refreshing sources.
+Downloads use public files from the pinned repositories and source pages recorded
+in `scripts/collect-modern-stickers.mjs` and each private catalog row. Repository
+code licenses do not establish commercial rights to third-party characters.
+All new media remain **unverified / publicationAllowed=false** and gitignored;
+source README/license notices are preserved without claiming they license the IP.
 
-Run `node node_modules/tsx/dist/cli.mjs --test test/unit/stickerLibrary.test.ts`.
-Checks cover all asset hashes/sizes/decoding, posters, bilingual search relevance,
-persona/context/repeat filters, unknown IDs and path traversal. Publish assets with
-the normal atomic `npm run build:seo`; no running backend imports this new module,
-so this asset/module-only delivery needs no production restart. Keep the complete
-`public/stickers` tree, catalog and licenses in every deployment/migration. The raw
-download cache and local QA sheets are rebuildable, not user records or off-host backup.
+SigStick was excluded because its [terms](https://www.sigstick.com/tos) explicitly
+prohibit bulk automated collection. Tenor was not a media source.
+[GetStickerPack terms](https://getstickerpack.com/terms-of-service) retain underlying
+owner rights and require uploader permission; public download availability is not
+commercial redistribution clearance. No authentication, paywall or blocked website
+access was bypassed. No synthetic replacement of these branded characters was made.
 
-Validation for this delivery: six library tests pass (all files decoded and hashes
-checked); cache contract 184/184; typecheck zero diagnostics; targeted lint clean;
-atomic SEO build passes (67 pages plus two Chinese snapshots). Local and public
-origins each pass 12 HTTP/hash checks covering catalog, static/WebP/APNG samples,
-posters and licenses, with health 200. No backend restart was needed. The full
-shared-worktree suite is **not green**: 3,474/3,504 pass, with 30 pricing-related
-failures across quota, roleplay-cache ledger, turn estimates and usage tests, mainly
-`AI_BUDGET_MODEL_UNPRICED`. No pricing/ledger source changes are part of this delivery.
-Private evidence and the portable ZIP: `temp/sticker-library/`.
+## Reproduce, verify and migrate
+
+- `node scripts/collect-modern-stickers.mjs --dry-run` inspects the explicit source list.
+- `--apply` downloads privately and compresses; it refuses to overwrite a curated bundle.
+- `node scripts/organize-modern-stickers.mjs --apply --verify` applies manually reviewed
+  scene assignments and checks every selected hash, size, image, animation and poster.
+  Rejected raw downloads are retained outside the deliverable in ignored temp.
+- `node node_modules/tsx/dist/cli.mjs --test test/unit/stickerLibrary.test.ts`
+  checks public retirement, rights exclusion, ID/path safety, common search semantics,
+  style balance, scene curation and reduced motion without requiring private media in CI.
+- `npm run test:cache`, typecheck and normal `npm run build:seo` retain project gates.
+
+The legacy importer now refuses `--apply`. Old assets were moved out of active
+public source/build directories, with a private rollback copy. A read-only SQLite
+scan found no old library URL references before retirement; all business records
+remain untouched. The publisher merges static folders, so removal of `dist/stickers`
+requires the separately checked exact-directory retirement step, not just a build.
+
+The new private directory must be explicitly provisioned and hash-verified during a
+future cloud migration; it is not in public Git or an automatic cloud/off-host backup.
+No new database key, browser state, dependency or runtime service. No backend restart
+is needed for this source/static-library change. Rights clearance must precede any
+public media provisioning and sending integration.
 
 <a id="zh"></a>
 
-# 共用表情包库
+# 现代聊天与朋友圈共用表情库
 
-本地库供日常角色聊天和朋友圈共用。本轮交付素材、中文检索标签与共用检索函数，尚未接入角色自动发送、消息附件或朋友圈展示；原聊天记录与在线搜索不变。
+旧 Fluent／Blob／Blobfox 已退出可用库。新库精选372张、115张动图、27类场景，
+涵盖真实猫咪、背手负鼠、高雅企鹅、线条小狗、蜜桃猫灰猫、小熊一二布布、水豚噜噜、
+抽象奶龙。候选去重745张，剔除重复模板与不适合日常互动的图片；企鹅含可用姿势模板，
+不将所有模板夸成现成配字梗图。系列选择符合用户确认，未声称每张都出自最近或有实时热度排名。
 
-共 2,279 张去重素材：Fluent 3D 1,514 张、Blob 反应贴纸 455 张、小狐狸 310 张，其中 130 张动图均有静态预览。图片合计由约 74.48 MB 压缩至 25.77 MB，缩减 65.4%，此数字不含另存预览、索引与授权文件。采用 WebP；不支持完整解码的 APNG 保留原动画 PNG，避免悄悄变成静图。
+私有目录与压缩包见英文路径，打开index.html可按系列／场景／关键词检索，默认静态预览，
+可切换动图。scenes按主场景归档，多场景交叉索引不重复占图像空间。恋爱抱抱／亲亲／撒娇、
+日常问候／晚安／工作／吃饭／安慰、抽象吐槽／吃瓜等分别标注；全部保留出处、哈希与动画。
 
-33 类覆盖情绪、问候、安慰、收到与拒绝、饮食、工作学习、娱乐、音乐、运动、天气、花草风景、动物、出行、居家、礼物购物、节日、人物动作、物品与符号。支持简繁中文与英文关键词；猫、狗、狐狸以及不同节日分别匹配，避免整类套用错误标签。每张保存来源、固定版本、授权、哈希、尺寸与动画信息。完整条款和作者署名随库分发；不是实时热榜，来源／文件名筛选也不等于逐张人工审图。本轮已查看三张抽样联系表。
+主图由约188.91MB压到63.96MB，加预览65.47MB，ZIP约65.59MB。全部文件校验与解码通过，
+逐组看过静态／动图封面，未声称逐帧人工审查。旧库移出源目录及发布目录；只读未查到旧地址引用，
+未修改聊天、朋友圈或其他用户记录。
 
-公共素材位于 `public/stickers/`，检索函数位于 `src/lib/stickerLibrary.ts`，支持聊天／朋友圈场景、角色画风、话题、最近用过的 ID 排除、减少动态效果。模型只能选已存在的 ID，由程序校验并解析地址；不强制发送，不把整库塞进提示词。后续接入时附件须随真实消息保存并保留不可变地址，历史引用的素材不能因更新被清除。
-
-导入命令、测试、来源与发布方法见上方英文。整库跟随正常前端构建发布，无运行中的后端引用，无需重启生产。上云必须携带整个素材目录、索引与授权文件；`temp` 中原始下载缓存和抽样图可重建，不是用户数据或异机备份。没有新增付费调用、密钥或用户持久层；复用已安装的 sharp 0.34.5，补直接依赖声明供干净安装使用，本机没有安装或更换版本。
-
-本轮素材专项 6／6、缓存 184／184、类型零诊断、定向 lint 及 SEO 构建通过；本机／公网各 12 项 HTTP／哈希校验通过、健康 200。全量共享工作区测试不是全绿：3,474／3,504 通过，另外 30 项计费相关失败，主要为测试模型缺价；本轮没有改动计费／账本源码。证据和便携 ZIP 位于上述私有目录。
+新角色IP的商业再分发授权尚未核实，素材保存在被Git忽略的私有目录，公共索引暂为空；
+已备聊天／朋友圈共用分类检索，尚未接入线上角色自动发送。明确禁止批量抓取的SigStick已排除，
+没有从Tenor下载，也未绕过登录／付费／封禁页面。来源可下载不等于取得IP授权。
+上云须私下携带新目录并验哈希，不能当成已上传或已异机备份。无用户持久层或后端服务变动。

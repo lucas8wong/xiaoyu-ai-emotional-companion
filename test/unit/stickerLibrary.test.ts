@@ -1,101 +1,80 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-import path from 'node:path';
-import crypto from 'node:crypto';
-import sharp from 'sharp';
-import { isLocalStickerAsset, searchStickerLibrary, stickerById, stickerDisplayUrl, type StickerLibrary } from '../../src/lib/stickerLibrary';
+import { isLocalStickerAsset, searchStickerLibrary, stickerById, stickerDisplayUrl, STICKER_LIBRARY_VERSION, type StickerLibrary, type LibrarySticker } from '../../src/lib/stickerLibrary';
 
-const root = path.resolve('public/stickers');
-const catalog = JSON.parse(await fs.readFile(path.join(root, 'catalog.json'), 'utf8')) as StickerLibrary;
+const fixture = (id: string, extra: Partial<LibrarySticker> = {}): LibrarySticker => ({
+  id, url: `/stickers/assets/${id}.webp`, title: '抱抱', alt: '合成测试素材', categories: ['hug'],
+  tags: ['抱抱', '貼貼', 'cuddle'], style: 'test-dog', contexts: ['chat', 'moments'],
+  sourceId: 'synthetic-test', license: 'test-only', sourceUrl: 'https://example.com/test',
+  sha256: 'test-only', bytes: 1, width: 1, height: 1, animated: false, review: 'test-only',
+  rightsStatus: 'cleared', publicationAllowed: true, ...extra,
+});
+const catalog = (...assets: LibrarySticker[]): StickerLibrary => ({ schemaVersion: 1, version: 'test-only', assets });
 
-test('bulk library contains diverse, attributed local assets for both chat and Moments', async () => {
-  assert.ok(catalog.assets.length >= 2000);
-  assert.equal(new Set(catalog.assets.map(a => a.id)).size, catalog.assets.length);
-  assert.equal(new Set(catalog.assets.map(a => a.sha256)).size, catalog.assets.length);
-  assert.ok(catalog.assets.filter(a => a.animated).length >= 100);
-  assert.deepEqual([...new Set(catalog.assets.map(a => a.style))].sort(), ['3d', 'blob', 'fox']);
-  for (const a of catalog.assets) {
-    assert.deepEqual(a.contexts, ['chat', 'moments']);
-    assert.ok(['MIT', 'Apache-2.0'].includes(a.license));
-    assert.ok(a.categories.length && a.tags.length && a.sourceUrl.startsWith('https://raw.githubusercontent.com/'));
-    assert.ok(a.width > 0 && a.width <= 256 && a.height > 0 && a.height <= 256, a.id);
-    if (a.animated) assert.ok(a.posterUrl && isLocalStickerAsset(a.posterUrl), a.id);
+test('retired public catalog contains no legacy or unapproved media', async () => {
+  const active = JSON.parse(await fs.readFile('public/stickers/catalog.json', 'utf8'));
+  assert.equal(active.version, STICKER_LIBRARY_VERSION);
+  assert.deepEqual(active.assets, []);
+  assert.deepEqual(active.sources, []);
+  assert.equal(active.status, 'modern-collection-rights-review');
+  assert.ok(!(await fs.readdir('public/stickers')).includes('assets'));
+});
+
+test('unverified and explicitly blocked media cannot be resolved or searched', () => {
+  for (const extra of [{ rightsStatus: 'unverified' as const }, { publicationAllowed: false }]) {
+    const c = catalog(fixture('blocked', extra));
+    assert.equal(stickerById(c, 'blocked'), undefined);
+    assert.deepEqual(searchStickerLibrary(c, { query: '抱抱' }), []);
   }
-  for (const name of ['fluent.txt', 'blob.txt', 'blobfox.txt', 'cldr.txt']) {
-    assert.ok((await fs.readFile(path.join(root, 'licenses', name))).length > 500);
-  }
+  const c = catalog(fixture('allowed'));
+  assert.equal(stickerById(c, 'allowed')?.id, 'allowed');
+  assert.equal(stickerById(c, 'unknown'), undefined);
 });
 
-test('every asset decodes and matches its manifest hash and size; posters are static', async () => {
-  let cursor = 0;
-  await Promise.all(Array.from({ length: 8 }, async () => {
-    while (cursor < catalog.assets.length) {
-      const a = catalog.assets[cursor++];
-      assert.ok(isLocalStickerAsset(a.url));
-      const bytes = await fs.readFile(path.resolve('public', a.url.slice(1)));
-      assert.equal(bytes.length, a.bytes, a.id);
-      assert.ok(bytes.length <= 512 * 1024, a.id);
-      assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), a.sha256, a.id);
-      const info = await sharp(bytes, { animated: true }).metadata();
-      assert.equal(info.width, a.width, a.id);
-      assert.equal(info.pageHeight || info.height, a.height, a.id);
-      await sharp(bytes, { animated: true }).raw().toBuffer();
-      if (a.posterUrl) {
-        const poster = await sharp(path.resolve('public', a.posterUrl.slice(1)), { animated: true }).metadata();
-        assert.equal(poster.pages || 1, 1, a.id);
-        assert.ok(poster.width! <= 256 && poster.height! <= 256, a.id);
-      }
-    }
-  }));
+test('shared search composes context, topic, persona, repeat and animation constraints', () => {
+  const c = catalog(fixture('first'), fixture('next'), fixture('other', { style: 'test-cat' }),
+    fixture('chat-only', { contexts: ['chat'] }), fixture('animated', { animated: true }),
+    fixture('food', { title: '吃饭', categories: ['food'], tags: ['吃飯'] }));
+  const found = searchStickerLibrary(c, { query: '貼貼', context: 'moments', style: 'test-dog', excludeIds: ['first'], allowAnimated: false });
+  assert.deepEqual(found.map(a => a.id), ['next']);
+  assert.deepEqual(searchStickerLibrary(c, { query: '吃飯', categories: ['food'] }).map(a => a.id), ['food']);
+  assert.deepEqual(searchStickerLibrary(c, { query: 'no_matching_topic' }), []);
+  assert.deepEqual(searchStickerLibrary(c, { limit: 0 }), []);
 });
 
-test('Chinese daily topics and Traditional Chinese aliases retrieve relevant assets', () => {
-  const examples: [string, string][] = [
-    ['好困', 'tired'], ['摸摸', 'comfort'], ['收到', 'agreement'], ['下班了', 'work'],
-    ['吃飯', 'food'], ['咖啡', 'drinks'], ['開心', 'happy'], ['想你', 'affection'],
-    ['生日', 'celebration'], ['下雨', 'weather'], ['貓貓', 'animals'], ['吃瓜', 'waiting'],
-  ];
-  for (const [query, category] of examples) {
-    const found = searchStickerLibrary(catalog, { query, context: 'chat', limit: 12 });
-    assert.ok(found.length, query);
-    assert.ok(found.some(a => a.categories.includes(category)), query);
-  }
-  assert.ok(searchStickerLibrary(catalog, { query: '草莓' }).some(a => /strawberry/i.test(a.title)));
-  assert.ok(searchStickerLibrary(catalog, { query: 'coffee' }).some(a => a.tags.includes('coffee')));
-  assert.ok(searchStickerLibrary(catalog, { query: '貓貓' }).every(a => /cat/i.test(a.title)));
-  assert.ok(searchStickerLibrary(catalog, { query: '圣诞' }).every(a => a.tags.some(t => /圣诞|christmas|santa/i.test(t))));
-  assert.deepEqual(searchStickerLibrary(catalog, { query: 'no_matching_topic_9876' }), []);
-});
-
-test('persona style, repeat exclusion, context and animation filters compose', () => {
-  const first = searchStickerLibrary(catalog, { query: '抱抱', context: 'moments', style: 'fox', limit: 5 });
-  assert.ok(first.length > 0 && first.length <= 5);
-  assert.ok(first.every(a => a.style === 'fox' && a.contexts.includes('moments')));
-  const next = searchStickerLibrary(catalog, { query: '抱抱', style: 'fox', excludeIds: first.map(a => a.id), allowAnimated: false, limit: 8 });
-  assert.ok(next.every(a => !a.animated && !first.some(p => p.id === a.id)));
-  const category = searchStickerLibrary(catalog, { categories: ['food'], limit: 10 });
-  assert.ok(category.length && category.every(a => a.categories.includes('food')));
-  assert.deepEqual(searchStickerLibrary(catalog, { limit: 0 }), []);
-  assert.ok(searchStickerLibrary(catalog, { limit: 100000 }).length <= 60);
-});
-
-test('unknown IDs and external/path traversal assets cannot escape the local allowlist', () => {
-  const known = catalog.assets[0];
-  assert.equal(stickerById(catalog, known.id)?.url, known.url);
-  assert.equal(stickerById(catalog, 'made-up-id'), undefined);
+test('external URLs, traversal, SVGs and unsafe posters are rejected', () => {
   for (const url of ['https://example.com/a.webp', '//evil/a.webp', '/stickers/assets/../secret.png', '/stickers/assets/a.svg', '/stickers/assets/a.webp?q=secret']) {
     assert.equal(isLocalStickerAsset(url), false, url);
-    const bad = { ...catalog, assets: [{ ...known, id: 'bad', url }] };
-    assert.equal(stickerById(bad, 'bad'), undefined);
-    assert.deepEqual(searchStickerLibrary(bad), []);
+    for (const extra of [{ url }, { posterUrl: url }]) {
+      const c = catalog(fixture('bad', extra));
+      assert.equal(stickerById(c, 'bad'), undefined);
+      assert.deepEqual(searchStickerLibrary(c), []);
+    }
   }
 });
 
-test('reduced motion resolves to a static poster and keeps ordinary stickers unchanged', () => {
-  const animated = catalog.assets.find(a => a.animated)!;
-  const still = catalog.assets.find(a => !a.animated)!;
-  assert.equal(stickerDisplayUrl(animated), animated.url);
-  assert.equal(stickerDisplayUrl(animated, true), animated.posterUrl);
-  assert.equal(stickerDisplayUrl(still, true), still.url);
+test('reduced motion uses a static poster', () => {
+  const a = fixture('motion', { animated: true, posterUrl: '/stickers/assets/motion-poster.webp' });
+  assert.equal(stickerDisplayUrl(a), a.url);
+  assert.equal(stickerDisplayUrl(a, true), a.posterUrl);
+  assert.equal(stickerDisplayUrl(fixture('still'), true), fixture('still').url);
+});
+
+test('search caps output and balances equally relevant styles', () => {
+  const rows = Array.from({ length: 100 }, (_, i) => fixture(`dog-${i}`));
+  const result = searchStickerLibrary(catalog(...rows, fixture('cat', { style: 'test-cat' })), { limit: 10000 });
+  assert.equal(result.length, 60);
+  assert.ok(result.slice(0, 2).some(a => a.style === 'test-cat'));
+});
+
+test('curation assigns actual scenes and excludes rejected templates', async () => {
+  const { classifyModernSticker, modernStickerScenes } = await import('../../scripts/lib/modernStickerScenes.mjs');
+  assert.equal(new Set(modernStickerScenes.map((s: { id: string }) => s.id)).size, 27);
+  assert.ok(classifyModernSticker({ family: 'E', order: 16 }).scenes.includes('hug'));
+  assert.ok(classifyModernSticker({ family: 'F', order: 24 }).scenes.includes('care'));
+  assert.ok(!classifyModernSticker({ family: 'A', order: 3 }).scenes.includes('kiss'));
+  assert.equal(classifyModernSticker({ family: 'C', order: 23 }), null);
+  assert.equal(classifyModernSticker({ family: 'I', order: 70 }), null);
+  assert.equal(classifyModernSticker({ family: 'D', order: 467 }), null);
 });
