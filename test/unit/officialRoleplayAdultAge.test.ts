@@ -6,7 +6,9 @@ const { listScenarios, getScenario, scenarioCast } = await import('../../api/ser
 
 test('all current official main characters are adults in both source languages', () => {
   const scenarios = listScenarios('zh');
-  assert.ok(scenarios.length >= 37);
+  // The committed official set is 30 (2026-10); the old 37 was written against a local
+  // tree that had extra uncommitted stories, so CI could never pass it.
+  assert.ok(scenarios.length >= 30);
   for (const item of scenarios) {
     const story = getScenario(item.id)!;
     for (const lang of ['zh', 'en'] as const) {

@@ -1637,7 +1637,7 @@ export default function Home() {
 
       {/* Hero Section（手机紧凑：首屏尽快露出三入口） */}
       <div id="main-content" role="main" tabIndex={-1} className="container mx-auto px-4 pt-6 sm:pt-16 pb-6 sm:pb-8">
-        <AndroidUpdateNotice userId={authUser?.userId} />
+        <AndroidUpdateNotice />
         <div className="text-center">
           {/* 电影感 Hero 背景：仅非默认皮肤时展示；中心径向落地 + 底部渐隐，保证文字可读 */}
           <div className="relative overflow-hidden rounded-[1.6rem] sm:rounded-[3rem] shadow-lift">

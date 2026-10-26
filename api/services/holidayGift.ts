@@ -239,7 +239,7 @@ export function maybeGrantHolidayGiftOnRegister(userId: string): {
 
   try {
     quotaStore.grantProGift(userId, cfg.days);
-  } catch (e) {
+  } catch {
     return { granted: false, reason: 'grant-failed', days: cfg.days };
   }
   processed.add(userId);

@@ -8,7 +8,7 @@ const annualPlans = {
 
 /** One configured CNY price, converted once for regional checkout; no campaign discount. */
 export function annualPrice(plan: string, usdCny: number, usdHkd: number) {
-  if (!Object.hasOwn(annualPlans, plan)) return { cny: 0, usd: 0, hkd: 0 };
+  if (!Object.prototype.hasOwnProperty.call(annualPlans, plan)) return { cny: 0, usd: 0, hkd: 0 };
   const rule = annualPlans[plan as keyof typeof annualPlans];
   const raw = process.env[rule.env];
   const cny = raw === undefined || raw.trim() === '' ? rule.fallback : Number(raw);

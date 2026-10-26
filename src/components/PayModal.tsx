@@ -22,7 +22,7 @@
 import { useEffect, useState } from 'react';
 import { CreditCard, Copy, Check, Mail, MessageCircle, Instagram, QrCode, ChevronDown } from 'lucide-react';
 import { getQuota, getPayConfig, stripePay, getInviteLink, trackInviteCopy, isLoggedIn, type QuotaInfo, type PayConfig, type PlanKey, type PayTerm } from '../services/api';
-import { mainPrice, otherPrices, payCurrencyOf, num } from '../lib/payPrice';
+import { mainPrice, otherPrices, num } from '../lib/payPrice';
 import { quotaTierTiao } from '../lib/quotaTiers';
 import { SUPPORT_EMAIL, SUPPORT_XHS_URL, SUPPORT_IG_URL } from '../lib/support';
 import { t } from '../i18n';
@@ -97,8 +97,7 @@ export default function PayModal({ open, plan = 'plus', days, term = 'monthly', 
 
   /* 【价格（只显示本次结算币种；另两币种放在小字里便于换算；取值/格式化统一走 lib/payPrice）】 */
   const pp = config?.pricing?.plans?.[plan];
-  const cur = payCurrencyOf(config);
-  // 月付续费延长（30/60/90 天）：按 天数/30 比例放大，与 Stripe 单次购买实扣一致
+    // 月付续费延长（30/60/90 天）：按 天数/30 比例放大，与 Stripe 单次购买实扣一致
   const ratio = term === 'monthly' && days && days > 0 ? days / 30 : 1;
   const onceVals: [number, number, number] = term === 'yearly'
     ? [num(pp?.yearlyUsd), num(pp?.yearlyHkd), num(pp?.yearlyCny)]

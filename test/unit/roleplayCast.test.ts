@@ -9,7 +9,6 @@ const CAST: CastName[] = [
 ];
 
 const speakers = (raw: string) => parseCastSegments(raw, CAST).map(s => (s.speaker ? s.speaker.name : '')).join(',');
-const texts = (raw: string) => parseCastSegments(raw, CAST).map(s => s.text).join('|');
 
 test('没有标记：整段退化为单条旁白，text 逐字等于原文（绝不吞字符）', () => {
   const raw = '红烛燃着，喜房里静得只剩烛芯偶尔"啪"地一响。';

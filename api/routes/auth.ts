@@ -10,7 +10,7 @@ import { sendEmailCode, emailCodeStore } from '../services/email.js';
 import { getAuthUser } from '../services/session.js';
 import { getClientCountry, getClientIp } from '../services/geo.js';
 import { rateLimit } from '../middleware/rateLimit.js';
-import { GOOGLE_CLIENT_ID, googleConfigured, verifyGoogleIdToken } from '../services/googleAuth.js';
+import { googleConfigured, verifyGoogleIdToken } from '../services/googleAuth.js';
 import { bindGuestAndTrack, grantSignupRewards } from '../services/onboardNewAccount.js';
 
 const router = Router();

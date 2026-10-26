@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { getLang } from '../i18n';
+import { companionShortName } from '../lib/companionName';
 import { androidCommand, isLocalAndroidApp, type AndroidAppState } from '../lib/androidApp';
 import { createAndroidUpdatePromptGate } from '../lib/androidUpdatePrompt';
 
@@ -65,7 +66,7 @@ export default function AndroidUpdateNotice() {
     onCancel={event => { event.preventDefault(); setOpen(false); }}
     style={{ position: 'fixed', inset: 0, margin: 'auto', background: 'var(--color-surface)', color: 'var(--color-fg)', maxHeight: 'calc(100dvh - 32px)' }}
     className="w-[calc(100%-2rem)] max-w-sm overflow-y-auto overscroll-contain rounded-3xl border border-primary/20 p-5 shadow-xl backdrop:bg-black/40">
-    <h2 id="android-update-title" className="text-lg font-semibold">{text('小愈有新版本了', '小愈有新版本了', 'A new Xiaoyu version is available')}</h2>
+    <h2 id="android-update-title" className="text-lg font-semibold">{text(`${companionShortName()}有新版本了`, `${companionShortName()}有新版本了`, `A new ${companionShortName()} version is available`)}</h2>
     <p className="mt-2 text-sm text-ink-soft">{text('版本', '版本', 'Version')} {state.latestVersion}</p>
     <p id="android-update-description" className="mt-2 text-sm leading-relaxed">{text('建议连接 Wi-Fi 下载，安装时直接覆盖，保留原 App 和存档。', '建議連接 Wi-Fi 下載，安裝時直接覆蓋，保留原 App 和存檔。', 'Use Wi-Fi to download. Install over the existing app to keep your saved data.')}</p>
     <p role="status" className="mt-3 text-sm text-ink-soft">{status}</p>

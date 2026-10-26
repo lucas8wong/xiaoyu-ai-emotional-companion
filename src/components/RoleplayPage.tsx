@@ -23,7 +23,7 @@ import { canRegenerateAt, startRegenerate, finishRegenerate, switchVersionIn, to
 import { looksIncomplete, incompleteCode, type IncompleteReason } from '../lib/replyCompleteness';
 import { hasThoughtMarker } from '../lib/roleplayText';
 import { parseCastSegments, stripCastTags, hasCastSpeaker, type CastName } from '../lib/roleplayCast';
-import { type RoleplayMode, parseRoleplayMode, DEFAULT_ROLEPLAY_MODE } from '../lib/roleplayMode';
+import { type RoleplayMode, DEFAULT_ROLEPLAY_MODE } from '../lib/roleplayMode';
 import { detectStuck, detectOocMeta, recordBridgeEvent, isIdleEnough, canShowBridge, readBridgeBudget, markBridgeShown, markBridgeDismissed, bridgeEnabled, buildBridgeDraft, BRIDGE_MIN_TURNS, type BridgeSeed, type BridgeTrigger } from '../lib/rpBridge';
 import RoleplayRichText from './RoleplayRichText';
 import { t, getLang } from '../i18n';
