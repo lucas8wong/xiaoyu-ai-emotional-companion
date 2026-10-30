@@ -1,6 +1,6 @@
 # Source-linked long-memory recall v2
 
-Status: release verification pending, 2026-10-31. This document describes the first implementation stage, not a promise of lossless memory.
+Status: backend released and origin/public health verified at 2026-10-31 01:22 (UTC+8), fingerprint `cache-7f9f32192c11924e5726`. This document describes the first implementation stage, not a promise of lossless memory. Focused18/18, cache488/488 and types pass; the full-suite snapshot has34failures also reproduced with v2 disabled. Details and limits are in CHANGELOG.
 
 Chat and Story keep their existing memory entrances, original transcripts, verified chapters, facts, edits, prices, membership/input capacities, output defaults and billing. The new path adds local multi-question retrieval, indivisible source groups, one supplementary lexical wave, and a deterministic fifty-turn directory over existing verified chapters. It makes no new inference call and creates no new persistent key, database, dependency, service or browser storage. Generated phase narratives and new paid organization products are not implemented by this release.
 
@@ -38,7 +38,7 @@ Design inspiration: [billion-context](https://github.com/ranxianglei/billion-con
 
 # 来源可追溯的长程记忆召回 v2
 
-状态：2026-10-31，待最终发布核验。本轮是首批后端增强，不承诺无损或永远记住全部内容。
+状态：2026-10-31 01:22（UTC+8），后端已上线，内外健康与版本指纹一致。18专项、488缓存及类型通过；全量快照另有34项失败，关闭新版后完整复现，详见CHANGELOG。本轮是首批后端增强，不承诺无损或永远记住全部内容。
 
 小微信与剧情沿用原记忆入口、原文、已核验章节、事实、修正、价格、会员容量、输出缺省和计费。新增本地多问题检索、完整来源组、最多一次补查，以及基于现有已核验章节的五十回合目录。没有新增模型调用、持久键、数据库、依赖、服务或浏览器存储；生成式阶段正文及新收费整理不在本轮范围。
 
