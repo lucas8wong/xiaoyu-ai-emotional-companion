@@ -1,0 +1,25 @@
+{
+  "name": "qqqm-spym-monitor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "test": "tsx --test --test-concurrency=1 test/*.test.ts",
+    "check": "tsc --noEmit",
+    "dev": "node scripts/dev.mjs",
+    "build": "node scripts/build.mjs",
+    "login": "node scripts/login.mjs",
+    "setup": "node scripts/setup.mjs",
+    "deploy": "node scripts/deploy.mjs",
+    "activate": "node scripts/activate.mjs",
+    "live:check": "tsx scripts/live-check.ts",
+    "backtest": "tsx scripts/backtest.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.3",
+    "typescript": "~5.8.3",
+    "wrangler": "^4.45.0"
+  }
+}

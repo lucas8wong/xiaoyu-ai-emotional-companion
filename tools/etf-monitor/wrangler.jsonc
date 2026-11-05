@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "qqqm-spym-monitor",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "triggers": { "crons": ["*/15 * * * *"] },
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "qqqm-spym-monitor",
+    "database_id": "00000000-0000-0000-0000-000000000000",
+    "migrations_dir": "migrations"
+  }],
+  "observability": { "enabled": true },
+  "vars": { "ENVIRONMENT": "production" }
+}

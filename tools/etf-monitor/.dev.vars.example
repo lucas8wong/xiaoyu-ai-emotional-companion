@@ -1,0 +1,3 @@
+# Local development only. Use Cloudflare Secrets for production.
+ADMIN_TOKEN=
+SERVERCHAN_SENDKEY=
