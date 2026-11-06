@@ -16,7 +16,9 @@ export function xhsOperator(options:{secret:()=>string; port?:number; origin?:st
     const raw=req.url;
     if(raw!==PREFIX&&!raw.startsWith(PREFIX+'/')&&!raw.startsWith(PREFIX+'?'))return next();
     res.setHeader('Cache-Control','no-store, private');res.setHeader('X-Robots-Tag','noindex, nofollow');
-    res.setHeader('Referrer-Policy','no-referrer');res.setHeader('X-Content-Type-Options','nosniff');
+    // no-referrer turns a native form POST's Origin into "null" in Chromium.
+    // Preserve same-origin form provenance without sending referrers cross-origin.
+    res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Content-Type-Options','nosniff');
     res.setHeader('Content-Security-Policy',"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'");
     if(!options.secret())return void res.status(503).send('运营台管理鉴权尚未配置');
     const pathname=raw.split('?')[0];
