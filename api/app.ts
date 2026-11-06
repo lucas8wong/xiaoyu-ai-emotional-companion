@@ -3,6 +3,7 @@
  */
 
 import './services/env.js'; // 副作用：同时加载 .env 与 .env.local（须最先执行）
+import {xhsOperator} from './middleware/xhsOperator.js';
 import express, { type Request, type Response, type NextFunction }  from 'express';
 import cors from 'cors';
 import compression from 'compression';
@@ -59,6 +60,8 @@ app.disable('x-powered-by');
 // 因此**限流、游客身份、防滥用一律用 getClientIp(req)**（优先 cf-connecting-ip，Cloudflare 会覆盖它），
 // 不要再用 req.ip 做安全判定；req.ip 只保留给审计日志等低风险用途。
 app.set('trust proxy', true);
+// Authenticated operator proxy must precede body parsing, compression and business observers.
+app.use(xhsOperator({secret:()=>process.env.ADMIN_TOKEN||''}));
 
 // gzip 压缩静态资源与接口响应（大幅减少首次访问下载量）
 app.use(compression());
