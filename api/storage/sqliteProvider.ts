@@ -35,14 +35,14 @@ function keyOf(file: string): string {
 }
 
 const sqliteProvider: PersistenceProvider = {
+  transaction<T>(work: () => T): T { return getDb().transaction(work)(); },
   read(file) {
     try {
       const row = getDb().prepare('select value from kv where key = ?').get(keyOf(file)) as { value: string } | undefined;
       return row?.value ?? null;
     } catch (e) {
-      // 读失败不能静默：返回 null 会被业务层当成「本来就没有数据」，把故障伪装成空数据
-      console.error('❌ [Persistence/sqlite] 读取失败（按「无数据」返回）:', keyOf(file), (e as Error)?.message);
-      return null;
+      console.error('[Persistence/sqlite] read failed:', keyOf(file));
+      throw e;
     }
   },
   write(file, content) {
@@ -52,7 +52,8 @@ const sqliteProvider: PersistenceProvider = {
         .run(keyOf(file), content);
     } catch (e) {
       // 写失败必须可见（磁盘满/权限/损坏）：此前完全静默 = 用户数据无声蒸发（2026-09-28 审查 P1-7）
-      console.error('❌ [Persistence/sqlite] 写入失败（数据未落盘）:', keyOf(file), (e as Error)?.message);
+      console.error('[Persistence/sqlite] write failed:', keyOf(file));
+      throw e;
     }
   },
   ensureDir(dir) {

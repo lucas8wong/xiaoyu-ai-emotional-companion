@@ -83,6 +83,11 @@ app.use(cors({
   },
   credentials: false,
 }));
+function sendHealth(_req: Request, res: Response): void {
+  res.setHeader('Cache-Control', 'no-store');
+  res.status(200).json({ success: true, message: 'ok' });
+}
+app.get('/api/health', sendHealth);
 app.use(express.json({ limit: '10mb', verify: (req: Request, _res: Response, buf: Buffer) => { (req as Request & { rawBody?: Buffer }).rawBody = buf; } }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -222,12 +227,7 @@ if (fs.existsSync(distDir)) {
 /**
  * health
  */
-app.use('/api/health', (req: Request, res: Response, _next: NextFunction): void => {
-  res.status(200).json({
-    success: true,
-    message: 'ok'
-  });
-});
+app.use('/api/health', sendHealth);
 
 /**
  * error handler middleware

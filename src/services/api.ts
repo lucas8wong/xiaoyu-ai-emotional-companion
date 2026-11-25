@@ -393,10 +393,16 @@ export async function apiRequest<T>(
   // 避免「服务端已成功但响应超时」时重试导致重复扣费/重复写。
   const method = (fetchOptions.method || 'GET').toUpperCase();
   const idempotent = method === 'GET' || method === 'HEAD' || method === 'OPTIONS';
+  const path = endpoint.split('?')[0];
+  const previewRead = (method === 'POST' && path === '/api/energy-controls/forecast') ||
+    (method === 'GET' && path === '/api/roleplay/memory/organization');
+  // These two previews can span a short origin restart. Keep the caller's ordinary
+  // retry budget for application errors and network deadlines.
+  const gatewayRetries = previewRead ? Math.max(4, retries) : retries;
   const mergedHeaders: Record<string, string> = buildHeaders((fetchOptions.headers as Record<string, string>) || {});
 
   let lastError = '';
-  for (let attempt = 0; attempt <= retries; attempt++) {
+  for (let attempt = 0; attempt <= gatewayRetries; attempt++) {
     if (attempt > 0) await sleep(600 * Math.pow(2, attempt - 1));
 
     const controller = new AbortController();
@@ -438,7 +444,8 @@ export async function apiRequest<T>(
         try { window.dispatchEvent(new CustomEvent('auth-expired')); } catch { /* 忽略 */ }
       }
 
-      if (!retryable || attempt === API_MAX_RETRIES) {
+      const gateway = previewRead && !errCode && [502, 503, 504].includes(status);
+      if (!(gateway && attempt < gatewayRetries) && !(retryable && attempt < retries)) {
         if (isFreeQuotaExhausted(errCode)) notifyQuotaExhausted();
         return { success: false, error: translateBackendError(errText), status, code: errCode || undefined };
       }
@@ -447,7 +454,7 @@ export async function apiRequest<T>(
       const isTimeout = e instanceof Error && e.name === 'AbortError';
       const isNetwork = e instanceof Error && e.name === 'TypeError';
       // 仅幂等方法对超时/网络错误重试；写操作不重试（可能已被服务端处理）
-      if (!idempotent || (!isTimeout && !isNetwork) || attempt === API_MAX_RETRIES) {
+      if (!idempotent || (!isTimeout && !isNetwork) || attempt >= retries) {
         return { success: false, error: '' };
       }
     } finally {

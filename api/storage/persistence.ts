@@ -15,6 +15,7 @@ import { createSqlitePersistenceProvider } from './sqliteProvider.js';
 
 /** 持久化提供者接口：业务层只依赖它，不依赖具体实现 */
 export interface PersistenceProvider {
+  transaction?<T>(work: () => T): T;
   /** 读取文件原始内容；文件不存在返回 null */
   read(file: string): string | null;
   /** 原子写（先写 tmp 再 rename，避免写一半损坏） */
@@ -96,4 +97,10 @@ export function assertStorageReady(): { ok: boolean; dir: string; detail: string
 /** 写 JSON（序列化 + 原子写） */
 export function writeJson(file: string, data: unknown): void {
   persistence.write(file, JSON.stringify(data));
+}
+
+export function writeJsonStrict(file: string, data: unknown): void {
+  const serialized = JSON.stringify(data);
+  persistence.write(file, serialized);
+  if (persistence.read(file) !== serialized) throw new Error('Payment persistence verification failed');
 }
