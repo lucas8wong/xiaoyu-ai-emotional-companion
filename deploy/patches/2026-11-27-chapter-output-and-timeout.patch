@@ -125,8 +125,8 @@ diff --git a/api/services/deepseek.ts b/api/services/deepseek.ts
    forceStream?: boolean;
 @@ -208,2 +217,7 @@
 
-+/** An organization ledger gateway stream reached its local idle deadline before any model output. */
-+class EmptyLedgerTimeout extends Error {
++/** A chapter gateway stream reached its local idle deadline before any model output. */
++class EmptyChapterStreamTimeout extends Error {
 +  readonly code = 'UPSTREAM_TIMEOUT';
 +}
 +
@@ -147,17 +147,17 @@ diff --git a/api/services/deepseek.ts b/api/services/deepseek.ts
        finishReason: ['stop', 'length', 'tool_calls', 'content_filter', 'insufficient_system_resource'].includes(finishReason) ? finishReason : '' }));
 +    if (idleTimedOut && !externalSignals.some(s => s.aborted) && !full && !reasoningFull && !toolText && !usage && !finishReason
 +        && cfg.baseUrl === DEEPSEEK_GATEWAY_BASE && useModel === DEEPSEEK_GATEWAY_MODEL
-+        && req.callKind === 'story-fact-ledger' && storyOrganizationBillingActive()) {
-+      throw new EmptyLedgerTimeout('Chapter ledger timed out before output');
++        && storyOrganizationBillingActive() && ['story-fact-ledger','story-ledger-recap','story-memory-audit'].includes(req.callKind || '')) {
++      throw new EmptyChapterStreamTimeout('Chapter request timed out before output');
 +    }
      // Content, tool calls and usage are billable AND user-visible/stateful, so never replay
 @@ -964,2 +981,9 @@
        if (generationOutputStarted(error)) throw error;
-+      if (error instanceof EmptyLedgerTimeout) {
++      if (error instanceof EmptyChapterStreamTimeout) {
 +        const official = officialFallbackProvider(primary);
 +        if (!official || signal.aborted || new URL(official.baseUrl).origin !== 'https://api.deepseek.com') throw error;
 +        // This single stage retains its deadline, job hold and observation. A
-+        // stalled ledger does not establish an outage for other gateway users.
++        // stalled chapter does not establish an outage for other gateway users.
 +        return await attempt({...official,model:'deepseek-flash',officialCatalogPricing:true});
 +      }
        if (error instanceof Error && (error instanceof TypeError || error.name === 'AbortError' || error.name === 'TimeoutError')) {
@@ -190,7 +190,7 @@ diff --git a/test/unit/storyLedgerTransport.test.ts b/test/unit/storyLedgerTrans
 new file mode 100644
 --- /dev/null
 +++ b/test/unit/storyLedgerTransport.test.ts
-@@ -0,0 +1,135 @@
+@@ -0,0 +1,144 @@
 +import test, {type TestContext} from 'node:test';
 +import assert from 'node:assert/strict';
 +import {setupTempCwd} from './setup.js';
@@ -206,7 +206,9 @@ new file mode 100644
 +const {withStoryOrganizationBilling}=await import('../../api/services/storyOrganizationContext.js');
 +const {__resetProviderHealth}=await import('../../api/services/providerHealth.js');
 +
-+function runLedger(t:TestContext,options:{
++const chapterStages=['story-fact-ledger','story-ledger-recap','story-memory-audit'] as const;
++
++function runStage(t:TestContext,options:{
 +  frame?:object;
 +  cancel?:boolean;
 +  organization?:boolean;
@@ -250,31 +252,33 @@ new file mode 100644
 +    }}));
 +  });
 +  const client=createDeepSeekClientFor('deepseek-flash',{timeoutMs:180000,maxRetries:0});
++  const stage=options.stage??'story-fact-ledger';
++  const owner='transport-fixture-'+stage;
 +  const invoke=()=>client.models.generateContent({
-+    userId:'ledger-transport-fixture',feature:'memory',callKind:options.stage??'story-fact-ledger',jsonMode:true,signal:cancel.signal,
++    userId:owner,feature:'memory',callKind:stage,jsonMode:true,signal:cancel.signal,
 +    contents:[{role:'user',parts:[{text:'Synthetic evidence for a test chapter.'}]}],
 +  });
-+  return {calls,deadlines:()=>totalDeadlines,deadlineExpired:()=>deadlineExpired,result:options.organization===false?invoke():withStoryOrganizationBilling(invoke)};
++  return {calls,owner,deadlines:()=>totalDeadlines,deadlineExpired:()=>deadlineExpired,result:options.organization===false?invoke():withStoryOrganizationBilling(invoke)};
 +}
 +
 +test('a ledger with an expired official catalog cannot send the fallback at the cheaper gateway tariff',async t=>{
 +  const expired=Date.now()+7*3_600_000;
 +  t.mock.method(Date,'now',()=>expired);
-+  const run=runLedger(t,{expiredOfficialPricing:true});
++  const run=runStage(t,{expiredOfficialPricing:true});
 +  await assert.rejects(run.result,/AI_BUDGET_MODEL_UNPRICED/);
 +  assert.deepEqual(run.calls.map(call=>call.host),['sta1n.ai']);
 +});
 +
-+test('a fixed-price ledger stalled before its first output can switch to the official model once',async t=>{
-+  const run=runLedger(t);
++for(const stage of chapterStages)test(stage+' stalled before its first output switches to the official model once',async t=>{
++  const run=runStage(t,{stage});
 +  const result=await run.result;
 +  assert.equal(result.finishReason,'stop');
 +  assert.deepEqual(run.calls,[{host:'sta1n.ai',model:'deepseek-v4.1-flash'},{host:'api.deepseek.com',model:'deepseek-flash'}]);
 +  assert.equal(run.deadlines(),1);
 +  const {usageCallStore}=await import('../../api/services/usageCalls.js');
-+  const [entry]=usageCallStore.byUser('ledger-transport-fixture');
++  const [entry]=usageCallStore.byUser(run.owner);
 +  assert.equal(entry.provider,'DeepSeek');
-+  assert.equal(entry.callKind,'story-fact-ledger');
++  assert.equal(entry.callKind,stage);
 +  const rate=result.usage.model_pricing;
 +  assert.equal(rate.model,'deepseek-flash');
 +  assert.equal(rate.source,'test-fixture');
@@ -282,8 +286,8 @@ new file mode 100644
 +  assert.equal(entry.costYuan,(10*rate.input+4*rate.output)/1e6);
 +});
 +
-+test('the fallback still shares the original ledger deadline and cannot start a third request',async t=>{
-+  const run=runLedger(t,{holdFallback:true});
++for(const stage of chapterStages)test(stage+' fallback shares the original deadline and cannot start a third request',async t=>{
++  const run=runStage(t,{stage,holdFallback:true});
 +  await assert.rejects(run.result);
 +  assert.deepEqual(run.calls.map(call=>call.host),['sta1n.ai','api.deepseek.com']);
 +  assert.equal(run.deadlines(),1);
@@ -298,14 +302,19 @@ new file mode 100644
 +  ['tool output',{frame:{choices:[{delta:{tool_calls:[{index:0,id:'call-1',function:{name:'read'}}]}}]}}],
 +  ['user cancellation',{cancel:true}],
 +  ['a non-organization caller',{organization:false}],
-+  ['another chapter stage',{stage:'story-ledger-recap'}],
 +] as const){
-+  test('ledger idle fallback does not repeat a request after '+name,async t=>{
-+    const run=runLedger(t,options);
++  for(const stage of chapterStages)test(stage+' idle fallback skips '+name,async t=>{
++    const run=runStage(t,{stage,...options});
 +    await assert.rejects(run.result);
 +    assert.deepEqual(run.calls.map(call=>call.host),['sta1n.ai']);
 +  });
 +}
++
++test('a different operation cannot acquire chapter fallback by sharing its billing context',async t=>{
++  const run=runStage(t,{stage:'chat-verified-recap'});
++  await assert.rejects(run.result);
++  assert.deepEqual(run.calls.map(call=>call.host),['sta1n.ai']);
++});
 +
 +test('the welfare channel keeps its own output limit while its DeepSeek fallback receives the full chapter ceiling',async t=>{
 +  const {organizationClient}=await import('../../api/services/storyOrganization.js');
