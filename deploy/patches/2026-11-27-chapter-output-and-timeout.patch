@@ -1,0 +1,328 @@
+diff --git a/api/services/storyFirstPassMemory.ts b/api/services/storyFirstPassMemory.ts
+--- a/api/services/storyFirstPassMemory.ts
++++ b/api/services/storyFirstPassMemory.ts
+@@ -11,3 +11,3 @@
+ import {storyIdentityCorrectionContract} from './storyIdentityContinuity.js';
+-import {STORY_MEMORY_MAX_CALLS_PER_CHAPTER,STORY_MEMORY_AUDIT_MAX_TOKENS} from './memoryChapterPolicy.js';
++import {STORY_MEMORY_MAX_CALLS_PER_CHAPTER,STORY_MEMORY_AUDIT_MAX_TOKENS,DEEPSEEK_CHAPTER_OUTPUT_TOKENS} from './memoryChapterPolicy.js';
+ import {chapterOutputOutcome} from './chapterOutputOutcome.js';
+@@ -219,3 +219,3 @@
+   const accept=(parsed:any,stage:string)=>{if(args.onAcceptedCost){const cost=priced.get(parsed);if(cost===undefined)throw Error('MEMORY_USAGE_UNKNOWN');args.onAcceptedCost(stage,cost);}};
+-  async function request(kind:string,system:string,input:unknown,outputTokens?:number):Promise<any>{
++  async function request(kind:string,system:string,input:unknown):Promise<any>{
+     // Bound nested format, semantic and handoff repairs as one chapter budget.
+@@ -225,3 +225,3 @@
+     system+='\n'+attributionContract+'\n'+handoffManualSourceContract;
+-    const tokenLimit=outputTokens??(kind==='story-memory-audit'?STORY_MEMORY_AUDIT_MAX_TOKENS:kind==='story-ledger-recap'?Math.max(4096,Math.ceil(maximum)+2048):undefined);
++    const tokenLimit=kind==='story-memory-audit'?auditTokens:kind==='story-ledger-recap'?recapTokens:undefined;
+     const response=await args.client.models.generateContent({contents:[{role:'system',parts:[{text:system}]},{role:'user',parts:[{text:JSON.stringify(input)}]}],feature:'memory',userId:args.userId,callKind:kind,temperature:0.1,thinkingLevel,...(tokenLimit?{maxTokens:tokenLimit,maxTokensCap:tokenLimit}:{}),jsonMode:true});
+@@ -254,2 +254,4 @@
+   const maximum=lengthRange?.max??3000;
++  const recapTokens=args.resume?DEEPSEEK_CHAPTER_OUTPUT_TOKENS:Math.max(4096,Math.ceil(maximum)+2048);
++  const auditTokens=args.resume?DEEPSEEK_CHAPTER_OUTPUT_TOKENS:STORY_MEMORY_AUDIT_MAX_TOKENS;
+   const target=storyRecapTarget(parts.reduce((n,p)=>n+p.text.length,0),lengthRange);
+@@ -343,3 +345,3 @@
+           parsed=await request('story-ledger-recap',conciseSystem,
+-            {...narrativeInput,ledger:briefLedger,repair:{problem:'SUMMARY_OUTPUT_INCOMPLETE'}},STORY_MEMORY_AUDIT_MAX_TOKENS);
++            {...narrativeInput,ledger:briefLedger,repair:{problem:'SUMMARY_OUTPUT_INCOMPLETE'}});
+         }else if((error as Error).message==='SUMMARY_JSON_INVALID'&&(repairCounts.SUMMARY_JSON_INVALID||0)<2&&repair<3){
+diff --git a/api/services/storyOrganization.ts b/api/services/storyOrganization.ts
+--- a/api/services/storyOrganization.ts
++++ b/api/services/storyOrganization.ts
+@@ -22,3 +22,3 @@
+ import {stripEmDash} from '../../src/lib/dashText.js';
+-import {MEMORY_JOB_POLICY,STORY_MEMORY_TIMEOUT_MS,STORY_MEMORY_REPAIR_ALLOWANCE_CNY,STORY_MEMORY_MAX_CALLS_PER_CHAPTER,memoryFailureDetail} from './memoryChapterPolicy.js';
++import {MEMORY_JOB_POLICY,STORY_MEMORY_TIMEOUT_MS,STORY_MEMORY_REPAIR_ALLOWANCE_CNY,STORY_MEMORY_MAX_CALLS_PER_CHAPTER,STORY_MEMORY_AUDIT_MAX_TOKENS,memoryFailureDetail} from './memoryChapterPolicy.js';
+ import {chapterOutputOutcome} from './chapterOutputOutcome.js';
+@@ -251,3 +251,8 @@
+  const primary=welfare||story||paid,hasFallback=!!(welfare||story);
+- const call=(client:any,request:any)=>client.models.generateContent({...request,feature:'memory',userId:job.owner,cacheConversationId:hash([job.owner,job.scope]),cacheRoutingSystem:'story-organization-v1:'+request.callKind});
++ const call=(client:any,request:any)=>{
++   // The optional welfare channel has its own configured model and output limit.
++   const limits=client===welfare&&request.maxTokens>STORY_MEMORY_AUDIT_MAX_TOKENS
++     ?{maxTokens:STORY_MEMORY_AUDIT_MAX_TOKENS,maxTokensCap:STORY_MEMORY_AUDIT_MAX_TOKENS}:{};
++   return client.models.generateContent({...request,...limits,feature:'memory',userId:job.owner,cacheConversationId:hash([job.owner,job.scope]),cacheRoutingSystem:'story-organization-v1:'+request.callKind});
++ };
+  return {client:{models:{generateContent:async(request:any)=>{
+diff --git a/test/integration/storyOrganizationConcurrency.test.ts b/test/integration/storyOrganizationConcurrency.test.ts
+--- a/test/integration/storyOrganizationConcurrency.test.ts
++++ b/test/integration/storyOrganizationConcurrency.test.ts
+@@ -141,8 +141,5 @@
+  assert.deepEqual(job.calls.map((c:any)=>c.outcome),outcomes);
+- if(stage==='narrative'){
+-   const sent=calls.slice(start);
+-   assert.equal(sent.length,5);
+-   assert.equal(sent[2].max_tokens,4096);
+-   assert.ok(sent[3].max_tokens>sent[2].max_tokens&&sent[3].max_tokens<=16384);
+- }
++ const sent=calls.slice(start);
++ assert.equal(sent.length,5);
++ assert.deepEqual(sent.slice(2).map(req=>req.max_tokens),[393216,393216,393216]);
+  assert.equal(balance-quotaStore.getCreditQuota(a.id).creditRemain!,job.ordinary*UNIT_CREDIT);
+diff --git a/test/unit/storyFirstPassMemory.test.ts b/test/unit/storyFirstPassMemory.test.ts
+--- a/test/unit/storyFirstPassMemory.test.ts
++++ b/test/unit/storyFirstPassMemory.test.ts
+@@ -462,2 +462,4 @@
+  await verifiedConversationSummary({...args,client:f.client});assert.equal(f.calls.length,4);
++ const narrative=f.calls.find(req=>req.callKind==='story-ledger-recap');
++ assert.equal(narrative.maxTokens,4096);assert.equal(narrative.maxTokensCap,4096);
+ });
+@@ -512,5 +514,8 @@
+  assert.deepEqual(f.calls.map(req=>req.callKind),['story-fact-ledger','story-fact-ledger','story-ledger-recap','story-ledger-recap','story-memory-audit']);
+- assert.equal(f.calls[2].maxTokens,4096);
+- assert.ok(f.calls[3].maxTokens>f.calls[2].maxTokens&&f.calls[3].maxTokens<=16384);
++ assert.equal(f.calls[2].maxTokens,393216);
++ assert.equal(f.calls[2].maxTokensCap,f.calls[2].maxTokens);
++ assert.equal(f.calls[3].maxTokens,f.calls[2].maxTokens);
+  assert.equal(f.calls[3].maxTokensCap,f.calls[3].maxTokens);
++ assert.equal(f.calls[4].maxTokens,393216);
++ assert.equal(f.calls[4].maxTokensCap,393216);
+  const predicates=(ledger:any[])=>ledger.map(r=>({turn:r.turn,facts:r.facts.map((fact:any)=>({
+@@ -549,3 +554,3 @@
+    assert.equal(narrative.length,3);
+-   assert.equal(narrative.filter(req=>req.maxTokens===16384).length,1);
++   assert.equal(narrative.filter(req=>JSON.parse(req.contents[1].parts[0].text).repair?.problem==='SUMMARY_OUTPUT_INCOMPLETE').length,1);
+  }
+@@ -606,2 +611,5 @@
+  assert.equal(f.calls.length,8);assert.equal(acceptedAudit,0);
++ for(const audit of f.calls.filter(req=>req.callKind==='story-memory-audit')){
++   assert.equal(audit.maxTokens,393216);assert.equal(audit.maxTokensCap,393216);
++ }
+  const input=(i:number)=>JSON.parse(f.calls[i].contents[1].parts[0].text);
+diff --git a/api/services/memoryChapterPolicy.ts b/api/services/memoryChapterPolicy.ts
+--- a/api/services/memoryChapterPolicy.ts
++++ b/api/services/memoryChapterPolicy.ts
+@@ -42 +42,6 @@
+ export const STORY_MEMORY_AUDIT_MAX_TOKENS=16384;
++
++// DeepSeek Flash /models advertises 384 Ki output tokens. The chapter gateway
++// accepts this exact max_tokens value. Requested length is separate from the
++// player's narrative length preference and the provider's actual token usage.
++export const DEEPSEEK_CHAPTER_OUTPUT_TOKENS=393216;
+diff --git a/api/services/deepseek.ts b/api/services/deepseek.ts
+--- a/api/services/deepseek.ts
++++ b/api/services/deepseek.ts
+@@ -24,3 +24,3 @@
+ import { foldAnthropicCacheUsage, isPeakAt } from './usage.js';
+-import { refreshModelPricing, modelPricing,requireModelPricing,type ModelPricing } from './modelPricing.js';
++import { refreshModelPricing, modelPricing,requireModelPricing,officialDeepseekPricing,type ModelPricing } from './modelPricing.js';
+ import { cacheUsageEvidence } from './cacheUsage.js';
+@@ -29,2 +29,3 @@
+ import {beginUsageAttempt,rejectUsageAttempt} from './usageIntegrity.js';
++import { storyOrganizationBillingActive } from './storyOrganizationContext.js';
+ import { UpstreamApiError, markGenerationRetryHandled, generationOutputStarted } from './upstreamApiError.js';
+@@ -84,3 +85,11 @@
+
++async function captureDispatchPricing(cfg:ProviderConfig,model:string,startedAt:number):Promise<ModelPricing|null> {
++  const peak=isPeakAt(startedAt);
++  if(cfg.officialCatalogPricing)return officialDeepseekPricing(model,peak);
++  await refreshModelPricing(model,cfg);
++  return cfg.flatRate?modelPricing(model,0,peak):requireModelPricing(model,0,peak);
++}
++
+ export interface ProviderConfig {
++  officialCatalogPricing?: boolean;
+   forceStream?: boolean;
+@@ -208,2 +217,7 @@
+
++/** An organization ledger gateway stream reached its local idle deadline before any model output. */
++class EmptyLedgerTimeout extends Error {
++  readonly code = 'UPSTREAM_TIMEOUT';
++}
++
+ function modelUnavailableError(model: string, retryAfterSeconds: number): UpstreamApiError {
+@@ -534,4 +548,3 @@
+       // Every physical attempt shares the turn budget, including HTTP/network retries.
+-      await refreshModelPricing(useModel,cfg);
+-      const dispatchPricing=cfg.flatRate?modelPricing(useModel,0,isPeakAt(startedAt)):requireModelPricing(useModel,0,isPeakAt(startedAt));
++      const dispatchPricing=await captureDispatchPricing(cfg,useModel,startedAt);
+       body.max_tokens = budgetedMaxTokens(useModel, messages, requestedMaxTokens, providerDefaultReplyOutput(req));
+@@ -749,4 +762,3 @@
+     if(signal?.aborted||req.signal?.aborted)throw new Error('请求已取消');
+-    await refreshModelPricing(useModel,cfg);
+-    dispatchPricing=cfg.flatRate?modelPricing(useModel,0,isPeakAt(startedAt)):requireModelPricing(useModel,0,isPeakAt(startedAt));
++    dispatchPricing=await captureDispatchPricing(cfg,useModel,startedAt);
+     body.max_tokens = budgetedMaxTokens(useModel, messages, requestedMaxTokens, providerDefaultReplyOutput(req));
+@@ -868,2 +880,7 @@
+       finishReason: ['stop', 'length', 'tool_calls', 'content_filter', 'insufficient_system_resource'].includes(finishReason) ? finishReason : '' }));
++    if (idleTimedOut && !externalSignals.some(s => s.aborted) && !full && !reasoningFull && !toolText && !usage && !finishReason
++        && cfg.baseUrl === DEEPSEEK_GATEWAY_BASE && useModel === DEEPSEEK_GATEWAY_MODEL
++        && req.callKind === 'story-fact-ledger' && storyOrganizationBillingActive()) {
++      throw new EmptyLedgerTimeout('Chapter ledger timed out before output');
++    }
+     // Content, tool calls and usage are billable AND user-visible/stateful, so never replay
+@@ -964,2 +981,9 @@
+       if (generationOutputStarted(error)) throw error;
++      if (error instanceof EmptyLedgerTimeout) {
++        const official = officialFallbackProvider(primary);
++        if (!official || signal.aborted || new URL(official.baseUrl).origin !== 'https://api.deepseek.com') throw error;
++        // This single stage retains its deadline, job hold and observation. A
++        // stalled ledger does not establish an outage for other gateway users.
++        return await attempt({...official,model:'deepseek-flash',officialCatalogPricing:true});
++      }
+       if (error instanceof Error && (error instanceof TypeError || error.name === 'AbortError' || error.name === 'TimeoutError')) {
+diff --git a/api/services/modelPricing.ts b/api/services/modelPricing.ts
+--- a/api/services/modelPricing.ts
++++ b/api/services/modelPricing.ts
+@@ -108,2 +108,5 @@
+   }
++  return catalogPricing(model,promptTokens,peak);
++}
++function catalogPricing(model:string,promptTokens:number,peak:boolean):ModelPricing|null {
+   const r = rates.get(canonical(model));
+@@ -126,2 +129,15 @@
+   if(model && (sta1nModel(model)||usesDeepseekGateway(model)))return;
++  return refreshCatalog(model,cfg);
++}
++
++/** A physical official fallback uses its current supplier catalog, even when the
++ * account's normal route for this model is priced on the gateway. */
++export async function officialDeepseekPricing(model:string,peak:boolean):Promise<ModelPricing> {
++  load();
++  await refreshCatalog(model);
++  const price=catalogPricing(model,0,peak);
++  if(!price)throw Error('AI_BUDGET_MODEL_UNPRICED');
++  return price;
++}
++async function refreshCatalog(model?:string,cfg?:{apiKey?:string;baseUrl?:string}):Promise<void> {
+   const key=model?canonical(model):undefined;
+diff --git a/test/unit/storyLedgerTransport.test.ts b/test/unit/storyLedgerTransport.test.ts
+new file mode 100644
+--- /dev/null
++++ b/test/unit/storyLedgerTransport.test.ts
+@@ -0,0 +1,135 @@
++import test, {type TestContext} from 'node:test';
++import assert from 'node:assert/strict';
++import {setupTempCwd} from './setup.js';
++
++setupTempCwd();
++Object.assign(process.env,{
++  PERSISTENCE_PROVIDER:'file',DEEPSEEK_V41_ROUTE:'sta1n',
++  STA1N_API_KEY:'gateway-fixture',DEEPSEEK_API_KEY:'official-fixture',
++  STA1N_WELFARE_ENABLED:'1',STA1N_WELFARE_BASE_URL:'https://welfare.invalid/v1',
++  STA1N_WELFARE_API_KEY:'welfare-fixture',STA1N_WELFARE_MODEL:'test',
++});
++const {createDeepSeekClientFor}=await import('../../api/services/deepseek.js');
++const {withStoryOrganizationBilling}=await import('../../api/services/storyOrganizationContext.js');
++const {__resetProviderHealth}=await import('../../api/services/providerHealth.js');
++
++function runLedger(t:TestContext,options:{
++  frame?:object;
++  cancel?:boolean;
++  organization?:boolean;
++  stage?:string;
++  holdFallback?:boolean;
++  expiredOfficialPricing?:boolean;
++}={}){
++  __resetProviderHealth();
++  const calls:{host:string;model:string}[]=[];
++  const cancel=new AbortController();
++  const realTimer=globalThis.setTimeout;
++  let totalDeadlines=0,deadlineExpired=false;
++  t.mock.method(globalThis,'setTimeout',(cb:any,ms:number,...args:any[])=>{
++    if(ms===240000){
++      totalDeadlines++;
++      return realTimer(()=>{deadlineExpired=true;cb(...args);},300);
++    }
++    // The official request has a longer local timeout. Only the shared logical
++    // deadline can end the held fallback first.
++    const delay=ms===180000?(options.holdFallback&&calls.length?1000:60):ms;
++    return realTimer(cb,delay,...args);
++  });
++  t.mock.method(globalThis,'fetch',async(url:string,init:RequestInit)=>{
++    const host=new URL(url).hostname;
++    if(options.expiredOfficialPricing&&host==='api-docs.deepseek.com')return new Response(null,{status:503});
++    const body=JSON.parse(String(init.body));
++    calls.push({host,model:body.model});
++    const signal=init.signal!;
++    if(host==='api.deepseek.com'){
++      if(options.holdFallback)return new Promise<Response>((_,reject)=>{
++        signal.addEventListener('abort',()=>reject(signal.reason),{once:true});
++      });
++      return Response.json({choices:[{message:{content:'{"turns":[]}'},finish_reason:'stop'}],usage:{prompt_tokens:10,completion_tokens:4}});
++    }
++    assert.equal(host,'sta1n.ai');
++    assert.equal(body.stream,true);
++    return new Response(new ReadableStream({start(controller){
++      if(options.frame)controller.enqueue(new TextEncoder().encode('data: '+JSON.stringify(options.frame)+'\n\n'));
++      signal.addEventListener('abort',()=>controller.error(signal.reason),{once:true});
++      if(options.cancel)queueMicrotask(()=>cancel.abort(new DOMException('Stopped by user','AbortError')));
++    }}));
++  });
++  const client=createDeepSeekClientFor('deepseek-flash',{timeoutMs:180000,maxRetries:0});
++  const invoke=()=>client.models.generateContent({
++    userId:'ledger-transport-fixture',feature:'memory',callKind:options.stage??'story-fact-ledger',jsonMode:true,signal:cancel.signal,
++    contents:[{role:'user',parts:[{text:'Synthetic evidence for a test chapter.'}]}],
++  });
++  return {calls,deadlines:()=>totalDeadlines,deadlineExpired:()=>deadlineExpired,result:options.organization===false?invoke():withStoryOrganizationBilling(invoke)};
++}
++
++test('a ledger with an expired official catalog cannot send the fallback at the cheaper gateway tariff',async t=>{
++  const expired=Date.now()+7*3_600_000;
++  t.mock.method(Date,'now',()=>expired);
++  const run=runLedger(t,{expiredOfficialPricing:true});
++  await assert.rejects(run.result,/AI_BUDGET_MODEL_UNPRICED/);
++  assert.deepEqual(run.calls.map(call=>call.host),['sta1n.ai']);
++});
++
++test('a fixed-price ledger stalled before its first output can switch to the official model once',async t=>{
++  const run=runLedger(t);
++  const result=await run.result;
++  assert.equal(result.finishReason,'stop');
++  assert.deepEqual(run.calls,[{host:'sta1n.ai',model:'deepseek-v4.1-flash'},{host:'api.deepseek.com',model:'deepseek-flash'}]);
++  assert.equal(run.deadlines(),1);
++  const {usageCallStore}=await import('../../api/services/usageCalls.js');
++  const [entry]=usageCallStore.byUser('ledger-transport-fixture');
++  assert.equal(entry.provider,'DeepSeek');
++  assert.equal(entry.callKind,'story-fact-ledger');
++  const rate=result.usage.model_pricing;
++  assert.equal(rate.model,'deepseek-flash');
++  assert.equal(rate.source,'test-fixture');
++  assert.deepEqual(entry.modelPricing,rate);
++  assert.equal(entry.costYuan,(10*rate.input+4*rate.output)/1e6);
++});
++
++test('the fallback still shares the original ledger deadline and cannot start a third request',async t=>{
++  const run=runLedger(t,{holdFallback:true});
++  await assert.rejects(run.result);
++  assert.deepEqual(run.calls.map(call=>call.host),['sta1n.ai','api.deepseek.com']);
++  assert.equal(run.deadlines(),1);
++  assert.equal(run.deadlineExpired(),true);
++});
++
++for(const [name,options] of [
++  ['partial JSON',{frame:{choices:[{delta:{content:'{"turns":'}}]}}],
++  ['reasoning alone',{frame:{choices:[{delta:{reasoning_content:'thinking'}}]}}],
++  ['provider usage alone',{frame:{usage:{prompt_tokens:12,completion_tokens:0}}}],
++  ['a finish signal with no trailing DONE marker',{frame:{choices:[{delta:{},finish_reason:'stop'}]}}],
++  ['tool output',{frame:{choices:[{delta:{tool_calls:[{index:0,id:'call-1',function:{name:'read'}}]}}]}}],
++  ['user cancellation',{cancel:true}],
++  ['a non-organization caller',{organization:false}],
++  ['another chapter stage',{stage:'story-ledger-recap'}],
++] as const){
++  test('ledger idle fallback does not repeat a request after '+name,async t=>{
++    const run=runLedger(t,options);
++    await assert.rejects(run.result);
++    assert.deepEqual(run.calls.map(call=>call.host),['sta1n.ai']);
++  });
++}
++
++test('the welfare channel keeps its own output limit while its DeepSeek fallback receives the full chapter ceiling',async t=>{
++  const {organizationClient}=await import('../../api/services/storyOrganization.js');
++  const requests:{host:string;limit:number}[]=[];
++  t.mock.method(globalThis,'fetch',async(url:string,init:RequestInit)=>{
++    const host=new URL(url).hostname;
++    const body=JSON.parse(String(init.body));
++    requests.push({host,limit:body.max_tokens});
++    if(host==='welfare.invalid')return Response.json({error:{message:'fixture unavailable'}},{status:503});
++    assert.equal(host,'sta1n.ai');
++    const answer={choices:[{delta:{content:'{"recap":"test"}'},finish_reason:'stop'}],usage:{prompt_tokens:10,completion_tokens:4}};
++    return new Response('data: '+JSON.stringify(answer)+'\n\ndata: [DONE]\n\n');
++  });
++  const meter=organizationClient({id:'isolated-welfare',owner:'welfare-limit',scope:'scope',from:1,to:10,cap:20,billingMultiplier:1} as any);
++  const result=await meter.client.models.generateContent({
++    contents:[{role:'user',parts:[{text:'Synthetic chapter'}]}],callKind:'story-ledger-recap',maxTokens:393216,maxTokensCap:393216,
++  });
++  assert.equal(result.finishReason,'stop');
++  assert.deepEqual(requests,[{host:'welfare.invalid',limit:16384},{host:'sta1n.ai',limit:393216}]);
++});
