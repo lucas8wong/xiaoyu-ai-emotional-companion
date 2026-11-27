@@ -29,12 +29,38 @@ diff --git a/api/services/storyFirstPassMemory.ts b/api/services/storyFirstPassM
 diff --git a/api/services/storyOrganization.ts b/api/services/storyOrganization.ts
 --- a/api/services/storyOrganization.ts
 +++ b/api/services/storyOrganization.ts
-@@ -22,3 +22,3 @@
+@@ -22,5 +22,6 @@
  import {stripEmDash} from '../../src/lib/dashText.js';
 -import {MEMORY_JOB_POLICY,STORY_MEMORY_TIMEOUT_MS,STORY_MEMORY_REPAIR_ALLOWANCE_CNY,STORY_MEMORY_MAX_CALLS_PER_CHAPTER,memoryFailureDetail} from './memoryChapterPolicy.js';
 +import {MEMORY_JOB_POLICY,STORY_MEMORY_TIMEOUT_MS,STORY_MEMORY_REPAIR_ALLOWANCE_CNY,STORY_MEMORY_MAX_CALLS_PER_CHAPTER,STORY_MEMORY_AUDIT_MAX_TOKENS,memoryFailureDetail} from './memoryChapterPolicy.js';
  import {chapterOutputOutcome} from './chapterOutputOutcome.js';
-@@ -251,3 +251,8 @@
+-import {organizationRetryProtection,organizationFailureCode} from './storyOrganizationRetry.js';
++import {chapterTransportRetryAfter,isOrganizationTransportFailure,organizationRetryProtection,organizationFailureCode} from './storyOrganizationRetry.js';
++import type {MemoryJob} from '../../src/lib/memoryEvidence.js';
+ import {organizationTiming} from './storyOrganizationTiming.js';
+@@ -109,2 +110,11 @@
+ }
++export function organizationMemoryRetryAfter(owner:string,scenario:string,mode:string,job:MemoryJob|undefined,context?:{data:Data;plan:ReturnType<typeof prepare>}){
++ if(job?.state!=='failed'||job.policyVersion!==MEMORY_JOB_POLICY||!job.retryAfter||!isOrganizationTransportFailure(job.errorCode))return job?.retryAfter;
++ try{
++   const plan=context?context.plan:prepare(owner,scenario,mode);
++   if(!plan||plan.from!==job.from||plan.to!==job.to)return job.retryAfter;
++   const d=context?.data??load();
++   return chapterTransportRetryAfter([...Object.values(d.jobs),...(d.attempts||[])],owner,plan.scope,plan.retrySourceKey,job);
++ }catch{return job.retryAfter;}
++}
+ export async function organizationStatus(owner:string,scenario:string,mode:string):Promise<OrganizationStatus>{
+@@ -133,3 +143,8 @@
+  const autoRetry=canRetryOrganization(phaseError)||phaseError==='MEMORY_RETRY_LIMIT';
+- const retryAfter=autoRetry?Math.max(memoryJob?.retryAfter||0,retryGuard.retryAfter||0)||undefined:undefined;
++ const memoryRetryAfter=organizationMemoryRetryAfter(owner,scenario,mode,memoryJob,{data:d,plan:p});
++ if(memoryJob&&memoryJob.retryAfter!==memoryRetryAfter){
++   memoryJob={...memoryJob,retryAfter:memoryRetryAfter};
++   storyStateStore.setMemoryJob(owner,scenario,mode,memoryJob);
++ }
++ const retryAfter=autoRetry?Math.max(memoryRetryAfter||0,retryGuard.retryAfter||0)||undefined:undefined;
+  const phase=organizationPhase({hasWork:!!p,ownRunning:jobs.some(j=>j.scope===scope&&j.state==='running'),otherRunning:busy,ready:!!p?.cached,available:organizationAvailable(w),ordinary:quote?.ordinaryMax||0,total:quote?.maxEnergy||0,enabled:w.settings.enabled,perJob:w.settings.perJob,perDay:w.settings.perDay,spent:w.spent,historical:false,balance:quotaStore.storyOrganizationAvailable(owner)/UNIT_CREDIT,error:phaseError==='MEMORY_INTERRUPTED'&&!autoRetry?'MEMORY_RETRY_REQUIRED':phaseError,retryAfter,now:Date.now()});
+@@ -251,3 +266,8 @@
   const primary=welfare||story||paid,hasFallback=!!(welfare||story);
 - const call=(client:any,request:any)=>client.models.generateContent({...request,feature:'memory',userId:job.owner,cacheConversationId:hash([job.owner,job.scope]),cacheRoutingSystem:'story-organization-v1:'+request.callKind});
 + const call=(client:any,request:any)=>{
@@ -89,6 +115,75 @@ diff --git a/test/unit/storyFirstPassMemory.test.ts b/test/unit/storyFirstPassMe
 +   assert.equal(audit.maxTokens,393216);assert.equal(audit.maxTokensCap,393216);
 + }
   const input=(i:number)=>JSON.parse(f.calls[i].contents[1].parts[0].text);
+diff --git a/api/services/storyOrganizationRetry.ts b/api/services/storyOrganizationRetry.ts
+--- a/api/services/storyOrganizationRetry.ts
++++ b/api/services/storyOrganizationRetry.ts
+@@ -1 +1,4 @@
++import type {MemoryJob} from '../../src/lib/memoryEvidence.js';
++import {memoryRetryDelay} from './memoryExtraction.js';
++
+ /** Operational failure protection is independent of the user's daily spending
+@@ -10,2 +13,30 @@
+ interface RetryReceipt {owner:string;scope:string;state:string;at:number;cost:number;policyVersion?:string;signature?:string;error?:string;retrySourceKey?:string;recapLengthRecovery?:boolean;calls?:readonly {stage:string;outcome:string}[]}
++export const isOrganizationTransportFailure=(code?:string)=>!!code&&['UPSTREAM_TIMEOUT','UPSTREAM_UNAVAILABLE'].includes(organizationFailureCode(code));
++
++/** Keep the original backoff unless receipts prove that failures at a different
++ * stage inflated the cumulative attempt count for these same ten turns. */
++export function chapterTransportRetryAfter(rows:readonly (RetryReceipt&{from:number;to:number})[],owner:string,scope:string,source:string,job:MemoryJob){
++ const fallback=job.retryAfter;
++ if(job.state!=='failed'||!fallback||!source||!job.policyVersion||!isOrganizationTransportFailure(job.errorCode))return fallback;
++ const history=rows.filter(r=>r.owner===owner&&(r.scope===scope||r.retrySourceKey===source)&&r.from===job.from&&r.to===job.to).sort((a,b)=>b.at-a.at);
++ const latest=history[0],failure=latest?.calls?.at(-1);
++ const stages=['story-fact-ledger','story-ledger-recap','story-memory-audit'];
++ if(!latest||latest.scope!==scope||latest.error!==job.errorCode||latest.at>job.updatedAt||failure?.outcome!=='failed'||!stages.includes(failure.stage))return fallback;
++ let streak=0;
++ for(const row of history){
++   const last=row.calls?.at(-1);
++   if(row.retrySourceKey!==source||row.policyVersion!==job.policyVersion||row.state!=='failed'||!last||!stages.includes(last.stage))return fallback;
++   const endedAtLimit=last.outcome==='output_length'&&(row.error==='SUMMARY_OUTPUT_INCOMPLETE'||row.error==='MEMORY_INTERRUPTED');
++   if(last.stage!==failure.stage||endedAtLimit){
++     // A returned call followed by an unrelated local error cannot prove
++     // where the earlier provider failure occurred.
++     if(!['failed','output_length','missing_finish_reason','other_finish_reason'].includes(last.outcome))return fallback;
++     return Math.min(fallback,job.updatedAt+memoryRetryDelay(streak));
++   }
++   if(last.outcome!=='failed'||!isOrganizationTransportFailure(row.error))return fallback;
++   streak++;
++   if(streak>=job.attempts)return fallback;
++ }
++ return fallback;
++}
+ // Only the old narrative-length failure has a new recovery path. Its actual
+diff --git a/test/unit/storyOrganizationRetry.test.ts b/test/unit/storyOrganizationRetry.test.ts
+--- a/test/unit/storyOrganizationRetry.test.ts
++++ b/test/unit/storyOrganizationRetry.test.ts
+@@ -1,5 +1,25 @@
+ import test from 'node:test';import assert from 'node:assert/strict';
+-import {organizationRetryProtection,ORGANIZATION_RETRY_WINDOW_MS as windowMs} from '../../api/services/storyOrganizationRetry.js';
++import {chapterTransportRetryAfter,organizationRetryProtection,ORGANIZATION_RETRY_WINDOW_MS as windowMs} from '../../api/services/storyOrganizationRetry.js';
+ const now=2e12;const receipt=(at=now,cost=.1,extra:any={})=>({owner:'a',scope:'story',state:'failed',at,cost,signature:'source',policyVersion:'current',...extra});
+ const check=(rows:any[],time=now)=>organizationRetryProtection(rows,'a','story',['source'],'current',time);
++test('stage backoff counts consecutive timeouts and unavailable responses together only for proven chapter sources',()=>{
++ const source='first-ten';
++ const job={state:'failed' as const,from:1,to:10,policyVersion:'current',attempts:19,updatedAt:now,errorCode:'UPSTREAM_UNAVAILABLE',retryAfter:now+3600000};
++ const event=(n:number,stage:string,error:string,outcome:string)=>receipt(now-n,.01,{from:1,to:10,retrySourceKey:source,error,calls:[{stage,outcome}]});
++ const recap=event(3,'story-ledger-recap','SUMMARY_OUTPUT_INCOMPLETE','output_length');
++ const audit=event(2,'story-memory-audit','UPSTREAM_TIMEOUT','failed');
++ const latest=event(1,'story-memory-audit',job.errorCode,'failed');
++ const deadline=(rows:any[])=>chapterTransportRetryAfter(rows,'a','story',source,job);
++ assert.equal(deadline([recap,latest]),now+60000);
++ assert.equal(deadline([latest,recap,audit]),now+120000);
++ const longOutage=Array.from({length:8},(_,i)=>({...latest,at:now+i-9}));
++ assert.equal(deadline([{...recap,at:now-10},...longOutage]),job.retryAfter);
++ assert.equal(deadline([latest]),job.retryAfter);
++ for(const change of [{retrySourceKey:'edited'},{calls:undefined},{from:11},{owner:'b'},{scope:'other',retrySourceKey:'other'}]){
++   assert.equal(deadline([recap,{...latest,...change}]),job.retryAfter);
++ }
++ assert.equal(deadline([{...recap,calls:[]},latest]),job.retryAfter);
++ assert.equal(deadline([{...recap,calls:[{stage:'story-ledger-recap',outcome:'returned'}]},latest]),job.retryAfter);
++ assert.equal(deadline([recap,{...latest,error:'SUMMARY_FAILED'}]),job.retryAfter);
++});
+ test('three failures pause briefly and reopen automatically without waiting for midnight or deleting receipts',()=>{const rows=[receipt(now-2000),receipt(now-1000),receipt()];const gate=check(rows);assert.equal(gate.failures,3);assert.equal(gate.retryAfter,now-2000+windowMs+1);assert.equal(check(rows,gate.retryAfter!).failures,2);assert.equal(check(rows,gate.retryAfter!).retryAfter,undefined);assert.equal(rows.length,3);});
 diff --git a/api/services/memoryChapterPolicy.ts b/api/services/memoryChapterPolicy.ts
 --- a/api/services/memoryChapterPolicy.ts
 +++ b/api/services/memoryChapterPolicy.ts
@@ -335,3 +430,84 @@ new file mode 100644
 +  assert.equal(result.finishReason,'stop');
 +  assert.deepEqual(requests,[{host:'welfare.invalid',limit:16384},{host:'sta1n.ai',limit:393216}]);
 +});
+diff --git a/api/services/storyVerifiedSummary.ts b/api/services/storyVerifiedSummary.ts
+--- a/api/services/storyVerifiedSummary.ts
++++ b/api/services/storyVerifiedSummary.ts
+@@ -13,3 +13,3 @@
+ import {CREDIT_PER_YUAN,UNIT_CREDIT} from './quota.js';
+-import {organizationChapterResume,organizationStatus,reserveOrganization,organizationClient,finish,rejectOrganizationMemory,canRetryOrganization,recordOrganizationFailure} from './storyOrganization.js';
++import {organizationChapterResume,organizationMemoryRetryAfter,organizationStatus,reserveOrganization,organizationClient,finish,rejectOrganizationMemory,canRetryOrganization,recordOrganizationFailure} from './storyOrganization.js';
+ import {relevantMemoryFacts,memoryRetryDelay} from './memoryExtraction.js';
+@@ -46,3 +46,3 @@
+   if(previousCovered)retry.delete(scope);
+-  const retryAt=Math.max(retry.get(scope)||0,previousJob?.policyVersion===MEMORY_JOB_POLICY?previousJob.retryAfter||0:0);
++  const retryAt=Math.max(retry.get(scope)||0,previousJob?.policyVersion===MEMORY_JOB_POLICY?organizationMemoryRetryAfter(args.userId,args.scenarioId,mode,previousJob)||0:0);
+   if(!authorization&&!previousCovered&&retryAt>Date.now()){pending.delete(scope);resumeActiveStoryOrganization(args,retryAt-Date.now());return false;}
+@@ -66,3 +66,8 @@
+       const covered=job&&storyStateStore.verifiedSummaries(args.userId,args.scenarioId,mode).some(s=>(s.from-1)%10===0&&s.to%10===0&&s.from<=job.from&&s.to>=job.to);
+-      try{if(job&&!covered)storyStateStore.setMemoryJob(args.userId,args.scenarioId,mode,{...job,state:'failed',errorCode:memoryFailureCode(error),errorDetail:memoryFailureDetail(error)||undefined,updatedAt:Date.now(),retryAfter:Date.now()+memoryRetryDelay(job.attempts)});
++      try{if(job&&!covered){
++          const updatedAt=Date.now();
++          const failed={...job,state:'failed' as const,errorCode:failureCode,errorDetail:memoryFailureDetail(error)||undefined,updatedAt,retryAfter:updatedAt+memoryRetryDelay(job.attempts)};
++          failed.retryAfter=organizationMemoryRetryAfter(args.userId,args.scenarioId,mode,failed)??failed.retryAfter;
++          storyStateStore.setMemoryJob(args.userId,args.scenarioId,mode,failed);
++        }
+         else if(job)storyStateStore.setMemoryJob(args.userId,args.scenarioId,mode,{...job,state:'idle',errorCode:undefined,errorDetail:undefined,updatedAt:Date.now()});}catch{/* Source still retained. */}
+diff --git a/test/integration/storyOrganizationWorker.test.ts b/test/integration/storyOrganizationWorker.test.ts
+--- a/test/integration/storyOrganizationWorker.test.ts
++++ b/test/integration/storyOrganizationWorker.test.ts
+@@ -51,2 +51,54 @@
+
++test('startup recovers an old mixed failure backoff using the actual consecutive transport receipts',async()=>{
++ const a=await account(),story='legacy-mixed-backoff';
++ await scope(a,story);subsidy(a);
++ const {MEMORY_JOB_POLICY}=await import('../../api/services/memoryChapterPolicy.js');
++ const {finish}=await import('../../api/services/storyOrganization.js');
++ const quote=(await organizationStatus(a.id,story,'solo')).quote!;
++ const reserved=reserveOrganization(a.id,story,'solo',quote.key);
++ finish(reserved.id,0,.01,()=>{},'UPSTREAM_UNAVAILABLE');
++ const d=readJson<any>(file,{}),failure=d.jobs[reserved.id];
++ const failedAt=Date.now()-90000;
++ failure.at=failedAt;
++ failure.calls=[{stage:'story-memory-audit',outcome:'failed',at:failedAt,cost:0}];
++ const older={...failure,observationId:'old-narrative',at:failedAt-3600000,error:'SUMMARY_OUTPUT_INCOMPLETE',
++   calls:[{stage:'story-ledger-recap',outcome:'output_length',at:failedAt-3600000,cost:.01}]};
++ delete older.recapLengthRecovery;
++ (d.attempts||=[]).push(older);
++ writeJsonStrict(file,d);
++ storyStateStore.setMemoryJob(a.id,story,'solo',{state:'failed',from:1,to:10,attempts:7,
++   policyVersion:MEMORY_JOB_POLICY,errorCode:failure.error,updatedAt:failedAt,retryAfter:failedAt+3600000});
++ const preceding={...failure,observationId:'previous-gateway-failure',at:failedAt-120000,
++   calls:[{stage:'story-memory-audit',outcome:'failed',at:failedAt-120000,cost:0}]};
++ const sourceState=storyStateStore.get(a.id,story,'solo')!.memory!.job!;
++ const withHistory=async(...rows:any[])=>{
++   const saved=readJson<any>(file,{});
++   saved.attempts=[...d.attempts,...rows];
++   writeJsonStrict(file,saved);
++   storyStateStore.setMemoryJob(a.id,story,'solo',{...sourceState});
++   return organizationStatus(a.id,story,'solo');
++ };
++ const twice=await withHistory(preceding);
++ assert.equal(twice.retryAfter,failedAt+120000,'two consecutive transport failures still back off exponentially');
++ const recentCost=await withHistory({...preceding,scope:failure.scope+'-another-story',cost:1.25});
++ assert.ok(recentCost.retryAfter!>Date.now()+600000,'recent supplier cost across stories still protects the account');
++ const status=await withHistory();
++ assert.equal(status.autoRetry,true);
++ assert.ok((status.retryAfter??0)<=Date.now(),'the first transport retry was due after one minute');
++ assert.equal(storyStateStore.get(a.id,story,'solo')!.memory!.job!.retryAfter,failedAt+60000);
++ storyStateStore.setMemoryJob(a.id,story,'solo',{...sourceState});
++ assert.equal(queueStoryVerifiedSummary({userId:a.id,scenarioId:story,mode:'solo',lang:'en',messages:[]}),true,'queue precheck applies the same recovery without a status read');
++ const before=quotaStore.getCreditQuota(a.id).creditRemain;
++ const worker=new StoryOrganizationWorker({intervalMs:20});
++ worker.start();
++ try{
++   await until(()=>jobs(a).some(j=>j.state==='completed'),'resume despite the inherited one-hour deadline');
++   assert.equal(storyStateStore.verifiedSummaries(a.id,story,'solo').length,1);
++   assert.equal(quotaStore.getCreditQuota(a.id).creditRemain,before);
++   const history=readJson<any>(file,{}).attempts.filter((j:any)=>j.owner===a.id);
++   assert.ok(history.some((j:any)=>j.observationId==='old-narrative'&&j.error==='SUMMARY_OUTPUT_INCOMPLETE'));
++   assert.ok([...history,...jobs(a)].some((j:any)=>j.observationId===reserved.observationId&&j.error==='UPSTREAM_UNAVAILABLE'&&j.energy===0));
++ }finally{worker.stop();}
++});
++
+ test('the tenth durable reply wakes a sleeping worker without a refresh or next chat',async()=>{
