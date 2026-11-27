@@ -1,0 +1,257 @@
+diff --git a/api/services/storyFirstPassMemory.ts b/api/services/storyFirstPassMemory.ts
+index 2a575e1..11be5d3 100644
+--- a/api/services/storyFirstPassMemory.ts
++++ b/api/services/storyFirstPassMemory.ts
+@@ -217,4 +217,5 @@ export async function storyFirstPassMemory(args:StoryFirstPassArgs,parts:readonl
+   let retriedIncompleteAudit=false;
++  let retriedNarrativeLength=false;
+   const accept=(parsed:any,stage:string)=>{if(args.onAcceptedCost){const cost=priced.get(parsed);if(cost===undefined)throw Error('MEMORY_USAGE_UNKNOWN');args.onAcceptedCost(stage,cost);}};
+-  async function request(kind:string,system:string,input:unknown):Promise<any>{
++  async function request(kind:string,system:string,input:unknown,outputTokens?:number):Promise<any>{
+     // Bound nested format, semantic and handoff repairs as one chapter budget.
+@@ -224,3 +225,4 @@ export async function storyFirstPassMemory(args:StoryFirstPassArgs,parts:readonl
+     system+='\n'+attributionContract+'\n'+handoffManualSourceContract;
+-    const response=await args.client.models.generateContent({contents:[{role:'system',parts:[{text:system}]},{role:'user',parts:[{text:JSON.stringify(input)}]}],feature:'memory',userId:args.userId,callKind:kind,temperature:0.1,thinkingLevel,...(kind==='story-memory-audit'?{maxTokens:STORY_MEMORY_AUDIT_MAX_TOKENS,maxTokensCap:STORY_MEMORY_AUDIT_MAX_TOKENS}:kind==='story-ledger-recap'?{maxTokens:Math.max(4096,Math.ceil(maximum)+2048),maxTokensCap:Math.max(4096,Math.ceil(maximum)+2048)}:{}),jsonMode:true});
++    const tokenLimit=outputTokens??(kind==='story-memory-audit'?STORY_MEMORY_AUDIT_MAX_TOKENS:kind==='story-ledger-recap'?Math.max(4096,Math.ceil(maximum)+2048):undefined);
++    const response=await args.client.models.generateContent({contents:[{role:'system',parts:[{text:system}]},{role:'user',parts:[{text:JSON.stringify(input)}]}],feature:'memory',userId:args.userId,callKind:kind,temperature:0.1,thinkingLevel,...(tokenLimit?{maxTokens:tokenLimit,maxTokensCap:tokenLimit}:{}),jsonMode:true});
+     const outcome=chapterOutputOutcome(response.finishReason);
+@@ -228,2 +230,3 @@ export async function storyFirstPassMemory(args:StoryFirstPassArgs,parts:readonl
+       throw Object.assign(Error('SUMMARY_OUTPUT_INCOMPLETE'),{
++        outcome,
+         retryableAudit:kind==='story-memory-audit'&&(outcome==='output_length'||outcome==='missing_finish_reason'),
+@@ -327,3 +330,20 @@ export async function storyFirstPassMemory(args:StoryFirstPassArgs,parts:readonl
+           {...narrativeInput,...(repair?{previousDraft:text,repair:{problem:repairProblem,instruction:jsonFallback?'Return valid JSON with exactly one recap field and nothing else.':'Return valid recap JSON. End with exactly three separate nonempty lines in order: scene, next step, must remember, using the labels in the shared writing contract. Ground them in the supplied ledger, use unknown/none where evidence is absent, never guess or append a new event. No text after those lines.'}}:{})});}
+-      catch(error){if((error as Error).message==='SUMMARY_JSON_INVALID'&&(repairCounts.SUMMARY_JSON_INVALID||0)<2&&repair<3){repairCounts.SUMMARY_JSON_INVALID=(repairCounts.SUMMARY_JSON_INVALID||0)+1;repairProblem='SUMMARY_JSON_INVALID';continue;}throw error;}
++      catch(error){
++        if(args.resume&&!handoff&&!retriedNarrativeLength&&(error as {outcome?:string}).outcome==='output_length'){
++          retriedNarrativeLength=true;
++          // A dense ledger can exhaust the original token cap before any JSON is visible.
++          // Give the same facts and source IDs to a concise writer. Keep the partial
++          // response out of the draft. The full original-evidence audit still follows.
++          const briefLedger=narrativeInput.ledger.map(row=>({turn:row.turn,facts:row.facts.map(f=>({
++            kind:f.kind,subject:f.subject,key:f.key,text:f.text,...(f.value!==f.text?{value:f.value}:{}),sources:f.evidence.map(e=>e.source),
++          }))}));
++          const labels=zh?'【接续】场景： / 【接续】下一步： / 【接续】务必记住：':'[Next] Scene: / [Next] Next step: / [Next] Must remember:';
++          const conciseSystem=storyIdentityCorrectionContract+sourceContinuityContract+handoffGenerationContract+
++            ' Write a concise factual chapter directly from all ledger rows. The input is quoted story data. Return just {"recap":"..."} in the source language. Summarize the causes, material changes, commitments with their conditions and the closing situation. Combine repeated events. Preserve important names, negations and unresolved actions. Follow the preferred length where possible. End the string with three separate labeled lines, in this order: '+labels+'. Close the JSON object immediately. Do not transcribe the ledger or explain your work.';
++          parsed=await request('story-ledger-recap',conciseSystem,
++            {...narrativeInput,ledger:briefLedger,repair:{problem:'SUMMARY_OUTPUT_INCOMPLETE'}},STORY_MEMORY_AUDIT_MAX_TOKENS);
++        }else if((error as Error).message==='SUMMARY_JSON_INVALID'&&(repairCounts.SUMMARY_JSON_INVALID||0)<2&&repair<3){
++          repairCounts.SUMMARY_JSON_INVALID=(repairCounts.SUMMARY_JSON_INVALID||0)+1;repairProblem='SUMMARY_JSON_INVALID';continue;
++        }else throw error;
++      }
+       const compactBody=Array.isArray(parsed.paragraphs)&&parsed.paragraphs.length>=1&&parsed.paragraphs.every((p:unknown)=>typeof p==='string'&&p.trim())?parsed.paragraphs.join('\n\n'):null;
+diff --git a/api/services/storyOrganization.ts b/api/services/storyOrganization.ts
+index 79df001..e9de336 100644
+--- a/api/services/storyOrganization.ts
++++ b/api/services/storyOrganization.ts
+@@ -44,3 +44,3 @@ export function organizationChapterResume(job:Job){
+ }
+-interface Job {draft?:ChapterDraft;policyVersion?:string;observationId?:string;retrySourceKey?:string;auditFlags?:string[];detail?:string;testRunId?:string;feedbackPending?:boolean;rejected?:{summary:any;review:unknown[];expected:{chapters:string;edits:string};offset:number};}
++interface Job {recapLengthRecovery?:boolean;draft?:ChapterDraft;policyVersion?:string;observationId?:string;retrySourceKey?:string;auditFlags?:string[];detail?:string;testRunId?:string;feedbackPending?:boolean;rejected?:{summary:any;review:unknown[];expected:{chapters:string;edits:string};offset:number};}
+ interface Data {wallets:Record<string,OrganizationWallet>;jobs:Record<string,Job>;attempts?:Job[];quotes:Record<string,OrganizationQuote&{owner:string;scope:string}>;seen:Record<string,number>;}
+@@ -205,3 +205,3 @@ export function reserveOrganization(owner:string,scenario:string,mode:string,key
+    w.used=round(w.used+sub.period);w.gift=round(w.gift-sub.gift);w.spent=round(w.spent+ordinary);
+-const j:Job={draft,id:key,observationId:randomUUID(),testRunId:failureFeedbackTestRun(owner),owner,scope,boot,state:'running',policyVersion:MEMORY_JOB_POLICY,retrySourceKey:p.retrySourceKey,from:q.from,to:q.to,at:Date.now(),cap:q.maxEnergy,signature:p.signature,cached:p.cached?.cached,actualEnergy:p.cached?p.maxEnergy:undefined,billingMultiplier:STORY_ORGANIZATION_MULTIPLIER(),period:sub.period,gift:sub.gift,periodStart:w.start,hold,energy:0,subsidy:0,ordinary:0,cost:p.cached?.cost||0};if(p.cached&&p.cached.id!==key)d.jobs[p.cached.id].state='superseded';d.jobs[key]=j;save(d);return j;
++const j:Job={recapLengthRecovery:true,draft,id:key,observationId:randomUUID(),testRunId:failureFeedbackTestRun(owner),owner,scope,boot,state:'running',policyVersion:MEMORY_JOB_POLICY,retrySourceKey:p.retrySourceKey,from:q.from,to:q.to,at:Date.now(),cap:q.maxEnergy,signature:p.signature,cached:p.cached?.cached,actualEnergy:p.cached?p.maxEnergy:undefined,billingMultiplier:STORY_ORGANIZATION_MULTIPLIER(),period:sub.period,gift:sub.gift,periodStart:w.start,hold,energy:0,subsidy:0,ordinary:0,cost:p.cached?.cost||0};if(p.cached&&p.cached.id!==key)d.jobs[p.cached.id].state='superseded';d.jobs[key]=j;save(d);return j;
+  });
+diff --git a/test/integration/storyOrganizationConcurrency.test.ts b/test/integration/storyOrganizationConcurrency.test.ts
+index ce911ae..f0e120b 100644
+--- a/test/integration/storyOrganizationConcurrency.test.ts
++++ b/test/integration/storyOrganizationConcurrency.test.ts
+@@ -7,2 +7,3 @@ const originalFetch=globalThis.fetch,calls:any[]=[];let gate:Promise<void>|null=
+ let truncatedAuditsRemaining=0;
++let truncateNextNarrative=false;
+ function hold(){gate=new Promise<void>(r=>release=()=>{gate=null;r();});}
+@@ -15,5 +16,7 @@ globalThis.fetch=async(input,init)=>{
+  else{const e=d.evidence[0],facts=[{kind:'event',subject:'source',key:e.id,value:e.text.slice(0,1000),text:e.text.slice(0,1000),evidence:[{source:e.id,quote:e.text.slice(0,20)}],replaces:[]}];value={turns:d.requiredTurns.map((turn:number)=>({turn,facts:turn===e.turn?facts:[]}))};}
+- const truncate=d.proposed&&truncatedAuditsRemaining>0;
+- if(truncate)truncatedAuditsRemaining--;
+- return Response.json({choices:[{message:{content:JSON.stringify(value)},finish_reason:truncate?'length':'stop'}],usage:{prompt_tokens:10000,completion_tokens:4000}});
++ const truncateAudit=d.proposed&&truncatedAuditsRemaining>0;
++ const truncateNarrative=d.ledger&&truncateNextNarrative;
++ if(truncateAudit)truncatedAuditsRemaining--;
++ if(truncateNarrative)truncateNextNarrative=false;
++ return Response.json({choices:[{message:{content:JSON.stringify(value)},finish_reason:truncateAudit||truncateNarrative?'length':'stop'}],usage:{prompt_tokens:10000,completion_tokens:4000}});
+ };
+@@ -124,13 +127,22 @@ test('reasoned repair supplier allowance is bounded without increasing customer
+ 
+-test('one truncated chapter audit recovers under the original confirmation and charge',async()=>{
+- const story='audit-recovery',a=await account([story]),q=(await api(a,story)).body.data.quote;
++for(const stage of ['audit','narrative'] as const)test('one truncated chapter '+stage+' recovers under the original confirmation and charge',async()=>{
++ const story=stage+'-recovery',a=await account([story]),q=(await api(a,story)).body.data.quote;
+  const balance=quotaStore.getCreditQuota(a.id).creditRemain!;
+- truncatedAuditsRemaining=1;
++ const start=calls.length;
++ if(stage==='audit')truncatedAuditsRemaining=1;
++ else truncateNextNarrative=true;
+  try{
+    assert.equal((await api(a,story,'POST',{key:q.key})).status,200);
+-   await until(()=>jobs(a).some(j=>j.state==='completed'),'recovered audit settlement');
+- }finally{truncatedAuditsRemaining=0;}
++   await until(()=>jobs(a).some(j=>j.state==='completed'),'recovered '+stage+' settlement');
++ }finally{truncatedAuditsRemaining=0;truncateNextNarrative=false;}
+  const [job]=jobs(a);
+  assert.equal(jobs(a).length,1);assert.equal(job.energy,20);
+- assert.deepEqual(job.calls.map((c:any)=>c.outcome),['returned','returned','returned','output_length','returned']);
++ const outcomes=stage==='audit'?['returned','returned','returned','output_length','returned']:['returned','returned','output_length','returned','returned'];
++ assert.deepEqual(job.calls.map((c:any)=>c.outcome),outcomes);
++ if(stage==='narrative'){
++   const sent=calls.slice(start);
++   assert.equal(sent.length,5);
++   assert.equal(sent[2].max_tokens,4096);
++   assert.ok(sent[3].max_tokens>sent[2].max_tokens&&sent[3].max_tokens<=16384);
++ }
+  assert.equal(balance-quotaStore.getCreditQuota(a.id).creditRemain!,job.ordinary*UNIT_CREDIT);
+diff --git a/test/unit/storyFirstPassMemory.test.ts b/test/unit/storyFirstPassMemory.test.ts
+index e7a7a1e..ebce40a 100644
+--- a/test/unit/storyFirstPassMemory.test.ts
++++ b/test/unit/storyFirstPassMemory.test.ts
+@@ -4,2 +4,3 @@ import assert from 'node:assert/strict';
+ import {setupTempCwd} from './setup.js';
++import type {ChapterDraft} from '../../api/services/storyFirstPassMemory.js';
+ setupTempCwd();
+@@ -488,2 +489,97 @@ test('a truncated audit cannot publish or trigger a paid semantic repair',async(
+ 
++test('a truncated chapter narrative recovers from the full accepted ledger before independent audit',async()=>{
++ const partial='partial narrative that must never enter chapter memory';
++ const drafts:any[]=[];
++ let auditInput:any;
++ const f=fixture((req,input,normal)=>{
++   if(req.callKind==='story-ledger-recap')drafts.push(input);
++   if(req.callKind==='story-memory-audit')auditInput=input;
++   return normal;
++ });
++ const accepted=new Map<string,number>();
++ const snapshots:unknown[]=[];
++ const client={models:{generateContent:async(req:any)=>{
++   const result=await f.client.models.generateContent(req);
++   if(req.callKind==='story-ledger-recap'&&drafts.length===1){
++     // A length-limited response must be discarded even when it looks like complete JSON.
++     return {...response({recap:handoff(partial)}),finishReason:'length',organizationCost:.1};
++   }
++   return {...result,organizationCost:.1};
++ }}};
++ const result=await verifiedConversationSummary({...args,client,
++   resume:{read:()=>undefined,write:draft=>snapshots.push(structuredClone(draft))},
++   onAcceptedCost:(stage,cost)=>accepted.set(stage,cost)});
++ assert.deepEqual(f.calls.map(req=>req.callKind),['story-fact-ledger','story-fact-ledger','story-ledger-recap','story-ledger-recap','story-memory-audit']);
++ assert.equal(f.calls[2].maxTokens,4096);
++ assert.ok(f.calls[3].maxTokens>f.calls[2].maxTokens&&f.calls[3].maxTokens<=16384);
++ assert.equal(f.calls[3].maxTokensCap,f.calls[3].maxTokens);
++ const predicates=(ledger:any[])=>ledger.map(r=>({turn:r.turn,facts:r.facts.map((fact:any)=>({
++   kind:fact.kind,subject:fact.subject,key:fact.key,text:fact.text,value:fact.value??fact.text,
++   sources:fact.sources??fact.evidence.map((e:any)=>e.source),
++ }))}));
++ assert.deepEqual(predicates(drafts[1].ledger),predicates(drafts[0].ledger));
++ assert.notDeepEqual(f.calls[2].contents[0],f.calls[3].contents[0]);
++ assert.equal(drafts[1].targetCharacters,drafts[0].targetCharacters);
++ assert.deepEqual(drafts[1].ledger.map((r:any)=>r.turn),Array.from({length:10},(_,i)=>141+i));
++ assert.equal(auditInput.evidence.length,messages.length);
++ assert.equal(result.handoffEvidence?.checks.length,3);
++ assert.equal(result.rejected,undefined);
++ assert.ok(!JSON.stringify([f.calls,snapshots,result]).includes(partial));
++ assert.equal(accepted.get('narrative'),0);
++});
++
++test('a chapter shares one narrative-length recovery across its format repairs',async()=>{
++ const resume={read:()=>undefined,write:()=>{}};
++ for(const outcomes of [['empty','length','valid'],['length','empty','length']] as const){
++   let drafts=0;
++   const f=fixture();
++   const client={models:{generateContent:async(req:any)=>{
++     const value=await f.client.models.generateContent(req);
++     if(req.callKind!=='story-ledger-recap')return value;
++     const outcome=outcomes[drafts++];
++     if(outcome==='empty')return response({});
++     if(outcome==='length')return {...value,finishReason:'length'};
++     assert.equal(outcome,'valid','no additional regeneration');
++     return value;
++   }}};
++   const job=verifiedConversationSummary({...args,client,resume});
++   if(outcomes[2]==='valid')assert.equal((await job).rejected,undefined);
++   else await assert.rejects(job,/SUMMARY_OUTPUT_INCOMPLETE/);
++   const narrative=f.calls.filter(req=>req.callKind==='story-ledger-recap');
++   assert.equal(narrative.length,3);
++   assert.equal(narrative.filter(req=>req.maxTokens===16384).length,1);
++ }
++});
++
++test('repeated narrative truncation stops before audit and preserves a resumable ledger',async()=>{
++ let draft:ChapterDraft|undefined;
++ const f=fixture();
++ const client={models:{generateContent:async(req:any)=>{
++   const value=await f.client.models.generateContent(req);
++   return req.callKind==='story-ledger-recap'?{...value,finishReason:'length'}:value;
++ }}};
++ const resume={read:()=>draft,write:(value:ChapterDraft)=>{draft=structuredClone(value);}};
++ await assert.rejects(verifiedConversationSummary({...args,client,resume}),/SUMMARY_OUTPUT_INCOMPLETE/);
++ assert.deepEqual(f.calls.map(req=>req.callKind),['story-fact-ledger','story-fact-ledger','story-ledger-recap','story-ledger-recap']);
++ assert.equal(draft?.ledger.length,10);
++ assert.equal(draft?.text,undefined);
++ const again=fixture();
++ const result=await verifiedConversationSummary({...args,client:again.client,resume});
++ assert.deepEqual(again.calls.map(req=>req.callKind),['story-ledger-recap','story-memory-audit']);
++ assert.equal(result.rejected,undefined);
++});
++
++test('terminal chapter narrative finishes and non-checkpointed rewrites cannot trigger a truncation recovery',async()=>{
++ for(const [reason,checkpointed] of [['',true],['content_filter',true],['tool_calls',true],['length',false]] as const){
++   const f=fixture();
++   const client={models:{generateContent:async(req:any)=>{
++     const value=await f.client.models.generateContent(req);
++     return req.callKind==='story-ledger-recap'?{...value,finishReason:reason}:value;
++   }}};
++   const resume=checkpointed?{read:()=>undefined,write:()=>{}}:undefined;
++   await assert.rejects(verifiedConversationSummary({...args,client,resume}),/SUMMARY_OUTPUT_INCOMPLETE/);
++   assert.deepEqual(f.calls.map(req=>req.callKind),['story-fact-ledger','story-fact-ledger','story-ledger-recap']);
++ }
++});
++
+ test('a checkpointed chapter recovers a truncated final re-audit without repeating accepted stages',async()=>{
+diff --git a/api/services/storyOrganizationRetry.ts b/api/services/storyOrganizationRetry.ts
+--- a/api/services/storyOrganizationRetry.ts
++++ b/api/services/storyOrganizationRetry.ts
+@@ -9,3 +9,13 @@
+ }
+-interface RetryReceipt {owner:string;scope:string;state:string;at:number;cost:number;policyVersion?:string;signature?:string;error?:string;retrySourceKey?:string}
++interface RetryReceipt {owner:string;scope:string;state:string;at:number;cost:number;policyVersion?:string;signature?:string;error?:string;retrySourceKey?:string;recapLengthRecovery?:boolean;calls?:readonly {stage:string;outcome:string}[]}
++// Only the old narrative-length failure has a new recovery path. Its actual
++// supplier cost and recent-failure cooldown still count in the checks below.
++function legacyTruncatedRecap(receipt:RetryReceipt):boolean {
++ const calls=receipt.calls||[],last=calls.at(-1);
++ return !receipt.recapLengthRecovery&&receipt.error==='SUMMARY_OUTPUT_INCOMPLETE'
++   &&last?.stage==='story-ledger-recap'&&last.outcome==='output_length'
++   // Handoff and semantic edit requests reuse this stage name. Only an initial
++   // narrative (including a resumed ledger) has gained length recovery.
++   &&calls.slice(0,-1).every(call=>call.stage==='story-fact-ledger');
++}
+ /** Semantic repairs have already been attempted inside the job. A clock tick or
+@@ -14,3 +24,3 @@
+ export function organizationRetryProtection(receipts:readonly RetryReceipt[],owner:string,scope:string,signatures:readonly string[],policy:string,now=Date.now(),retrySourceKey?:string){
+- const semanticFailures=receipts.filter(j=>j.owner===owner&&j.state==='failed'&&j.policyVersion===policy&&(j.scope===scope&&signatures.includes(j.signature||'')||!!retrySourceKey&&j.retrySourceKey===retrySourceKey)&&semanticOrganizationFailure(j.error));
++ const semanticFailures=receipts.filter(j=>j.owner===owner&&j.state==='failed'&&j.policyVersion===policy&&(j.scope===scope&&signatures.includes(j.signature||'')||!!retrySourceKey&&j.retrySourceKey===retrySourceKey)&&semanticOrganizationFailure(j.error)&&!legacyTruncatedRecap(j));
+  const recent=receipts.filter(j=>j.owner===owner&&j.at>now-ORGANIZATION_RETRY_WINDOW_MS);
+diff --git a/test/unit/storyOrganizationRetry.test.ts b/test/unit/storyOrganizationRetry.test.ts
+--- a/test/unit/storyOrganizationRetry.test.ts
++++ b/test/unit/storyOrganizationRetry.test.ts
+@@ -37 +37,19 @@
+ });
++
++test('only proven narrative-length failures on the old generator reopen after its repair',()=>{
++ const truncated={error:'SUMMARY_OUTPUT_INCOMPLETE',calls:[{stage:'story-ledger-recap',outcome:'output_length'}]};
++ const old=[receipt(now-2000,.4,truncated),receipt(now-1000,.4,truncated),receipt(now,.4,truncated)];
++ const reopened=check(old);
++ assert.equal(reopened.automaticBlocked,false);
++ assert.equal(reopened.failures,3);
++ assert.ok(reopened.cost>=1);
++ assert.ok(reopened.retryAfter!>now);
++ assert.equal(check(old.map(r=>({...r,recapLengthRecovery:true}))).automaticBlocked,true);
++ for(const stage of ['story-ledger-recap','story-memory-audit']){
++   const afterRepair=old.map(r=>({...r,calls:[{stage,outcome:'returned'},...r.calls]}));
++   assert.equal(check(afterRepair).automaticBlocked,true);
++ }
++ for(const last of [{stage:'story-memory-audit',outcome:'output_length'},{stage:'story-ledger-recap',outcome:'other_finish_reason'}]){
++   assert.equal(check(old.map(r=>({...r,calls:[...r.calls,last]}))).automaticBlocked,true);
++ }
++});
